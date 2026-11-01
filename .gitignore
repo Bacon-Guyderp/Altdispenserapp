@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+.pytest_cache/
+*.z64
+*.v64
+*.n64
+*.u64
+*.d64
+*.ndd
