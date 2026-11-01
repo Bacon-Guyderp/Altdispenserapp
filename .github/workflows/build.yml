@@ -1,0 +1,29 @@
+name: Build Blend2Unity.exe
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        run: dotnet build Blend2Unity.csproj -c Release
+      - name: Test conversion core
+        run: dotnet run --project tests
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Blend2Unity
+          path: bin/Release/Blend2Unity.exe
+      - name: Attach to release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" bin/Release/Blend2Unity.exe --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

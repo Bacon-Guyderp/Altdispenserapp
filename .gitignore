@@ -1,7 +1,6 @@
-__pycache__/
-*.pyc
+bin/
+obj/
 *.unitypackage
 *.part
-build/
-dist/
-*.spec
+.vs/
+*.user
