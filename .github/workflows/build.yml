@@ -8,22 +8,22 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-go@v5
         with:
-          dotnet-version: 8.0.x
+          go-version: "1.22"
+      - name: Test
+        run: go test ./...
       - name: Build
-        run: dotnet build Blend2Unity.csproj -c Release
-      - name: Test conversion core
-        run: dotnet run --project tests
+        run: GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o Blend2Unity.exe .
       - uses: actions/upload-artifact@v4
         with:
           name: Blend2Unity
-          path: bin/Release/Blend2Unity.exe
+          path: Blend2Unity.exe
       - name: Attach to release
         if: github.event_name == 'release'
-        run: gh release upload "${{ github.event.release.tag_name }}" bin/Release/Blend2Unity.exe --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" Blend2Unity.exe --clobber
         env:
           GH_TOKEN: ${{ github.token }}

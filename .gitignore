@@ -1,6 +1,4 @@
-bin/
-obj/
+/blend2unity
+/Blend2Unity.exe
 *.unitypackage
 *.part
-.vs/
-*.user

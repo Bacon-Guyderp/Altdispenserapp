@@ -1,0 +1,24 @@
+APP ICON "app.ico"
+1 24 "app.manifest"
+
+1 VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILETYPE 0x1
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "FileDescription", "Blend2Unity - converts .blend files to .unitypackage"
+      VALUE "FileVersion", "1.0.0"
+      VALUE "OriginalFilename", "Blend2Unity.exe"
+      VALUE "ProductName", "Blend2Unity"
+      VALUE "ProductVersion", "1.0.0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

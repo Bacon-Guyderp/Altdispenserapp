@@ -7,13 +7,11 @@ files into Unity `.unitypackage` files. It shows progress for each file and for 
 
 ## Requirements
 
-- **Windows 10 or 11.** The exe uses .NET Framework 4.8, which is built into Windows, so
-  there's nothing to install for the app itself.
-- **[Blender](https://www.blender.org/download/)** 2.93 or newer. Only Blender can read
-  `.blend` files, so the app runs it in the background. It looks for Blender in the usual install
-  locations (including Steam), or you can point it at `blender.exe`.
-
-You don't need Python. The small script that Blender runs is built into the exe.
+- **Windows 10 or 11** (64-bit). The exe is a native program: there's no .NET, Python or other
+  runtime to install. Just download it and run it.
+- **[Blender](https://www.blender.org/download/)** 2.93 or newer. Only Blender can read `.blend` files,
+  so the app runs it in the background. It finds normal and Steam installs automatically, or you can
+  point it at `blender.exe`.
 
 ## Usage
 
@@ -38,36 +36,42 @@ Settings are saved in `%APPDATA%\Blend2Unity\settings.ini`.
 
 ## How it works
 
-1. For each file, Blender runs in the background with the built-in export script
-   (`src/BlenderExport.py`). It writes an FBX set up for Unity (Y-up, -Z forward, unit scale applied,
-   no leaf bones) and copies the textures into `Textures/`.
+1. For each file, Blender runs in the background with `blender_export.py`, which is built into
+   the exe. It writes an FBX set up for Unity (Y-up, -Z forward, unit scale applied, no leaf bones)
+   and copies the textures into `Textures/`.
 2. The app packs them into a `.unitypackage` under `Assets/<file name>/`. A `.unitypackage` is a
-   tar.gz with one folder per asset (`src/UnityPackage.cs`). Asset GUIDs come from each asset's path,
-   so importing an updated package replaces the old assets instead of making duplicates.
+   tar.gz with one folder per asset. Asset GUIDs come from each asset's path, so importing an updated
+   package replaces the old assets instead of making duplicates.
 
-## Building the exe
+## Building
 
-Install the [.NET SDK](https://dotnet.microsoft.com/download) (8 or newer) on Windows, Linux or macOS, then run:
+The app is written in Go and uses the Windows API directly, so there are no dependencies.
+With [Go](https://go.dev/dl/) 1.21+ installed, on any OS:
 
 ```sh
-dotnet build Blend2Unity.csproj -c Release
+GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o Blend2Unity.exe .
 ```
 
-The output is `bin/Release/Blend2Unity.exe`, a single file you can copy anywhere.
-The GitHub Actions workflow builds it on every push and attaches it to each GitHub release.
+(On Windows `cmd`, run `set GOOS=windows` and `set GOARCH=amd64` first.) `rsrc_windows_amd64.syso`
+holds the icon, manifest and version info and is linked in automatically. It is built from `winres/`
+with `x86_64-w64-mingw32-windres -O coff -i app.rc -o ../rsrc_windows_amd64.syso`, run inside `winres/`.
+
+The GitHub Actions workflow builds the exe on every push and attaches it to each GitHub release.
+
+On Linux and macOS the same code builds as a command-line tool: `go build -o blend2unity .`, then run
+`blend2unity -o out/ model.blend`.
 
 ## Tests
 
-The conversion code is tested cross-platform:
-
 ```sh
-dotnet run --project tests                                    # package-format tests
-BLENDER_PATH=/path/to/blender dotnet run --project tests      # plus end-to-end conversions
+go test ./...                                   # package-format tests
+BLENDER_PATH=/path/to/blender go test ./...     # plus end-to-end conversions with Blender
 ```
 
 ## Source
 
-- `src/MainForm.cs`: the window (WinForms)
-- `src/Converter.cs`: finds and runs Blender and parses its progress
-- `src/UnityPackage.cs`: `.unitypackage` writer
-- `src/BlenderExport.py`: export script built into the exe and run inside Blender
+- `gui_windows.go`, `win32_windows.go`: the window, built directly on the Windows API
+- `converter.go`: finds and runs Blender and parses its progress
+- `unitypackage.go`: `.unitypackage` writer
+- `blender_export.py`: export script that runs inside Blender (embedded in the exe)
+- `main_other.go`: command-line version for Linux and macOS
