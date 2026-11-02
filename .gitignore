@@ -1,9 +1,10 @@
-__pycache__/
-*.pyc
-build/
+bin/
+obj/
+publish/
 dist/
-*.spec
-.pytest_cache/
+*.user
+.vs/
+TestResults/
 *.z64
 *.v64
 *.n64

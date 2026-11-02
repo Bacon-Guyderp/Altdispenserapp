@@ -16,42 +16,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-dotnet@v4
         with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt pyinstaller pytest
+          dotnet-version: "8.0.x"
 
       - name: Run tests
-        run: python -m pytest -q tests
+        run: dotnet test tests/N64AssetStudio.Tests -c Release
 
-      - name: Build executable
-        run: >
-          python -m PyInstaller --noconfirm --clean --onefile --windowed
-          --name N64AssetStudio
-          --icon assets\icon.ico
-          --add-data "assets\icon.ico;assets"
-          --add-data "assets\icon.png;assets"
-          main.py
+      - name: Publish self-contained single-file exe
+        run: dotnet publish src/N64AssetStudio -c Release -o publish
 
-      - name: Smoke test the executable (CLI mode)
+      - name: Build test ROM
+        run: dotnet run --project src/N64AssetStudio.Cli -c Release -- make-test-rom smoke
+
+      - name: Smoke test the exe (command line)
         shell: pwsh
         run: |
-          python tests\make_test_rom.py smoke
-          $p = Start-Process -FilePath dist\N64AssetStudio.exe -ArgumentList "--cli","export","smoke\test.v64","smoke_out","--models","fbx","--unity" -Wait -PassThru
+          $p = Start-Process -FilePath publish\N64AssetStudio.exe -ArgumentList "--cli","export","smoke\test.v64","smoke_out","--models","fbx","--unity" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "exe failed with $($p.ExitCode)" }
           if (-not (Test-Path smoke_out\N64STUDIO_TEST.unitypackage)) { throw "no unitypackage produced" }
+
+      - name: Smoke test the exe (GUI self-test)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force selftest | Out-Null
+          $p = Start-Process -FilePath publish\N64AssetStudio.exe -ArgumentList "--selftest","smoke\test.z64","selftest" -Wait -PassThru
+          Get-Content selftest\selftest_result.txt
+          if ($p.ExitCode -ne 0) { throw "GUI self-test failed" }
 
       - uses: actions/upload-artifact@v4
         with:
           name: N64AssetStudio-windows
-          path: dist/N64AssetStudio.exe
+          path: publish/N64AssetStudio.exe
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gui-selftest-screenshots
+          path: selftest/
 
       - name: Publish release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/N64AssetStudio.exe
+          files: publish/N64AssetStudio.exe
