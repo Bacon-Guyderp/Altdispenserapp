@@ -25,12 +25,13 @@ jobs:
         with:
           name: Blend2Unity
           path: Blend2Unity.exe
-      # Pushing a tag like blend2unity-v1.0.0 publishes a GitHub Release with the exe.
+      # Every successful build of the app's branch (or a pushed blend2unity-v* tag)
+      # publishes a GitHub Release with the exe attached.
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/blend2unity-v')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/claude/blend-unity-converter-gui-wn1hao' || startsWith(github.ref, 'refs/tags/blend2unity-v'))
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('blend2unity-v1.0.{0}', github.run_number) }}
         run: |
           VERSION="${TAG#blend2unity-v}"
           cat > notes.md <<NOTES
@@ -42,5 +43,5 @@ jobs:
 
           Windows may say "Windows protected your PC" because the exe isn't code-signed. Click **More info → Run anyway**.
           NOTES
-          gh release create "$TAG" Blend2Unity.exe --title "Blend2Unity $VERSION" --notes-file notes.md --latest=false \
+          gh release create "$TAG" Blend2Unity.exe --target "$GITHUB_SHA" --title "Blend2Unity $VERSION" --notes-file notes.md --latest=false \
             || gh release upload "$TAG" Blend2Unity.exe --clobber

@@ -3,7 +3,7 @@
 A Windows app, a single `Blend2Unity.exe`, that converts Blender `.blend`
 files into Unity `.unitypackage` files. It shows progress for each file and for the whole batch.
 
-**[Download Blend2Unity.exe](https://github.com/Bacon-Guyderp/Altdispenserapp/releases/tag/blend2unity-v1.0.0)**
+**Download:** get `Blend2Unity.exe` from the newest *Blend2Unity* release on the [Releases page](https://github.com/Bacon-Guyderp/Altdispenserapp/releases).
 
 ![](docs/screenshot.png)
 
@@ -58,7 +58,7 @@ GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o B
 holds the icon, manifest and version info and is linked in automatically. It is built from `winres/`
 with `x86_64-w64-mingw32-windres -O coff -i app.rc -o ../rsrc_windows_amd64.syso`, run inside `winres/`.
 
-The GitHub Actions workflow builds the exe on every push. Pushing a tag like `blend2unity-v1.0.1` publishes a GitHub Release with the exe attached.
+The GitHub Actions workflow builds and tests the exe on every push. Each successful build of the app's branch publishes a GitHub Release (`blend2unity-v1.0.<build>`) with the exe attached.
 
 On Linux and macOS the same code builds as a command-line tool: `go build -o blend2unity .`, then run
 `blend2unity -o out/ model.blend`.
