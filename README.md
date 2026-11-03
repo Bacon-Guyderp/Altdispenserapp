@@ -38,7 +38,9 @@ formats you'd use in Blender, Unity or other tools.
 ## Getting the program
 
 ### Download
-Every push to this repository builds `N64AssetStudio.exe` in GitHub Actions. Open the **Actions** tab, then the latest *Build Windows app* run, and download the **N64AssetStudio-windows** artifact. Pushing a tag such as `v2.0.0` also attaches the `.exe` to a GitHub Release.
+**[Download N64AssetStudio.exe](https://github.com/Bacon-Guyderp/Altdispenserapp/releases/latest/download/N64AssetStudio.exe)** (latest release)
+
+Every build that passes its tests is published automatically on the [Releases](https://github.com/Bacon-Guyderp/Altdispenserapp/releases) page.
 
 It runs on 64-bit Windows 10 and 11. Windows SmartScreen may warn about an unsigned download. Choose *More info > Run anyway*.
 

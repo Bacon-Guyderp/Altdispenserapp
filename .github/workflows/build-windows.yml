@@ -55,8 +55,20 @@ jobs:
           name: gui-selftest-screenshots
           path: selftest/
 
-      - name: Publish release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Every successful build of a pushed branch or tag becomes a downloadable GitHub Release; the newest
+      # one is always at https://github.com/<owner>/<repo>/releases/latest/download/N64AssetStudio.exe
+      - name: Publish release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v2.0.{0}', github.run_number) }}
+          name: N64 Asset Studio ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('2.0.{0}', github.run_number) }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          body: |
+            Download **N64AssetStudio.exe** below and double-click it. It's a single self-contained program for 64-bit
+            Windows 10/11, so nothing else (Python, .NET) needs to be installed. If SmartScreen warns about an
+            unrecognised app, choose *More info > Run anyway*.
+
+            Built from ${{ github.sha }}.
           files: publish/N64AssetStudio.exe
