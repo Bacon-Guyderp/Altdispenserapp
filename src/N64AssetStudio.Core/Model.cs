@@ -11,11 +11,23 @@ public sealed class Material
     public bool HasAlpha => Texture?.HasAlpha ?? Color[3] < 1f;
 }
 
+/// <summary>A skeleton joint. Position is the bind-pose position in model space; bind rotations are identity.</summary>
+public sealed class Bone
+{
+    public string Name = "";
+    public int Parent = -1;
+    public float X, Y, Z;
+
+    public Bone(string name, int parent, float x, float y, float z) { Name = name; Parent = parent; X = x; Y = y; Z = z; }
+}
+
 public struct Vertex
 {
     public float X, Y, Z, U, V;
     public float R, G, B, A;
     public float NX, NY, NZ;
+    /// <summary>Index into <see cref="Mesh.Bones"/>; every vertex is rigidly bound to one bone (as on the N64).</summary>
+    public int Bone;
 
     public Vertex(float x, float y, float z, float u = 0, float v = 0)
     {
@@ -33,6 +45,11 @@ public sealed class Mesh
     public List<Material> Materials = new();
     public bool HasNormals, HasColors;
     public List<string> Notes = new();
+    public List<Bone> Bones = new();
+    /// <summary>"game" when the skeleton came from the game's own data, "auto" when generated.</summary>
+    public string RigSource = "";
+
+    public bool IsRigged => Bones.Count > 0;
 
     public Mesh(string name) { Name = name; }
 
@@ -78,7 +95,18 @@ public sealed class Mesh
             Notes = Notes.Concat(other.Notes).ToList(),
         };
         int vo = m.Vertices.Count, mo = m.Materials.Count;
-        m.Vertices.AddRange(other.Vertices);
+        if (IsRigged && other.IsRigged)
+        {
+            int bo = Bones.Count;
+            m.Bones = Bones.Concat(other.Bones.Select(b => new Bone(b.Name, b.Parent < 0 ? -1 : b.Parent + bo, b.X, b.Y, b.Z))).ToList();
+            m.RigSource = RigSource;
+            m.Vertices.AddRange(other.Vertices.Select(v => { v.Bone += bo; return v; }));
+        }
+        else
+        {
+            // rigs only survive a merge when both halves have one; callers re-rig the result
+            m.Vertices = m.Vertices.Concat(other.Vertices).Select(v => { v.Bone = 0; return v; }).ToList();
+        }
         m.Materials.AddRange(other.Materials);
         foreach (var (a, b, c, mat) in other.Triangles) m.Triangles.Add((a + vo, b + vo, c + vo, mat + mo));
         return m;

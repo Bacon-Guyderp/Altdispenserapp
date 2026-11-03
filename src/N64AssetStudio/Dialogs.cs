@@ -39,6 +39,16 @@ MODELS
   If a model looks scrambled, adjust the "segment base" in the model view. Games with custom
   microcodes need the Texture Ripper and Raw views instead.
 
+RIGGING
+  Models are exported with a skeleton. Zelda 64 engine games (Ocarina of Time, Majora's Mask) store
+  their character skeletons, so those characters (under "Characters") get the real limb hierarchy,
+  including Link-style "flex" skinning across joints. For everything else the model is rigged
+  automatically: N64 characters are built from rigid parts, so each part gets a bone placed where it
+  meets its neighbour, the biggest part becomes the body, and every vertex is weighted 100% to its
+  part's bone - exactly how the N64 itself animates them. Rigs are kept in .glb, .gltf, .fbx, .blend
+  and .unitypackage exports (Blender imports an armature, Unity a Generic rig).
+  Automatic rigging can be switched off in Settings. Animations are not exported.
+
 TEXTURES
   Textures referenced by display lists are listed automatically. The Texture Ripper shows any data
   as any N64 format (RGBA16/32, CI4/8, IA4/8/16, I4/8, YUV16).
@@ -107,7 +117,8 @@ sealed class ExportAllDialog : Form
         var code = Check("Code as pseudo-C (.c)", opt.Code);
         var unity = Check("Unity package (.unitypackage), models as", opt.UnityPackage); var uf = Combo(new[] { "fbx", "obj", "glb" }, opt.UnityModelFormat);
         var blend = Check("Blender scene (.blend)", opt.Blender);
-        Row(models, mf); Row(roots); Row(tex, imf); Row(aud, af); Row(sf2); Row(mus); Row(raw); Row(code); Row(unity, uf); Row(blend);
+        var rig = Check("    rig models automatically (skeleton + skin weights)", opt.AutoRig);
+        Row(models, mf); Row(rig); Row(roots); Row(tex, imf); Row(aud, af); Row(sf2); Row(mus); Row(raw); Row(code); Row(unity, uf); Row(blend);
 
         var outRow = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 10, 0, 0) };
         _out = new TextBox { Text = folder, Width = 360 };
@@ -135,7 +146,7 @@ sealed class ExportAllDialog : Form
             opt.Textures = tex.Checked; opt.ImageFormat = (string)imf.SelectedItem!;
             opt.Audio = aud.Checked; opt.AudioFormat = (string)af.SelectedItem!;
             opt.SoundFonts = sf2.Checked; opt.Music = mus.Checked; opt.RawFiles = raw.Checked; opt.Code = code.Checked;
-            opt.UnityPackage = unity.Checked; opt.UnityModelFormat = (string)uf.SelectedItem!; opt.Blender = blend.Checked;
+            opt.UnityPackage = unity.Checked; opt.UnityModelFormat = (string)uf.SelectedItem!; opt.Blender = blend.Checked; opt.AutoRig = rig.Checked;
             try { Directory.CreateDirectory(_out.Text); }
             catch (Exception ex) { MessageBox.Show(this, "Invalid output folder: " + ex.Message); e.Cancel = true; }
         };
@@ -181,6 +192,8 @@ sealed class SettingsDialog : Form
         var romdl = new CheckBox { Text = "Search uncompressed ROM data for models", Checked = s.ScanRomDisplayLists, AutoSize = true };
         t.Controls.Add(deep); t.SetColumnSpan(deep, 3);
         t.Controls.Add(romdl); t.SetColumnSpan(romdl, 3);
+        var autorig = new CheckBox { Text = "Rig models automatically (one bone per rigid part; game skeletons are always used)", Checked = s.AutoRig, AutoSize = true };
+        t.Controls.Add(autorig); t.SetColumnSpan(autorig, 3);
         var buttons = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Dock = DockStyle.Fill };
         var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel };
         var ok = new Button { Text = "OK", DialogResult = DialogResult.OK };
@@ -198,6 +211,7 @@ sealed class SettingsDialog : Form
             if (double.TryParse(tb2.Text, System.Globalization.NumberStyles.Float, inv, out var budget) && budget > 0) s.TextureBudget = budget;
             s.DeepCompression = deep.Checked;
             s.ScanRomDisplayLists = romdl.Checked;
+            s.AutoRig = autorig.Checked;
         };
     }
 }

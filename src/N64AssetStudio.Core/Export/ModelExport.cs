@@ -110,11 +110,11 @@ public static class ModelExport
             views.Add(v);
             return views.Count - 1;
         }
-        int AddFloats(float[] arr, int comps, string type, bool minmax)
+        int AddFloats(float[] arr, int comps, string type, bool minmax, int? target = 34962)
         {
             var bytes = new byte[arr.Length * 4];
             Buffer.BlockCopy(arr, 0, bytes, 0, bytes.Length);
-            var acc = new JsonObject { ["bufferView"] = AddView(bytes, 34962), ["componentType"] = 5126, ["count"] = arr.Length / comps, ["type"] = type };
+            var acc = new JsonObject { ["bufferView"] = AddView(bytes, target), ["componentType"] = 5126, ["count"] = arr.Length / comps, ["type"] = type };
             if (minmax && arr.Length > 0)
             {
                 var mn = new JsonArray(); var mx = new JsonArray();
@@ -141,6 +141,15 @@ public static class ModelExport
             ["TEXCOORD_0"] = AddFloats(uv, 2, "VEC2", false),
         };
         if (mesh.HasColors) attrs["COLOR_0"] = AddFloats(vs.SelectMany(v => new[] { v.R, v.G, v.B, v.A }).ToArray(), 4, "VEC4", false);
+        if (mesh.IsRigged)
+        {
+            // rigid skinning: one joint per vertex at weight 1
+            var joints = new byte[vs.Count * 8];
+            for (int i = 0; i < vs.Count; i++) BitConverter.TryWriteBytes(joints.AsSpan(i * 8), (ushort)vs[i].Bone);
+            accessors.Add(new JsonObject { ["bufferView"] = AddView(joints, 34962), ["componentType"] = 5123, ["count"] = vs.Count, ["type"] = "VEC4" });
+            attrs["JOINTS_0"] = accessors.Count - 1;
+            attrs["WEIGHTS_0"] = AddFloats(vs.SelectMany(_ => new[] { 1f, 0f, 0f, 0f }).ToArray(), 4, "VEC4", false);
+        }
 
         var images = new JsonArray(); var textures = new JsonArray(); var samplers = new JsonArray(); var materials = new JsonArray();
         for (int i = 0; i < mesh.Materials.Count; i++)
@@ -189,13 +198,55 @@ public static class ModelExport
             ["scenes"] = new JsonArray(new JsonObject { ["nodes"] = new JsonArray(0) }),
             ["nodes"] = new JsonArray(new JsonObject { ["name"] = Safe(mesh.Name), ["mesh"] = 0 }),
             ["meshes"] = new JsonArray(new JsonObject { ["name"] = Safe(mesh.Name), ["primitives"] = prims }),
-            ["buffers"] = new JsonArray(new JsonObject { ["byteLength"] = blob.Length }),
             ["bufferViews"] = views,
             ["accessors"] = accessors,
         };
+        if (mesh.IsRigged) AddSkin(root, mesh, scale, AddFloats);
+        root["buffers"] = new JsonArray(new JsonObject { ["byteLength"] = blob.Length });
         if (materials.Count > 0) root["materials"] = materials;
         if (images.Count > 0) { root["images"] = images; root["textures"] = textures; root["samplers"] = samplers; }
         return (root, blob.ToArray());
+    }
+
+    /// <summary>Adds joint nodes (node i+1 = bone i) and a skin. Bind rotations are identity, so each inverse
+    /// bind matrix is just a translation by minus the joint's model-space position.</summary>
+    static void AddSkin(JsonObject root, Mesh mesh, double scale, Func<float[], int, string, bool, int?, int> addFloats)
+    {
+        var nodes = (JsonArray)root["nodes"]!;
+        var bones = mesh.Bones;
+        for (int i = 0; i < bones.Count; i++)
+        {
+            var b = bones[i];
+            float px = 0, py = 0, pz = 0;
+            if (b.Parent >= 0) { px = bones[b.Parent].X; py = bones[b.Parent].Y; pz = bones[b.Parent].Z; }
+            var node = new JsonObject
+            {
+                ["name"] = b.Name,
+                ["translation"] = new JsonArray((float)((b.X - px) * scale), (float)((b.Y - py) * scale), (float)((b.Z - pz) * scale)),
+            };
+            var kids = Enumerable.Range(0, bones.Count).Where(k => bones[k].Parent == i).Select(k => (JsonNode)(k + 1)).ToArray();
+            if (kids.Length > 0) node["children"] = new JsonArray(kids);
+            nodes.Add(node);
+        }
+        var ibm = new float[bones.Count * 16];
+        for (int i = 0; i < bones.Count; i++)
+        {
+            ibm[i * 16] = ibm[i * 16 + 5] = ibm[i * 16 + 10] = ibm[i * 16 + 15] = 1;
+            ibm[i * 16 + 12] = (float)(-bones[i].X * scale);
+            ibm[i * 16 + 13] = (float)(-bones[i].Y * scale);
+            ibm[i * 16 + 14] = (float)(-bones[i].Z * scale);
+        }
+        var roots = Enumerable.Range(0, bones.Count).Where(i => bones[i].Parent < 0).ToList();
+        root["skins"] = new JsonArray(new JsonObject
+        {
+            ["name"] = "armature",
+            ["joints"] = new JsonArray(Enumerable.Range(1, bones.Count).Select(i => (JsonNode)i).ToArray()),
+            ["inverseBindMatrices"] = addFloats(ibm, 16, "MAT4", false, null),
+            ["skeleton"] = roots[0] + 1,
+        });
+        nodes[0]!["skin"] = 0;
+        var sceneNodes = (JsonArray)root["scenes"]![0]!["nodes"]!;
+        foreach (var r in roots) sceneNodes.Add(r + 1);
     }
 
     public static byte[] GlbBytes(Mesh mesh, double scale = 1.0)

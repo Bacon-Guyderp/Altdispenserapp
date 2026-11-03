@@ -44,8 +44,12 @@ public sealed class Project
     public List<BankFile> BankFiles = new();
     public List<Sequence> Sequences = new();
     public List<uint> Functions = new();
+    public List<SkeletonAsset> Skeletons = new();
     public List<string> Log = new();
-    readonly Dictionary<(int, int?), Mesh> _meshCache = new();
+    /// <summary>Give every model a skeleton (see <see cref="Rigging.AutoRig"/>).</summary>
+    public bool AutoRig = true;
+    readonly Dictionary<(int, int?, bool), Mesh> _meshCache = new();
+    readonly Dictionary<int, Mesh> _skeletonCache = new();
     readonly Dictionary<(int, uint, int), short[]> _pcmCache = new();
     List<SoundRef>? _sounds;
 
@@ -97,6 +101,20 @@ public sealed class Project
             foreach (var dl in F3D.FindDisplayLists(Blobs[bi].Data, bi))
                 Models.Add(new ModelAsset { Index = Models.Count, BlobIndex = bi, Dl = dl, Name = $"{dl.Ucode} DL @ 0x{dl.Offset:X}" });
         }
+
+        prog(0.69, "Searching for character skeletons");
+        Skeletons = new();
+        for (int bi = 1; bi < Blobs.Count; bi++)
+        {
+            var dlOffsets = Models.Where(m => m.BlobIndex == bi).Select(m => m.Dl.Offset).ToHashSet();
+            if (dlOffsets.Count == 0) continue;
+            foreach (var sk in Rigging.FindZeldaSkeletons(Blobs[bi].Data, bi, dlOffsets))
+            {
+                sk.Index = Skeletons.Count;
+                Skeletons.Add(sk);
+            }
+        }
+        if (Skeletons.Count > 0) Log.Add($"{Skeletons.Count} character skeletons (Zelda 64 format)");
 
         prog(0.70, "Searching for audio banks and sequences");
         BankFiles = new();
@@ -177,26 +195,47 @@ public sealed class Project
 
     public string SafeName(ModelAsset m) => $"model_b{m.BlobIndex}_{m.Dl.Offset:X6}";
 
-    public Mesh GetMesh(ModelAsset m)
+    public Mesh GetMesh(ModelAsset m) => GetMesh(m, AutoRig);
+
+    public Mesh GetMesh(ModelAsset m, bool rig)
     {
         lock (_meshCache)
         {
-            if (_meshCache.TryGetValue((m.Index, m.BaseOverride), out var c)) return c;
+            var key = (m.Index, m.BaseOverride, rig);
+            if (_meshCache.TryGetValue(key, out var c)) return c;
             var mesh = F3D.BuildMesh(Blobs[m.BlobIndex].Data, m.Dl, m.BaseOverride, Rom, SafeName(m), m.BlobIndex != 0);
             if (!mesh.HasNormals) mesh.ComputeNormals();
-            return _meshCache[(m.Index, m.BaseOverride)] = mesh;
+            if (rig) Rigging.AutoRig(mesh);
+            return _meshCache[key] = mesh;
         }
     }
 
+    /// <summary>All display lists of one file merged into one model (rigged as a whole, one bone per part).</summary>
     public Mesh? GetBlobMesh(int blobIndex, bool rootsOnly = true)
     {
         Mesh? mesh = null;
         foreach (var m in Models.Where(m => m.BlobIndex == blobIndex && !(rootsOnly && m.Dl.IsChild)))
         {
-            var part = GetMesh(m);
+            var part = GetMesh(m, false);
             mesh = mesh == null ? part.MergedWith(new Mesh(""), $"file_{blobIndex}") : mesh.MergedWith(part, $"file_{blobIndex}");
         }
+        if (mesh != null && AutoRig) Rigging.AutoRig(mesh);
         return mesh;
+    }
+
+    public string SafeName(SkeletonAsset s) => $"character_b{s.BlobIndex}_{s.Offset:X6}";
+
+    /// <summary>A character assembled from its game skeleton: one bone per limb, limb geometry skinned to it.</summary>
+    public Mesh GetSkeletonMesh(SkeletonAsset s)
+    {
+        lock (_skeletonCache)
+        {
+            if (_skeletonCache.TryGetValue(s.Index, out var c)) return c;
+            var dls = Models.Where(m => m.BlobIndex == s.BlobIndex).GroupBy(m => m.Dl.Offset).ToDictionary(g => g.Key, g => g.First().Dl);
+            var mesh = Rigging.BuildSkeletonMesh(Blobs[s.BlobIndex].Data, s, dls, SafeName(s));
+            if (!mesh.HasNormals) mesh.ComputeNormals();
+            return _skeletonCache[s.Index] = mesh;
+        }
     }
 
     public RgbaImage TextureImage(TextureAsset t)

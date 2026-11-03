@@ -308,7 +308,7 @@ public static class F3D
         public int H => ((Lrt - Ult) >> 2) + 1;
     }
 
-    record struct RawVtx(int Addr, short X, short Y, short Z, short S, short T, byte C0, byte C1, byte C2, byte C3, bool Lit);
+    record struct RawVtx(int Addr, short X, short Y, short Z, short S, short T, byte C0, byte C1, byte C2, byte C3, bool Lit, int Bone);
 
     public sealed class DisplayListInterpreter
     {
@@ -318,6 +318,10 @@ public static class F3D
         readonly int? _home;
         readonly Rom? _rom;
         public readonly HashSet<int> Unresolved = new();
+        /// <summary>Bone that vertices are bound to when no matrix override is active.</summary>
+        public int DefaultBone;
+        /// <summary>Maps a G_MTX address (e.g. Zelda's 0x0D limb-matrix segment) to a bone; null = not a bone matrix.</summary>
+        public Func<uint, int?>? MatrixBone;
 
         public DisplayListInterpreter(byte[] d, Ucode u, int b, int? home, Rom? rom)
         {
@@ -339,7 +343,8 @@ public static class F3D
             var u = _u;
             var mesh = new Mesh(name);
             var vbuf = new RawVtx?[64];
-            var vcache = new Dictionary<(int, int), int>();
+            var vcache = new Dictionary<(int, int, int), int>();
+            int curBone = DefaultBone;
             var matCache = new Dictionary<(int?, int, int, int, int, int?, bool), int>();
             var tiles = Enumerable.Range(0, 8).Select(_ => new Tile()).ToArray();
             uint timgAddr = 0;
@@ -394,7 +399,7 @@ public static class F3D
                 int k = 0;
                 foreach (var raw in new[] { a, b, c })
                 {
-                    if (!vcache.TryGetValue((raw.Addr, m), out int idx))
+                    if (!vcache.TryGetValue((raw.Addr, m, raw.Bone), out int idx))
                     {
                         var v = new Vertex(raw.X, raw.Y, raw.Z,
                             (float)((raw.S * scaleS / 32.0 - t.Uls / 4.0) / w),
@@ -413,8 +418,9 @@ public static class F3D
                             v.R = raw.C0 / 255f; v.G = raw.C1 / 255f; v.B = raw.C2 / 255f; v.A = raw.C3 / 255f;
                             mesh.HasColors = true;
                         }
+                        v.Bone = raw.Bone;
                         mesh.Vertices.Add(v);
-                        idx = vcache[(raw.Addr, m)] = mesh.Vertices.Count - 1;
+                        idx = vcache[(raw.Addr, m, raw.Bone)] = mesh.Vertices.Count - 1;
                     }
                     outIdx[k++] = idx;
                 }
@@ -446,7 +452,7 @@ public static class F3D
                         int q = p.Value + i * 16;
                         if (q + 16 > _d.Length || v0 + i < 0 || v0 + i >= 64) break;
                         vbuf[v0 + i] = new RawVtx(q, BE.S16(_d, q), BE.S16(_d, q + 2), BE.S16(_d, q + 4),
-                            BE.S16(_d, q + 8), BE.S16(_d, q + 10), _d[q + 12], _d[q + 13], _d[q + 14], _d[q + 15], lighting);
+                            BE.S16(_d, q + 8), BE.S16(_d, q + 10), _d[q + 12], _d[q + 13], _d[q + 14], _d[q + 15], lighting, curBone);
                     }
                 }
                 else if (op == Tri1Op(u))
@@ -492,6 +498,12 @@ public static class F3D
                     int shift = u == Ucode.F3DEX2 ? 32 - (int)((w0 >> 8) & 0xFF) - ((int)(w0 & 0xFF) + 1) : (int)((w0 >> 8) & 0xFF);
                     if (shift == 14) tlutIa = ((w1 >> 14) & 3) == 3;
                 }
+                else if (op == (u == Ucode.F3DEX2 ? 0xDA : 0x01))
+                {
+                    // G_MTX: when the matrix belongs to another limb, following vertices are skinned to it
+                    if (MatrixBone?.Invoke(w1) is int b) curBone = b;
+                }
+                else if (op == (u == Ucode.F3DEX2 ? 0xD8 : 0xBD)) curBone = DefaultBone; // G_POPMTX
                 else if (op == G_SETTIMG) timgAddr = w1;
                 else if (op == G_SETTILE)
                 {

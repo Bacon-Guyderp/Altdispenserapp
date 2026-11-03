@@ -6,6 +6,8 @@ public sealed class BatchOptions
     public string ModelFormat = "glb";
     public double ModelScale = 1.0;
     public bool RootsOnly = true;
+    /// <summary>Give every model a skeleton (game skeletons are always exported rigged).</summary>
+    public bool AutoRig = true;
     public bool Textures = true;
     public string ImageFormat = "png";
     public bool Audio = true;
@@ -37,13 +39,20 @@ public static class BatchExport
         var models = p.Models.Where(m => !(opt.RootsOnly && m.Dl.IsChild)).ToList();
         var meshes = new List<Mesh>();
         if (opt.Models || opt.UnityPackage || opt.Blender)
+        {
+            foreach (var s in p.Skeletons)
+            {
+                try { var m = p.GetSkeletonMesh(s); if (m.Triangles.Count > 0) meshes.Add(m); }
+                catch (Exception) { errors++; }
+            }
             for (int i = 0; i < models.Count; i++)
             {
                 cancel.ThrowIfCancellationRequested();
                 if (i % 8 == 0) prog(0.4 * i / Math.Max(1, models.Count), $"Building models ({i}/{models.Count})");
-                try { var m = p.GetMesh(models[i]); if (m.Triangles.Count > 0) meshes.Add(m); }
+                try { var m = p.GetMesh(models[i], opt.AutoRig); if (m.Triangles.Count > 0) meshes.Add(m); }
                 catch (Exception) { errors++; }
             }
+        }
 
         if (opt.Models)
         {
@@ -57,7 +66,10 @@ public static class BatchExport
                 try { ModelExport.Export(meshes[i], Path.Combine(sub ? Path.Combine(d, n) : d, $"{n}.{opt.ModelFormat}"), opt.ModelFormat, opt.ModelScale); }
                 catch (Exception) { errors++; }
             }
-            report.Add($"{meshes.Count} models -> {d}");
+            int rigged = meshes.Count(m => m.IsRigged);
+            report.Add($"{meshes.Count} models ({p.Skeletons.Count} characters with game skeletons, {rigged} rigged in total) -> {d}");
+            if (opt.ModelFormat is "obj" or "ply" or "stl" or "dae" && rigged > 0)
+                report.Add($"note: .{opt.ModelFormat} can't store skeletons - use glb, gltf or fbx to keep the rigs");
         }
 
         if (opt.Textures)

@@ -4,7 +4,7 @@ namespace N64AssetStudio.Core;
 
 /// <summary>
 /// Command line:  info &lt;rom&gt;  |  export &lt;rom&gt; &lt;outdir&gt; [--models fbx] [--images png] [--audio wav]
-///                [--scale 1] [--unity] [--blender] [--code] [--raw] [--fast]
+///                [--scale 1] [--unity] [--blender] [--code] [--raw] [--fast] [--no-rig]
 /// </summary>
 public static class Cli
 {
@@ -18,7 +18,7 @@ public static class Cli
         if (args.Length < 2 || (args[0] != "info" && args[0] != "export") || (args[0] == "export" && args.Length < 3))
         {
             error.WriteLine("usage:\n  info <rom>\n  make-test-rom <outdir>\n  export <rom> <outdir> [--models glb|gltf|fbx|obj|dae|ply|stl|none] [--images png|bmp|tga|tif|dds|ico|qoi|ppm]\n" +
-                            "         [--audio wav|aiff|flac|au|raw|ogg|mp3|none] [--scale N] [--unity] [--blender] [--code] [--raw] [--fast]");
+                            "         [--audio wav|aiff|flac|au|raw|ogg|mp3|none] [--scale N] [--unity] [--blender] [--code] [--raw] [--fast] [--no-rig]");
             return 2;
         }
         string Opt(string name, string def)
@@ -42,7 +42,7 @@ public static class Cli
                 Models = models != "none", ModelFormat = models == "none" ? "glb" : models,
                 ModelScale = double.Parse(Opt("--scale", "1"), System.Globalization.CultureInfo.InvariantCulture),
                 ImageFormat = Opt("--images", "png"), Audio = audio != "none", AudioFormat = audio == "none" ? "wav" : audio,
-                UnityPackage = Flag("--unity"), Blender = Flag("--blender"), Code = Flag("--code"), RawFiles = Flag("--raw"),
+                UnityPackage = Flag("--unity"), Blender = Flag("--blender"), AutoRig = !Flag("--no-rig"), Code = Flag("--code"), RawFiles = Flag("--raw"),
             };
             var report = BatchExport.ExportAll(proj, args[2], opt, Progress);
             error.WriteLine();

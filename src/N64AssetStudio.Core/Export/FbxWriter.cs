@@ -94,6 +94,74 @@ public static class FbxWriter
     static P[] Row(string name, string type, string sub, string flags, params P[] vals) =>
         new P[] { new PS(name), new PS(type), new PS(sub), new PS(flags) }.Concat(vals).ToArray();
 
+    static PAd Translation(double x, double y, double z) =>
+        new(new double[] { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1 });
+
+    /// <summary>Armature: one LimbNode per bone, a Skin deformer with one Cluster per bone (rigid weights)
+    /// and a BindPose. Bind rotations are identity, so all bind matrices are pure translations.</summary>
+    static void WriteSkeleton(Mesh mesh, double scale, Node objects, Node conns, Func<long> newId, long meshId, long geoId)
+    {
+        var bones = mesh.Bones;
+        var boneIds = new long[bones.Count];
+        for (int i = 0; i < bones.Count; i++)
+        {
+            var b = bones[i];
+            double px = 0, py = 0, pz = 0;
+            if (b.Parent >= 0) { px = bones[b.Parent].X; py = bones[b.Parent].Y; pz = bones[b.Parent].Z; }
+            long attrId = newId();
+            var attr = objects.Add("NodeAttribute", new PL(attrId), ClassName(b.Name, "NodeAttribute"), new PS("LimbNode"));
+            P70(attr, Row("Size", "double", "Number", "", new PD(1.0)));
+            attr.Add("TypeFlags", new PS("Skeleton"));
+            boneIds[i] = newId();
+            var model = objects.Add("Model", new PL(boneIds[i]), ClassName(b.Name, "Model"), new PS("LimbNode"));
+            model.Add("Version", new PI(232));
+            P70(model,
+                Row("Lcl Translation", "Lcl Translation", "", "A", new PD((b.X - px) * scale), new PD((b.Y - py) * scale), new PD((b.Z - pz) * scale)),
+                Row("Lcl Rotation", "Lcl Rotation", "", "A", new PD(0), new PD(0), new PD(0)),
+                Row("Lcl Scaling", "Lcl Scaling", "", "A", new PD(1), new PD(1), new PD(1)));
+            model.Add("Shading", new PC(true));
+            model.Add("Culling", new PS("CullingOff"));
+            conns.Add("C", new PS("OO"), new PL(attrId), new PL(boneIds[i]));
+        }
+        for (int i = 0; i < bones.Count; i++)
+            conns.Add("C", new PS("OO"), new PL(boneIds[i]), new PL(bones[i].Parent >= 0 ? boneIds[bones[i].Parent] : 0));
+
+        long skinId = newId();
+        var skin = objects.Add("Deformer", new PL(skinId), ClassName("Armature", "Deformer"), new PS("Skin"));
+        skin.Add("Version", new PI(101));
+        skin.Add("Link_DeformAcuracy", new PD(50.0));
+        conns.Add("C", new PS("OO"), new PL(skinId), new PL(geoId));
+        for (int i = 0; i < bones.Count; i++)
+        {
+            var idx = Enumerable.Range(0, mesh.Vertices.Count).Where(v => mesh.Vertices[v].Bone == i).ToArray();
+            long clId = newId();
+            var cl = objects.Add("Deformer", new PL(clId), ClassName(bones[i].Name, "SubDeformer"), new PS("Cluster"));
+            cl.Add("Version", new PI(100));
+            cl.Add("UserData", new PS(""), new PS(""));
+            cl.Add("Indexes", new PAi(idx));
+            cl.Add("Weights", new PAd(idx.Select(_ => 1.0).ToArray()));
+            double bx = bones[i].X * scale, by = bones[i].Y * scale, bz = bones[i].Z * scale;
+            cl.Add("Transform", Translation(-bx, -by, -bz));     // mesh space -> bone space at bind time
+            cl.Add("TransformLink", Translation(bx, by, bz));    // bone's global bind matrix
+            conns.Add("C", new PS("OO"), new PL(clId), new PL(skinId));
+            conns.Add("C", new PS("OO"), new PL(boneIds[i]), new PL(clId));
+        }
+
+        var pose = objects.Add("Pose", new PL(newId()), ClassName("BindPose", "Pose"), new PS("BindPose"));
+        pose.Add("Type", new PS("BindPose"));
+        pose.Add("Version", new PI(100));
+        pose.Add("NbPoseNodes", new PI(bones.Count + 1));
+        var pn = pose.Add("PoseNode");
+        pn.Add("Node", new PL(meshId));
+        pn.Add("Matrix", Translation(0, 0, 0));
+        for (int i = 0; i < bones.Count; i++)
+        {
+            var n = pose.Add("PoseNode");
+            n.Add("Node", new PL(boneIds[i]));
+            n.Add("Matrix", Translation(bones[i].X * scale, bones[i].Y * scale, bones[i].Z * scale));
+        }
+    }
+
     public static void Write(Mesh mesh, string path, double scale, Dictionary<int, string> textures)
     {
         long uid = 100000;
@@ -136,8 +204,10 @@ public static class FbxWriter
         int nTex = textures.Count, nMat = mesh.Materials.Count;
         var defs = new Node("Definitions");
         defs.Add("Version", new PI(100));
-        defs.Add("Count", new PI(3 + nMat + 2 * nTex));
-        foreach (var (typ, cnt) in new[] { ("GlobalSettings", 1), ("Model", 1), ("Geometry", 1), ("Material", nMat), ("Texture", nTex), ("Video", nTex) })
+        int nBones = mesh.Bones.Count, rigged = nBones > 0 ? 1 : 0;
+        defs.Add("Count", new PI(3 + nMat + 2 * nTex + nBones * 3 + rigged * 2));
+        foreach (var (typ, cnt) in new[] { ("GlobalSettings", 1), ("Model", 1 + nBones), ("Geometry", 1), ("Material", nMat), ("Texture", nTex),
+                     ("Video", nTex), ("NodeAttribute", nBones), ("Deformer", nBones + rigged), ("Pose", rigged) })
             if (cnt > 0) defs.Add("ObjectType", new PS(typ)).Add("Count", new PI(cnt));
         root.Add(defs);
 
@@ -201,6 +271,7 @@ public static class FbxWriter
         model.Add("Culling", new PS("CullingOff"));
         conns.Add("C", new PS("OO"), new PL(modelId), new PL(0));
         conns.Add("C", new PS("OO"), new PL(geoId), new PL(modelId));
+        if (nBones > 0) WriteSkeleton(mesh, scale, objects, conns, NewId, modelId, geoId);
 
         string folder = Path.GetDirectoryName(Path.GetFullPath(path))!;
         for (int i = 0; i < nMat; i++)

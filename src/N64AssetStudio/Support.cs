@@ -17,6 +17,8 @@ public sealed class AppSettings
     public bool ScanRomDisplayLists { get; set; } = true;
     public double TextureBudget { get; set; } = 90;
     public bool ShowChildDls { get; set; }
+    public bool AutoRig { get; set; } = true;
+    public bool ShowBones { get; set; } = true;
     public string LastDir { get; set; } = "";
     public string ExportDir { get; set; } = "";
     public List<string> Recent { get; set; } = new();

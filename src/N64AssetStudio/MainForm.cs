@@ -84,6 +84,7 @@ public sealed class MainForm : Form
     ImageCanvas? _modelCanvas;
     MeshView.Mode _renderMode = MeshView.Mode.Textured;
     bool _edges;
+    Mesh? _viewMesh;
     Point? _drag;
     bool _dragPan;
 
@@ -277,6 +278,7 @@ public sealed class MainForm : Form
         var proj = await RunBg("Loading ROM", prog => { var p = Project.Open(path); p.Scan(prog, opts); return p; });
         if (proj == null) return;
         _project = proj;
+        proj.AutoRig = _settings.AutoRig;
         Text = $"N64 Asset Studio - {proj.Rom.DisplayTitle} [{proj.Rom.Name}]";
         PopulateTree();
         RipperRefreshBlobs();
@@ -337,6 +339,15 @@ public sealed class MainForm : Form
 
         bool kids = _showChildren.Checked;
         var byBlob = p.Models.Where(m => kids || !m.Dl.IsChild).GroupBy(m => m.BlobIndex).ToList();
+        if (p.Skeletons.Count > 0)
+            AddNode(_tree.Nodes, $"Characters ({p.Skeletons.Count} game skeletons)", "group", null, n =>
+            {
+                foreach (var s in p.Skeletons)
+                {
+                    var t = $"{p.Blobs[s.BlobIndex].Name}: {s.Name}";
+                    if (Match(t)) AddNode(n.Nodes, t, "character", s);
+                }
+            });
         AddNode(_tree.Nodes, $"Models ({byBlob.Sum(g => g.Count())})", "group", null, n =>
         {
             foreach (var g in byBlob)
@@ -411,6 +422,7 @@ public sealed class MainForm : Form
                 case "blob": ShowBlob((Blob)nd.Obj!); break;
                 case "model": ShowModel((ModelAsset)nd.Obj!); break;
                 case "blobmodel": ShowBlobModel((int)nd.Obj!); break;
+                case "character": ShowCharacter((SkeletonAsset)nd.Obj!); break;
                 case "texture": ShowTexture((TextureAsset)nd.Obj!); break;
                 case "sound": ShowSound((SoundRef)nd.Obj!); break;
                 case "bankfile": ShowBankFile((int)nd.Obj!); break;
@@ -439,6 +451,7 @@ public sealed class MainForm : Form
             ("Textures", pr.Textures.Count.ToString()), ("Sound bank files", pr.BankFiles.Count.ToString()),
             ("Sounds", pr.AllSounds().Count.ToString()), ("Music sequences", pr.Sequences.Count.ToString()),
             ("Code functions", pr.Functions.Count.ToString()),
+            ("Character skeletons", pr.Skeletons.Count.ToString()),
         });
         foreach (var l in pr.Log) p.Note("•  " + l, Color.Black);
         p.Row(Page.Btn("Export All Assets...", () => ExportAllDialog()), Page.Btn("Verify checksum", VerifyCrc));
@@ -471,6 +484,12 @@ public sealed class MainForm : Form
         HexShow(m.BlobIndex, m.Dl.Offset);
     }
 
+    void ShowCharacter(SkeletonAsset s)
+    {
+        ModelView(_project!.GetSkeletonMesh(s), null);
+        HexShow(s.BlobIndex, s.Offset);
+    }
+
     void ShowBlobModel(int bi)
     {
         var mesh = _project!.GetBlobMesh(bi, !_showChildren.Checked);
@@ -492,9 +511,20 @@ public sealed class MainForm : Form
         var edges = new CheckBox { Text = "Edges", AutoSize = true, Checked = _edges, Margin = new Padding(3, 6, 6, 0) };
         edges.CheckedChanged += (_, _) => { _edges = edges.Checked; RedrawModel(); };
         row.Controls.Add(edges);
+        if (mesh.IsRigged)
+        {
+            var bonesBox = new CheckBox { Text = "Bones", AutoSize = true, Checked = _settings.ShowBones, Margin = new Padding(3, 6, 6, 0) };
+            bonesBox.CheckedChanged += (_, _) => { _settings.ShowBones = bonesBox.Checked; RedrawModel(); };
+            row.Controls.Add(bonesBox);
+        }
         row.Controls.Add(Page.Btn("Reset view", () => { _meshView?.Reset(); RedrawModel(); }));
         row.Controls.Add(Page.Btn("Export...", ExportSelected));
         int texCount = mesh.Materials.Count(x => x.Texture != null);
+        _viewMesh = mesh;
+        p.Note(mesh.IsRigged
+            ? $"Rig: {mesh.Bones.Count} bones ({(mesh.RigSource == "game" ? "the game's own skeleton" : "generated automatically - one bone per rigid part")}). " +
+              "Exported with the skeleton in .glb / .gltf / .fbx / .blend / .unitypackage."
+            : "Not rigged (automatic rigging is off in Tools > Settings).", Color.DarkGreen);
         p.Note($"{mesh.Vertices.Count} vertices, {mesh.Triangles.Count} triangles, {mesh.Materials.Count} materials ({texCount} textured).   " +
                "Drag = rotate, right-drag = pan, wheel = zoom.", Color.Black);
         if (asset != null)
@@ -552,7 +582,9 @@ public sealed class MainForm : Form
         var mode = _renderMode;
         // while dragging, use the cheaper flat-shaded mode so rotation stays smooth
         if (fast && mode == MeshView.Mode.Textured) mode = MeshView.Mode.Solid;
-        _modelCanvas.Image = Gfx.ToBitmap(_meshView.Render(_modelCanvas.Width, _modelCanvas.Height, mode, _edges));
+        var img = _meshView.Render(_modelCanvas.Width, _modelCanvas.Height, mode, _edges);
+        if (_settings.ShowBones && _viewMesh is { IsRigged: true }) _meshView.DrawBones(img);
+        _modelCanvas.Image = Gfx.ToBitmap(img);
     }
 
     // ------------------------------------------------------------- textures
@@ -945,8 +977,14 @@ public sealed class MainForm : Form
             {
                 case "model":
                 case "blobmodel":
+                case "character":
                     {
-                        var mesh = nd.Kind == "model" ? p.GetMesh((ModelAsset)nd.Obj!) : p.GetBlobMesh((int)nd.Obj!, !_showChildren.Checked);
+                        var mesh = nd.Kind switch
+                        {
+                            "model" => p.GetMesh((ModelAsset)nd.Obj!),
+                            "character" => p.GetSkeletonMesh((SkeletonAsset)nd.Obj!),
+                            _ => p.GetBlobMesh((int)nd.Obj!, !_showChildren.Checked),
+                        };
                         if (mesh == null) return;
                         var path = AskSave(ModelExport.Safe(mesh.Name), ModelFilter(), "glb");
                         if (path != null) ExportMesh(mesh, path);
@@ -1069,7 +1107,7 @@ public sealed class MainForm : Form
     async void ExportAllDialog(string? preset = null)
     {
         if (_project == null) { MessageBox.Show(this, "Open a ROM first.", Text); return; }
-        var opt = new BatchOptions { ModelScale = _settings.ModelScale, UnityPackage = preset == "unity", Blender = preset == "blender" };
+        var opt = new BatchOptions { ModelScale = _settings.ModelScale, AutoRig = _settings.AutoRig, UnityPackage = preset == "unity", Blender = preset == "blender" };
         string folder = string.IsNullOrEmpty(_settings.ExportDir) ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : _settings.ExportDir;
         using var dlg = new ExportAllDialog(opt, folder);
         if (dlg.ShowDialog(this) != DialogResult.OK) return;
@@ -1087,7 +1125,10 @@ public sealed class MainForm : Form
     void SettingsDialog()
     {
         using var d = new SettingsDialog(_settings);
-        if (d.ShowDialog(this) == DialogResult.OK) { _settings.Apply(); _settings.Save(); }
+        if (d.ShowDialog(this) != DialogResult.OK) return;
+        _settings.Apply();
+        _settings.Save();
+        if (_project != null && _project.AutoRig != _settings.AutoRig) { _project.AutoRig = _settings.AutoRig; OnSelect(); }
     }
 
     // ============================================================ self test

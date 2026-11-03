@@ -149,9 +149,12 @@ public class CoreTests : IClassFixture<ProjectFixture>
     [Fact]
     public void ScanFindsEverything()
     {
-        Assert.Equal(new[] { "MIO0", "Yay0", "Yaz0" }, P.Blobs.Skip(1).Select(b => b.Kind).OrderBy(k => k, StringComparer.Ordinal));
-        Assert.Equal(new[] { "F3D", "F3DEX", "F3DEX2", "F3DEX2" }, P.Models.Select(m => m.Dl.Ucode.ToString()).OrderBy(x => x, StringComparer.Ordinal));
-        foreach (var m in P.Models)
+        Assert.Equal(new[] { "MIO0", "Yay0", "Yaz0", "Yaz0" }, P.Blobs.Skip(1).Select(b => b.Kind).OrderBy(k => k, StringComparer.Ordinal));
+        int skelBlob = P.Blobs.Single(b => b.RomOffset == _fx.Info.SkelOff).Index;
+        var models = P.Models.Where(m => m.BlobIndex != skelBlob).ToList();
+        Assert.Equal(3, P.Models.Count(m => m.BlobIndex == skelBlob)); // the three limb display lists
+        Assert.Equal(new[] { "F3D", "F3DEX", "F3DEX2", "F3DEX2" }, models.Select(m => m.Dl.Ucode.ToString()).OrderBy(x => x, StringComparer.Ordinal));
+        foreach (var m in models)
         {
             var mesh = P.GetMesh(m);
             Assert.Contains(mesh.Triangles.Count, new[] { 12, 2 });
@@ -293,6 +296,63 @@ public class CoreTests : IClassFixture<ProjectFixture>
         Assert.All(paths, x => Assert.StartsWith("Assets/N64", x));
         Assert.Contains(paths, x => x.StartsWith("Assets/N64/N64STUDIO_TEST/Models/"));
         Assert.True(File.Exists(Path.Combine(dir, "N64STUDIO_TEST", "code_pseudo.c")));
+    }
+
+    [Fact]
+    public void GameSkeletonIsRebuilt()
+    {
+        var s = Assert.Single(P.Skeletons);
+        Assert.Equal(_fx.Info.SkelHeader, s.Offset);
+        Assert.True(s.Flex);
+        var m = P.GetSkeletonMesh(s);
+        Assert.Equal("game", m.RigSource);
+        Assert.Equal(new[] { -1, 0, 0 }, m.Bones.Select(b => b.Parent));
+        Assert.Equal((0f, 150f, 0f), (m.Bones[1].X, m.Bones[1].Y, m.Bones[1].Z));
+        Assert.Equal((150f, 0f, 0f), (m.Bones[2].X, m.Bones[2].Y, m.Bones[2].Z));
+        Assert.Equal(38, m.Triangles.Count);
+        // head limb vertices are placed at their joint (local y 0..60 -> 150..210)
+        var head = m.Vertices.Where(v => v.Bone == 1).ToList();
+        Assert.Equal(8, head.Count);
+        Assert.Equal(150f, head.Min(v => v.Y));
+        Assert.Equal(210f, head.Max(v => v.Y));
+        // the two vertices the arm loads under limb 0's matrix (flex skinning) belong to limb 0, in limb 0 space
+        var bridge = m.Vertices.Where(v => v.Bone == 0 && v.X == 40).ToList();
+        Assert.Equal(2, bridge.Count);
+        Assert.Equal(8, m.Vertices.Count(v => v.Bone == 2 && v.X >= 160));
+    }
+
+    [Fact]
+    public void AutoRigSplitsRigidParts()
+    {
+        var a = P.GetMesh(P.Models.First(m => m.Dl.Ucode == Ucode.F3D), false);
+        Assert.False(a.IsRigged);
+        var b = new Mesh("b") { Vertices = a.Vertices.Select(v => { v.Y += 300; return v; }).ToList(), Triangles = a.Triangles.ToList(), Materials = a.Materials.ToList() };
+        var two = a.MergedWith(b, "two");
+        Rigging.AutoRig(two);
+        Assert.Equal("auto", two.RigSource);
+        Assert.Equal(new[] { "root", "body", "part01_upper" }, two.Bones.Select(x => x.Name));
+        Assert.Equal(new[] { -1, 0, 1 }, two.Bones.Select(x => x.Parent));
+        Assert.Equal((0f, 200f, 0f), (two.Bones[2].X, two.Bones[2].Y, two.Bones[2].Z)); // centre of the contact face
+        Assert.All(two.Vertices.Take(8), v => Assert.Equal(1, v.Bone));
+        Assert.All(two.Vertices.Skip(8), v => Assert.Equal(2, v.Bone));
+        Assert.True(P.GetMesh(P.Models[0]).IsRigged); // project default: every model gets a rig
+    }
+
+    [Fact]
+    public void RiggedExportsContainSkins()
+    {
+        var m = P.GetSkeletonMesh(P.Skeletons[0]);
+        var dir = TempDir();
+        var (json, _) = ModelExport.BuildGltf(m, 1.0, true);
+        var skin = json["skins"]![0]!;
+        Assert.Equal(3, skin["joints"]!.AsArray().Count);
+        Assert.NotNull(json["meshes"]![0]!["primitives"]![0]!["attributes"]!["JOINTS_0"]);
+        Assert.Equal(0, (int)json["nodes"]![0]!["skin"]!);
+        ModelExport.Export(m, Path.Combine(dir, "c.fbx"), "fbx");
+        var fbx = System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(Path.Combine(dir, "c.fbx")));
+        Assert.Contains("LimbNode", fbx);
+        Assert.Contains("Cluster", fbx);
+        Assert.Contains("BindPose", fbx);
     }
 
     [Fact]

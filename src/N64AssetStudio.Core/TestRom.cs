@@ -217,6 +217,62 @@ public static class TestRom
         return (prefix.Concat(vtx).Concat(dl).ToArray(), dlOff);
     }
 
+    /// <summary>A Zelda 64 style object with a 3-limb flex skeleton: body (root), head (child, joint at y=150)
+    /// and arm (sibling of head, joint at x=150). The arm's display list first loads two vertices under limb 0's
+    /// matrix (segment 0x0D) - exactly how flex skinning bridges joints in Link's model.</summary>
+    public static (byte[] blob, int header) SkeletonObject()
+    {
+        static IEnumerable<(short, short, short)> Box(short s, short ox = 0, short oy = 0) =>
+            Cube.Select(c => ((short)(c.Item1 / 100 * s + ox), (short)(c.Item2 / 100 * s + oy), (short)(c.Item3 / 100 * s)));
+        var body = Vertices(Box(50), true);
+        var head = Vertices(Box(30, 0, 30), true);
+        var bridge = Vertices(new (short, short, short)[] { (40, 0, 0), (40, 30, 0) }, true);
+        var arm = Vertices(Box(20, 30), true);
+        var o = new List<byte>(new byte[0x10]);
+        int bodyV = o.Count; o.AddRange(body);
+        int headV = o.Count; o.AddRange(head);
+        int bridgeV = o.Count; o.AddRange(bridge);
+        int armV = o.Count; o.AddRange(arm);
+        const uint S = 0x06000000;
+        void CubeTris(List<byte> dl, int baseIdx)
+        {
+            for (int k = 0; k < TestRom.CubeTris.Length; k += 2)
+            {
+                var (a0, a1, a2) = TestRom.CubeTris[k]; var (b0, b1, b2) = TestRom.CubeTris[k + 1];
+                a0 += baseIdx; a1 += baseIdx; a2 += baseIdx; b0 += baseIdx; b1 += baseIdx; b2 += baseIdx;
+                W(dl, (uint)(0x06000000 | (a0 * 2 << 16) | (a1 * 2 << 8) | a2 * 2), (uint)((b0 * 2 << 16) | (b1 * 2 << 8) | b2 * 2));
+            }
+        }
+        int dl0 = o.Count;
+        var d = new List<byte>();
+        W(d, 0x01000000 | (8 << 12) | (8 << 1), S | (uint)bodyV); CubeTris(d, 0); W(d, 0xDF000000, 0);
+        o.AddRange(d);
+        int dl1 = o.Count; d.Clear();
+        W(d, 0x01000000 | (8 << 12) | (8 << 1), S | (uint)headV); CubeTris(d, 0); W(d, 0xDF000000, 0);
+        o.AddRange(d);
+        int dl2 = o.Count; d.Clear();
+        W(d, 0xDA380003, 0x0D000000);                                   // gsSPMatrix(limb 0's matrix, LOAD)
+        W(d, 0x01000000 | (2 << 12) | (2 << 1), S | (uint)bridgeV);     // 2 vertices in limb 0 space -> slots 0-1
+        W(d, 0xD8380002, 0x40);                                         // gsSPPopMatrix
+        W(d, 0x01000000 | (8 << 12) | (10 << 1), S | (uint)armV);       // arm box -> slots 2-9
+        CubeTris(d, 2);
+        W(d, 0x06000000 | (0 << 16) | (1 * 2 << 8) | 2 * 2, (1 * 2 << 16) | (3 * 2 << 8) | 2 * 2); // bridge tris
+        W(d, 0xDF000000, 0);
+        o.AddRange(d);
+        int limbs = o.Count;
+        var limbDefs = new (short x, short y, short z, byte child, byte sib, int dl)[] { (0, 0, 0, 1, 0xFF, dl0), (0, 150, 0, 0xFF, 2, dl1), (150, 0, 0, 0xFF, 0xFF, dl2) };
+        foreach (var l in limbDefs)
+        {
+            Be16(o, l.x); Be16(o, l.y); Be16(o, l.z); o.Add(l.child); o.Add(l.sib); Be32(o, S | (uint)l.dl);
+        }
+        int arr = o.Count;
+        for (int k = 0; k < 3; k++) Be32(o, S | (uint)(limbs + k * 12));
+        int header = o.Count;
+        Be32(o, S | (uint)arr); o.AddRange(new byte[] { 3, 0, 0, 0, 3, 0, 0, 0 });
+        while (o.Count % 16 != 0) o.Add(0);
+        return (o.ToArray(), header);
+    }
+
     // --------------------------------------------------------------- audio
     public static readonly short[] Book =
     {
@@ -304,7 +360,7 @@ public static class TestRom
     // ----------------------------------------------------------------- ROM
     public sealed class Layout
     {
-        public int Yaz0Off, Mio0Off, Yay0Off, RawObjOff, RawDl, Ctl, Tbl, Sbk, Midi;
+        public int Yaz0Off, Mio0Off, Yay0Off, RawObjOff, RawDl, Ctl, Tbl, Sbk, Midi, SkelOff, SkelHeader;
     }
 
     static void Align(List<byte> r, int a = 16) { while (r.Count % a != 0) r.Add(0); }
@@ -331,7 +387,9 @@ public static class TestRom
         info.Ctl = rom.Count; rom.AddRange(ctl); Align(rom);
         info.Tbl = rom.Count; rom.AddRange(tbl); Align(rom);
         info.Sbk = rom.Count; rom.AddRange(SeqFile(CSeq())); Align(rom);
-        info.Midi = rom.Count; rom.AddRange(Midi()); Align(rom, 0x100);
+        info.Midi = rom.Count; rom.AddRange(Midi()); Align(rom);
+        var (skel, skelHeader) = SkeletonObject();
+        info.SkelOff = rom.Count; info.SkelHeader = skelHeader; rom.AddRange(Yaz0(skel)); Align(rom, 0x100);
         int pad = 0x40000 - rom.Count % 0x40000;
         rom.AddRange(Enumerable.Repeat((byte)0xFF, pad));
         return (rom.ToArray(), info);

@@ -136,6 +136,37 @@ public sealed class MeshView
         return img;
     }
 
+    /// <summary>Draws the skeleton on top of a rendered image: a line from each joint to its parent and a dot per joint.</summary>
+    public void DrawBones(RgbaImage img)
+    {
+        var bones = _mesh.Bones;
+        if (bones.Count == 0) return;
+        int w = img.Width, h = img.Height;
+        double cy = Math.Cos(Yaw), sy = Math.Sin(Yaw), cp = Math.Cos(Pitch), sp = Math.Sin(Pitch);
+        double s = Math.Min(w, h) * 0.45 / _radius * Zoom;
+        var pts = bones.Select(b =>
+        {
+            double x = b.X - _cx[0], y = b.Y - _cx[1], z = b.Z - _cx[2];
+            double x1 = cy * x + sy * z, z1 = -sy * x + cy * z, y2 = cp * y - sp * z1;
+            return (x1 * s + w / 2.0 + PanX, -y2 * s + h / 2.0 + PanY);
+        }).ToArray();
+        for (int i = 0; i < bones.Count; i++)
+            if (bones[i].Parent >= 0)
+            {
+                var (ax, ay) = pts[bones[i].Parent];
+                var (bx, by) = pts[i];
+                for (int o = -1; o <= 1; o++) Line(img, ax + o, ay, bx + o, by, 255, 210, 40);
+            }
+        foreach (var (x, y) in pts)
+            for (int dy = -3; dy <= 3; dy++)
+                for (int dx = -3; dx <= 3; dx++)
+                    if (dx * dx + dy * dy <= 9)
+                    {
+                        int px = (int)x + dx, py = (int)y + dy;
+                        if (px >= 0 && py >= 0 && px < w && py < h) img.Set(px, py, 255, 90, 30, 255);
+                    }
+    }
+
     static void DrawTri(RgbaImage img, double[] x, double[] y, int a, int b, int c, byte r, byte g, byte bl)
     {
         Line(img, x[a], y[a], x[b], y[b], r, g, bl);
