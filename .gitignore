@@ -2,3 +2,4 @@
 /Blend2Unity.exe
 *.unitypackage
 *.part
+dist/*.zip
