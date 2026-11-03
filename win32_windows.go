@@ -120,6 +120,10 @@ const (
 	emSetSel         = 0x00B1
 	emReplaceSel     = 0x00C2
 	emSetLimitText   = 0x00C5
+	cbAddString      = 0x0143
+	cbGetCurSel      = 0x0147
+	cbSetCurSel      = 0x014E
+	cbsDropDownList  = 0x0003
 	pbmSetPos        = 0x0402
 	pbmSetRange32    = 0x0406
 	swShowDefault    = 10

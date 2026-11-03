@@ -38,11 +38,13 @@ type Options struct {
 	IncludeAnimation bool
 	IncludeTextures  bool
 	IncludeBlend     bool // also ship the original .blend
+	BakeMaterials    bool // render node-based materials (procedural, mixes, bump) to textures
+	BakeSize         int  // baked texture size in pixels
 }
 
 func DefaultOptions() Options {
 	return Options{UnityFolder: "Assets/{name}", ApplyTransform: true, ApplyModifiers: true,
-		IncludeAnimation: true, IncludeTextures: true}
+		IncludeAnimation: true, IncludeTextures: true, BakeSize: 1024}
 }
 
 // FindBlender looks for a Blender executable in the usual places.
@@ -223,6 +225,13 @@ func runBlender(ctx context.Context, blender, blend, script, exportDir, name str
 	}
 	if o.IncludeTextures {
 		args = append(args, "--textures")
+	}
+	if o.BakeMaterials {
+		size := o.BakeSize
+		if size < 64 || size > 8192 {
+			size = 1024
+		}
+		args = append(args, "--bake", "--bake-size", strconv.Itoa(size))
 	}
 
 	cmd := exec.Command(blender, args...)

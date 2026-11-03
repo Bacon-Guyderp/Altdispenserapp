@@ -22,6 +22,8 @@ func main() {
 	noAnimation := flag.Bool("no-animation", false, "don't export animation")
 	noTextures := flag.Bool("no-textures", false, "don't include textures")
 	flag.BoolVar(&o.IncludeBlend, "include-blend", false, "also include the original .blend")
+	flag.BoolVar(&o.BakeMaterials, "bake", false, "bake node-based materials (procedural textures, bump) to image textures")
+	flag.IntVar(&o.BakeSize, "bake-size", o.BakeSize, "baked texture size in pixels")
 	verbose := flag.Bool("v", false, "show Blender's output")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "usage: blend2unity [options] file.blend [more.blend ...]")

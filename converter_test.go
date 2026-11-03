@@ -167,3 +167,61 @@ func TestCancel(t *testing.T) {
 		t.Error("output written after cancel")
 	}
 }
+
+const makeProcedural = `
+import bpy, sys
+out = sys.argv[sys.argv.index('--') + 1]
+bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3); rock = bpy.context.active_object; rock.name = 'Rock'
+m = bpy.data.materials.new('RockMat'); m.use_nodes = True; nt = m.node_tree; p = nt.nodes['Principled BSDF']
+noise = nt.nodes.new('ShaderNodeTexNoise'); bump = nt.nodes.new('ShaderNodeBump')
+nt.links.new(noise.outputs['Color'], p.inputs['Base Color'])
+nt.links.new(noise.outputs['Fac'], bump.inputs['Height']); nt.links.new(bump.outputs['Normal'], p.inputs['Normal'])
+rock.data.materials.append(m)
+bpy.ops.mesh.primitive_cylinder_add(location=(3, 0, 0)); mix = bpy.context.active_object; mix.name = 'Mixed'
+while mix.data.uv_layers: mix.data.uv_layers.remove(mix.data.uv_layers[0])
+m = bpy.data.materials.new('MixMat'); m.use_nodes = True; nt = m.node_tree
+nt.nodes.remove(nt.nodes['Principled BSDF'])
+d = nt.nodes.new('ShaderNodeBsdfDiffuse'); g = nt.nodes.new('ShaderNodeBsdfGlossy'); s = nt.nodes.new('ShaderNodeMixShader')
+nt.links.new(d.outputs[0], s.inputs[1]); nt.links.new(g.outputs[0], s.inputs[2])
+nt.links.new(s.outputs[0], nt.nodes['Material Output'].inputs['Surface'])
+mix.data.materials.append(m)
+bpy.ops.wm.save_as_mainfile(filepath=out)
+`
+
+func TestBakeMaterials(t *testing.T) {
+	blender := os.Getenv("BLENDER_PATH")
+	if blender == "" {
+		t.Skip("set BLENDER_PATH to run Blender tests")
+	}
+	d := t.TempDir()
+	blend := filepath.Join(d, "Procedural.blend")
+	script := filepath.Join(d, "make.py")
+	os.WriteFile(script, []byte(makeProcedural), 0o644)
+	if out, err := exec.Command(blender, "-b", "--factory-startup", "--python", script, "--", blend).CombinedOutput(); err != nil {
+		t.Fatalf("making test file: %v\n%s", err, out)
+	}
+	o := DefaultOptions()
+	o.BakeMaterials, o.BakeSize = true, 128
+	var logs []string
+	out, err := Convert(context.Background(), blend, filepath.Join(d, "out"), blender, o, nil, func(m string) { logs = append(logs, m) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := ReadUnityPackage(out)
+	for _, p := range []string{
+		"Assets/Procedural/Textures/Rock_RockMat_BaseColor.png",
+		"Assets/Procedural/Textures/Rock_RockMat_Normal.png",
+		"Assets/Procedural/Textures/Mixed_MixMat_BaseColor.png",
+	} {
+		if len(c[p]) == 0 {
+			t.Errorf("missing baked texture %s", p)
+		}
+	}
+	fbx := string(c["Assets/Procedural/Procedural.fbx"])
+	if !strings.Contains(fbx, "Rock_RockMat_BaseColor.png") || !strings.Contains(fbx, "Rock_RockMat_Normal.png") {
+		t.Error("FBX does not reference the baked textures")
+	}
+	if !strings.Contains(strings.Join(logs, "\n"), "Unwrapped UVs for Mixed") {
+		t.Error("object without UVs was not unwrapped")
+	}
+}

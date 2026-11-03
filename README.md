@@ -32,6 +32,7 @@ files into Unity `.unitypackage` files. It shows progress for each file and for 
 | Include animation | Bake actions and animations into the FBX. |
 | Apply modifiers | Export meshes with their modifiers applied. |
 | Apply transform | Bake the axis conversion so objects don't import with a -90° X rotation. |
+| Bake procedural materials to textures | Render materials built from nodes (Noise, Voronoi, ramps, mix shaders, bump) into image textures with Blender's Cycles, so they look the same in Unity. Objects without UV maps are unwrapped automatically. Choose the texture size (512 to 4096); bigger is sharper but slower. |
 | Also include original .blend | Ship the `.blend` too. Unity can only import it if Blender is installed. |
 
 Settings are saved in `%APPDATA%\Blend2Unity\settings.ini`.
@@ -41,6 +42,9 @@ Settings are saved in `%APPDATA%\Blend2Unity\settings.ini`.
 1. For each file, Blender runs in the background with `blender_export.py`, which is built into
    the exe. It writes an FBX set up for Unity (Y-up, -Z forward, unit scale applied, no leaf bones)
    and copies the textures into `Textures/`.
+   With baking on, any material whose color or normals come from nodes is first rendered to a
+   base color map (and a normal map if it has bump or normal detail). The material is then rewired to use
+   those images, so Unity picks them up. Materials that already use plain image textures are left as they are.
 2. The app packs them into a `.unitypackage` under `Assets/<file name>/`. A `.unitypackage` is a
    tar.gz with one folder per asset. Asset GUIDs come from each asset's path, so importing an updated
    package replaces the old assets instead of making duplicates.

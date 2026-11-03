@@ -31,10 +31,13 @@ const (
 	idNextToSource
 	idOpenOutput
 	idCancel
+	idBake
 	idOptions // option checkboxes use idOptions+n
 )
 
 const wmRunQueued = wmApp + 1
+
+var bakeSizes = []int{512, 1024, 2048, 4096}
 
 func init() { runtime.LockOSThread() } // all window calls must stay on one OS thread
 
@@ -69,6 +72,9 @@ type app struct {
 	chkModifiers     uintptr
 	chkTransform     uintptr
 	chkIncludeBlend  uintptr
+	chkBake          uintptr
+	lblBakeSize      uintptr
+	cmbBakeSize      uintptr
 	grpProgress      uintptr
 	lblFile          uintptr
 	barFile          uintptr
@@ -242,6 +248,12 @@ func (a *app) createControls() {
 	a.chkModifiers = a.check("Apply modifiers", idOptions+2)
 	a.chkTransform = a.check("Apply transform (fixes -90° rotation)", idOptions+3)
 	a.chkIncludeBlend = a.check("Also include original .blend", idOptions+4)
+	a.chkBake = a.check("Bake procedural materials to textures", idBake)
+	a.lblBakeSize = a.label("Texture size:", 0)
+	a.cmbBakeSize = a.ctl("COMBOBOX", "", cbsDropDownList|wsVScroll|wsTabStop, 0, 0)
+	for _, size := range bakeSizes {
+		sendMessage(a.cmbBakeSize, cbAddString, 0, ptr(u16(fmt.Sprintf("%d × %d", size, size))))
+	}
 
 	a.grpProgress = a.group("Progress")
 	a.lblFile = a.label("Idle", ssEndEllipsis)
@@ -330,7 +342,7 @@ func (a *app) layout() {
 
 	hBlender := gt + bh + gp
 	hOutput := gt + bh + s(4) + ch + s(4) + bh + gp
-	hOptions := gt + optRows*ch + (optRows-1)*s(4) + gp
+	hOptions := gt + optRows*ch + (optRows-1)*s(4) + s(6) + eh + gp
 	hProgress := gt + lh + s(3) + pbh + s(8) + lh + s(3) + pbh + gp
 	flex := H - 2*m - hBlender - hOutput - hOptions - hProgress - bh - 6*gap
 	hFiles := maxInt(gt+2*bh+s(6)+gp, flex*55/100)
@@ -378,6 +390,13 @@ func (a *app) layout() {
 		p := places[i]
 		move(c, p.x, y+gt+p.row*(ch+s(4)), p.w, ch)
 	}
+	// Bake row: checkbox, then the texture size dropdown.
+	by := y + gt + optRows*(ch+s(4)) + s(2)
+	bw2 := a.textWidths[a.chkBake] + s(28)
+	move(a.chkBake, ix, by+(eh-ch)/2, bw2, ch)
+	lx := ix + bw2 + s(8)
+	move(a.lblBakeSize, lx, by, a.textWidths[a.lblBakeSize]+s(6), eh)
+	move(a.cmbBakeSize, lx+a.textWidths[a.lblBakeSize]+s(10), by, s(120), s(200)) // height includes the drop-down list
 	y += hOptions + gap
 
 	// Progress
@@ -500,7 +519,7 @@ func (a *app) onCommand(id int) {
 		if d := a.browseFolder("Choose where to save .unitypackage files:", getText(a.edOutput)); d != "" {
 			setText(a.edOutput, d)
 		}
-	case idNextToSource:
+	case idNextToSource, idBake:
 		a.updateButtons()
 	case idOpenOutput:
 		if a.lastOutputDir != "" {
@@ -710,7 +729,7 @@ func (a *app) updateButtons() {
 	idle := !a.busy
 	for _, h := range []uintptr{a.btnAddFiles, a.btnAddFolder, a.btnRemove, a.btnClear, a.edBlender,
 		a.btnBrowseBlender, a.btnDetect, a.edUnityFolder, a.chkNextToSource, a.chkTextures,
-		a.chkAnimation, a.chkModifiers, a.chkTransform, a.chkIncludeBlend} {
+		a.chkAnimation, a.chkModifiers, a.chkTransform, a.chkIncludeBlend, a.chkBake} {
 		enable(h, idle)
 	}
 	hasFiles := sendMessage(a.list, lbGetCount, 0, 0) > 0
@@ -720,6 +739,9 @@ func (a *app) updateButtons() {
 	enable(a.edOutput, outOn)
 	enable(a.btnBrowseOutput, outOn)
 	enable(a.btnOpenOutput, a.lastOutputDir != "")
+	bakeOn := idle && isChecked(a.chkBake)
+	enable(a.lblBakeSize, bakeOn)
+	enable(a.cmbBakeSize, bakeOn)
 }
 
 func (a *app) options() Options {
@@ -732,6 +754,10 @@ func (a *app) options() Options {
 	o.ApplyModifiers = isChecked(a.chkModifiers)
 	o.ApplyTransform = isChecked(a.chkTransform)
 	o.IncludeBlend = isChecked(a.chkIncludeBlend)
+	o.BakeMaterials = isChecked(a.chkBake)
+	if i := int(sendMessage(a.cmbBakeSize, cbGetCurSel, 0, 0)); i >= 0 && i < len(bakeSizes) {
+		o.BakeSize = bakeSizes[i]
+	}
 	return o
 }
 
@@ -868,6 +894,14 @@ func (a *app) loadSettings() {
 	setChecked(a.chkModifiers, s.GetBool("apply_modifiers", true))
 	setChecked(a.chkTransform, s.GetBool("apply_transform", true))
 	setChecked(a.chkIncludeBlend, s.GetBool("include_blend", false))
+	setChecked(a.chkBake, s.GetBool("bake_materials", false))
+	sel := 1 // 1024
+	for i, size := range bakeSizes {
+		if s.Get("bake_size", "1024") == fmt.Sprint(size) {
+			sel = i
+		}
+	}
+	sendMessage(a.cmbBakeSize, cbSetCurSel, uintptr(sel), 0)
 }
 
 func (a *app) saveSettings() {
@@ -881,5 +915,7 @@ func (a *app) saveSettings() {
 	s.SetBool("apply_modifiers", isChecked(a.chkModifiers))
 	s.SetBool("apply_transform", isChecked(a.chkTransform))
 	s.SetBool("include_blend", isChecked(a.chkIncludeBlend))
+	s.SetBool("bake_materials", isChecked(a.chkBake))
+	s.Set("bake_size", fmt.Sprint(a.options().BakeSize))
 	s.Save()
 }
