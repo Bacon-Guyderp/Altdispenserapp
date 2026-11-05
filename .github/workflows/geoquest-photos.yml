@@ -1,0 +1,64 @@
+name: GeoQuest photos
+
+# Harvests geotagged 360° panoramas from Wikimedia Commons, re-hosts them on
+# GitHub Pages (a VRChat-trusted image host) and publishes locations.json.
+# One-time setup: Settings > Pages > Source: "GitHub Actions".
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "How many places to harvest"
+        default: "2500"
+      reharvest:
+        description: "Re-run the Commons harvest even if locations.json is committed"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: geoquest-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    defaults:
+      run:
+        working-directory: vrchat-geoquest/tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Restore photo cache
+        uses: actions/cache@v4
+        with:
+          path: vrchat-geoquest/site/p
+          key: geoquest-photos-${{ github.run_id }}
+          restore-keys: geoquest-photos-
+      - name: Harvest places from Wikimedia Commons
+        run: |
+          if [ "${{ inputs.reharvest }}" = "true" ] || [ ! -s ../Assets/GeoQuest/Data/locations.json ] || \
+             [ "$(python -c "import json;print(json.load(open('../Assets/GeoQuest/Data/locations.json'))['count'])")" -lt 50 ]; then
+            python harvest_commons.py --target "${{ inputs.target }}"
+          fi
+      - name: Download + resize photos
+        run: python build_site.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: vrchat-geoquest/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
