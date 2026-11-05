@@ -7,7 +7,8 @@ using TMPro;
 /// <summary>
 /// The guessing map. Point at it (VR: controller laser, desktop: screen centre)
 /// and pull the trigger / click to drop your pin. Zoom and pan with the buttons.
-/// The map texture is plate carree: u = (lon+180)/360, v = (lat+90)/180.
+/// The map texture is a linear lat/lon box: u = (lon-minLon)/(maxLon-minLon), same for v.
+/// Defaults cover North Carolina; set -180/180/-90/90 for a world map.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class MapBoard : UdonSharpBehaviour
@@ -17,6 +18,9 @@ public class MapBoard : UdonSharpBehaviour
     public Collider mapCollider;          // box collider on that quad
     public Transform pinRoot;             // unscaled, same pose as the quad
     public float width = 2f, height = 1f;
+
+    [Header("Area shown by the map texture")]
+    public float minLon = -84.7f, maxLon = -75.1f, minLat = 33.25f, maxLat = 37.15f;
 
     public Transform myPin, answerPin, hoverDot;
     public Transform[] otherPins;
@@ -94,8 +98,8 @@ public class MapBoard : UdonSharpBehaviour
         Vector2 uv;
         if (!Raycast(origin, dir, out uv)) return;
         Vector2 tex = ViewToTex(uv);
-        pinLon = tex.x * 360f - 180f;
-        pinLat = tex.y * 180f - 90f;
+        pinLon = minLon + tex.x * (maxLon - minLon);
+        pinLat = minLat + tex.y * (maxLat - minLat);
         hasPin = true;
         RefreshPins();
         game.OnPinPlaced();
@@ -138,7 +142,7 @@ public class MapBoard : UdonSharpBehaviour
 
     private Vector2 LatLonToView(float lat, float lon)
     {
-        float tu = (lon + 180f) / 360f, tv = (lat + 90f) / 180f;
+        float tu = (lon - minLon) / (maxLon - minLon), tv = (lat - minLat) / (maxLat - minLat);
         return new Vector2((tu - _cu) * _zoom + 0.5f, (tv - _cv) * _zoom + 0.5f);
     }
 
@@ -225,8 +229,8 @@ public class MapBoard : UdonSharpBehaviour
 
     private void CenterOn(float lat, float lon)
     {
-        _cu = (lon + 180f) / 360f;
-        _cv = (lat + 90f) / 180f;
+        _cu = (lon - minLon) / (maxLon - minLon);
+        _cv = (lat - minLat) / (maxLat - minLat);
     }
 
     // ---------------------------------------------------------------- game hooks
@@ -259,8 +263,8 @@ public class MapBoard : UdonSharpBehaviour
             lat0 = Mathf.Min(lat0, pinLat); lat1 = Mathf.Max(lat1, pinLat);
             lon0 = Mathf.Min(lon0, pinLon); lon1 = Mathf.Max(lon1, pinLon);
         }
-        float spanU = (lon1 - lon0) / 360f * 1.4f + 0.02f;
-        float spanV = (lat1 - lat0) / 180f * 1.4f + 0.04f;
+        float spanU = (lon1 - lon0) / (maxLon - minLon) * 1.4f + 0.02f;
+        float spanV = (lat1 - lat0) / (maxLat - minLat) * 1.4f + 0.04f;
         float z = 1f;
         while (z < 16f && spanU * z * 2f <= 1f && spanV * z * 2f <= 1f) z *= 2f;
         _zoom = z;

@@ -1,4 +1,4 @@
-"""Harvest geotagged 360x180 panoramas from Wikimedia Commons.
+"""Harvest geotagged 360x180 panoramas from Wikimedia Commons (North Carolina by default).
 
 Every result is a freely licensed equirectangular photo with a camera
 location. Output: ../Assets/GeoQuest/Data/locations.json, which the Unity
@@ -10,7 +10,7 @@ Be nice to Wikimedia: the script throttles itself and backs off on 429s.
 """
 import argparse, html, json, math, os, re, sys, time
 import requests
-from geo_common import CountryLookup
+from geo_common import CountryLookup, NCLookup, NC_BOUNDS, describe_nc, load_locations, save_locations, DEFAULT_LOCATIONS
 
 API = "https://commons.wikimedia.org/w/api.php"
 UA = "GeoQuestWorldBuilder/1.0 (VRChat geography game; https://github.com/bacon-guyderp/altdispenserapp)"
@@ -19,15 +19,17 @@ UA = "GeoQuestWorldBuilder/1.0 (VRChat geography game; https://github.com/bacon-
 TEMPLATES = ["hastemplate:Pano360", 'incategory:"Spherical panoramas"', '"360x180"']
 
 
-def tiles(step):
-    """Centres of roughly equal-area tiles, shuffled deterministically."""
+def tiles(step, b=None):
+    """Centres of roughly equal-area tiles over bounds b (default: the inhabited world)."""
     import random
+    b = b or {"min_lat": -60, "max_lat": 80, "min_lon": -180, "max_lon": 180}
     out = []
-    lat = -60 + step / 2
-    while lat < 80:
-        n = max(1, int(360 / (step / max(0.25, math.cos(math.radians(lat))))))
+    lat = b["min_lat"] + step / 2
+    while lat < b["max_lat"]:
+        width = b["max_lon"] - b["min_lon"]
+        n = max(1, int(width / (step / max(0.25, math.cos(math.radians(lat))))))
         for k in range(n):
-            out.append((round(lat, 2), round(-180 + (k + 0.5) * 360 / n, 2)))
+            out.append((round(lat, 3), round(b["min_lon"] + (k + 0.5) * width / n, 3)))
         lat += step
     random.Random(42).shuffle(out)
     return out
@@ -91,13 +93,29 @@ def accept(page, a, countries, seen, cells, per_country, out):
     lat, lon = round(c["lat"], 5), round(c["lon"], 5)
     if lat == 0 and lon == 0:
         return False
-    cell = (math.floor(lat), math.floor(lon))
-    name, iso = countries.lookup(lat, lon)
-    if cells.get(cell, 0) >= a.per_cell or per_country.get(iso, 0) >= a.per_country:
+    if a.region == "nc":
+        if not countries.in_bounds(lat, lon):
+            return False
+        name, iso = countries.lookup(lat, lon)
+        if not iso:
+            return False
+        cell = (round(lat * 20), round(lon * 20))  # ~5 km cells
+        outside = sum(v for k, v in per_country.items() if k != "NC")
+        if iso != "NC" and outside >= a.outside_fraction * max(20, len(out)):
+            return False
+    else:
+        name, iso = countries.lookup(lat, lon)
+        cell = (math.floor(lat), math.floor(lon))
+        if per_country.get(iso, 0) >= a.per_country:
+            return False
+    if cells.get(cell, 0) >= a.per_cell:
         return False
     cells[cell] = cells.get(cell, 0) + 1
     per_country[iso] = per_country.get(iso, 0) + 1
-    out.append({"lat": lat, "lon": lon, "title": nice_title(title), "country": name, "iso": iso,
+    nice = nice_title(title)
+    if a.region == "nc" and nice == "Unknown place":
+        nice = describe_nc(lat, lon, name)
+    out.append({"lat": lat, "lon": lon, "title": nice, "country": name, "iso": iso, "source": "Wikimedia Commons",
                 "author": clean(meta.get("Artist", {}).get("value"), 60) or "Unknown",
                 "license": lic, "page": title,
                 "src": ii.get("thumburl") or ii.get("url")})
@@ -106,32 +124,33 @@ def accept(page, a, countries, seen, cells, per_country, out):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", type=int, default=2500, help="stop after this many accepted places")
-    ap.add_argument("--tile", type=float, default=6.0, help="globe tile size in degrees")
+    ap.add_argument("--region", choices=["nc", "world"], default="nc")
+    ap.add_argument("--target", type=int, default=2500, help="stop when the table holds this many places")
+    ap.add_argument("--tile", type=float, default=None, help="tile size in degrees (default 0.4 for nc, 6 for world)")
+    ap.add_argument("--outside-fraction", type=float, default=0.08)
     ap.add_argument("--per-tile", type=int, default=12, help="max places taken from one tile per query")
-    ap.add_argument("--per-cell", type=int, default=2, help="max places per 1x1 degree cell")
+    ap.add_argument("--per-cell", type=int, default=2, help="max places per cell (~5 km for nc, 1 degree for world)")
     ap.add_argument("--per-country", type=int, default=120, help="max places per country")
     ap.add_argument("--allow-indoor", action="store_true")
     ap.add_argument("--sleep", type=float, default=1.5, help="seconds between API calls")
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
-                    "Assets", "GeoQuest", "Data", "locations.json"))
+    ap.add_argument("--out", default=DEFAULT_LOCATIONS)
     a = ap.parse_args()
+    a.tile = a.tile or (0.4 if a.region == "nc" else 6.0)
 
-    countries = CountryLookup()
+    countries = NCLookup() if a.region == "nc" else CountryLookup()
     s = requests.Session()
     s.headers["User-Agent"] = UA
     seen, cells, per_country, out = set(), {}, {}, []
-    if os.path.exists(a.out):  # resume / extend an earlier harvest
-        for p in json.load(open(a.out, encoding="utf-8"))["locations"]:
-            out.append(p)
-            seen.add(p["page"])
-            cell = (math.floor(p["lat"]), math.floor(p["lon"]))
-            cells[cell] = cells.get(cell, 0) + 1
-            per_country[p["iso"]] = per_country.get(p["iso"], 0) + 1
-        print(f"resuming with {len(out)} places")
+    for p in load_locations(a.out):  # resume / extend an earlier harvest (or a Mapillary one)
+        out.append(p)
+        seen.add(p["page"])
+        cell = (round(p["lat"] * 20), round(p["lon"] * 20)) if a.region == "nc" else (math.floor(p["lat"]), math.floor(p["lon"]))
+        cells[cell] = cells.get(cell, 0) + 1
+        per_country[p["iso"]] = per_country.get(p["iso"], 0) + 1
+    print(f"starting from {len(out)} places")
 
     radius_km = int(a.tile * 111 * 0.75)
-    work = [(t, q) for q in TEMPLATES for t in tiles(a.tile)]
+    work = [(t, q) for q in TEMPLATES for t in tiles(a.tile, NC_BOUNDS if a.region == "nc" else None)]
     for n, ((tlat, tlon), q) in enumerate(work):
         if len(out) >= a.target:
             break
@@ -150,19 +169,9 @@ def main():
             print(f"tile {n + 1}/{len(work)} ({tlat},{tlon}) +{took} -> {len(out)} places, "
                   f"{len(per_country)} countries", flush=True)
         if n % 40 == 0:
-            save(a.out, out)
+            save_locations(a.out, out, a.region)
         time.sleep(a.sleep)
-    save(a.out, out)
-
-
-def save(path, out):
-    for i, p in enumerate(out):
-        p["id"] = i
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump({"generator": "harvest_commons.py", "count": len(out), "locations": out},
-                  f, ensure_ascii=False, indent=0)
-    print("saved", len(out), "->", path)
+    save_locations(a.out, out, a.region)
 
 
 if __name__ == "__main__":

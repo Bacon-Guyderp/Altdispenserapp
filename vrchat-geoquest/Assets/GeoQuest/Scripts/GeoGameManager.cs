@@ -39,6 +39,9 @@ public class GeoGameManager : UdonSharpBehaviour
     public GameObject[] guessObjects;   // visible while guessing
     public GameObject[] revealObjects;  // visible during reveal
     public float revealSeconds = 25f;
+    [Tooltip("Points = 5000 * e^(-km / this). ~90 for North Carolina, ~1500 for the whole world.")]
+    public float scoreScaleKm = 90f;
+    public string gameTitle = "GEOQUEST: NORTH CAROLINA";
 
     [UdonSynced] public int phase;
     [UdonSynced] public int gameId;
@@ -146,8 +149,8 @@ public class GeoGameManager : UdonSharpBehaviour
 
     public int Score(float km)
     {
-        if (km < 0.15f) return 5000;
-        return Mathf.RoundToInt(5000f * Mathf.Exp(-km / 1500f));
+        if (km < 0.05f) return 5000;
+        return Mathf.RoundToInt(5000f * Mathf.Exp(-km / scoreScaleKm));
     }
 
     private string FormatKm(float km)
@@ -448,7 +451,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (count == 0) return "<color=#ff8080>No places loaded.</color>\nRun GeoQuest > Build World in Unity.";
         if (phase == PHASE_LOBBY || phase == PHASE_OVER)
         {
-            string head = phase == PHASE_OVER ? "<b>Game over!</b>" : "<b>GEOQUEST</b>";
+            string head = phase == PHASE_OVER ? "<b>Game over!</b>" : "<b>" + gameTitle + "</b>";
             return head + "\n" + count.ToString("N0") + " places  |  Rounds: " + totalRounds + "  |  Timer: " +
                    (roundSeconds == 0 ? "off" : roundSeconds + "s") + "\nYour best: " + GetBest().ToString("N0");
         }

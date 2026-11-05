@@ -33,6 +33,11 @@ def fetch(s, url, tries=6):
     return None
 
 
+def source_url(p):
+    page = p.get("page", "")
+    return page if page.startswith("http") else "https://commons.wikimedia.org/wiki/" + page.replace(" ", "_")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--locations", default=os.path.join(HERE, "..", "Assets", "GeoQuest", "Data", "locations.json"))
@@ -48,7 +53,7 @@ def main():
     s.headers["User-Agent"] = UA
     ok = []
     for i, p in enumerate(locs):
-        path = os.path.join(pdir, f"{p['id']:05d}.jpg")
+        path = os.path.join(pdir, p.get("file") or f"{p['id']:05d}.jpg")
         if not os.path.exists(path):
             data = fetch(s, p["src"])
             time.sleep(a.sleep)
@@ -65,19 +70,21 @@ def main():
         if i % 50 == 0:
             print(f"{i + 1}/{len(locs)} photos")
 
+    meta = json.load(open(a.locations, encoding="utf-8"))
+    meta.update(generator="build_site.py", count=len(ok), locations=ok)
     with open(os.path.join(a.out, "locations.json"), "w", encoding="utf-8") as f:
-        json.dump({"generator": "build_site.py", "count": len(ok), "locations": ok}, f, ensure_ascii=False, indent=0)
+        json.dump(meta, f, ensure_ascii=False, indent=0)
     rows = "\n".join(
         f"<tr><td>{p['id']}</td><td>{html.escape(p['title'])}</td><td>{html.escape(p['country'])}</td>"
         f"<td>{html.escape(p['author'])}</td><td>{html.escape(p['license'])}</td>"
-        f"<td><a href=\"https://commons.wikimedia.org/wiki/{html.escape(p['page'].replace(' ', '_'))}\">source</a></td></tr>"
+        f"<td><a href=\"{html.escape(source_url(p))}\">{html.escape(p.get('source', 'source'))}</a></td></tr>"
         for p in ok)
     with open(os.path.join(a.out, "index.html"), "w", encoding="utf-8") as f:
         f.write(f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>GeoQuest photo credits</title>
 <style>body{{font:14px system-ui;margin:16px}}table{{border-collapse:collapse}}td{{border-bottom:1px solid #ddd;padding:3px 8px}}</style>
 <h1>GeoQuest photo credits</h1>
-<p>{len(ok)} panoramas from Wikimedia Commons, resized to 2048&times;1024. Each photo keeps its original license
+<p>{len(ok)} panoramas from Mapillary and Wikimedia Commons contributors, resized to 2048&times;1024. Each photo keeps its original license
 (see the source link); the resized copies are shared under the same terms.</p>
 <table><tr><th>#</th><th>Place</th><th>Country</th><th>Author</th><th>License</th><th></th></tr>
 {rows}

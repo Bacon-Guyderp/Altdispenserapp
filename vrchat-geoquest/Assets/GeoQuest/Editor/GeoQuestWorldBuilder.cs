@@ -24,8 +24,9 @@ public class GeoQuestWorldBuilder : EditorWindow
     const string Root = "Assets/GeoQuest";
     const string Gen = Root + "/Generated";
 
-    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src; }
-    [Serializable] class LocFile { public Loc[] locations; }
+    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source; }
+    [Serializable] class Bounds { public float min_lon = -84.7f, max_lon = -75.1f, min_lat = 33.25f, max_lat = 37.15f; }
+    [Serializable] class LocFile { public string region; public Bounds bounds; public float score_km; public Loc[] locations; }
 
     TextAsset locationsJson;
     string imageBaseUrl = "https://YOUR-GITHUB-NAME.github.io/YOUR-REPO/p/";
@@ -41,7 +42,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         imageBaseUrl = EditorPrefs.GetString("GeoQuest.baseUrl", imageBaseUrl);
         useCommonsUrls = EditorPrefs.GetBool("GeoQuest.commons", false);
         locationsJson = locationsJson ?? AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/locations.json");
-        worldMap = worldMap ?? AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/WorldMap.png");
+        worldMap = worldMap ?? AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/NCMap.png");
         lobbyPanorama = lobbyPanorama ?? AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/LobbyPanorama.png");
     }
 
@@ -53,10 +54,10 @@ public class GeoQuestWorldBuilder : EditorWindow
             "3. Press 'Build World', then build & upload for both PC and Android (Quest).", MessageType.Info);
         imageBaseUrl = EditorGUILayout.TextField("Photo base URL", imageBaseUrl);
         useCommonsUrls = EditorGUILayout.ToggleLeft(
-            "Load photos straight from Wikimedia (players need 'Allow Untrusted URLs')", useCommonsUrls);
+            "Hot-link original photo URLs (testing only; Mapillary links expire)", useCommonsUrls);
         locationsJson = (TextAsset)EditorGUILayout.ObjectField("locations.json", locationsJson, typeof(TextAsset), false);
         maxPlaces = EditorGUILayout.IntField("Max places", maxPlaces);
-        worldMap = (Texture2D)EditorGUILayout.ObjectField("World map", worldMap, typeof(Texture2D), false);
+        worldMap = (Texture2D)EditorGUILayout.ObjectField("Map (NCMap or WorldMap)", worldMap, typeof(Texture2D), false);
         lobbyPanorama = (Texture2D)EditorGUILayout.ObjectField("Lobby panorama", lobbyPanorama, typeof(Texture2D), false);
         EditorPrefs.SetString("GeoQuest.baseUrl", imageBaseUrl);
         EditorPrefs.SetBool("GeoQuest.commons", useCommonsUrls);
@@ -96,10 +97,12 @@ public class GeoQuestWorldBuilder : EditorWindow
         EditorUtility.DisplayDialog("GeoQuest", "Got " + LoadLocs().Length + " places.", "OK");
     }
 
+    LocFile LoadFile() => locationsJson == null ? null : JsonUtility.FromJson<LocFile>(locationsJson.text);
+
     Loc[] LoadLocs()
     {
         if (locationsJson == null) return new Loc[0];
-        var f = JsonUtility.FromJson<LocFile>(locationsJson.text);
+        var f = LoadFile();
         return (f?.locations ?? new Loc[0]).Where(l => l != null && !string.IsNullOrEmpty(l.src)).Take(maxPlaces).ToArray();
     }
 
@@ -260,6 +263,14 @@ public class GeoQuestWorldBuilder : EditorWindow
         map.mapCollider = mapCol;
         map.pinRoot = pinRoot;
         map.width = W; map.height = H;
+        var file = LoadFile();
+        bool world = file != null && file.region == "world";
+        var bounds = world ? new Bounds { min_lon = -180, max_lon = 180, min_lat = -90, max_lat = 90 }
+                           : (file?.bounds != null && file.bounds.max_lon > file.bounds.min_lon ? file.bounds : new Bounds());
+        map.minLon = bounds.min_lon; map.maxLon = bounds.max_lon;
+        map.minLat = bounds.min_lat; map.maxLat = bounds.max_lat;
+        mgr.scoreScaleKm = file != null && file.score_km > 0 ? file.score_km : (world ? 1500f : 90f);
+        mgr.gameTitle = world ? "GEOQUEST" : "GEOQUEST: NORTH CAROLINA";
         map.myPin = myPin.transform;
         map.answerPin = answerPin.transform;
         map.hoverDot = hover.transform;
@@ -292,12 +303,12 @@ public class GeoQuestWorldBuilder : EditorWindow
         for (int i = 0; i < locs.Length; i++)
         {
             var l = locs[i];
-            mgr.urls[i] = new VRCUrl(useCommonsUrls ? l.src : baseUrl + l.id.ToString("D5") + ".jpg");
+            mgr.urls[i] = new VRCUrl(useCommonsUrls ? l.src : baseUrl + (string.IsNullOrEmpty(l.file) ? l.id.ToString("D5") + ".jpg" : l.file));
             mgr.lats[i] = l.lat;
             mgr.lons[i] = l.lon;
             mgr.titles[i] = l.title ?? "";
             mgr.countries[i] = l.country ?? "";
-            mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), Wikimedia Commons";
+            mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), " + (string.IsNullOrEmpty(l.source) ? "Wikimedia Commons" : l.source);
         }
 
         foreach (var b in new UdonSharpBehaviour[] { mgr, map, tmpl }) Sync(b);

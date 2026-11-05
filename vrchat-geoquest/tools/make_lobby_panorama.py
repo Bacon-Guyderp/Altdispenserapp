@@ -42,7 +42,7 @@ def text_at(u, elev, s, size, fill):
 
 
 text_at(0.5, 38, "GEOQUEST", 110, (255, 236, 200))
-text_at(0.5, 25, "Where in the world are you?", 34, (255, 220, 190))
-text_at(0.0, 22, "Photos: Wikimedia Commons contributors", 28, (255, 220, 190))
+text_at(0.5, 25, "North Carolina edition: where in the Old North State are you?", 30, (255, 220, 190))
+text_at(0.0, 22, "Photos: Mapillary + Wikimedia Commons contributors", 28, (255, 220, 190))
 img.save(OUT, optimize=True)
 print("wrote", OUT)

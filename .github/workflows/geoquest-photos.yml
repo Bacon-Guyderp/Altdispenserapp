@@ -1,16 +1,21 @@
 name: GeoQuest photos
 
-# Harvests geotagged 360° panoramas from Wikimedia Commons, re-hosts them on
-# GitHub Pages (a VRChat-trusted image host) and publishes locations.json.
-# One-time setup: Settings > Pages > Source: "GitHub Actions".
+# Harvests 360° panoramas around North Carolina (Mapillary street-level imagery,
+# topped up with Wikimedia Commons), re-hosts them on GitHub Pages (a VRChat-trusted
+# image host) and publishes locations.json for the Unity builder.
+#
+# One-time setup:
+#   * Settings > Pages > Source: "GitHub Actions"
+#   * Settings > Secrets and variables > Actions > New secret MAPILLARY_TOKEN
+#     (free client token from https://www.mapillary.com/dashboard/developers)
 on:
   workflow_dispatch:
     inputs:
       target:
-        description: "How many places to harvest"
+        description: "How many places"
         default: "2500"
       reharvest:
-        description: "Re-run the Commons harvest even if locations.json is committed"
+        description: "Start the place list from scratch"
         type: boolean
         default: false
 
@@ -42,12 +47,23 @@ jobs:
           path: vrchat-geoquest/site/p
           key: geoquest-photos-${{ github.run_id }}
           restore-keys: geoquest-photos-
-      - name: Harvest places from Wikimedia Commons
+      - name: Reuse the previously published place list
+        if: ${{ !inputs.reharvest }}
         run: |
-          if [ "${{ inputs.reharvest }}" = "true" ] || [ ! -s ../Assets/GeoQuest/Data/locations.json ] || \
-             [ "$(python -c "import json;print(json.load(open('../Assets/GeoQuest/Data/locations.json'))['count'])")" -lt 50 ]; then
-            python harvest_commons.py --target "${{ inputs.target }}"
+          url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/locations.json"
+          curl -fsSL "$url" -o ../Assets/GeoQuest/Data/locations.json || echo "no earlier list at $url"
+          # Mapillary photo links expire; anything already in the cache doesn't need them.
+      - name: Harvest Mapillary (street-level 360s)
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+        run: |
+          if [ -n "$MAPILLARY_TOKEN" ]; then
+            python harvest_mapillary.py --target "${{ inputs.target }}"
+          else
+            echo "::warning::MAPILLARY_TOKEN secret not set; using Wikimedia Commons only (far fewer NC places)."
           fi
+      - name: Top up from Wikimedia Commons
+        run: python harvest_commons.py --region nc --target "${{ inputs.target }}" || echo "::warning::Commons harvest stopped early"
       - name: Download + resize photos
         run: python build_site.py
       - uses: actions/upload-pages-artifact@v3
