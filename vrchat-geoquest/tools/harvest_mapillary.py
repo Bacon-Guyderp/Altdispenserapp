@@ -8,8 +8,8 @@ which is exactly what a GeoGuessr-style game wants. Needs a free client token:
 
 Points are sampled uniformly over the state (so you get back roads and small towns,
 not just Charlotte), and no two places are closer than --min-spacing-km.
-By default 75% of places are in NC and 25% (--outside-fraction) come from the
-neighbouring parts of VA, SC, TN and GA that the in-world map shows.
+Every place is inside North Carolina by default. --outside-fraction 0.25 would
+mix in the neighbouring parts of VA, SC, TN and GA that the map shows.
 """
 import argparse, math, os, random, sys, time
 import requests
@@ -41,7 +41,7 @@ def query(s, token, lat, lon, half):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", type=int, default=2500)
-    ap.add_argument("--outside-fraction", type=float, default=0.25,
+    ap.add_argument("--outside-fraction", type=float, default=0.0,
                     help="share of places from neighbouring states inside the map area")
     ap.add_argument("--min-spacing-km", type=float, default=3.0)
     ap.add_argument("--search-km", type=float, default=4.0, help="half-size of each search box")
@@ -102,8 +102,8 @@ def main():
             if k in have or too_close(ilat, ilon) or not nc.in_bounds(ilat, ilon):
                 continue
             label, key = nc.lookup(ilat, ilon)
-            if not key:
-                continue
+            if not key or (key != "NC") != want_outside:
+                continue  # the photo itself must be on the right side of the state line
             user = (im.get("creator") or {}).get("username") or "Mapillary contributor"
             out.append({"key": k, "lat": round(ilat, 6), "lon": round(ilon, 6),
                         "title": describe_nc(ilat, ilon, label, outside=key != "NC"),

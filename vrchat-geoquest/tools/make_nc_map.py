@@ -29,6 +29,10 @@ def P(c):
             (b["max_lat"] - c[1]) / (b["max_lat"] - b["min_lat"]) * H * SS)
 
 
+import sys
+NEIGHBORS = "--neighbor-towns" in sys.argv
+
+
 def main():
     img = Image.new("RGB", (W * SS, H * SS), OCEAN)
     d = ImageDraw.Draw(img)
@@ -81,8 +85,8 @@ def main():
         placed.append(box)
         d.text((x, ty), name, font=f, anchor=anchor, fill=(30, 20, 20), stroke_width=3 * SS, stroke_fill=(255, 255, 250))
 
-    # neighbouring towns: same markers, muted, so out-of-state rounds are guessable too
-    for name, lat, lon, k in sorted(NEIGHBOR_CITIES, key=lambda c: c[3]):
+    # neighbouring towns (only useful if you harvest with --outside-fraction > 0)
+    for name, lat, lon, k in sorted(NEIGHBOR_CITIES if NEIGHBORS else [], key=lambda c: c[3]):
         x, y = P((lon, lat))
         r = (7 if k == 1 else 6 if k == 2 else 4) * SS
         d.ellipse([x - r, y - r, x + r, y + r], fill=(110, 70, 70), outline=(240, 240, 235), width=SS * 2)
