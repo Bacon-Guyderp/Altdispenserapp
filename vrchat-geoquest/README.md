@@ -10,8 +10,8 @@ North Carolina**. Both lists are already harvested and committed in `Assets/GeoQ
 * **360° photos** (3,051): you stand inside the photo and can look all around. Mapillary only has
   360° imagery in 44 NC counties, mostly along I-40, I-77, I-95, US-17, the Outer Banks, Asheville and
   Raleigh/Cary. Each county is capped at 200 places so Wake doesn't take over.
-* **Flat photos** (regular road photos, up to 30 per county, at least 2 km apart): shown on a big
-  screen in front of the map. These cover nearly every county, including Boone, Johnston and Duplin,
+* **Flat photos** (2,390 regular road photos, up to 30 per county, at least 2 km apart): shown on a big
+  screen in front of the map. These cover all 100 counties, including Boone, Johnston and Duplin,
   which have no 360° imagery at all.
 
 The **Photo type** button in the lobby cycles **Mixed**, **360° only** and **Flat only**.
