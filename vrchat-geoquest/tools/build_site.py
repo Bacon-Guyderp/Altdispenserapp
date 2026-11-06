@@ -64,6 +64,7 @@ def main():
     os.makedirs(pdir, exist_ok=True)
     s = requests.Session()
     s.headers["User-Agent"] = UA
+    token = os.environ.get("MAPILLARY_TOKEN", "").strip()
     # Share the size budget across every photo: ~5,000 places is about 190 KB each,
     # which is still a clean 2048x1024 street scene at JPEG quality ~55-70.
     budget_total = a.max_site_mb * 1024 * 1024 - 8 * 1024 * 1024  # leave room for json/html
@@ -74,7 +75,14 @@ def main():
     for i, p in enumerate(locs):
         path = os.path.join(pdir, p.get("file") or f"{p['id']:05d}.jpg")
         if not os.path.exists(path):
-            data = fetch(s, p["src"])
+            data = fetch(s, p["src"], tries=2)
+            if not data and p.get("key", "").startswith("m") and token:
+                # Mapillary download links expire after ~30 days; ask for a fresh one.
+                r = s.get("https://graph.mapillary.com/" + p["key"][1:],
+                          params={"fields": "thumb_2048_url", "access_token": token}, timeout=60)
+                if r.ok and r.json().get("thumb_2048_url"):
+                    p["src"] = r.json()["thumb_2048_url"]
+                    data = fetch(s, p["src"])
             time.sleep(a.sleep)
             if not data:
                 print(f"skip {p['id']} (download failed)")

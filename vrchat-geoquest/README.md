@@ -6,7 +6,7 @@ the NC map, drop a pin and lock in your guess. Closer guesses score more (up to
 5,000 points a round). It plays multiplayer with a live scoreboard and saves your best score.
 
 **Places:** thousands of 360° panoramas sampled evenly across the whole state, so you get
-back roads and small towns as well as Charlotte and Raleigh. No two places are within 2 km
+back roads and small towns as well as Charlotte and Raleigh. No two places are within 0.8 km
 of each other. **Every place is in North Carolina.** (If you ever want trick rounds from just over
 the border, harvest with `--outside-fraction 0.25` and rebuild the map with
 `python make_nc_map.py --neighbor-towns`.) The main source is **Mapillary**
@@ -41,10 +41,12 @@ Quest memory stays flat however many places you add.
 
 ## Setup
 
-1. **Get a Mapillary token** (free). At https://www.mapillary.com/dashboard/developers,
-   register an app and copy its *Client Token* (`MLY|...`). In your GitHub repo, add it under
-   **Settings > Secrets and variables > Actions** as `MAPILLARY_TOKEN`.
-   Without a token the workflow falls back to Wikimedia Commons only, which has far fewer NC 360s.
+1. **Add your Mapillary token to GitHub.** The place list is already harvested and committed
+   (`Assets/GeoQuest/Data/locations.json`). The workflow still needs the token to refresh photo
+   download links, which expire after about 30 days, and to harvest more places later. In your
+   GitHub repo, go to **Settings > Secrets and variables > Actions > New repository secret**.
+   Name it `MAPILLARY_TOKEN` and paste the `MLY|...` client token from
+   https://www.mapillary.com/dashboard/developers. Don't commit the token to the repo.
 2. **Host the photos.** Under **Settings > Pages**, set the source to **GitHub Actions**.
    Then go to **Actions > GeoQuest photos > Run workflow**.
    The run harvests about **5,000 places** by default, resizes each photo to 2048×1024 and

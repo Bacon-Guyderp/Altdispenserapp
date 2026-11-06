@@ -65,6 +65,8 @@ jobs:
       - name: Top up from Wikimedia Commons
         run: python harvest_commons.py --region nc --target "${{ inputs.target }}" || echo "::warning::Commons harvest stopped early"
       - name: Download + resize photos
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
         run: python build_site.py
       - uses: actions/upload-pages-artifact@v3
         with:
