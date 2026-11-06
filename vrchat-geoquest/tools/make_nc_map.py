@@ -35,20 +35,21 @@ NEIGHBORS = "--neighbor-towns" in sys.argv
 # --labels brings back towns, state names and the title.
 LABELS = "--labels" in sys.argv
 PLAIN_FILL = (226, 214, 180)
+BLANK_BG = (236, 236, 232)   # plain background around NC (no neighbours, no ocean)
 
 
 def main():
-    img = Image.new("RGB", (W * SS, H * SS), OCEAN)
+    img = Image.new("RGB", (W * SS, H * SS), OCEAN if LABELS else BLANK_BG)
     d = ImageDraw.Draw(img)
     states = load_states()
     for f in states:
-        if f["properties"]["name"] == "North Carolina":
+        if f["properties"]["name"] == "North Carolina" or not LABELS:
             continue
         for poly in polygons(f):
             d.polygon([P(c) for c in poly[0]], fill=LAND_OUT, outline=BORDER_OUT)
     counties = load_nc_counties()
     nc = [f for f in states if f["properties"]["name"] == "North Carolina"][0]
-    for poly in polygons(nc):  # fills coastal slivers the county outlines miss
+    for poly in (polygons(nc) if LABELS else []):  # fills coastal slivers the county outlines miss
         d.polygon([P(c) for c in poly[0]], fill=COUNTY[0] if LABELS else PLAIN_FILL)
     for i, f in enumerate(sorted(counties, key=lambda f: f["properties"]["COUNTY"])):
         for poly in polygons(f):
@@ -56,11 +57,27 @@ def main():
     for f in counties:
         for poly in polygons(f):
             d.line([P(c) for c in poly[0]], fill=(120, 100, 85), width=2 * SS)
-    for f in states:  # neighbours' outlines double as NC's land borders
-        if f["properties"]["name"] == "North Carolina":
-            continue
-        for poly in polygons(f):
-            d.line([P(c) for c in poly[0]], fill=(60, 50, 45), width=5 * SS)
+    if LABELS:
+        for f in states:  # neighbours' outlines double as NC's land borders
+            if f["properties"]["name"] == "North Carolina":
+                continue
+            for poly in polygons(f):
+                d.line([P(c) for c in poly[0]], fill=(60, 50, 45), width=5 * SS)
+    else:
+        # NC on its own: the state outline is every county edge that only one county has,
+        # so it lines up exactly with the county lines (no mismatched coastline).
+        from collections import Counter
+        def key(c):
+            return (round(c[0], 5), round(c[1], 5))
+        segs = Counter()
+        for f in counties:
+            for poly in polygons(f):
+                for ring in poly:
+                    for a, b in zip(ring, ring[1:]):
+                        segs[tuple(sorted((key(a), key(b))))] += 1
+        for (a, b), n in segs.items():
+            if n == 1:
+                d.line([P(a), P(b)], fill=(70, 58, 48), width=4 * SS)
 
     # county names (small), skipped where a city label will sit
     placed = []
