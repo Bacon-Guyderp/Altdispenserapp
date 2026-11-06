@@ -31,6 +31,10 @@ def P(c):
 
 import sys
 NEIGHBORS = "--neighbor-towns" in sys.argv
+# Default: a bare map with nothing but county outlines (no names, towns or titles).
+# --labels brings back towns, state names and the title.
+LABELS = "--labels" in sys.argv
+PLAIN_FILL = (226, 214, 180)
 
 
 def main():
@@ -45,10 +49,10 @@ def main():
     counties = load_nc_counties()
     nc = [f for f in states if f["properties"]["name"] == "North Carolina"][0]
     for poly in polygons(nc):  # fills coastal slivers the county outlines miss
-        d.polygon([P(c) for c in poly[0]], fill=COUNTY[0])
+        d.polygon([P(c) for c in poly[0]], fill=COUNTY[0] if LABELS else PLAIN_FILL)
     for i, f in enumerate(sorted(counties, key=lambda f: f["properties"]["COUNTY"])):
         for poly in polygons(f):
-            d.polygon([P(c) for c in poly[0]], fill=COUNTY[(i * 3) % len(COUNTY)])
+            d.polygon([P(c) for c in poly[0]], fill=COUNTY[(i * 3) % len(COUNTY)] if LABELS else PLAIN_FILL)
     for f in counties:
         for poly in polygons(f):
             d.line([P(c) for c in poly[0]], fill=(120, 100, 85), width=2 * SS)
@@ -62,6 +66,9 @@ def main():
     placed = []
     def free(box):
         return all(box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3] for b in placed)
+
+    if not LABELS:
+        return save(img)
 
     # neighbouring state names
     for name, lat, lon in [("VIRGINIA", 36.95, -78.2), ("SOUTH CAROLINA", 34.5, -80.1), ("TENNESSEE", 36.7, -83.6),
@@ -113,6 +120,10 @@ def main():
 
     d.text((40 * SS, 40 * SS), "NORTH CAROLINA", font=font(72 * SS), fill=(40, 60, 90), anchor="la",
            stroke_width=4 * SS, stroke_fill=(230, 240, 250))
+    save(img)
+
+
+def save(img):
     img = img.resize((W, H), Image.LANCZOS)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     img.save(OUT, optimize=True)
