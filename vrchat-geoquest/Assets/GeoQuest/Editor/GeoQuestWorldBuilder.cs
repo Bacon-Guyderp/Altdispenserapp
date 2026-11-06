@@ -24,7 +24,7 @@ public class GeoQuestWorldBuilder : EditorWindow
     const string Root = "Assets/GeoQuest";
     const string Gen = Root + "/Generated";
 
-    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source; }
+    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source, kind; }
     [Serializable] class Bounds { public float min_lon = -84.7f, max_lon = -75.1f, min_lat = 33.25f, max_lat = 37.15f; }
     [Serializable] class LocFile { public string region; public Bounds bounds; public float score_km; public Loc[] locations; }
 
@@ -138,6 +138,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         // ---- materials
         var panoMat = Mat("Panorama", Shader.Find("GeoQuest/Panorama"), Color.white, lobbyPanorama);
         var mapMat = Mat("Map", Shader.Find("Unlit/Texture"), Color.white, worldMap);
+        var screenMat = Mat("PhotoScreen", Shader.Find("Unlit/Texture"), Color.white);
         var cMine = Mat("PinMine", ColorShader(), new Color(0.2f, 0.9f, 0.3f));
         var cAnswer = Mat("PinAnswer", ColorShader(), new Color(1f, 0.2f, 0.2f));
         var cOther = Mat("PinOther", ColorShader(), new Color(0.3f, 0.6f, 1f));
@@ -154,6 +155,10 @@ public class GeoQuestWorldBuilder : EditorWindow
 
         // ---- panorama sphere (radius 100 m, sampled by view direction so it behaves like a skybox)
         var sphere = Prim(PrimitiveType.Sphere, "PanoramaSphere", root.transform, Vector3.zero, Vector3.one * 200f, panoMat, false);
+
+        // ---- big screen for flat (non-360) photos, straight ahead above the map
+        var screen = Prim(PrimitiveType.Quad, "PhotoScreen", root.transform, new Vector3(0, 3.0f, 5f), new Vector3(4f, 3f, 1f), screenMat, false);
+        screen.SetActive(false);
 
         // ---- floor: invisible walkable area plus a small visible disc
         var floor = new GameObject("Floor");
@@ -214,7 +219,8 @@ public class GeoQuestWorldBuilder : EditorWindow
         var laser = MakeLine("Laser", root.transform, cLaser, 0.004f, true);
 
         // ---- text boards
-        var status = Board("StatusBoard", root.transform, new Vector3(0, 2.25f, 1.55f), new Vector2(2.6f, 0.7f), cBoard, fontMat, out _);
+        // Status sits above the scores on the left so the photo screen ahead stays clear.
+        var status = Board("StatusBoard", root.transform, new Vector3(-1.75f, 2.85f, 1.15f), new Vector2(1.6f, 0.75f), cBoard, fontMat, out _);
         var score = Board("ScoreBoard", root.transform, new Vector3(-1.75f, 1.55f, 1.15f), new Vector2(1.3f, 1.6f), cBoard, fontMat, out _);
         score.alignment = TextAlignmentOptions.TopLeft;
         var info = Board("InfoBoard", root.transform, new Vector3(1.75f, 1.55f, 1.15f), new Vector2(1.3f, 1.2f), cBoard, fontMat, out _);
@@ -247,6 +253,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         var startBtn = Button("START", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.StartGame));
         var roundsBtn = Button("Rounds", mapRoot, Bp(0.75f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleRounds));
         var timerBtn = Button("Timer", mapRoot, Bp(0.75f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleTimer));
+        var modeBtn = Button("Photo type", mapRoot, Bp(0.42f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleMode));
         var nextBtn = Button("Next round", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.NextRound));
         var lobbyBtn = Button("Quit to lobby", mapRoot, Bp(0.75f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.BackToLobby));
 
@@ -288,7 +295,9 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.statusText = status;
         mgr.scoreboardText = score;
         mgr.infoText = info;
-        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn };
+        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn };
+        mgr.photoScreen = screen.transform;
+        mgr.screenMaterial = screenMat;
         mgr.guessObjects = new[] { guessBtn, skipBtn, endBtn };
         mgr.revealObjects = new[] { nextBtn, lobbyBtn };
 
@@ -298,6 +307,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.titles = new string[locs.Length];
         mgr.countries = new string[locs.Length];
         mgr.credits = new string[locs.Length];
+        mgr.kinds = new int[locs.Length];
         string baseUrl = imageBaseUrl.Trim();
         if (!baseUrl.EndsWith("/")) baseUrl += "/";
         for (int i = 0; i < locs.Length; i++)
@@ -308,6 +318,7 @@ public class GeoQuestWorldBuilder : EditorWindow
             mgr.lons[i] = l.lon;
             mgr.titles[i] = l.title ?? "";
             mgr.countries[i] = l.country ?? "";
+            mgr.kinds[i] = l.kind == "flat" ? 1 : 0;
             mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), " + (string.IsNullOrEmpty(l.source) ? "Wikimedia Commons" : l.source);
         }
 

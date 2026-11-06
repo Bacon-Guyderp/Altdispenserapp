@@ -88,7 +88,11 @@ def main():
                 print(f"skip {p['id']} (download failed)")
                 continue
             try:
-                im = Image.open(io.BytesIO(data)).convert("RGB").resize((2048, 1024), Image.LANCZOS)
+                im = Image.open(io.BytesIO(data)).convert("RGB")
+                if p.get("kind") == "flat":
+                    im.thumbnail((1600, 1600), Image.LANCZOS)  # keeps its aspect; shown on a screen
+                else:
+                    im = im.resize((2048, 1024), Image.LANCZOS)
                 with open(path, "wb") as f:
                     f.write(encode(im, per_photo))
             except Exception as e:  # corrupt / odd formats

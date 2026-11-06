@@ -26,10 +26,16 @@ public class GeoGameManager : UdonSharpBehaviour
     public string[] titles;
     public string[] countries;
     public string[] credits;
+    public int[] kinds;                 // 0 = 360° panorama, 1 = flat photo
 
     [Header("Scene")]
     public Material panoramaMaterial;
     public Texture lobbyPanorama;
+    [Tooltip("Big screen that shows flat (non-360) photos.")]
+    public Transform photoScreen;
+    public Material screenMaterial;
+    public float screenHeight = 3f;
+    public float screenMaxWidth = 6.4f;
     public MapBoard map;
     public PlayerGuess guessTemplate;
     public TextMeshPro statusText;
@@ -49,6 +55,7 @@ public class GeoGameManager : UdonSharpBehaviour
     [UdonSynced] public int totalRounds = 5;
     [UdonSynced] public int roundSeconds = 120;
     [UdonSynced] public int deadline;
+    [UdonSynced] public int photoMode;   // 0 = mixed, 1 = 360° only, 2 = flat only
     [UdonSynced] public int[] roundLocations = new int[MAX_ROUNDS];
 
     private int[] _roundOptions = { 3, 5, 10 };
@@ -65,11 +72,19 @@ public class GeoGameManager : UdonSharpBehaviour
     private bool _loading, _loadFailed;
     private int _retries;
     private int[] _recent = new int[200];
+    private int _panoCount, _flatCount;
     private int _recentHead;
 
     void Start()
     {
         for (int i = 0; i < _recent.Length; i++) _recent[i] = -1;
+        int n = urls == null ? 0 : urls.Length;
+        for (int i = 0; i < n; i++)
+        {
+            if (IsFlat(i)) _flatCount++;
+            else _panoCount++;
+        }
+        if (photoScreen != null) photoScreen.gameObject.SetActive(false);
         ApplyState();
     }
 
@@ -115,17 +130,30 @@ public class GeoGameManager : UdonSharpBehaviour
         return g == null || !g.HasGuess(gameId, round, CurrentLocation());
     }
 
+    public bool IsFlat(int loc)
+    {
+        return kinds != null && loc >= 0 && loc < kinds.Length && kinds[loc] == 1;
+    }
+
+    private bool ModeAllows(int loc)
+    {
+        if (photoMode == 1 && _panoCount > 0) return !IsFlat(loc);
+        if (photoMode == 2 && _flatCount > 0) return IsFlat(loc);
+        return true;
+    }
+
     private int PickLocation()
     {
         int n = urls.Length;
         int c = 0;
-        for (int attempt = 0; attempt < 40; attempt++)
+        for (int attempt = 0; attempt < 80; attempt++)
         {
             c = Random.Range(0, n);
+            if (!ModeAllows(c)) continue;
             bool used = false;
             for (int r = 0; r < round - 1 && !used; r++) used = roundLocations[r] == c;
             // Avoid places seen in recent games too, as long as there are plenty to choose from.
-            if (attempt < 30) for (int i = 0; i < _recent.Length && !used; i++) used = _recent[i] == c;
+            if (attempt < 60) for (int i = 0; i < _recent.Length && !used; i++) used = _recent[i] == c;
             if (!used) break;
         }
         Remember(c);
@@ -237,6 +265,21 @@ public class GeoGameManager : UdonSharpBehaviour
         for (int i = 0; i < _roundOptions.Length; i++) if (_roundOptions[i] == totalRounds) idx = i;
         totalRounds = _roundOptions[(idx + 1) % _roundOptions.Length];
         Commit();
+    }
+
+    public void CycleMode()
+    {
+        if (phase == PHASE_GUESS || phase == PHASE_REVEAL) return;
+        TakeOwner();
+        photoMode = (photoMode + 1) % 3;
+        Commit();
+    }
+
+    private string ModeName()
+    {
+        if (photoMode == 1) return "360° only (" + _panoCount.ToString("N0") + ")";
+        if (photoMode == 2) return "Flat only (" + _flatCount.ToString("N0") + ")";
+        return "Mixed (" + _panoCount.ToString("N0") + " 360° + " + _flatCount.ToString("N0") + " flat)";
     }
 
     public void CycleTimer()
@@ -375,12 +418,12 @@ public class GeoGameManager : UdonSharpBehaviour
             if (_pendingDl != null) { _pendingDl.Dispose(); _pendingDl = null; }
             if (_shownDl != null) { _shownDl.Dispose(); _shownDl = null; }
             _loading = false;
-            panoramaMaterial.SetTexture("_MainTex", lobbyPanorama);
-            panoramaMaterial.SetFloat("_Yaw", 0f);
-            panoramaMaterial.SetColor("_Tint", Color.white);
+            ShowBackdrop(1f);
+            if (photoScreen != null) photoScreen.gameObject.SetActive(false);
             return;
         }
         _loading = true;
+        if (photoScreen != null) photoScreen.gameObject.SetActive(false);
         panoramaMaterial.SetColor("_Tint", new Color(0.15f, 0.15f, 0.15f, 1f));
         _DoDownload();
     }
@@ -400,7 +443,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (_pendingDl != null) _pendingDl.Dispose();
         _pendingDl = new VRCImageDownloader();
         TextureInfo info = new TextureInfo();
-        info.GenerateMipMaps = false;
+        info.GenerateMipMaps = IsFlat(loc);  // the flat screen is seen from a distance
         info.WrapModeU = TextureWrapMode.Repeat;
         info.WrapModeV = TextureWrapMode.Clamp;
         info.FilterMode = FilterMode.Bilinear;
@@ -418,10 +461,33 @@ public class GeoGameManager : UdonSharpBehaviour
         _pendingDl = null;
         _loadingLocation = -1;
         _loading = false;
-        panoramaMaterial.SetTexture("_MainTex", result.Result);
-        panoramaMaterial.SetFloat("_Yaw", (_wantLocation * 0.6180339f) % 1f);
-        panoramaMaterial.SetColor("_Tint", Color.white);
+        Texture2D tex = result.Result;
+        if (IsFlat(_wantLocation) && photoScreen != null)
+        {
+            // Flat photo: dim lobby sky behind, photo on the big screen sized to its aspect.
+            ShowBackdrop(0.35f);
+            screenMaterial.SetTexture("_MainTex", tex);
+            float aspect = tex.height > 0 ? (float)tex.width / tex.height : 1.5f;
+            float h = screenHeight, w = h * aspect;
+            if (w > screenMaxWidth) { w = screenMaxWidth; h = w / aspect; }
+            photoScreen.localScale = new Vector3(w, h, 1f);
+            photoScreen.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (photoScreen != null) photoScreen.gameObject.SetActive(false);
+            panoramaMaterial.SetTexture("_MainTex", tex);
+            panoramaMaterial.SetFloat("_Yaw", (_wantLocation * 0.6180339f) % 1f);
+            panoramaMaterial.SetColor("_Tint", Color.white);
+        }
         UpdateTexts();
+    }
+
+    private void ShowBackdrop(float brightness)
+    {
+        panoramaMaterial.SetTexture("_MainTex", lobbyPanorama);
+        panoramaMaterial.SetFloat("_Yaw", 0f);
+        panoramaMaterial.SetColor("_Tint", new Color(brightness, brightness, brightness, 1f));
     }
 
     public override void OnImageLoadError(IVRCImageDownload result)
@@ -452,7 +518,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (phase == PHASE_LOBBY || phase == PHASE_OVER)
         {
             string head = phase == PHASE_OVER ? "<b>Game over!</b>" : "<b>" + gameTitle + "</b>";
-            return head + "\n" + count.ToString("N0") + " places  |  Rounds: " + totalRounds + "  |  Timer: " +
+            return head + "\n" + count.ToString("N0") + " places  |  Photos: " + ModeName() + "\nRounds: " + totalRounds + "  |  Timer: " +
                    (roundSeconds == 0 ? "off" : roundSeconds + "s") + "\nYour best: " + GetBest().ToString("N0");
         }
         string s = "Round " + round + " / " + totalRounds;
@@ -466,6 +532,7 @@ public class GeoGameManager : UdonSharpBehaviour
             s += "   Guessed " + CountGuessed() + "/" + VRCPlayerApi.GetPlayerCount();
             if (_loading) s += "\n<color=#ffd060>Loading photo...</color>";
             else if (_loadFailed) s += "\n<color=#ff8080>Photo failed to load. Enable 'Allow Untrusted URLs' or press Skip.</color>";
+            else if (IsFlat(CurrentLocation())) s += "\nStudy the photo, then point at the map and pull the trigger / click.";
             else s += "\nLook around, then point at the map and pull the trigger / click.";
         }
         else

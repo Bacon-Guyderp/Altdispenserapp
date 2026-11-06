@@ -70,7 +70,7 @@ def tile_point(x, y, px, py, extent):
     return lat, lon
 
 
-def panos_in_tile(token, x, y):
+def panos_in_tile(token, x, y, kind="pano"):
     data = get(TILES.format(z=Z, x=x, y=y), token, binary=True)
     if not data:
         return []
@@ -81,7 +81,9 @@ def panos_in_tile(token, x, y):
     out = []
     for f in layer["features"]:
         p = f["properties"]
-        if not p.get("is_pano") or (p.get("quality_score") or 1) < 0.4:
+        if bool(p.get("is_pano")) != (kind == "pano"):
+            continue
+        if (p.get("quality_score") or 1) < (0.4 if kind == "pano" else 0.6):
             continue
         px, py = f["geometry"]["coordinates"][:2]
         lat, lon = tile_point(x, y, px, py, extent)
@@ -91,7 +93,10 @@ def panos_in_tile(token, x, y):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", type=int, default=5000)
+    ap.add_argument("--kind", choices=["pano", "flat"], default="pano",
+                    help="pano = 360° photos; flat = regular photos (shown on a big screen in-world)")
+    ap.add_argument("--target", type=int, default=5000, help="stop when the list holds this many places of --kind")
+    ap.add_argument("--max-per-county", type=int, default=0, help="cap per county for --kind (0 = none)")
     ap.add_argument("--outside-fraction", type=float, default=0.0,
                     help="share of places from neighbouring states inside the map area")
     ap.add_argument("--min-spacing-km", type=float, default=0.8)
@@ -111,6 +116,11 @@ def main():
     out = load_locations(a.out)
     have = {p["key"] for p in out}
     outside = sum(1 for p in out if p.get("iso") != "NC")
+    mine = [p for p in out if p.get("kind", "pano") == a.kind]
+    per_county = {}
+    for p in mine:
+        per_county[p["country"]] = per_county.get(p["country"], 0) + 1
+    count = len(mine)
     grid = {}
 
     def gkey(lat, lon):
@@ -155,13 +165,13 @@ def main():
     searched = 0
     pool = ThreadPoolExecutor(a.workers)
     queue_nc, queue_out = iter(nc_tiles), iter(out_tiles)
-    while len(out) < a.target:
+    while count < a.target:
         src = queue_out if wanted_outside() else queue_nc
         batch = [t for t, _ in zip(src, range(a.workers * 4))]
         if not batch:
             print("ran out of tiles")
             break
-        results = pool.map(lambda t: (t, panos_in_tile(token, *t)), batch)
+        results = pool.map(lambda t: (t, panos_in_tile(token, t[0], t[1], a.kind)), batch)
         picks = []
         for (tx, ty), panos in results:
             searched += 1
@@ -176,12 +186,15 @@ def main():
                 label, key = nc.lookup(lat, lon)
                 if not key or (key != "NC") != wanted_outside():
                     continue
+                if a.max_per_county and per_county.get(label, 0) >= a.max_per_county:
+                    continue
+                per_county[label] = per_county.get(label, 0) + 1
                 grid.setdefault(gkey(lat, lon), []).append((lat, lon))
                 have.add(k)
                 picks.append((pid, label, key))
                 took += 1
         details = pool.map(lambda pk: (pk, get(GRAPH + pk[0], token, {
-            "fields": "id,thumb_2048_url,computed_geometry,geometry,creator,captured_at"})), picks)
+            "fields": "id,thumb_2048_url,computed_geometry,geometry,creator,captured_at,width,height"})), picks)
         for (pid, label, key), d in details:
             if not d or not d.get("thumb_2048_url"):
                 continue
@@ -190,18 +203,23 @@ def main():
             label, key = nc.lookup(lat, lon)
             if not key or (a.outside_fraction == 0 and key != "NC"):
                 continue
+            w, h = d.get("width") or 0, d.get("height") or 0
+            if a.kind == "flat" and (w < 1000 or h < 600 or not 1.2 <= w / h <= 2.0):
+                continue  # skip tiny, portrait and stitched-strip images
             out.append({"key": "m" + pid, "lat": round(lat, 6), "lon": round(lon, 6),
                         "title": describe_nc(lat, lon, label, outside=key != "NC"),
                         "country": label if key == "NC" else label + " (not NC!)", "iso": key,
                         "author": (d.get("creator") or {}).get("username") or "Mapillary contributor",
                         "license": "CC BY-SA 4.0", "page": f"https://www.mapillary.com/app/?pKey={pid}",
                         "src": d["thumb_2048_url"], "source": "Mapillary",
-                        "captured": time.strftime("%Y-%m", time.gmtime((d.get("captured_at") or 0) / 1000))})
+                        "captured": time.strftime("%Y-%m", time.gmtime((d.get("captured_at") or 0) / 1000)),
+                        "kind": a.kind, "aspect": round(w / h, 3) if h else 2.0})
+            count += 1
             if key != "NC":
                 outside += 1
-            if len(out) >= a.target:
+            if count >= a.target:
                 break
-        print(f"{searched} tiles searched -> {len(out)} places", flush=True)
+        print(f"{searched} tiles searched -> {count} {a.kind} places ({len(out)} total)", flush=True)
         if searched % 400 < a.workers * 4:
             save_locations(a.out, out)
     save_locations(a.out, out)
