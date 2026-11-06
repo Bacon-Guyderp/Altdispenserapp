@@ -74,7 +74,11 @@ def panos_in_tile(token, x, y, kind="pano"):
     data = get(TILES.format(z=Z, x=x, y=y), token, binary=True)
     if not data:
         return []
-    layer = mapbox_vector_tile.decode(data).get("image")
+    try:
+        layer = mapbox_vector_tile.decode(data).get("image")
+    except Exception as e:  # a truncated/corrupt tile: skip it rather than stop the whole harvest
+        print(f"  skipping bad tile {x},{y}: {type(e).__name__}", file=sys.stderr)
+        return []
     if not layer:
         return []
     extent = layer.get("extent", 4096)
