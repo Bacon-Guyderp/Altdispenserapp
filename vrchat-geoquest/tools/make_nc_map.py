@@ -51,7 +51,7 @@ def main():
             d.polygon([P(c) for c in poly[0]], fill=COUNTY[(i * 3) % len(COUNTY)])
     for f in counties:
         for poly in polygons(f):
-            d.line([P(c) for c in poly[0]], fill=(150, 130, 110), width=2 * SS)
+            d.line([P(c) for c in poly[0]], fill=(120, 100, 85), width=2 * SS)
     for f in states:  # neighbours' outlines double as NC's land borders
         if f["properties"]["name"] == "North Carolina":
             continue
@@ -98,8 +98,9 @@ def main():
                 d.text((x, ty), name, font=f, anchor=anchor, fill=(70, 60, 60), stroke_width=3 * SS, stroke_fill=(235, 233, 226))
                 break
 
+    # County names are off by default (outlines only); pass --county-names to print them.
     cf = font(15 * SS)
-    for f in counties:
+    for f in (counties if "--county-names" in sys.argv else []):
         name = f["properties"]["NAME"]
         best = max(polygons(f), key=lambda p: len(p[0]))[0]
         xs = [P(c)[0] for c in best]
