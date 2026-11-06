@@ -97,6 +97,8 @@ def main():
     ap.add_argument("--min-spacing-km", type=float, default=0.8)
     ap.add_argument("--per-tile", type=int, default=6, help="max places from one ~2 km tile")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--refill", action="store_true",
+                    help="second pass: only revisit tiles that already gave places (use with smaller spacing)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", default=DEFAULT_LOCATIONS)
     a = ap.parse_args()
@@ -139,6 +141,10 @@ def main():
                 nc_tiles.append((x, y))
             elif key:
                 out_tiles.append((x, y))
+    if a.refill:
+        known = {tile_of(p["lat"], p["lon"]) for p in out}
+        nc_tiles = [t for t in nc_tiles if t in known]
+        out_tiles = [t for t in out_tiles if t in known]
     rng.shuffle(nc_tiles)
     rng.shuffle(out_tiles)
     print(f"{len(nc_tiles)} NC tiles, {len(out_tiles)} neighbouring tiles; starting from {len(out)} places", flush=True)
