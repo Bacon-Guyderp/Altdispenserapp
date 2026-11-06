@@ -40,6 +40,10 @@ public class GeoQuestWorldBuilder : EditorWindow
     void OnEnable()
     {
         imageBaseUrl = EditorPrefs.GetString("GeoQuest.baseUrl", imageBaseUrl);
+        // A package built by the "GeoQuest photos" workflow carries its photo site's address.
+        var site = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/photo_base_url.txt");
+        if (site != null && site.text.Trim().StartsWith("https://") && imageBaseUrl.Contains("YOUR-GITHUB-NAME"))
+            imageBaseUrl = site.text.Trim();
         useCommonsUrls = EditorPrefs.GetBool("GeoQuest.commons", false);
         locationsJson = locationsJson ?? AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/locations.json");
         worldMap = worldMap ?? AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/NCMap.png");
