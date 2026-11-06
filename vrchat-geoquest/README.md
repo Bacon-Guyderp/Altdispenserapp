@@ -75,6 +75,18 @@ Quest memory stays flat however many places you add.
 
 You can re-run **Build World** whenever you harvest more places. It replaces the old `GeoQuest` object.
 
+## The world
+* **Hangout**: where you spawn. It's an enclosed room with couches, a wall map of NC and a **TV**.
+  Paste a video link into the box under it and everyone watches together. Play/pause and stop are
+  shared, and volume is per person. It uses AVPro, which works on PC and Quest. On Quest, direct
+  video links are the most reliable. The green **Play GeoQuest** button takes you to the game.
+* **Game area**: you stand inside the photo with the map table in front of you. A **6 m × 3 m NC
+  map is on the floor behind you**, with a rack of 12 pins. Grab a pin and drop it on the floor
+  map to set your guess. That works the same as pointing at the table map, and everyone sees the
+  pins. On the reveal, a red beam marks the real spot on the floor map. **Reset pins** puts them
+  back on the rack, and the **Hangout** button takes you back.
+* Only people in the game area count as players, so friends chilling in the hangout don't hold up rounds.
+
 ## How to play
 * Press **START**. **Rounds** cycles 3/5/10, **Timer** cycles off, 30s, 60s, 120s, 180s and 300s, and
   **Photo type** cycles Mixed, 360° only and Flat only.
