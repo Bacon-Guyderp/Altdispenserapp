@@ -5,7 +5,10 @@ from the Blue Ridge to the Outer Banks. Look around, point at
 the NC map, drop a pin and lock in your guess. Closer guesses score more (up to
 5,000 points a round). It plays multiplayer with a live scoreboard and saves your best score.
 
-**Places:** thousands of 360° panoramas sampled evenly across the whole state, so you get
+**Places:** 3,051 real 360° street-level photos are already harvested and committed
+(`Assets/GeoQuest/Data/locations.json`). They cover the 44 NC counties where Mapillary has
+360° imagery, capped at 200 per county so Raleigh/Cary don't take over. They were sampled
+evenly across the whole state, so you get
 back roads and small towns as well as Charlotte and Raleigh. No two places are within 0.8 km
 of each other. **Every place is in North Carolina.** (If you ever want trick rounds from just over
 the border, harvest with `--outside-fraction 0.25` and rebuild the map with
@@ -49,11 +52,12 @@ Quest memory stays flat however many places you add.
    https://www.mapillary.com/dashboard/developers. Don't commit the token to the repo.
 2. **Host the photos.** Under **Settings > Pages**, set the source to **GitHub Actions**.
    Then go to **Actions > GeoQuest photos > Run workflow**.
-   The run harvests about **5,000 places** by default, resizes each photo to 2048×1024 and
-   publishes them to `https://<you>.github.io/<repo>/`. GitHub Pages sites are capped at 1 GB,
+   A normal run downloads the committed places' photos (about 20–30 minutes), resizes each to
+   2048×1024 and publishes them to `https://<you>.github.io/<repo>/`. Tick **harvest_more**
+   to also search Mapillary and Wikimedia Commons for new places, which takes about an hour. GitHub Pages sites are capped at 1 GB,
    so the JPEG quality adapts to fit everything: about 190 KB per photo at 5,000 places.
    Ask for fewer places for sharper photos, or more for more variety. Past roughly 8,000 the
-   photos start looking rough. Expect 1–2 hours on the first run. Later runs reuse the published
+   photos start looking rough. Later runs reuse the published
    list and the cached photos, and only add more.
    Photos are hosted on `github.io` because it's on VRChat's trusted image-host list, so
    players don't need *Allow Untrusted URLs*.

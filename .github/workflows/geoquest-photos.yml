@@ -14,8 +14,12 @@ on:
       target:
         description: "How many places (photo quality adapts to fit GitHub Pages' 1 GB)"
         default: "5000"
+      harvest_more:
+        description: "Search Mapillary + Commons for more places (slow: ~1 hour)"
+        type: boolean
+        default: false
       reharvest:
-        description: "Start the place list from scratch"
+        description: "Start the place list from scratch (implies harvest_more)"
         type: boolean
         default: false
 
@@ -47,13 +51,18 @@ jobs:
           path: vrchat-geoquest/site/p
           key: geoquest-photos-${{ github.run_id }}
           restore-keys: geoquest-photos-
-      - name: Reuse the previously published place list
+      - name: Start from the newest place list
         if: ${{ !inputs.reharvest }}
         run: |
+          # The committed list is used unless the Pages site already has a newer one.
           url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/locations.json"
-          curl -fsSL "$url" -o ../Assets/GeoQuest/Data/locations.json || echo "no earlier list at $url"
+          if curl -fsSL "$url" -o /tmp/published.json; then cp /tmp/published.json ../Assets/GeoQuest/Data/locations.json; else echo "no earlier list at $url; using the committed one"; fi
           # Mapillary photo links expire; anything already in the cache doesn't need them.
+      - name: Forget the old list
+        if: ${{ inputs.reharvest }}
+        run: rm -f ../Assets/GeoQuest/Data/locations.json
       - name: Harvest Mapillary (street-level 360s)
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
         env:
           MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
         run: |
@@ -63,7 +72,11 @@ jobs:
             echo "::warning::MAPILLARY_TOKEN secret not set; using Wikimedia Commons only (far fewer NC places)."
           fi
       - name: Top up from Wikimedia Commons
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
         run: python harvest_commons.py --region nc --target "${{ inputs.target }}" || echo "::warning::Commons harvest stopped early"
+      - name: Keep any one county from dominating
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
+        run: python balance_counties.py --max-per-county 200
       - name: Download + resize photos
         env:
           MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
