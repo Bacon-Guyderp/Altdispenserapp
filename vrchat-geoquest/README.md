@@ -10,7 +10,7 @@ North Carolina**. Both lists are already harvested and committed in `Assets/GeoQ
 * **360° photos** (3,051): you stand inside the photo and can look all around. Mapillary only has
   360° imagery in 44 NC counties, mostly along I-40, I-77, I-95, US-17, the Outer Banks, Asheville and
   Raleigh/Cary. Each county is capped at 200 places so Wake doesn't take over.
-* **Flat photos** (2,390 regular road photos, up to 30 per county, at least 2 km apart): shown on a big
+* **Flat photos** (4,086 regular road photos, up to 60 per county, at least 1.5 km apart): shown on a big
   screen in front of the map. These cover all 100 counties, including Boone, Johnston and Duplin,
   which have no 360° imagery at all.
 
@@ -58,7 +58,7 @@ Quest memory stays flat however many places you add.
    A normal run downloads the committed places' photos (about 20–30 minutes), resizes each to
    2048×1024 and publishes them to `https://<you>.github.io/<repo>/`. Tick **harvest_more**
    to also search Mapillary and Wikimedia Commons for new places, which takes about an hour. GitHub Pages sites are capped at 1 GB,
-   so the JPEG quality adapts to fit everything: about 190 KB per photo at 5,000 places.
+   so the JPEG quality adapts to fit everything: about 110 KB per flat photo and about 170 KB per 360° photo at 7,137 places.
    Ask for fewer places for sharper photos, or more for more variety. Past roughly 8,000 the
    photos start looking rough. Later runs reuse the published
    list and the cached photos, and only add more.

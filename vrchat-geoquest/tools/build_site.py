@@ -68,8 +68,13 @@ def main():
     # Share the size budget across every photo: ~5,000 places is about 190 KB each,
     # which is still a clean 2048x1024 street scene at JPEG quality ~55-70.
     budget_total = a.max_site_mb * 1024 * 1024 - 8 * 1024 * 1024  # leave room for json/html
-    per_photo = min(450 * 1024, budget_total / max(1, len(locs)))
-    print(f"{len(locs)} places, about {per_photo / 1024:.0f} KB per photo")
+    # Flat photos are 1280 px and seen on a screen, so ~110 KB is plenty; the 360° photos
+    # you stand inside get the rest of the budget.
+    n_flat = sum(1 for p in locs if p.get("kind") == "flat")
+    n_pano = max(1, len(locs) - n_flat)
+    per_flat = min(110 * 1024, budget_total / max(1, len(locs)))
+    per_pano = min(450 * 1024, (budget_total - n_flat * per_flat) / n_pano)
+    print(f"{n_pano} 360° photos at ~{per_pano / 1024:.0f} KB, {n_flat} flat photos at ~{per_flat / 1024:.0f} KB")
     used = 0
     ok = []
     for i, p in enumerate(locs):
@@ -94,7 +99,7 @@ def main():
                 else:
                     im = im.resize((2048, 1024), Image.LANCZOS)
                 with open(path, "wb") as f:
-                    f.write(encode(im, per_photo))
+                    f.write(encode(im, per_flat if p.get("kind") == "flat" else per_pano))
             except Exception as e:  # corrupt / odd formats
                 print(f"skip {p['id']} ({e})")
                 continue
