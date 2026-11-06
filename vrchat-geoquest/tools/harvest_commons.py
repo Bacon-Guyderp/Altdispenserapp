@@ -114,7 +114,7 @@ def accept(page, a, countries, seen, cells, per_country, out):
     per_country[iso] = per_country.get(iso, 0) + 1
     nice = nice_title(title)
     if a.region == "nc" and nice == "Unknown place":
-        nice = describe_nc(lat, lon, name)
+        nice = describe_nc(lat, lon, name, outside=iso != "NC")
     out.append({"lat": lat, "lon": lon, "title": nice, "country": name, "iso": iso, "source": "Wikimedia Commons",
                 "author": clean(meta.get("Artist", {}).get("value"), 60) or "Unknown",
                 "license": lic, "page": title,
@@ -127,7 +127,7 @@ def main():
     ap.add_argument("--region", choices=["nc", "world"], default="nc")
     ap.add_argument("--target", type=int, default=2500, help="stop when the table holds this many places")
     ap.add_argument("--tile", type=float, default=None, help="tile size in degrees (default 0.4 for nc, 6 for world)")
-    ap.add_argument("--outside-fraction", type=float, default=0.08)
+    ap.add_argument("--outside-fraction", type=float, default=0.25, help="share of places outside NC (nc region)")
     ap.add_argument("--per-tile", type=int, default=12, help="max places taken from one tile per query")
     ap.add_argument("--per-cell", type=int, default=2, help="max places per cell (~5 km for nc, 1 degree for world)")
     ap.add_argument("--per-country", type=int, default=120, help="max places per country")

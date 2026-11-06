@@ -7,12 +7,13 @@ the NC map, drop a pin and lock in your guess. Closer guesses score more (up to
 
 **Places:** thousands of 360° panoramas sampled evenly across the whole state, so you get
 back roads and small towns as well as Charlotte and Raleigh. No two places are within 3 km
-of each other. About 8% come from just over the border in VA, SC, TN or GA, to keep border
-guesses honest (`--outside-fraction 0` turns that off). The main source is **Mapillary**
+of each other. **75% are in North Carolina and 25% are in the neighbouring parts of VA, SC,
+TN and GA** shown on the map, with their towns labelled too. You can change the split with
+`--outside-fraction` (0.25 by default; 0 makes it all NC). The main source is **Mapillary**
 street-level imagery (CC BY-SA), topped up with Wikimedia Commons.
 
-**The map** is a county map of NC (`Assets/GeoQuest/Textures/NCMap.png`) with about 40 towns
-marked, and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
+**The map** is a county map of NC (`Assets/GeoQuest/Textures/NCMap.png`) with about 40 NC towns and about 35
+neighbouring-state towns marked, and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
 roughly 4,500 points at 10 km, 2,900 at 50 km and 500 at 200 km. The reveal tells you the
 county and the nearest town, for example "14 km from Raleigh, Wake County, NC". Photos are
 **streamed one at a time** with VRChat's Image Loading. The upload stays a few MB and

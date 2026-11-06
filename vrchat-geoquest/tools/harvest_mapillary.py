@@ -8,8 +8,8 @@ which is exactly what a GeoGuessr-style game wants. Needs a free client token:
 
 Points are sampled uniformly over the state (so you get back roads and small towns,
 not just Charlotte), and no two places are closer than --min-spacing-km.
-A small share (--outside-fraction) comes from just over the border (VA/SC/TN/GA)
-to keep border guesses honest.
+By default 75% of places are in NC and 25% (--outside-fraction) come from the
+neighbouring parts of VA, SC, TN and GA that the in-world map shows.
 """
 import argparse, math, os, random, sys, time
 import requests
@@ -41,7 +41,7 @@ def query(s, token, lat, lon, half):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", type=int, default=2500)
-    ap.add_argument("--outside-fraction", type=float, default=0.08,
+    ap.add_argument("--outside-fraction", type=float, default=0.25,
                     help="share of places from neighbouring states inside the map area")
     ap.add_argument("--min-spacing-km", type=float, default=3.0)
     ap.add_argument("--search-km", type=float, default=4.0, help="half-size of each search box")
@@ -106,8 +106,8 @@ def main():
                 continue
             user = (im.get("creator") or {}).get("username") or "Mapillary contributor"
             out.append({"key": k, "lat": round(ilat, 6), "lon": round(ilon, 6),
-                        "title": describe_nc(ilat, ilon, label) if key == "NC" else "Gotcha: " + label,
-                        "country": label if key == "NC" else "just over the NC state line", "iso": key,
+                        "title": describe_nc(ilat, ilon, label, outside=key != "NC"),
+                        "country": label if key == "NC" else label + " (not NC!)", "iso": key,
                         "author": user, "license": "CC BY-SA 4.0",
                         "page": f"https://www.mapillary.com/app/?pKey={im['id']}",
                         "src": im["thumb_2048_url"], "source": "Mapillary"})

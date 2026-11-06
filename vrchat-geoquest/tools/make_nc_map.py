@@ -6,7 +6,7 @@ Output: Assets/GeoQuest/Textures/NCMap.png
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
-from geo_common import CITIES, NC_BOUNDS, load_states, load_nc_counties, polygons
+from geo_common import CITIES, NEIGHBOR_CITIES, NC_BOUNDS, load_states, load_nc_counties, polygons
 
 W, H = 4096, 2048
 SS = 2
@@ -54,16 +54,17 @@ def main():
         for poly in polygons(f):
             d.line([P(c) for c in poly[0]], fill=(60, 50, 45), width=5 * SS)
 
-    # neighbouring state names
-    for name, lat, lon in [("VIRGINIA", 36.95, -78.6), ("SOUTH CAROLINA", 34.0, -80.9), ("TENNESSEE", 36.3, -84.1),
-                           ("GEORGIA", 34.55, -84.25), ("ATLANTIC OCEAN", 34.3, -76.2)]:
-        d.text(P((lon, lat)), name, font=font(40 * SS), fill=(110, 106, 100) if "OCEAN" not in name else (200, 225, 245),
-               anchor="mm")
-
     # county names (small), skipped where a city label will sit
     placed = []
     def free(box):
         return all(box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3] for b in placed)
+
+    # neighbouring state names
+    for name, lat, lon in [("VIRGINIA", 36.95, -78.2), ("SOUTH CAROLINA", 34.5, -80.1), ("TENNESSEE", 36.7, -83.6),
+                           ("GEORGIA", 34.1, -84.2), ("ATLANTIC OCEAN", 34.3, -76.2)]:
+        placed.append(d.textbbox(P((lon, lat)), name, font=font(40 * SS), anchor="mm"))
+        d.text(P((lon, lat)), name, font=font(40 * SS), fill=(110, 106, 100) if "OCEAN" not in name else (200, 225, 245),
+               anchor="mm")
 
     city_font = {1: font(34 * SS), 2: font(28 * SS), 3: font(22 * SS)}
     for name, lat, lon, k in sorted(CITIES, key=lambda c: c[3]):
@@ -79,6 +80,19 @@ def main():
             anchor, ty = "mb", y - r - 4 * SS
         placed.append(box)
         d.text((x, ty), name, font=f, anchor=anchor, fill=(30, 20, 20), stroke_width=3 * SS, stroke_fill=(255, 255, 250))
+
+    # neighbouring towns: same markers, muted, so out-of-state rounds are guessable too
+    for name, lat, lon, k in sorted(NEIGHBOR_CITIES, key=lambda c: c[3]):
+        x, y = P((lon, lat))
+        r = (7 if k == 1 else 6 if k == 2 else 4) * SS
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(110, 70, 70), outline=(240, 240, 235), width=SS * 2)
+        f = city_font[min(3, k + 1)]
+        for anchor, ty in (("mb", y - r - 4 * SS), ("mt", y + r + 4 * SS)):
+            box = d.textbbox((x, ty), name, font=f, anchor=anchor)
+            if free(box):
+                placed.append(box)
+                d.text((x, ty), name, font=f, anchor=anchor, fill=(70, 60, 60), stroke_width=3 * SS, stroke_fill=(235, 233, 226))
+                break
 
     cf = font(15 * SS)
     for f in counties:

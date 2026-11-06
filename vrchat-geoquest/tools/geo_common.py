@@ -177,15 +177,33 @@ CITIES = [  # name, lat, lon, size class (1 = big)
 ]
 
 
-def describe_nc(lat, lon, label):
-    """'12 km from Raleigh' style title for a spot."""
+# Towns just over the line, labelled on the map and used to describe out-of-state places.
+NEIGHBOR_CITIES = [
+    ("Danville, VA", 36.586, -79.395, 2), ("Martinsville, VA", 36.691, -79.873, 3), ("South Boston, VA", 36.699, -78.901, 3),
+    ("Norfolk, VA", 36.851, -76.286, 1), ("Virginia Beach, VA", 36.853, -75.978, 2), ("Suffolk, VA", 36.728, -76.583, 3),
+    ("Emporia, VA", 36.686, -77.542, 3), ("Galax, VA", 36.661, -80.924, 3), ("Abingdon, VA", 36.710, -81.975, 3),
+    ("Bristol, TN/VA", 36.596, -82.188, 2), ("Johnson City, TN", 36.313, -82.353, 2), ("Kingsport, TN", 36.548, -82.562, 3),
+    ("Knoxville, TN", 35.961, -83.921, 1), ("Gatlinburg, TN", 35.714, -83.511, 3), ("Morristown, TN", 36.214, -83.295, 3),
+    ("Blairsville, GA", 34.876, -83.958, 3), ("Clayton, GA", 34.878, -83.401, 3),
+    ("Gainesville, GA", 34.298, -83.824, 2), ("Athens, GA", 33.961, -83.378, 2), ("Toccoa, GA", 34.577, -83.332, 3),
+    ("Greenville, SC", 34.853, -82.394, 1), ("Spartanburg, SC", 34.950, -81.932, 2), ("Rock Hill, SC", 34.925, -81.025, 2),
+    ("Columbia, SC", 34.000, -81.035, 1), ("Florence, SC", 34.195, -79.763, 2), ("Myrtle Beach, SC", 33.689, -78.887, 1),
+    ("Anderson, SC", 34.503, -82.650, 3), ("Clemson, SC", 34.683, -82.837, 3), ("Sumter, SC", 33.920, -80.341, 3),
+    ("Conway, SC", 33.836, -79.048, 3), ("Lancaster, SC", 34.721, -80.771, 3), ("Gaffney, SC", 35.072, -81.650, 3),
+    ("Georgetown, SC", 33.377, -79.294, 3), ("Camden, SC", 34.246, -80.607, 3), ("Orangeburg, SC", 33.491, -80.856, 3),
+    ("Aiken, SC", 33.560, -81.720, 3),
+]
+
+
+def describe_nc(lat, lon, label, outside=False):
+    """'12 km from Raleigh' style title for a spot (neighbouring-state towns when outside NC)."""
     best, bd, best_size = None, 1e9, 3
-    for name, clat, clon, size in CITIES:
+    for name, clat, clon, size in (NEIGHBOR_CITIES if outside else CITIES):
         km = math.hypot((clat - lat) * 111, (clon - lon) * 111 * math.cos(math.radians(lat)))
         if km * (0.6, 0.8, 1.0)[size - 1] < bd * (0.6, 0.8, 1.0)[best_size - 1] if best else True:
             best, bd, best_size = name, km, size
     if bd < 3:
         return best
-    if bd < 60:
+    if bd < (150 if outside else 60):
         return f"{round(bd)} km from {best}"
     return label or "North Carolina"
