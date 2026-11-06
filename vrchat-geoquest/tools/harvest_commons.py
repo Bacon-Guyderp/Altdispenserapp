@@ -5,7 +5,7 @@ location. Output: ../Assets/GeoQuest/Data/locations.json, which the Unity
 builder (GeoQuest > Build World) turns into the in-world location table and
 build_site.py turns into a static image host.
 
-Usage:  python harvest_commons.py --target 3000
+Usage:  python harvest_commons.py --target 5000
 Be nice to Wikimedia: the script throttles itself and backs off on 429s.
 """
 import argparse, html, json, math, os, re, sys, time
@@ -125,7 +125,7 @@ def accept(page, a, countries, seen, cells, per_country, out):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--region", choices=["nc", "world"], default="nc")
-    ap.add_argument("--target", type=int, default=2500, help="stop when the table holds this many places")
+    ap.add_argument("--target", type=int, default=5000, help="stop when the table holds this many places")
     ap.add_argument("--tile", type=float, default=None, help="tile size in degrees (default 0.4 for nc, 6 for world)")
     ap.add_argument("--outside-fraction", type=float, default=0.0, help="share of places outside NC (nc region)")
     ap.add_argument("--per-tile", type=int, default=12, help="max places taken from one tile per query")

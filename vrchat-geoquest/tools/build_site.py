@@ -33,6 +33,18 @@ def fetch(s, url, tries=6):
     return None
 
 
+def encode(im, budget):
+    """Highest JPEG quality that fits the per-photo budget."""
+    data = b""
+    for q in (82, 76, 70, 64, 58, 52, 46, 40):
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=q, optimize=True, subsampling="4:2:0")
+        data = buf.getvalue()
+        if len(data) <= budget:
+            break
+    return data
+
+
 def source_url(p):
     page = p.get("page", "")
     return page if page.startswith("http") else "https://commons.wikimedia.org/wiki/" + page.replace(" ", "_")
@@ -42,7 +54,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--locations", default=os.path.join(HERE, "..", "Assets", "GeoQuest", "Data", "locations.json"))
     ap.add_argument("--out", default=os.path.join(HERE, "..", "site"))
-    ap.add_argument("--quality", type=int, default=72)
+    ap.add_argument("--max-site-mb", type=float, default=980,
+                    help="GitHub Pages sites are capped at 1 GB; photo quality adapts to fit")
     ap.add_argument("--sleep", type=float, default=0.4)
     a = ap.parse_args()
 
@@ -51,6 +64,12 @@ def main():
     os.makedirs(pdir, exist_ok=True)
     s = requests.Session()
     s.headers["User-Agent"] = UA
+    # Share the size budget across every photo: ~5,000 places is about 190 KB each,
+    # which is still a clean 2048x1024 street scene at JPEG quality ~55-70.
+    budget_total = a.max_site_mb * 1024 * 1024 - 8 * 1024 * 1024  # leave room for json/html
+    per_photo = min(450 * 1024, budget_total / max(1, len(locs)))
+    print(f"{len(locs)} places, about {per_photo / 1024:.0f} KB per photo")
+    used = 0
     ok = []
     for i, p in enumerate(locs):
         path = os.path.join(pdir, p.get("file") or f"{p['id']:05d}.jpg")
@@ -62,10 +81,16 @@ def main():
                 continue
             try:
                 im = Image.open(io.BytesIO(data)).convert("RGB").resize((2048, 1024), Image.LANCZOS)
-                im.save(path, "JPEG", quality=a.quality, optimize=True)
+                with open(path, "wb") as f:
+                    f.write(encode(im, per_photo))
             except Exception as e:  # corrupt / odd formats
                 print(f"skip {p['id']} ({e})")
                 continue
+        size = os.path.getsize(path)
+        if used + size > budget_total:
+            print(f"site is full at {len(ok)} places; skipping the rest")
+            break
+        used += size
         ok.append(p)
         if i % 50 == 0:
             print(f"{i + 1}/{len(locs)} photos")
@@ -90,7 +115,7 @@ def main():
 {rows}
 </table>""")
     open(os.path.join(a.out, ".nojekyll"), "w").close()
-    print(f"site ready: {len(ok)} places in {a.out}")
+    print(f"site ready: {len(ok)} places, {used / 1024 / 1024:.0f} MB of photos in {a.out}")
 
 
 if __name__ == "__main__":

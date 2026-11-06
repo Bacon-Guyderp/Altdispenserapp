@@ -6,7 +6,7 @@ the NC map, drop a pin and lock in your guess. Closer guesses score more (up to
 5,000 points a round). It plays multiplayer with a live scoreboard and saves your best score.
 
 **Places:** thousands of 360° panoramas sampled evenly across the whole state, so you get
-back roads and small towns as well as Charlotte and Raleigh. No two places are within 3 km
+back roads and small towns as well as Charlotte and Raleigh. No two places are within 2 km
 of each other. **Every place is in North Carolina.** (If you ever want trick rounds from just over
 the border, harvest with `--outside-fraction 0.25` and rebuild the map with
 `python make_nc_map.py --neighbor-towns`.) The main source is **Mapillary**
@@ -47,10 +47,12 @@ Quest memory stays flat however many places you add.
    Without a token the workflow falls back to Wikimedia Commons only, which has far fewer NC 360s.
 2. **Host the photos.** Under **Settings > Pages**, set the source to **GitHub Actions**.
    Then go to **Actions > GeoQuest photos > Run workflow**.
-   The run harvests about 2,500 places (you can raise the target), resizes each photo to
-   2048×1024 and publishes them to `https://<you>.github.io/<repo>/`. Expect about an hour on
-   the first run. Later runs reuse the published list and the cached photos, and only add more. GitHub Pages
-   sites should stay under 1 GB, which is roughly 2,500–3,000 photos at the default quality.
+   The run harvests about **5,000 places** by default, resizes each photo to 2048×1024 and
+   publishes them to `https://<you>.github.io/<repo>/`. GitHub Pages sites are capped at 1 GB,
+   so the JPEG quality adapts to fit everything: about 190 KB per photo at 5,000 places.
+   Ask for fewer places for sharper photos, or more for more variety. Past roughly 8,000 the
+   photos start looking rough. Expect 1–2 hours on the first run. Later runs reuse the published
+   list and the cached photos, and only add more.
    Photos are hosted on `github.io` because it's on VRChat's trusted image-host list, so
    players don't need *Allow Untrusted URLs*.
 3. **Unity project.** Create a world project in the VRChat Creator Companion

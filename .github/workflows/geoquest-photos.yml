@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: "How many places"
-        default: "2500"
+        description: "How many places (photo quality adapts to fit GitHub Pages' 1 GB)"
+        default: "5000"
       reharvest:
         description: "Start the place list from scratch"
         type: boolean

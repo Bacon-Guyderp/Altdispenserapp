@@ -4,7 +4,7 @@ Mapillary imagery is CC BY-SA 4.0 and has lots of 360° coverage along NC roads,
 which is exactly what a GeoGuessr-style game wants. Needs a free client token:
   mapillary.com/dashboard/developers  ->  register an app  ->  copy the "Client Token" (MLY|...)
   export MAPILLARY_TOKEN='MLY|...'
-  python harvest_mapillary.py --target 2500
+  python harvest_mapillary.py --target 5000
 
 Points are sampled uniformly over the state (so you get back roads and small towns,
 not just Charlotte), and no two places are closer than --min-spacing-km.
@@ -40,10 +40,10 @@ def query(s, token, lat, lon, half):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", type=int, default=2500)
+    ap.add_argument("--target", type=int, default=5000)
     ap.add_argument("--outside-fraction", type=float, default=0.0,
                     help="share of places from neighbouring states inside the map area")
-    ap.add_argument("--min-spacing-km", type=float, default=3.0)
+    ap.add_argument("--min-spacing-km", type=float, default=2.0)
     ap.add_argument("--search-km", type=float, default=4.0, help="half-size of each search box")
     ap.add_argument("--sleep", type=float, default=0.15)
     ap.add_argument("--seed", type=int, default=1)
