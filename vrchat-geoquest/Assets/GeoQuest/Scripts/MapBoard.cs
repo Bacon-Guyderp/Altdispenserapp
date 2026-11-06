@@ -133,6 +133,17 @@ public class MapBoard : UdonSharpBehaviour
         return uv.x >= 0f && uv.x <= 1f && uv.y >= 0f && uv.y <= 1f;
     }
 
+    /// <summary>Set your pin from somewhere else (e.g. a pin dropped on the floor map).</summary>
+    public void PlacePinAt(float lat, float lon)
+    {
+        if (game == null || !game.CanPlacePin()) return;
+        pinLat = Mathf.Clamp(lat, minLat, maxLat);
+        pinLon = Mathf.Clamp(lon, minLon, maxLon);
+        hasPin = true;
+        RefreshPins();
+        game.OnPinPlaced();
+    }
+
     // ---------------------------------------------------------------- view maths
 
     private Vector2 ViewToTex(Vector2 uv)

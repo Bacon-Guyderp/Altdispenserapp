@@ -163,17 +163,19 @@ public class GeoQuestWorldBuilder : EditorWindow
         // ---- floor: invisible walkable area plus a small visible disc
         var floor = new GameObject("Floor");
         floor.transform.SetParent(root.transform, false);
-        floor.transform.localPosition = new Vector3(0, -0.05f, 0);
-        floor.AddComponent<BoxCollider>().size = new Vector3(7f, 0.1f, 7f);
-        Prim(PrimitiveType.Cylinder, "FloorDisc", root.transform, new Vector3(0, -0.005f, 0.3f), new Vector3(3.2f, 0.005f, 3.2f), cFloor, false);
+        // Play area: z from about -5.6 (behind the floor map) to +2 (the map table).
+        floor.transform.localPosition = new Vector3(0, -0.05f, -1.8f);
+        floor.AddComponent<BoxCollider>().size = new Vector3(9f, 0.1f, 8f);
+        Prim(PrimitiveType.Cylinder, "FloorDisc", root.transform, new Vector3(0, -0.005f, 0.1f), new Vector3(3.6f, 0.005f, 3.6f), cFloor, false);
         // invisible walls so nobody walks off into the photo
         for (int i = 0; i < 4; i++)
         {
             var w = new GameObject("Wall" + i);
             w.transform.SetParent(root.transform, false);
             w.transform.localRotation = Quaternion.Euler(0, i * 90, 0);
-            w.transform.localPosition = w.transform.localRotation * new Vector3(0, 1.5f, 1.8f) + new Vector3(0, 0, 0.3f);
-            w.AddComponent<BoxCollider>().size = new Vector3(4f, 3f, 0.1f);
+            float half = i % 2 == 0 ? 3.9f : 4.4f;
+            w.transform.localPosition = w.transform.localRotation * new Vector3(0, 1.5f, half) + new Vector3(0, 0, -1.8f);
+            w.AddComponent<BoxCollider>().size = new Vector3(i % 2 == 0 ? 9f : 8f, 3f, 0.1f);
         }
 
         var spawn = new GameObject("Spawn").transform;
@@ -257,6 +259,79 @@ public class GeoQuestWorldBuilder : EditorWindow
         var nextBtn = Button("Next round", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.NextRound));
         var lobbyBtn = Button("Quit to lobby", mapRoot, Bp(0.75f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.BackToLobby));
 
+        // ---- big NC floor map behind the spawn, with grabbable pins
+        const float FW = 6f, FH = 3f;
+        var floorMap = new GameObject("FloorMap").transform;
+        floorMap.SetParent(root.transform, false);
+        floorMap.localPosition = new Vector3(0, 0.004f, -3.9f);   // local x = east, local z = north
+        var fm = Prim(PrimitiveType.Quad, "MapSurface", floorMap, Vector3.zero, new Vector3(FW, FH, 1f), mapMat, false);
+        fm.transform.localRotation = Quaternion.Euler(90f, 0, 0);
+        Prim(PrimitiveType.Cube, "Border", floorMap, new Vector3(0, -0.006f, 0), new Vector3(FW + 0.2f, 0.004f, FH + 0.2f), cFrame, false);
+        var floorLabel = Text("Hint", floorMap, new Vector3(0, 0.01f, -FH / 2 - 0.25f), new Vector2(4f, 0.3f), 1.2f, fontMat,
+            "Grab a pin from the rack and drop it on the map to guess");
+        floorLabel.transform.localRotation = Quaternion.Euler(90f, 0, 0);
+        var cBeam = Mat("AnswerBeam", ColorShader(), new Color(1f, 0.15f, 0.15f));
+        var beam = new GameObject("AnswerBeam").transform;
+        beam.SetParent(root.transform, false);
+        Prim(PrimitiveType.Cylinder, "Beam", beam, new Vector3(0, 1.2f, 0), new Vector3(0.05f, 1.2f, 0.05f), cBeam, false);
+        Prim(PrimitiveType.Sphere, "Spot", beam, Vector3.zero, new Vector3(0.18f, 0.02f, 0.18f), cBeam, false);
+        beam.gameObject.SetActive(false);
+        mgr.floorMap = floorMap;
+        mgr.floorMapWidth = FW;
+        mgr.floorMapHeight = FH;
+        mgr.floorAnswerBeam = beam;
+        mgr.gameArea = spawn;
+
+        var rackRoot = new GameObject("PinRack").transform;
+        rackRoot.SetParent(root.transform, false);
+        rackRoot.localPosition = new Vector3(3.7f, 0, -3.9f);
+        rackRoot.localRotation = Quaternion.Euler(0, -90f, 0);
+        Prim(PrimitiveType.Cube, "Table", rackRoot, new Vector3(0, 0.42f, 0), new Vector3(1.4f, 0.84f, 0.45f), cFrame, false)
+            .AddComponent<BoxCollider>();
+        var rack = rackRoot.gameObject.AddComponent<GeoPinRack>();
+        Setup(rack);
+        Color[] pinColors = { new Color(0.95f, 0.25f, 0.25f), new Color(0.25f, 0.55f, 1f), new Color(0.3f, 0.85f, 0.35f),
+                              new Color(1f, 0.8f, 0.2f), new Color(0.75f, 0.4f, 0.95f), new Color(1f, 0.5f, 0.15f) };
+        var cNeedle = Mat("PinNeedle", ColorShader(), new Color(0.8f, 0.8f, 0.85f));
+        const int PinCount = 12;
+        var syncs = new VRCObjectSync[PinCount];
+        for (int i = 0; i < PinCount; i++)
+        {
+            var pin = new GameObject("FloorPin" + i);
+            pin.transform.SetParent(rackRoot, false);
+            pin.transform.localPosition = new Vector3(-0.6f + i * 0.11f, 0.86f, 0);
+            var cHead = Mat("PinHead" + (i % pinColors.Length), ColorShader(), pinColors[i % pinColors.Length]);
+            Prim(PrimitiveType.Cylinder, "Needle", pin.transform, new Vector3(0, 0.07f, 0), new Vector3(0.012f, 0.07f, 0.012f), cNeedle, false);
+            Prim(PrimitiveType.Sphere, "Head", pin.transform, new Vector3(0, 0.17f, 0), Vector3.one * 0.07f, cHead, false);
+            var col = pin.AddComponent<BoxCollider>();
+            col.center = new Vector3(0, 0.1f, 0);
+            col.size = new Vector3(0.07f, 0.2f, 0.07f);
+            var rb = pin.AddComponent<Rigidbody>();
+            rb.mass = 0.1f;
+            rb.useGravity = true;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;   // pins land standing up
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            var pickup = pin.AddComponent<VRCPickup>();
+            pickup.InteractionText = "Pin";
+            pickup.AutoHold = VRC.SDKBase.VRC_Pickup.AutoHoldMode.No;
+            syncs[i] = pin.AddComponent<VRCObjectSync>();
+            var fp = pin.AddComponent<GeoFloorPin>();
+            Setup(fp);
+            fp.game = mgr;
+            fp.floorMap = floorMap;
+            fp.width = FW;
+            fp.height = FH;
+        }
+        rack.pins = syncs;
+        Button("Reset pins", rackRoot, new Vector3(0, 1.15f, 0.1f), new Vector3(0.36f, 0.12f, 0.05f), cWarn, fontMat, rack, nameof(GeoPinRack.ResetPins))
+            .transform.localRotation = Quaternion.Euler(0, 180f, 0);
+
+        // ---- hangout room, far away (beyond the 500 m view distance) so neither area can see the other
+        var hangSpawn = BuildHangout(root.transform, new Vector3(2000f, 0, 0), spawn, mapMat, fontMat, cBtn, cGo, cWarn);
+        var toHang = Button("Hangout", root.transform, new Vector3(-2.6f, 1.1f, -0.6f), new Vector3(0.45f, 0.18f, 0.06f), cBtn, fontMat, null, "");
+        toHang.transform.localRotation = Quaternion.Euler(0, -60f, 0);
+        TeleportButton(toHang, hangSpawn);
+
         // ---- player objects (one PlayerGuess per player)
         var tmplGo = new GameObject("PlayerGuess (per player)");
         tmplGo.transform.SetParent(root.transform, false);
@@ -323,13 +398,13 @@ public class GeoQuestWorldBuilder : EditorWindow
         }
 
         foreach (var b in new UdonSharpBehaviour[] { mgr, map, tmpl }) Sync(b);
-        foreach (var b in root.GetComponentsInChildren<GeoButton>(true)) Sync(b);
+        foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
 
         // start states
         foreach (var g in mgr.guessObjects.Concat(mgr.revealObjects)) g.SetActive(false);
         myPin.SetActive(false); answerPin.SetActive(false); hover.SetActive(false);
 
-        SetupDescriptor(spawn);
+        SetupDescriptor(hangSpawn);  // people arrive in the hangout; a button takes them to the game
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = Color.white;
@@ -459,6 +534,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         Prim(PrimitiveType.Cube, "Visual", go.transform, Vector3.zero, size, mat, false);
         var t = Text("Label", go.transform, new Vector3(0, 0, -size.z / 2 - 0.002f), new Vector2(size.x * 0.95f, size.y * 0.9f), 0.45f, fontMat, label);
         t.color = Color.white;
+        if (target == null) return go;  // caller adds its own behaviour
         var b = go.AddComponent<GeoButton>();
         Setup(b);
         b.target = target;
@@ -470,6 +546,193 @@ public class GeoQuestWorldBuilder : EditorWindow
             udon.proximity = 4f;
         }
         return go;
+    }
+
+    static void TeleportButton(GameObject button, Transform destination)
+    {
+        var t = button.AddComponent<GeoTeleporter>();
+        Setup(t);
+        t.destination = destination;
+        var udon = Backing(t);
+        if (udon != null) { udon.interactText = "Go"; udon.proximity = 4f; }
+    }
+
+    /// <summary>Cozy enclosed room with a synced TV. Returns its spawn point.</summary>
+    static Transform BuildHangout(Transform parent, Vector3 at, Transform gameSpawn, Material mapMat, Material fontMat,
+                                  Material cBtn, Material cGo, Material cWarn)
+    {
+        var room = new GameObject("Hangout").transform;
+        room.SetParent(parent, false);
+        room.localPosition = at;
+        var cWall = Mat("HangWall", ColorShader(), new Color(0.82f, 0.74f, 0.62f));
+        var cWood = Mat("HangFloor", ColorShader(), new Color(0.42f, 0.28f, 0.18f));
+        var cCeil = Mat("HangCeiling", ColorShader(), new Color(0.9f, 0.88f, 0.84f));
+        var cRug = Mat("HangRug", ColorShader(), new Color(0.2f, 0.32f, 0.5f));
+        var cCouch = Mat("HangCouch", ColorShader(), new Color(0.18f, 0.36f, 0.3f));
+        var cDark = Mat("HangDark", ColorShader(), new Color(0.04f, 0.04f, 0.05f));
+        const float RW = 12f, RD = 10f, RH = 3.6f;
+
+        Prim(PrimitiveType.Cube, "Floor", room, new Vector3(0, -0.1f, 0), new Vector3(RW, 0.2f, RD), cWood, true);
+        Prim(PrimitiveType.Cube, "Ceiling", room, new Vector3(0, RH + 0.1f, 0), new Vector3(RW, 0.2f, RD), cCeil, true);
+        Prim(PrimitiveType.Cube, "WallN", room, new Vector3(0, RH / 2, RD / 2 + 0.1f), new Vector3(RW, RH, 0.2f), cWall, true);
+        Prim(PrimitiveType.Cube, "WallS", room, new Vector3(0, RH / 2, -RD / 2 - 0.1f), new Vector3(RW, RH, 0.2f), cWall, true);
+        Prim(PrimitiveType.Cube, "WallE", room, new Vector3(RW / 2 + 0.1f, RH / 2, 0), new Vector3(0.2f, RH, RD), cWall, true);
+        Prim(PrimitiveType.Cube, "WallW", room, new Vector3(-RW / 2 - 0.1f, RH / 2, 0), new Vector3(0.2f, RH, RD), cWall, true);
+        Prim(PrimitiveType.Cube, "Rug", room, new Vector3(0, 0.005f, 0.5f), new Vector3(5f, 0.01f, 4f), cRug, false);
+
+        // couches facing the TV (north wall)
+        foreach (var x in new[] { -2.2f, 2.2f })
+        {
+            var c = new GameObject("Couch").transform;
+            c.SetParent(room, false);
+            c.localPosition = new Vector3(x, 0, -1.2f);
+            Prim(PrimitiveType.Cube, "Seat", c, new Vector3(0, 0.22f, 0), new Vector3(2.2f, 0.44f, 0.9f), cCouch, true);
+            Prim(PrimitiveType.Cube, "Back", c, new Vector3(0, 0.6f, -0.38f), new Vector3(2.2f, 0.8f, 0.2f), cCouch, true);
+        }
+
+        // decorative NC map on the west wall
+        var wallMap = Prim(PrimitiveType.Quad, "WallMap", room, new Vector3(-RW / 2 + 0.02f, 1.8f, 0), new Vector3(4f, 2f, 1f), mapMat, false);
+        wallMap.transform.localRotation = Quaternion.Euler(0, -90f, 0);
+
+        // ---- TV
+        var tvRoot = new GameObject("TV").transform;
+        tvRoot.SetParent(room, false);
+        tvRoot.localPosition = new Vector3(0, 1.75f, RD / 2 - 0.05f);
+        Prim(PrimitiveType.Cube, "Bezel", tvRoot, new Vector3(0, 0, 0.02f), new Vector3(3.4f, 1.95f, 0.06f), cDark, false);
+        var screenMat = Mat("TVScreen", Shader.Find("Unlit/Texture"), Color.white);
+        var tvScreen = Prim(PrimitiveType.Quad, "Screen", tvRoot, new Vector3(0, 0, -0.015f), new Vector3(3.2f, 1.8f, 1f), screenMat, false);
+        var off = Prim(PrimitiveType.Quad, "OffScreen", tvRoot, new Vector3(0, 0, -0.02f), new Vector3(3.2f, 1.8f, 1f), cDark, false);
+        Text("Logo", off.transform, new Vector3(0, 0, -0.01f), new Vector2(0.9f, 0.3f), 0.12f, fontMat, "GeoQuest TV")
+            .transform.localScale = new Vector3(1f / 3.2f, 1f / 1.8f, 1f);
+
+        var playerGo = new GameObject("VideoPlayer");
+        playerGo.transform.SetParent(tvRoot, false);
+        var player = playerGo.AddComponent<VRC.SDK3.Video.Components.AVPro.VRCAVProVideoPlayer>();
+        SetRefs(player, "autoplay", false);
+        var screenComp = tvScreen.AddComponent<VRC.SDK3.Video.Components.AVPro.VRCAVProVideoScreen>();
+        SetObjectRefs(screenComp, player);
+        var speakers = new AudioSource[2];
+        for (int i = 0; i < 2; i++)
+        {
+            var sp = new GameObject(i == 0 ? "SpeakerL" : "SpeakerR");
+            sp.transform.SetParent(tvRoot, false);
+            sp.transform.localPosition = new Vector3(i == 0 ? -1.9f : 1.9f, 0, 0);
+            var a = sp.AddComponent<AudioSource>();
+            a.spatialBlend = 1f;
+            a.minDistance = 6f;
+            a.maxDistance = 20f;
+            a.rolloffMode = AudioRolloffMode.Linear;
+            a.playOnAwake = false;
+            a.volume = 0.6f;
+            speakers[i] = a;
+            var vs = sp.AddComponent<VRC.SDK3.Video.Components.AVPro.VRCAVProVideoSpeaker>();
+            SetObjectRefs(vs, player);
+            Prim(PrimitiveType.Cube, "Box", sp.transform, Vector3.zero, new Vector3(0.3f, 0.6f, 0.25f), cDark, false);
+        }
+        var tvStatus = Text("Status", tvRoot, new Vector3(0, -1.1f, -0.05f), new Vector2(3.2f, 0.18f), 0.9f, fontMat, "Paste a video link below");
+
+        var tv = tvRoot.gameObject.AddComponent<GeoTV>();
+        Setup(tv);
+        tv.player = player;
+        tv.speakers = speakers;
+        tv.statusText = tvStatus;
+        tv.screenOff = off;
+
+        // URL box + controls on a little stand in front of the couches
+        var stand = new GameObject("TVControls").transform;
+        stand.SetParent(room, false);
+        stand.localPosition = new Vector3(0, 0, 1.6f);
+        Prim(PrimitiveType.Cube, "Stand", stand, new Vector3(0, 0.42f, 0.05f), new Vector3(1.6f, 0.84f, 0.1f), cDark, true);
+        tv.urlField = UrlBox(stand, new Vector3(0, 0.95f, -0.02f), tv);
+        var bs = new Vector3(0.34f, 0.12f, 0.05f);
+        Button("Play/Pause", stand, new Vector3(-0.58f, 0.7f, -0.03f), bs, cGo, fontMat, tv, nameof(GeoTV.TogglePause));
+        Button("Stop", stand, new Vector3(-0.2f, 0.7f, -0.03f), bs, cWarn, fontMat, tv, nameof(GeoTV.StopVideo));
+        Button("Vol -", stand, new Vector3(0.2f, 0.7f, -0.03f), bs, cBtn, fontMat, tv, nameof(GeoTV.VolumeDown));
+        Button("Vol +", stand, new Vector3(0.58f, 0.7f, -0.03f), bs, cBtn, fontMat, tv, nameof(GeoTV.VolumeUp));
+
+        // spawn + door to the game
+        var spawn = new GameObject("HangoutSpawn").transform;
+        spawn.SetParent(room, false);
+        spawn.localPosition = new Vector3(0, 0, -3.6f);
+        var play = Button("Play GeoQuest", room, new Vector3(-RW / 2 + 0.06f, 1.3f, -2.5f), new Vector3(0.9f, 0.3f, 0.08f), cGo, fontMat, null, "");
+        play.transform.localRotation = Quaternion.Euler(0, -90f, 0);
+        TeleportButton(play, gameSpawn);
+        return spawn;
+    }
+
+    /// <summary>World-space canvas with VRChat's URL input field, wired to GeoTV.OnUrlEntered.</summary>
+    static VRCUrlInputField UrlBox(Transform parent, Vector3 pos, GeoTV tv)
+    {
+        var canvasGo = new GameObject("UrlCanvas", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.GraphicRaycaster));
+        canvasGo.transform.SetParent(parent, false);
+        var crt = (RectTransform)canvasGo.transform;
+        canvasGo.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+        crt.sizeDelta = new Vector2(750, 70);
+        crt.localPosition = pos;
+        crt.localScale = Vector3.one * 0.002f;
+        var shape = FindType("VRCUiShape");
+        if (shape != null) canvasGo.AddComponent(shape);
+
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        var fieldGo = new GameObject("UrlField", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+        fieldGo.transform.SetParent(canvasGo.transform, false);
+        var frt = (RectTransform)fieldGo.transform;
+        frt.anchorMin = Vector2.zero; frt.anchorMax = Vector2.one; frt.offsetMin = frt.offsetMax = Vector2.zero;
+        fieldGo.GetComponent<UnityEngine.UI.Image>().color = new Color(0.95f, 0.95f, 0.95f);
+        UnityEngine.UI.Text MakeText(string name, string s, Color c)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Text));
+            go.transform.SetParent(fieldGo.transform, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(14, 6); rt.offsetMax = new Vector2(-14, -6);
+            var t = go.GetComponent<UnityEngine.UI.Text>();
+            t.font = font; t.fontSize = 34; t.color = c; t.text = s;
+            t.alignment = TextAnchor.MiddleLeft; t.supportRichText = false;
+            return t;
+        }
+        var placeholder = MakeText("Placeholder", "Paste a video URL here, then press Enter", new Color(0.4f, 0.4f, 0.4f));
+        var text = MakeText("Text", "", Color.black);
+        var field = fieldGo.AddComponent<VRCUrlInputField>();
+        if ((field as Component) is UnityEngine.UI.InputField input)
+        {
+            input.textComponent = text;
+            input.placeholder = placeholder;
+            input.lineType = UnityEngine.UI.InputField.LineType.SingleLine;
+            var udon = Backing(tv);
+            if (udon != null)
+                UnityEditor.Events.UnityEventTools.AddStringPersistentListener(input.onEndEdit, udon.SendCustomEvent, nameof(GeoTV.OnUrlEntered));
+        }
+        else
+        {
+            var so = new SerializedObject(field);
+            var p1 = so.FindProperty("m_TextComponent"); if (p1 != null) p1.objectReferenceValue = text;
+            var p2 = so.FindProperty("m_Placeholder"); if (p2 != null) p2.objectReferenceValue = placeholder;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.LogWarning("GeoQuest: hook the URL field's 'On End Edit' to GeoTV > SendCustomEvent(\"OnUrlEntered\") by hand.");
+        }
+        return field;
+    }
+
+    /// <summary>Points every video-player reference on an SDK component at the given player.</summary>
+    static void SetObjectRefs(Component c, Object player)
+    {
+        var so = new SerializedObject(c);
+        var it = so.GetIterator();
+        while (it.NextVisible(true))
+            if (it.propertyType == SerializedPropertyType.ObjectReference && it.name.ToLower().Contains("videoplayer"))
+                it.objectReferenceValue = player;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    static void SetRefs(Component c, string boolName, bool value)
+    {
+        var so = new SerializedObject(c);
+        var it = so.GetIterator();
+        while (it.NextVisible(true))
+            if (it.propertyType == SerializedPropertyType.Boolean && it.name.ToLower().Contains(boolName))
+                it.boolValue = value;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     void SetupDescriptor(Transform spawn)
@@ -496,7 +759,8 @@ public class GeoQuestWorldBuilder : EditorWindow
 
     // ------------------------------------------------------------------ UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "GeoGameManager", "MapBoard", "PlayerGuess", "GeoButton" };
+    static readonly string[] Scripts = { "GeoGameManager", "MapBoard", "PlayerGuess", "GeoButton",
+                                         "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV" };
 
     static bool EnsureProgramAssets()
     {

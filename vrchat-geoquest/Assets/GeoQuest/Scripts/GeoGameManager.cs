@@ -36,6 +36,13 @@ public class GeoGameManager : UdonSharpBehaviour
     public Material screenMaterial;
     public float screenHeight = 3f;
     public float screenMaxWidth = 6.4f;
+    [Tooltip("Big floor map (unscaled root, local x = east, z = north) and the beam that marks the answer on it.")]
+    public Transform floorMap;
+    public float floorMapWidth = 6f, floorMapHeight = 3f;
+    public Transform floorAnswerBeam;
+    [Tooltip("Only players within this distance of the game area take part (people in the hangout don't hold up rounds).")]
+    public Transform gameArea;
+    public float gameAreaRadius = 60f;
     public MapBoard map;
     public PlayerGuess guessTemplate;
     public TextMeshPro statusText;
@@ -115,6 +122,12 @@ public class GeoGameManager : UdonSharpBehaviour
         if (_local == null && guessTemplate != null && Networking.LocalPlayer != null)
             _local = (PlayerGuess)Networking.FindComponentInPlayerObjects(Networking.LocalPlayer, guessTemplate);
         return _local;
+    }
+
+    private bool InGame(VRCPlayerApi p)
+    {
+        if (gameArea == null) return true;
+        return (p.GetPosition() - gameArea.position).sqrMagnitude < gameAreaRadius * gameAreaRadius;
     }
 
     private PlayerGuess GuessOf(VRCPlayerApi p)
@@ -339,7 +352,9 @@ public class GeoGameManager : UdonSharpBehaviour
         {
             if (g != null) g.BankRound(gameId, round, loc);
             if (map != null) map.ShowAnswer(lats[loc], lons[loc]);
+            PlaceFloorBeam(lats[loc], lons[loc]);
         }
+        else if (floorAnswerBeam != null) floorAnswerBeam.gameObject.SetActive(false);
         if (newStage && phase == PHASE_OVER && g != null) SaveBest(g.totalScore);
 
         _seenPhase = phase;
@@ -348,6 +363,15 @@ public class GeoGameManager : UdonSharpBehaviour
         SetActiveAll(guessObjects, phase == PHASE_GUESS);
         SetActiveAll(revealObjects, phase == PHASE_REVEAL);
         UpdateTexts();
+    }
+
+    private void PlaceFloorBeam(float lat, float lon)
+    {
+        if (floorAnswerBeam == null || floorMap == null || map == null) return;
+        float u = (lon - map.minLon) / (map.maxLon - map.minLon) - 0.5f;
+        float v = (lat - map.minLat) / (map.maxLat - map.minLat) - 0.5f;
+        floorAnswerBeam.position = floorMap.TransformPoint(new Vector3(u * floorMapWidth, 0f, v * floorMapHeight));
+        floorAnswerBeam.gameObject.SetActive(true);
     }
 
     private void SetActiveAll(GameObject[] objs, bool on)
@@ -383,6 +407,7 @@ public class GeoGameManager : UdonSharpBehaviour
         int guessed = 0, counted = 0;
         for (int i = 0; i < n; i++)
         {
+            if (!Utilities.IsValid(_players[i]) || !InGame(_players[i])) continue;
             PlayerGuess pg = GuessOf(_players[i]);
             if (pg == null) continue;
             counted++;
@@ -529,7 +554,7 @@ public class GeoGameManager : UdonSharpBehaviour
                 int left = Mathf.Max(0, (deadline - Now()) / 1000);
                 s += "   <b>" + (left / 60) + ":" + (left % 60).ToString("00") + "</b>";
             }
-            s += "   Guessed " + CountGuessed() + "/" + VRCPlayerApi.GetPlayerCount();
+            s += "   Guessed " + CountGuessed() + "/" + CountInGame();
             if (_loading) s += "\n<color=#ffd060>Loading photo...</color>";
             else if (_loadFailed) s += "\n<color=#ff8080>Photo failed to load. Enable 'Allow Untrusted URLs' or press Skip.</color>";
             else if (IsFlat(CurrentLocation())) s += "\nStudy the photo, then point at the map and pull the trigger / click.";
@@ -551,9 +576,19 @@ public class GeoGameManager : UdonSharpBehaviour
         int c = 0;
         for (int i = 0; i < n; i++)
         {
+            if (!Utilities.IsValid(_players[i]) || !InGame(_players[i])) continue;
             PlayerGuess pg = GuessOf(_players[i]);
             if (pg != null && pg.HasGuess(gameId, round, loc)) c++;
         }
+        return c;
+    }
+
+    private int CountInGame()
+    {
+        int n = VRCPlayerApi.GetPlayerCount();
+        _players = VRCPlayerApi.GetPlayers(_players);
+        int c = 0;
+        for (int i = 0; i < n; i++) if (Utilities.IsValid(_players[i]) && InGame(_players[i])) c++;
         return c;
     }
 
@@ -601,16 +636,17 @@ public class GeoGameManager : UdonSharpBehaviour
             order[j + 1] = k;
         }
 
-        int pinSlot = 0;
+        int pinSlot = 0, rank = 0;
         string s = phase == PHASE_OVER ? "<b>FINAL SCORES</b>\n" : "<b>SCORES</b>\n";
         for (int r = 0; r < n; r++)
         {
             int i = order[r];
             VRCPlayerApi p = _players[i];
-            if (!Utilities.IsValid(p)) continue;
+            if (!Utilities.IsValid(p) || !InGame(p)) continue;  // people in the hangout aren't playing
+            rank++;
             string name = p.displayName;
             if (name.Length > 16) name = name.Substring(0, 16);
-            string line = (r + 1) + ". " + name + "  " + totals[i].ToString("N0");
+            string line = rank + ". " + name + "  " + totals[i].ToString("N0");
             bool guessed = gs[i] != null && loc >= 0 && gs[i].HasGuess(gameId, round, loc);
             if (phase == PHASE_GUESS && guessed) line += "  <color=#80ff80>(guessed)</color>";
             if (phase == PHASE_REVEAL && guessed)
@@ -623,7 +659,7 @@ public class GeoGameManager : UdonSharpBehaviour
                 }
             }
             if (p.isLocal) line = "<color=#80d0ff>" + line + "</color>";
-            if (r < 14) s += line + "\n";
+            if (rank <= 14) s += line + "\n";
         }
         if (map != null)
         {
