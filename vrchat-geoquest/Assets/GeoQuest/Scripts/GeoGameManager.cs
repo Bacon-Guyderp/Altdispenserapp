@@ -34,8 +34,8 @@ public class GeoGameManager : UdonSharpBehaviour
     [Tooltip("Big screen that shows flat (non-360) photos.")]
     public Transform photoScreen;
     public Material screenMaterial;
-    public float screenHeight = 3f;
-    public float screenMaxWidth = 6.4f;
+    public float screenHeight = 3.8f;
+    public float screenMaxWidth = 7.6f;
     [Tooltip("Big floor map (unscaled root, local x = east, z = north) and the beam that marks the answer on it.")]
     public Transform floorMap;
     public float floorMapWidth = 6f, floorMapHeight = 3f;
