@@ -24,18 +24,20 @@ def thin(places, keep):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--max-per-county", type=int, default=200)
+    ap.add_argument("--max-per-county", type=int, default=200, help="cap for 360° places")
+    ap.add_argument("--max-flat-per-county", type=int, default=30, help="cap for flat photos")
     ap.add_argument("--file", default=DEFAULT_LOCATIONS)
     a = ap.parse_args()
     locs = load_locations(a.file)
     groups = collections.defaultdict(list)
     for p in locs:
-        groups[p.get("country") or "?"].append(p)
+        groups[(p.get("kind", "pano"), p.get("country") or "?")].append(p)
     out = []
-    for name, ps in groups.items():
-        if len(ps) > a.max_per_county:
-            print(f"{name}: {len(ps)} -> {a.max_per_county}")
-            ps = thin(ps, a.max_per_county)
+    for (kind, name), ps in groups.items():
+        cap = a.max_flat_per_county if kind == "flat" else a.max_per_county
+        if len(ps) > cap:
+            print(f"{name} ({kind}): {len(ps)} -> {cap}")
+            ps = thin(ps, cap)
         out.extend(ps)
     out.sort(key=lambda p: p["key"])
     save_locations(a.file, out)

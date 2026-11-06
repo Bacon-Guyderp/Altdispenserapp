@@ -5,15 +5,18 @@ from the Blue Ridge to the Outer Banks. Look around, point at
 the NC map, drop a pin and lock in your guess. Closer guesses score more (up to
 5,000 points a round). It plays multiplayer with a live scoreboard and saves your best score.
 
-**Places:** 3,051 real 360° street-level photos are already harvested and committed
-(`Assets/GeoQuest/Data/locations.json`). They cover the 44 NC counties where Mapillary has
-360° imagery, capped at 200 per county so Raleigh/Cary don't take over. They were sampled
-evenly across the whole state, so you get
-back roads and small towns as well as Charlotte and Raleigh. No two places are within 0.8 km
-of each other. **Every place is in North Carolina.** (If you ever want trick rounds from just over
-the border, harvest with `--outside-fraction 0.25` and rebuild the map with
-`python make_nc_map.py --neighbor-towns`.) The main source is **Mapillary**
-street-level imagery (CC BY-SA), topped up with Wikimedia Commons.
+**Places:** two kinds, both from Mapillary street-level imagery (CC BY-SA), and **every place is in
+North Carolina**. Both lists are already harvested and committed in `Assets/GeoQuest/Data/locations.json`.
+* **360° photos** (3,051): you stand inside the photo and can look all around. Mapillary only has
+  360° imagery in 44 NC counties, mostly along I-40, I-77, I-95, US-17, the Outer Banks, Asheville and
+  Raleigh/Cary. Each county is capped at 200 places so Wake doesn't take over.
+* **Flat photos** (regular road photos, up to 30 per county, at least 2 km apart): shown on a big
+  screen in front of the map. These cover nearly every county, including Boone, Johnston and Duplin,
+  which have no 360° imagery at all.
+
+The **Photo type** button in the lobby cycles **Mixed**, **360° only** and **Flat only**.
+`coverage.png` shows where the 360° places are. (For trick rounds from just over the border, harvest
+with `--outside-fraction 0.25` and rebuild the map with `python make_nc_map.py --neighbor-towns`.)
 
 **The map** is a county map of NC (`Assets/GeoQuest/Textures/NCMap.png`) with about 40 towns marked, and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
 roughly 4,500 points at 10 km, 2,900 at 50 km and 500 at 200 km. The reveal tells you the
@@ -73,7 +76,8 @@ Quest memory stays flat however many places you add.
 You can re-run **Build World** whenever you harvest more places. It replaces the old `GeoQuest` object.
 
 ## How to play
-* Press **START**. **Rounds** cycles 3/5/10 and **Timer** cycles off, 30s, 60s, 120s, 180s and 300s.
+* Press **START**. **Rounds** cycles 3/5/10, **Timer** cycles off, 30s, 60s, 120s, 180s and 300s, and
+  **Photo type** cycles Mixed, 360° only and Flat only.
 * VR: point a controller at the map and pull the trigger. Desktop: aim the screen centre at the map and click.
 * Use **Zoom +** (it centres on your pin), **Zoom -** and the arrow buttons to place your pin precisely, then press **GUESS!**.
 * The round ends when everyone has guessed or the timer runs out. The reveal shows the real spot,
