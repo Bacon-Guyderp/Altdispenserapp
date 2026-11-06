@@ -68,7 +68,7 @@ jobs:
         run: |
           if [ -n "$MAPILLARY_TOKEN" ]; then
             python harvest_mapillary.py --target "${{ inputs.target }}"
-            python harvest_mapillary.py --kind flat --target 3000 --max-per-county 30 --min-spacing-km 2 --per-tile 1
+            python harvest_mapillary.py --kind flat --target 6000 --max-per-county 60 --min-spacing-km 1.5 --per-tile 2
           else
             echo "::warning::MAPILLARY_TOKEN secret not set; using Wikimedia Commons only (far fewer NC places)."
           fi

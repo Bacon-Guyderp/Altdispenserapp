@@ -25,7 +25,7 @@ def thin(places, keep):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-per-county", type=int, default=200, help="cap for 360° places")
-    ap.add_argument("--max-flat-per-county", type=int, default=30, help="cap for flat photos")
+    ap.add_argument("--max-flat-per-county", type=int, default=60, help="cap for flat photos")
     ap.add_argument("--file", default=DEFAULT_LOCATIONS)
     a = ap.parse_args()
     locs = load_locations(a.file)

@@ -90,7 +90,7 @@ def main():
             try:
                 im = Image.open(io.BytesIO(data)).convert("RGB")
                 if p.get("kind") == "flat":
-                    im.thumbnail((1600, 1600), Image.LANCZOS)  # keeps its aspect; shown on a screen
+                    im.thumbnail((1280, 1280), Image.LANCZOS)  # keeps its aspect; shown on a screen
                 else:
                     im = im.resize((2048, 1024), Image.LANCZOS)
                 with open(path, "wb") as f:
