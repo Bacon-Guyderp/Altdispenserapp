@@ -1,0 +1,102 @@
+name: GeoQuest photos
+
+# Harvests 360° panoramas around North Carolina (Mapillary street-level imagery,
+# topped up with Wikimedia Commons), re-hosts them on GitHub Pages (a VRChat-trusted
+# image host) and publishes locations.json for the Unity builder.
+#
+# One-time setup:
+#   * Settings > Pages > Source: "GitHub Actions"
+#   * Settings > Secrets and variables > Actions > New secret MAPILLARY_TOKEN
+#     (free client token from https://www.mapillary.com/dashboard/developers)
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "How many places (photo quality adapts to fit GitHub Pages' 1 GB)"
+        default: "5000"
+      harvest_more:
+        description: "Search Mapillary + Commons for more places (slow: ~1 hour)"
+        type: boolean
+        default: false
+      reharvest:
+        description: "Start the place list from scratch (implies harvest_more)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: geoquest-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    defaults:
+      run:
+        working-directory: vrchat-geoquest/tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Restore photo cache
+        uses: actions/cache@v4
+        with:
+          path: vrchat-geoquest/site/p
+          key: geoquest-photos-${{ github.run_id }}
+          restore-keys: geoquest-photos-
+      - name: Start from the newest place list
+        if: ${{ !inputs.reharvest }}
+        run: |
+          # The committed list is used unless the Pages site already has a newer one.
+          url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/locations.json"
+          if curl -fsSL "$url" -o /tmp/published.json; then cp /tmp/published.json ../Assets/GeoQuest/Data/locations.json; else echo "no earlier list at $url; using the committed one"; fi
+          # Mapillary photo links expire; anything already in the cache doesn't need them.
+      - name: Forget the old list
+        if: ${{ inputs.reharvest }}
+        run: rm -f ../Assets/GeoQuest/Data/locations.json
+      - name: Harvest Mapillary (street-level 360s)
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+        run: |
+          if [ -n "$MAPILLARY_TOKEN" ]; then
+            python harvest_mapillary.py --target "${{ inputs.target }}"
+            python harvest_mapillary.py --kind flat --target 6000 --max-per-county 60 --min-spacing-km 1.5 --per-tile 2
+          else
+            echo "::warning::MAPILLARY_TOKEN secret not set; using Wikimedia Commons only (far fewer NC places)."
+          fi
+      - name: Top up from Wikimedia Commons
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
+        run: python harvest_commons.py --region nc --target "${{ inputs.target }}" || echo "::warning::Commons harvest stopped early"
+      - name: Keep any one county from dominating
+        if: ${{ inputs.harvest_more || inputs.reharvest }}
+        run: python balance_counties.py --max-per-county 200
+      - name: Download + resize photos
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+        run: python build_site.py
+      - name: Build GeoQuestNC.unitypackage (published next to the photos)
+        run: |
+          # Package the list of places whose photos actually published, plus this site's address.
+          cp ../site/locations.json ../Assets/GeoQuest/Data/locations.json
+          echo "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/p/" > ../Assets/GeoQuest/Data/photo_base_url.txt
+          python make_unitypackage.py --out ../site/GeoQuestNC.unitypackage
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: vrchat-geoquest/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
