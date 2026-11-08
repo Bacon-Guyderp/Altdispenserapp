@@ -65,14 +65,14 @@ Quest memory stays flat however many places you add.
    Photos are hosted on `github.io` because it's on VRChat's trusted image-host list, so
    players don't need *Allow Untrusted URLs*.
 3. **Unity project.** Create a world project in the VRChat Creator Companion
-   (Worlds SDK **3.7.0 or newer**, which is needed for Player Objects and persistence). Import TMP
-   Essentials from **Window > TextMeshPro > Import TMP Essential Resources**. Then import
-   **`GeoQuestNC.unitypackage`** (**Assets > Import Package > Custom Package**). Each workflow run
-   publishes a fresh one at `https://<you>.github.io/<repo>/GeoQuestNC.unitypackage`, packed with
-   the current place list and your photo site's address. To build it locally, run
-   `python tools/make_unitypackage.py`.
-4. **Build the world.** Open **GeoQuest > Build World**. The photo URL is already filled in from
-   the package, so press **Build World**, then save the scene.
+   (Worlds SDK **3.7.0 or newer**, which is needed for Player Objects and persistence). Import
+   **`GeoQuestNC.unitypackage`** with **Assets > Import Package > Custom Package**. Each workflow
+   run publishes a fresh one at `https://<you>.github.io/<repo>/GeoQuestNC.unitypackage`, and you can
+   build one locally with `python tools/make_unitypackage.py`.
+4. **One-click setup.** After the import, Unity asks **"Set up GeoQuest now?"**. Click
+   **Set it up**, or use **GeoQuest > One-Click Setup** later. It imports TextMeshPro's
+   essentials, creates the scene **`Assets/GeoQuest/GeoQuest NC.unity`** with the whole world built
+   in, saves it and adds it to Build Settings. The photo address is already filled in.
 5. **Upload.** Build & Test on PC, then switch the build target to **Android** and upload the
    same world again for Quest.
 
