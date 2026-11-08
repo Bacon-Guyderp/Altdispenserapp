@@ -35,6 +35,8 @@ public static class FirWorldBuilder
     static readonly List<int> itemChapterList = new List<int>();
     static readonly List<VRCObjectSync> carrySyncList = new List<VRCObjectSync>();
     static readonly List<UdonSharpBehaviour> allBehaviours = new List<UdonSharpBehaviour>();
+    static readonly List<FirToilet> toilets = new List<FirToilet>();
+    static FirStalker stalkerRef;
 
     class TreeParts
     {
@@ -58,7 +60,7 @@ public static class FirWorldBuilder
             return false;
         }
         if (!EnsureProgramAssets()) return false;
-        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear();
+        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); stalkerRef = null;
         Directory.CreateDirectory(Gen);
         ConfigureAssets();
 
@@ -114,6 +116,7 @@ public static class FirWorldBuilder
         // ---- wire up the collected lists
         game.items = itemList.ToArray();
         game.itemChapter = itemChapterList.ToArray();
+        foreach (var t in toilets) t.stalker = stalkerRef;
         game.carrySyncs = carrySyncList.ToArray();
         game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).ToArray();
         game.jumpscares = root.GetComponentsInChildren<FirJumpscare>(true);
@@ -180,9 +183,16 @@ public static class FirWorldBuilder
             "<b>HOW TO PLAY</b>\n\n- Press <b>START</b>. Everyone here is taken in together.\n- Each room has a goal, shown under your view.\n" +
             "- Press (use) things to pick them up. Carry hats and little trees in your hands.\n- One tree <b>only moves when nobody looks at it</b>. " +
             "Watch it while your friends search. If it reaches you, you're sent back to the start of the room.\n" +
+            "- Toilets can be picked up and thrown. A good hit stuns the hunting tree for a few seconds.\n" +
             "- Stuck? A hint appears after a few minutes.\n- Late? Press <b>Join game</b>.\n\nBest with headphones. Lights off.").color = Color.white;
         Poster(lobby, "poster_warning", new Vector3(6.98f, 1.7f, 3.6f), e, 1.1f, true);
         Poster(lobby, "poster_original", new Vector3(-6.98f, 1.7f, -4.4f), w, 1.1f, true);
+
+        // two toilets to throw about while you wait
+        Toilet(lobby, new Vector3(4.6f, 0, -5.4f), 0);
+        Toilet(lobby, new Vector3(5.8f, 0, -5.4f), 0);
+        Text("ToiletSign", lobby, new Vector3(5.2f, 1.5f, -5.98f), Face(Vector3.forward), new Vector2(1.6f, 0.4f), 0.14f,
+             "<b>Free toilets!</b>\nPick up, throw. Use to flush.").color = Color.white;
 
         // a little family of "friendly" trees by the door
         for (int i = 0; i < 3; i++)
@@ -245,6 +255,7 @@ public static class FirWorldBuilder
         Box(park, "Floor", new Vector3(0, -0.1f, 0), new Vector3(4, 0.2f, 4), M("Concrete"), true);
 
         var stalker = BuildStalker(f, park);
+        stalkerRef = stalker;
         BuildShowroom(Group(f, "1 Showroom", Vector3.zero));
         BuildStockroom(Group(f, "2 Stockroom", Vector3.zero), stalker);
         BuildVoiceLab(Group(f, "3 VoiceLab", Vector3.zero));
@@ -480,6 +491,17 @@ public static class FirWorldBuilder
             }
         game.memoTexts = memos;
         Poster(g, "poster_recall", new Vector3(-9.98f, 1.7f, 102f), Vector3.right, 1.1f, false);
+
+        // staff restroom by the entrance: three stalls, three throwable toilets
+        Sign(g, "RESTROOM", new Vector3(-8f, 2.5f, 80.25f), Vector3.forward);
+        for (int i = 0; i < 3; i++)
+        {
+            float z = 81.0f + i * 1.15f;
+            Toilet(g, new Vector3(-9.55f, 0, z), 90);
+            Box(g, "StallWall", new Vector3(-9.4f, 0.75f, z + 0.575f), new Vector3(1.2f, 1.5f, 0.05f), M("Partition"), true);
+        }
+        var flushScare = Scare(g, "StallFlush", new Vector3(-7.5f, 1.5f, 82.2f), new Vector3(0.4f, 3, 3.4f), 2, 4, 4);
+        flushScare.sound = Src(g, new Vector3(-9.6f, 0.6f, 82.15f), Clip("toilet_flush"), false, 1f, 1f, 12f, false);
 
         // keypad beside the door
         var kp = Add<FirSequenceLock>(Group(g, "Keypad", new Vector3(2.8f, 1.35f, 103.85f)).gameObject);
@@ -789,6 +811,42 @@ public static class FirWorldBuilder
         var c = Add<FirCarryItem>(go);
         c.pickup = p;
         return c;
+    }
+
+    /// <summary>A throwable porcelain toilet. Seat faces the root's +Z.</summary>
+    static void Toilet(Transform g, Vector3 pos, float yaw)
+    {
+        var go = new GameObject("Toilet");
+        go.transform.SetParent(g, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        Prim(PrimitiveType.Cylinder, "Base", go.transform, new Vector3(0, 0.12f, 0.05f), new Vector3(0.24f, 0.12f, 0.3f), M("Porcelain"));
+        Prim(PrimitiveType.Sphere, "Bowl", go.transform, new Vector3(0, 0.33f, 0.1f), new Vector3(0.4f, 0.2f, 0.52f), M("Porcelain"));
+        Prim(PrimitiveType.Cylinder, "Water", go.transform, new Vector3(0, 0.425f, 0.1f), new Vector3(0.26f, 0.005f, 0.36f), M("ToiletWater"));
+        Prim(PrimitiveType.Cylinder, "Seat", go.transform, new Vector3(0, 0.44f, 0.1f), new Vector3(0.4f, 0.015f, 0.5f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Tank", go.transform, new Vector3(0, 0.6f, -0.2f), new Vector3(0.42f, 0.38f, 0.18f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Lid", go.transform, new Vector3(0, 0.8f, -0.2f), new Vector3(0.45f, 0.03f, 0.2f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Handle", go.transform, new Vector3(-0.17f, 0.72f, -0.1f), new Vector3(0.08f, 0.02f, 0.02f), M("Metal"));
+        var col = go.AddComponent<BoxCollider>();
+        col.center = new Vector3(0, 0.41f, -0.02f);
+        col.size = new Vector3(0.44f, 0.82f, 0.62f);
+        go.layer = 13;
+        foreach (Transform ch in go.GetComponentsInChildren<Transform>(true)) ch.gameObject.layer = 13;
+        var rb = go.AddComponent<Rigidbody>();
+        rb.mass = 3f; rb.useGravity = true; rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        var p = go.AddComponent<VRCPickup>();
+        p.InteractionText = "Toilet";
+        p.UseText = "Flush";
+        p.AutoHold = VRC_Pickup.AutoHoldMode.Yes;
+        p.ThrowVelocityBoostScale = 1.4f;
+        p.proximity = 2f;
+        carrySyncList.Add(go.AddComponent<VRCObjectSync>());
+        var t = Add<FirToilet>(go);
+        t.pickup = p; t.body = rb;
+        t.audioSrc = Src(go.transform, new Vector3(0, 0.5f, 0), null, false, 1f, 1f, 14f, false);
+        t.flushClip = Clip("toilet_flush"); t.clunkClip = Clip("toilet_clunk");
+        toilets.Add(t);
     }
 
     /// <summary>A pressable collectible with a global item index.</summary>
@@ -1255,6 +1313,8 @@ public static class FirWorldBuilder
         A("GiftBlue", null, new Color(0.15f, 0.25f, 0.6f));
         A("HatRed", null, new Color(0.75f, 0.05f, 0.08f));
         A("HatWhite", null, new Color(0.95f, 0.95f, 0.95f));
+        A("Porcelain", null, new Color(0.93f, 0.93f, 0.9f));
+        A("ToiletWater", null, new Color(0.45f, 0.6f, 0.65f));
         // tree faces: eyes stay faintly visible in the dark, which is the point
         A("Eye", null, new Color(0.9f, 0.9f, 0.85f), 0f, new Color(0.22f, 0.22f, 0.2f));
         A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1f);
@@ -1314,7 +1374,7 @@ public static class FirWorldBuilder
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "FirGameManager", "FirAnimatronic", "FirStalker", "FirJumpscare", "FirItem", "FirCarryItem",
-                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience" };
+                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet" };
 
     static bool EnsureProgramAssets()
     {

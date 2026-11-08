@@ -47,6 +47,12 @@ player gets their own torch, at no cost and with correct stereo. Udon drives thr
 which control blackouts, flicker and brightness. Tree eyes have a faint glow, so in a blackout all
 you can see is pairs of eyes.
 
+### Throwable toilets
+There are two toilets in the lobby and a three-stall staff restroom by the Offices entrance. Pick one up and
+throw it. Press **Use** while you hold one to flush it. A hit on the hunting tree makes it scream and freezes it
+for 4 seconds, so a teammate with a toilet can cover a friend who's being chased. The toilets go back to their
+places when a new game starts. Code: `Scripts/FirToilet.cs`.
+
 ### Comfort options (lobby, per player)
 * **Brightness:** dark, normal or bright.
 * **Flashing lights:** on or off. Off removes the strobing flicker, but blackouts still happen.
@@ -87,6 +93,7 @@ python make_unitypackage.py
 | Collectibles, carried items, hat and furnace sockets | `Scripts/FirItem.cs`, `FirCarryItem.cs`, `FirSocket.cs` |
 | Tape deck and keypad | `Scripts/FirSequenceLock.cs`, `FirKey.cs` |
 | Buttons and the conveyor belt | `Scripts/FirButton.cs`, `FirConveyor.cs` |
+| Throwable toilets | `Scripts/FirToilet.cs` |
 | The whole world, built from code (rooms, procedural tree meshes, props, NavMesh, descriptor) | `Editor/FirWorldBuilder.cs` |
 | One-click setup | `Editor/FirSetup.cs` |
 | The lantern shader | `Shaders/FirLantern.shader` |

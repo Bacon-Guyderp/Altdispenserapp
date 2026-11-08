@@ -222,6 +222,18 @@ def main():
     write("whoosh", whoosh)
     write("ending", music_box(96, 0.0, 0.0)[: int(14 * SR)])
 
+    # ---- toilets
+    ft = t(3.0)
+    swirl = bandpass(noise(3.0), 500, 1.5) * (0.6 + 0.4 * np.sin(2 * np.pi * (2 + 4 * ft) * ft))
+    gurgle = sum(bandpass(noise(3.0), f, 12) for f in (220, 340, 610)) * (np.abs(np.sin(2 * np.pi * 7 * ft)) ** 3)
+    rumble = lowpass(noise(3.0), 150) * 4
+    shape = np.minimum(1, ft * 3) * np.exp(-np.maximum(0, ft - 1.2) * 1.6)
+    write("toilet_flush", (swirl * 1.5 + gurgle * 0.8 + rumble) * shape)
+    ct = t(0.6)
+    clink = sum(sine(np.full(len(ct), f)) * np.exp(-ct * d) for f, d in ((1850, 18), (2930, 24), (4310, 30), (640, 12)))
+    thud = sine(np.linspace(140, 50, len(ct))) * np.exp(-ct * 14) * 2 + lowpass(noise(0.6), 900) * np.exp(-ct * 25) * 2
+    write("toilet_clunk", clink * 0.6 + thud)
+
 
 if __name__ == "__main__":
     main()

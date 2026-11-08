@@ -36,6 +36,7 @@ public class FirStalker : UdonSharpBehaviour
     float nextThink, nextCatch, nextCreak, nextBeat;
     Vector3 lastPos;
     bool seen;
+    float stunUntil;
 
     void Start()
     {
@@ -50,6 +51,16 @@ public class FirStalker : UdonSharpBehaviour
         if (agent == null) return;
         agent.enabled = Networking.IsOwner(gameObject);
         if (agent.enabled) agent.Warp(transform.position);
+    }
+
+    public bool IsActive() { return syncActive; }
+
+    /// <summary>Hit by a thrown toilet: it screams and stops for a few seconds.</summary>
+    public void NetStun()
+    {
+        if (!syncActive) return;
+        stunUntil = Time.time + 4f;
+        if (anim != null) anim.SetMode(4, 1.2f);
     }
 
     bool ActiveIn(int p) { return p >= 0 && p < spawnByPhase.Length && spawnByPhase[p] != null; }
@@ -105,6 +116,7 @@ public class FirStalker : UdonSharpBehaviour
         if (!syncActive || agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
         if (Time.time < nextThink) { agent.isStopped = true; return; }
+        if (Time.time < stunUntil) { agent.isStopped = true; agent.velocity = Vector3.zero; return; }
         seen = AnyoneLooking();
         bool finale = phase == 6;
         float speed = seen ? (finale ? finaleSeenSpeed : 0f) : (finale ? finaleUnseenSpeed : unseenSpeed);
