@@ -10,9 +10,11 @@ Shader "GeoQuest/Panorama"
     }
     SubShader
     {
-        Tags { "Queue"="Background" "RenderType"="Background" "PreviewType"="Skybox" }
+        Tags { "Queue"="Geometry-100" "RenderType"="Opaque" "PreviewType"="Skybox" }
         Cull Front
-        ZWrite Off
+        // Write depth: Unity's skybox is drawn after opaque geometry wherever depth is still
+        // empty, so with ZWrite Off it painted straight over the photo.
+        ZWrite On
         Pass
         {
             CGPROGRAM
