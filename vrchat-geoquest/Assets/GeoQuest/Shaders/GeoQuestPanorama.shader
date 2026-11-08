@@ -18,6 +18,7 @@ Shader "GeoQuest/Panorama"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0   // tex2Dlod
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
 
