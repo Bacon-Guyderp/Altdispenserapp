@@ -86,7 +86,8 @@ jobs:
         run: |
           # Package the list of places whose photos actually published, plus this site's address.
           cp ../site/locations.json ../Assets/GeoQuest/Data/locations.json
-          echo "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/p/" > ../Assets/GeoQuest/Data/photo_base_url.txt
+          # Lowercase host (Pages hostnames are lowercase; VRChat matches trusted image hosts by name).
+          echo "https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/p/" > ../Assets/GeoQuest/Data/photo_base_url.txt
           python make_unitypackage.py --out ../site/GeoQuestNC.unitypackage
       - uses: actions/upload-pages-artifact@v3
         with:
