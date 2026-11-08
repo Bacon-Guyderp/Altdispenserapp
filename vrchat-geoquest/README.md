@@ -18,7 +18,7 @@ The **Photo type** button in the lobby cycles **Mixed**, **360° only** and **Fl
 `coverage.png` shows where the 360° places are. (For trick rounds from just over the border, harvest
 with `--outside-fraction 0.25` and rebuild the map with `python make_nc_map.py --neighbor-towns`.)
 
-**The map** is bare: North Carolina alone on a blank background, with just its 100 county outlines. There are no neighbouring states, ocean, names, towns or labels, so you have to know your state (`python make_nc_map.py --labels` brings the towns and labels back), and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
+**The map** is bare: North Carolina's 100 county outlines on a white background, with no names, towns or labels. The artwork is `tools/art/nc_county_outlines.png`, and `python tools/warp_outline_map.py` lines it up with real county borders and writes `NCMap.png`, so you have to know your state (`python make_nc_map.py --labels` brings the towns and labels back), and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
 roughly 4,500 points at 10 km, 2,900 at 50 km and 500 at 200 km. The reveal tells you the
 county and the nearest town, for example "14 km from Raleigh, Wake County, NC". Photos are
 **streamed one at a time** with VRChat's Image Loading. The upload stays a few MB and

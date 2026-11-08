@@ -176,7 +176,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         var sphere = Prim(PrimitiveType.Sphere, "PanoramaSphere", root.transform, Vector3.zero, Vector3.one * 200f, panoMat, false);
 
         // ---- big screen for flat (non-360) photos, straight ahead above the map
-        var screen = Prim(PrimitiveType.Quad, "PhotoScreen", root.transform, new Vector3(0, 3.2f, 5f), new Vector3(5f, 3.8f, 1f), screenMat, false);
+        var screen = Prim(PrimitiveType.Quad, "PhotoScreen", root.transform, new Vector3(0, 3.6f, 5f), new Vector3(6.1f, 4.6f, 1f), screenMat, false);
         screen.SetActive(false);
 
         // ---- floor: invisible walkable area plus a small visible disc
@@ -392,8 +392,8 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn };
         mgr.photoScreen = screen.transform;
         mgr.screenMaterial = screenMat;
-        mgr.screenHeight = 3.8f;
-        mgr.screenMaxWidth = 7.6f;
+        mgr.screenHeight = 4.6f;
+        mgr.screenMaxWidth = 9.2f;
         mgr.guessObjects = new[] { guessBtn, skipBtn, endBtn };
         mgr.revealObjects = new[] { nextBtn, lobbyBtn };
 
