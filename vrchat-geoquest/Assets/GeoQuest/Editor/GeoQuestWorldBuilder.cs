@@ -29,6 +29,18 @@ public class GeoQuestWorldBuilder : EditorWindow
     [Serializable] class LocFile { public string region; public Bounds bounds; public float score_km; public Loc[] locations; }
 
     TextAsset locationsJson;
+    [NonSerialized] public int lastPlaceCount;
+
+    /// <summary>Runs Build World with the package's defaults (used by One-Click Setup).</summary>
+    public static bool BuildWithDefaults(out int places)
+    {
+        var b = CreateInstance<GeoQuestWorldBuilder>();
+        b.OnEnable();
+        bool ok = b.Build(quiet: true);
+        places = b.lastPlaceCount;
+        DestroyImmediate(b);
+        return ok;
+    }
     string imageBaseUrl = "https://YOUR-GITHUB-NAME.github.io/YOUR-REPO/p/";
     bool useCommonsUrls;
     int maxPlaces = 10000;
@@ -112,23 +124,24 @@ public class GeoQuestWorldBuilder : EditorWindow
 
     // ------------------------------------------------------------------ build
 
-    void Build()
+    /// <summary>Builds the world into the open scene. Returns false if a prerequisite is missing.</summary>
+    public bool Build(bool quiet = false)
     {
         if (TMP_Settings.defaultFontAsset == null)
         {
             EditorUtility.DisplayDialog("GeoQuest", "Import TextMeshPro first:\nWindow > TextMeshPro > Import TMP Essential Resources", "OK");
-            return;
+            return false;
         }
         if (FindType("VRCPlayerObject") == null)
         {
             EditorUtility.DisplayDialog("GeoQuest", "This world needs VRChat Worlds SDK 3.7.0 or newer (Player Objects). Update it in the VRChat Creator Companion.", "OK");
-            return;
+            return false;
         }
-        if (!EnsureProgramAssets()) return;
+        if (!EnsureProgramAssets()) return false;
 
         var locs = LoadLocs();
         if (locs.Length == 0 && !EditorUtility.DisplayDialog("GeoQuest",
-                "No places found in locations.json. Build an empty world anyway?", "Build", "Cancel")) return;
+                "No places found in locations.json. Build an empty world anyway?", "Build", "Cancel")) return false;
 
         Directory.CreateDirectory(Gen);
         ConfigureTexture(worldMap, 4096, false);
@@ -418,7 +431,10 @@ public class GeoQuestWorldBuilder : EditorWindow
 
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
-        EditorUtility.DisplayDialog("GeoQuest", "Built with " + locs.Length + " places.\n\nSave the scene, then build & test / upload for PC and for Android (Quest).", "Nice");
+        if (!quiet)
+            EditorUtility.DisplayDialog("GeoQuest", "Built with " + locs.Length + " places.\n\nSave the scene, then build & test / upload for PC and for Android (Quest).", "Nice");
+        lastPlaceCount = locs.Length;
+        return true;
     }
 
     // ------------------------------------------------------------------ helpers
