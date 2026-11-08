@@ -144,8 +144,10 @@ public class GeoQuestWorldBuilder : EditorWindow
                 "No places found in locations.json. Build an empty world anyway?", "Build", "Cancel")) return false;
 
         Directory.CreateDirectory(Gen);
-        ConfigureTexture(worldMap, 4096, false);
-        ConfigureTexture(lobbyPanorama, 2048, false);
+        // Re-load after configuring: a reimport can leave the old in-memory texture invalid.
+        worldMap = ConfigureTexture(worldMap ? worldMap : AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/NCMap.png"), 4096, true);
+        lobbyPanorama = ConfigureTexture(lobbyPanorama ? lobbyPanorama : AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/LobbyPanorama.png"), 2048, false);
+        if (worldMap == null) Debug.LogError("GeoQuest: couldn't find the map texture at " + Root + "/Textures/NCMap.png");
 
         var old = GameObject.Find("GeoQuest");
         if (old != null) Undo.DestroyObjectImmediate(old);
@@ -429,6 +431,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         RenderSettings.ambientLight = Color.white;
         RenderSettings.fog = false;
 
+        AssetDatabase.SaveAssets();  // write the materials' textures/colours to disk, not just memory
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
         if (!quiet)
@@ -449,11 +452,13 @@ public class GeoQuestWorldBuilder : EditorWindow
     {
         string path = Gen + "/" + name + ".mat";
         var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+        bool isNew = m == null;
+        if (isNew) m = new Material(shader);
         m.shader = shader;
         if (m.HasProperty("_Color")) m.SetColor("_Color", c);
         if (tex != null) m.mainTexture = tex;
         m.enableInstancing = true;
+        if (isNew) AssetDatabase.CreateAsset(m, path);  // created with its colour + texture already set
         EditorUtility.SetDirty(m);
         return m;
     }
@@ -471,11 +476,12 @@ public class GeoQuestWorldBuilder : EditorWindow
         return m;
     }
 
-    static void ConfigureTexture(Texture2D t, int max, bool mips)
+    static Texture2D ConfigureTexture(Texture2D t, int max, bool mips)
     {
-        if (t == null) return;
-        var imp = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(t)) as TextureImporter;
-        if (imp == null) return;
+        if (t == null) return null;
+        string path = AssetDatabase.GetAssetPath(t);
+        var imp = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (imp == null) return t;
         imp.textureType = TextureImporterType.Default;
         imp.mipmapEnabled = mips;
         imp.wrapMode = TextureWrapMode.Clamp;
@@ -484,6 +490,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         imp.SetPlatformTextureSettings(new TextureImporterPlatformSettings
         { name = "Android", overridden = true, maxTextureSize = max, format = TextureImporterFormat.ASTC_6x6 });
         imp.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
     static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat, bool keepCollider)

@@ -80,6 +80,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private int _retries;
     private int[] _recent = new int[200];
     private int _panoCount, _flatCount;
+    private string _lastError = "";
     private int _recentHead;
 
     void Start()
@@ -474,13 +475,17 @@ public class GeoGameManager : UdonSharpBehaviour
         info.FilterMode = FilterMode.Bilinear;
         _loadingLocation = loc;
         _lastDownload = Time.time;
+        Debug.Log("[GeoQuest] loading photo " + loc + ": " + urls[loc].Get());
         _pendingDl.DownloadImage(urls[loc], null, (IUdonEventReceiver)this, info);
         UpdateTexts();
     }
 
     public override void OnImageLoadSuccess(IVRCImageDownload result)
     {
-        if (_wantLocation < 0 || result.Url == null || result.Url.Get() != urls[_wantLocation].Get()) return;
+        // Only one download is in flight at a time (older ones are disposed), so any success
+        // that arrives while we're loading is the photo we asked for.
+        if (_wantLocation < 0 || !_loading) return;
+        Debug.Log("[GeoQuest] photo loaded: " + urls[_wantLocation].Get());
         if (_shownDl != null && _shownDl != _pendingDl) _shownDl.Dispose();
         _shownDl = _pendingDl;
         _pendingDl = null;
@@ -517,10 +522,11 @@ public class GeoGameManager : UdonSharpBehaviour
 
     public override void OnImageLoadError(IVRCImageDownload result)
     {
-        if (_wantLocation < 0 || result.Url == null || result.Url.Get() != urls[_wantLocation].Get()) return;
+        if (_wantLocation < 0 || !_loading) return;
         _loadingLocation = -1;
         if (_pendingDl != null) { _pendingDl.Dispose(); _pendingDl = null; }
-        Debug.LogWarning("[GeoQuest] image failed: " + result.ErrorMessage);
+        _lastError = result.ErrorMessage;
+        Debug.LogWarning("[GeoQuest] photo failed (" + urls[_wantLocation].Get() + "): " + _lastError);
         if (_retries++ < 2) { SendCustomEventDelayedSeconds(nameof(_DoDownload), 1f); return; }
         _loading = false;
         _loadFailed = true;
@@ -556,7 +562,7 @@ public class GeoGameManager : UdonSharpBehaviour
             }
             s += "   Guessed " + CountGuessed() + "/" + CountInGame();
             if (_loading) s += "\n<color=#ffd060>Loading photo...</color>";
-            else if (_loadFailed) s += "\n<color=#ff8080>Photo failed to load. Enable 'Allow Untrusted URLs' or press Skip.</color>";
+            else if (_loadFailed) s += "\n<color=#ff8080>Photo failed to load (" + _lastError + "). Press Skip photo.</color>";
             else if (IsFlat(CurrentLocation())) s += "\nStudy the photo, then point at the map and pull the trigger / click.";
             else s += "\nLook around, then point at the map and pull the trigger / click.";
         }
