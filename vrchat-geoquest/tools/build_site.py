@@ -126,7 +126,8 @@ def main():
 <title>GeoQuest photo credits</title>
 <style>body{{font:14px system-ui;margin:16px}}table{{border-collapse:collapse}}td{{border-bottom:1px solid #ddd;padding:3px 8px}}</style>
 <h1>GeoQuest photo credits</h1>
-<p><a href="GeoQuestNC.unitypackage"><b>Download GeoQuestNC.unitypackage</b></a> (import into a VRChat world project, then GeoQuest &gt; Build World)</p>
+<p><a href="GeoQuestNC.unitypackage"><b>Download GeoQuestNC.unitypackage</b></a> (Assets &gt; Import Package &gt; Custom Package in a VRChat world project)<br>
+If that won't import: <a href="GeoQuestNC-folder.zip"><b>GeoQuestNC-folder.zip</b></a>. Unzip it into your Unity project folder, the one that contains <code>Assets</code>.</p>
 <p>{len(ok)} panoramas from Mapillary and Wikimedia Commons contributors, resized to 2048&times;1024. Each photo keeps its original license
 (see the source link); the resized copies are shared under the same terms.</p>
 <table><tr><th>#</th><th>Place</th><th>Country</th><th>Author</th><th>License</th><th></th></tr>

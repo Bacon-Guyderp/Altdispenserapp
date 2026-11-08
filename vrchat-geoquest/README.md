@@ -69,6 +69,9 @@ Quest memory stays flat however many places you add.
    **`GeoQuestNC.unitypackage`** with **Assets > Import Package > Custom Package**. Each workflow
    run publishes a fresh one at `https://<you>.github.io/<repo>/GeoQuestNC.unitypackage`, and you can
    build one locally with `python tools/make_unitypackage.py`.
+   If the package won't import (no file list appears), use **`GeoQuestNC-folder.zip`** from the same
+   place instead. Close Unity, unzip it into your project folder (the one containing `Assets`) so
+   you get `Assets/GeoQuest`, then reopen the project.
 4. **One-click setup.** After the import, Unity asks **"Set up GeoQuest now?"**. Click
    **Set it up**, or use **GeoQuest > One-Click Setup** later. It imports TextMeshPro's
    essentials, creates the scene **`Assets/GeoQuest/GeoQuest NC.unity`** with the whole world built
