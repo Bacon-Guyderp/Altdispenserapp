@@ -22,27 +22,9 @@ public static class XenoDialWorldBuilder
 {
     const string Root = "Assets/XenoDial";
     const string Gen = Root + "/Generated";
-    const float K_ICON = 0.021f;   // alien model -> dial icon scale
 
-    // Order matters: it's the form index used by every script.
-    static readonly string[] Names = { "Emberjack", "Bedrock", "Zipwire", "Skyfin", "Pip", "Shardling" };
-    static readonly string[] Powers =
-    {
-        "Throw fireballs", "Ground slam (you're a giant)", "Super speed + dash", "Flap and glide (low gravity)",
-        "Tiny! Hop and sneak through gaps", "Grow crystal platforms (jump, then use it to climb)",
-    };
-    static readonly Color[] Colors =
-    {
-        new Color(1f, 0.45f, 0.1f), new Color(0.75f, 0.62f, 0.45f), new Color(0.2f, 0.55f, 1f),
-        new Color(0.45f, 0.95f, 0.95f), new Color(0.45f, 0.95f, 0.25f), new Color(1f, 0.45f, 0.95f),
-    };
-    //                                    Ember Bedrk  Zip   Sky   Pip   Shard
-    static readonly float[] Walk =      { 3f,   2.5f,  9f,   3f,   2f,   3f };
-    static readonly float[] Run =       { 5f,   4.5f,  16f,  5f,   4f,   5f };
-    static readonly float[] Jump =      { 4f,   7.5f,  4f,   5f,   3f,   4f };
-    static readonly float[] Gravity =   { 1f,   1.4f,  1f,   0.3f, 0.7f, 1f };
-    static readonly float[] EyeHeight = { 0f,   3.4f,  0f,   0f,   0.25f, 0f };   // 0 = keep your size
-    static readonly float[] Cooldown =  { 0.3f, 1.4f,  1.0f, 0.25f, 0.6f, 0.45f };
+    const float K_ICON = 0.021f;   // alien model -> dial icon scale
+    const int PAGE = 10;           // aliens shown on the dial at once
 
     [MenuItem("XenoDial/Build World", priority = 1)]
     static void BuildMenu()
@@ -65,6 +47,13 @@ public static class XenoDialWorldBuilder
             EditorUtility.DisplayDialog("XenoDial", "This world needs VRChat Worlds SDK 3.7.0 or newer (Player Objects). Update it in the VRChat Creator Companion.", "OK");
             return false;
         }
+        string rosterError;
+        var roster = XenoDialAliens.LoadRoster(out rosterError);
+        if (rosterError != null || roster.Count == 0)
+        {
+            EditorUtility.DisplayDialog("XenoDial", rosterError ?? "aliens.txt has no aliens in it.", "OK");
+            return false;
+        }
         if (!EnsureProgramAssets()) return false;
         Directory.CreateDirectory(Gen);
 
@@ -77,6 +66,16 @@ public static class XenoDialWorldBuilder
 
         var font = FontMaterial();
         var clips = LoadClips();
+
+        // ---- every alien's model, once. Bodies, the dial and the gallery copy from here.
+        var libRoot = new GameObject("Alien Library (templates)");
+        libRoot.transform.SetParent(root.transform, false);
+        libRoot.transform.localPosition = new Vector3(0, -50, 0);
+        var alienMat = MatAsset("AlienVertexColor", Shader.Find("XenoDial/ToonVertexColor"));
+        alienMat.SetColor("_Color", Color.white);
+        alienMat.SetFloat("_Emission", 0f);
+        var library = BuildLibrary(roster, libRoot.transform, alienMat);
+        libRoot.SetActive(false);
 
         // ---- the land
         var grass = Toon("Grass", new Color(0.33f, 0.52f, 0.24f));
@@ -111,7 +110,7 @@ public static class XenoDialWorldBuilder
         BuildCrashSite(env, root.transform, watch, font, teal, board);
 
         // ---- per-player alien bodies
-        var body = BuildBodyTemplate(root.transform, clips);
+        var body = BuildBodyTemplate(root.transform, clips, library, roster);
 
         // ---- areas
         var targets = new List<XenoTarget>();
@@ -121,6 +120,7 @@ public static class XenoDialWorldBuilder
         BuildVault(env, root.transform, new Vector3(0, 0, -40), watch, spawn, font, board, rock, btn, clips);
         BuildMirror(env, root.transform, new Vector3(-7.5f, 0, 2.5f), font, btn, board);
         BuildSigns(env, font, board, post);
+        BuildGallery(env, new Vector3(-45, 0, -62), roster, library, font, board, rock);
 
         // ---- wire the watch
         watch.bodyTemplate = body;
@@ -130,16 +130,20 @@ public static class XenoDialWorldBuilder
         watch.clickClip = clips["click"];
         watch.openClip = clips["open"];
         watch.beepClip = clips["beep"];
-        watch.formNames = Names;
-        watch.formPowers = Powers;
-        watch.formColors = Colors;
-        watch.walkSpeed = Walk;
-        watch.runSpeed = Run;
-        watch.jumpImpulse = Jump;
-        watch.gravity = Gravity;
-        watch.eyeHeight = EyeHeight;
-        watch.cooldown = Cooldown;
-        watch.pickKeys = new[] { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6 };
+        watch.library = library;
+        watch.formNames = roster.Select(a => a.name).ToArray();
+        watch.formPowers = roster.Select(a => a.Description).ToArray();
+        watch.formColors = roster.Select(a => a.glow).ToArray();
+        watch.powerType = roster.Select(a => a.power).ToArray();
+        watch.strength = roster.Select(a => a.strength).ToArray();
+        watch.walkSpeed = roster.Select(a => a.walk).ToArray();
+        watch.runSpeed = roster.Select(a => a.run).ToArray();
+        watch.jumpImpulse = roster.Select(a => a.jump).ToArray();
+        watch.gravity = roster.Select(a => a.gravity).ToArray();
+        watch.eyeHeight = roster.Select(a => a.eyeHeight).ToArray();
+        watch.cooldown = roster.Select(a => a.cooldown).ToArray();
+        watch.pickKeys = new[] { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5,
+                                 KeyCode.Alpha6, KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Alpha9, KeyCode.Alpha0 };
 
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
 
@@ -168,24 +172,32 @@ public static class XenoDialWorldBuilder
         var dial = new GameObject("Dial").transform;
         dial.SetParent(w, false);
         dial.localPosition = new Vector3(0, 0.03f, 0);
-        var icons = new Transform[Names.Length];
-        for (int i = 0; i < Names.Length; i++)
+        var slots = new Transform[PAGE];
+        var discs = new Renderer[PAGE];
+        var minis = new Transform[PAGE];
+        for (int i = 0; i < PAGE; i++)
         {
-            float a = Mathf.PI * 0.5f - i * Mathf.PI * 2f / Names.Length;
-            var icon = new GameObject("Icon " + Names[i]).transform;
-            icon.SetParent(dial, false);
-            icon.localPosition = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * 0.075f;
-            var disc = Prim(PrimitiveType.Cylinder, "Disc", icon, new Vector3(0, 0, -0.008f), new Vector3(0.034f, 0.0008f, 0.034f),
-                            Glow("Icon" + i, new Color(Colors[i].r, Colors[i].g, Colors[i].b, 0.45f)), false);
+            float a = Mathf.PI * 0.5f - i * Mathf.PI * 2f / PAGE;
+            var slot = new GameObject("Slot " + (i + 1)).transform;
+            slot.SetParent(dial, false);
+            slot.localPosition = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * 0.085f;
+            var disc = Prim(PrimitiveType.Cylinder, "Disc", slot, new Vector3(0, 0, -0.008f), new Vector3(0.032f, 0.0008f, 0.032f),
+                            Glow("DialDisc", new Color(0.2f, 1f, 0.85f, 0.45f)), false);
             disc.transform.localRotation = Quaternion.Euler(90, 0, 0);
             var mini = new GameObject("Mini").transform;
-            mini.SetParent(icon, false);
+            mini.SetParent(slot, false);
             mini.localPosition = new Vector3(0, -0.019f, 0);
             mini.localScale = Vector3.one * K_ICON;
-            AlienModel(i, mini, null, null, null);
-            icons[i] = icon;
+            slots[i] = slot;
+            discs[i] = disc.GetComponent<Renderer>();
+            minis[i] = mini;
         }
         var sel = Prim(PrimitiveType.Sphere, "Selector", dial, Vector3.zero, Vector3.one * 0.048f, Glow("Selector", new Color(1, 1, 1, 0.3f)), false);
+        var arrowMat = Glow("PageArrow", new Color(1f, 1f, 1f, 0.7f));
+        var prev = Prim(PrimitiveType.Sphere, "PrevPage", dial, new Vector3(-0.13f, 0, 0), new Vector3(0.022f, 0.022f, 0.022f), arrowMat, false);
+        var next = Prim(PrimitiveType.Sphere, "NextPage", dial, new Vector3(0.13f, 0, 0), new Vector3(0.022f, 0.022f, 0.022f), arrowMat, false);
+        Text("Prev", prev.transform, Vector3.zero, new Vector2(1.6f, 1.6f), 1.2f, font, "<").transform.localScale = Vector3.one * 0.9f;
+        Text("Next", next.transform, Vector3.zero, new Vector2(1.6f, 1.6f), 1.2f, font, ">").transform.localScale = Vector3.one * 0.9f;
 
         var label = Text("Label", w, new Vector3(0, 0.1f, 0), new Vector2(0.24f, 0.1f), 0.3f, font, "XenoDial");
         label.fontSizeMin = 0.01f;
@@ -195,7 +207,11 @@ public static class XenoDialWorldBuilder
         watch.faceRenderer = face;
         watch.coreRenderer = glow;
         watch.dialRoot = dial;
-        watch.icons = icons;
+        watch.slots = slots;
+        watch.slotDiscs = discs;
+        watch.slotMinis = minis;
+        watch.prevPage = prev.transform;
+        watch.nextPage = next.transform;
         watch.selector = sel.transform;
         watch.label = label;
     }
@@ -219,164 +235,53 @@ public static class XenoDialWorldBuilder
             Prim(PrimitiveType.Cube, "Button", w, new Vector3(0.03f * s, 0.002f, 0.012f), new Vector3(0.008f, 0.006f, 0.01f), casing, false);
     }
 
-    // ------------------------------------------------------------------ aliens
+    // ------------------------------------------------------------------ alien library
 
-    /// <summary>
-    /// Builds one alien from primitives. Feet at the origin, facing +Z, eye height about 1.6 m
-    /// (XenoBody scales it to the wearer). Limbs that swing while walking go into a/b.
-    /// </summary>
-    static void AlienModel(int i, Transform p, List<Transform> a, List<Transform> b, List<Transform> pulse)
+    const string AlienMeshDir = Gen + "/Aliens";
+
+    /// <summary>Builds every alien's model (see XenoDialAliens) under <paramref name="parent"/>, in roster order.</summary>
+    static GameObject[] BuildLibrary(List<XenoDialAliens.Alien> roster, Transform parent, Material mat)
     {
-        Action<Transform> A = t => a?.Add(t);
-        Action<Transform> B = t => b?.Add(t);
-        Action<Transform> P = t => pulse?.Add(t);
-        switch (i)
+        if (AssetDatabase.IsValidFolder(AlienMeshDir)) AssetDatabase.DeleteAsset(AlienMeshDir);
+        AssetDatabase.CreateFolder(Gen, "Aliens");
+        var result = new GameObject[roster.Count];
+        try
         {
-            case 0: // Emberjack: charcoal body, lava cracks, a head of fire
+            for (int i = 0; i < roster.Count; i++)
             {
-                var coal = Toon("A0Coal", new Color(0.17f, 0.12f, 0.1f));
-                var lava = Toon("A0Lava", new Color(1f, 0.42f, 0.05f), 1f);
-                var flame = Toon("A0Flame", new Color(1f, 0.82f, 0.25f), 1f);
-                Part(PrimitiveType.Capsule, p, new Vector3(0, 1.15f, 0), new Vector3(0.58f, 0.42f, 0.4f), coal);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.2f, 0.18f), new Vector3(0.12f, 0.42f, 0.05f), lava, new Vector3(0, 0, 12));
-                Part(PrimitiveType.Cube, p, new Vector3(0.1f, 1.05f, 0.17f), new Vector3(0.22f, 0.05f, 0.05f), lava, new Vector3(0, 0, -25));
-                Part(PrimitiveType.Sphere, p, new Vector3(0, 1.72f, 0), Vector3.one * 0.38f, coal);
-                Eyes(p, 1.74f, 0.16f, 0.085f, 0.075f, flame);
-                P(Part(PrimitiveType.Sphere, p, new Vector3(0, 1.95f, -0.02f), Vector3.one * 0.34f, lava));
-                P(Part(PrimitiveType.Sphere, p, new Vector3(0.02f, 2.16f, -0.05f), Vector3.one * 0.22f, flame));
-                P(Part(PrimitiveType.Sphere, p, new Vector3(-0.03f, 2.32f, -0.08f), Vector3.one * 0.12f, flame));
-                for (int s = -1; s <= 1; s += 2)
+                var a = roster[i];
+                EditorUtility.DisplayProgressBar("XenoDial", "Growing aliens... " + a.name, (float)i / roster.Count);
+                var root = new GameObject($"{i + 1:000} {a.name}");
+                root.transform.SetParent(parent, false);
+                string path = $"{AlienMeshDir}/{i + 1:000}_{new string(a.name.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray())}.asset";
+                bool first = true;
+                foreach (var piece in XenoDialAliens.Generate(a))
                 {
-                    var arm = Pivot(p, new Vector3(0.37f * s, 1.5f, 0));
-                    Part(PrimitiveType.Capsule, arm, new Vector3(0, -0.32f, 0), new Vector3(0.17f, 0.32f, 0.17f), coal);
-                    P(Part(PrimitiveType.Sphere, arm, new Vector3(0, -0.68f, 0), Vector3.one * 0.19f, lava));
-                    var leg = Pivot(p, new Vector3(0.16f * s, 0.78f, 0));
-                    Part(PrimitiveType.Capsule, leg, new Vector3(0, -0.39f, 0), new Vector3(0.21f, 0.4f, 0.21f), coal);
-                    Part(PrimitiveType.Cube, leg, new Vector3(0, -0.75f, 0.06f), new Vector3(0.2f, 0.08f, 0.3f), lava);
-                    if (s < 0) { A(arm); B(leg); } else { B(arm); A(leg); }
+                    if (first) { AssetDatabase.CreateAsset(piece.mesh, path); first = false; }
+                    else AssetDatabase.AddObjectToAsset(piece.mesh, path);
+                    var go = new GameObject(piece.name);
+                    go.transform.SetParent(root.transform, false);
+                    go.transform.localPosition = piece.origin;
+                    go.AddComponent<MeshFilter>().sharedMesh = piece.mesh;
+                    var r = go.AddComponent<MeshRenderer>();
+                    r.sharedMaterial = mat;
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    r.receiveShadows = false;
+                    r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                    r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
                 }
-                break;
-            }
-            case 1: // Bedrock: a walking pile of boulders (the watch also makes you giant)
-            {
-                var stone = Toon("A1Stone", new Color(0.5f, 0.46f, 0.41f));
-                var dark = Toon("A1Dark", new Color(0.33f, 0.3f, 0.27f));
-                var moss = Toon("A1Eyes", new Color(0.45f, 1f, 0.35f), 1f);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.12f, 0), new Vector3(0.95f, 0.75f, 0.62f), stone, new Vector3(4, 0, 0));
-                Part(PrimitiveType.Sphere, p, new Vector3(0, 0.78f, -0.02f), new Vector3(0.75f, 0.4f, 0.55f), dark);
-                for (int s = -1; s <= 1; s += 2)
-                    Part(PrimitiveType.Sphere, p, new Vector3(0.56f * s, 1.46f, 0), Vector3.one * 0.48f, dark);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.62f, 0.12f), new Vector3(0.38f, 0.3f, 0.36f), stone);
-                P(Part(PrimitiveType.Cube, p, new Vector3(-0.09f, 1.65f, 0.31f), new Vector3(0.08f, 0.04f, 0.02f), moss));
-                P(Part(PrimitiveType.Cube, p, new Vector3(0.09f, 1.65f, 0.31f), new Vector3(0.08f, 0.04f, 0.02f), moss));
-                for (int s = -1; s <= 1; s += 2)
-                {
-                    var arm = Pivot(p, new Vector3(0.64f * s, 1.42f, 0));
-                    Part(PrimitiveType.Cube, arm, new Vector3(0, -0.45f, 0.05f), new Vector3(0.32f, 0.72f, 0.32f), stone);
-                    Part(PrimitiveType.Cube, arm, new Vector3(0, -0.9f, 0.06f), new Vector3(0.46f, 0.4f, 0.46f), dark, new Vector3(0, 12, 0));
-                    var leg = Pivot(p, new Vector3(0.26f * s, 0.75f, 0));
-                    Part(PrimitiveType.Cube, leg, new Vector3(0, -0.37f, 0), new Vector3(0.38f, 0.76f, 0.42f), stone);
-                    if (s < 0) { A(arm); B(leg); } else { B(arm); A(leg); }
-                }
-                break;
-            }
-            case 2: // Zipwire: lean speedster with a visor and a light tail
-            {
-                var blue = Toon("A2Blue", new Color(0.1f, 0.35f, 0.95f));
-                var black = Toon("A2Black", new Color(0.06f, 0.06f, 0.1f));
-                var visor = Toon("A2Visor", new Color(0.35f, 0.95f, 1f), 1f);
-                Part(PrimitiveType.Capsule, p, new Vector3(0, 1.2f, 0.05f), new Vector3(0.38f, 0.38f, 0.3f), blue, new Vector3(15, 0, 0));
-                Part(PrimitiveType.Capsule, p, new Vector3(0, 1.7f, 0.07f), new Vector3(0.27f, 0.22f, 0.27f), black, new Vector3(90, 0, 0));
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.72f, 0.24f), new Vector3(0.23f, 0.07f, 0.06f), visor);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.86f, -0.04f), new Vector3(0.04f, 0.12f, 0.34f), blue);
-                P(Part(PrimitiveType.Cube, p, new Vector3(0, 1.05f, -0.4f), new Vector3(0.06f, 0.06f, 0.7f), visor, new Vector3(-20, 0, 0)));
-                for (int s = -1; s <= 1; s += 2)
-                {
-                    var arm = Pivot(p, new Vector3(0.24f * s, 1.48f, 0.05f));
-                    Part(PrimitiveType.Capsule, arm, new Vector3(0, -0.3f, 0), new Vector3(0.1f, 0.3f, 0.1f), black);
-                    var leg = Pivot(p, new Vector3(0.12f * s, 0.86f, 0));
-                    Part(PrimitiveType.Capsule, leg, new Vector3(0, -0.42f, 0), new Vector3(0.13f, 0.43f, 0.13f), blue);
-                    Part(PrimitiveType.Cube, leg, new Vector3(0, -0.82f, 0.08f), new Vector3(0.12f, 0.06f, 0.32f), visor);
-                    if (s < 0) { A(arm); B(leg); } else { B(arm); A(leg); }
-                }
-                break;
-            }
-            case 3: // Skyfin: manta-winged glider
-            {
-                var pale = Toon("A3Pale", new Color(0.6f, 0.88f, 0.92f));
-                var deep = Toon("A3Deep", new Color(0.08f, 0.42f, 0.55f));
-                var eye = Toon("A3Eye", new Color(1f, 1f, 1f), 1f);
-                Part(PrimitiveType.Capsule, p, new Vector3(0, 1.2f, 0), new Vector3(0.42f, 0.4f, 0.32f), pale);
-                Part(PrimitiveType.Sphere, p, new Vector3(0, 1.7f, 0.03f), Vector3.one * 0.34f, pale);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.88f, -0.06f), new Vector3(0.05f, 0.2f, 0.32f), deep, new Vector3(-20, 0, 0));
-                Eyes(p, 1.73f, 0.15f, 0.08f, 0.07f, eye);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 0.95f, -0.3f), new Vector3(0.45f, 0.04f, 0.32f), deep, new Vector3(-15, 0, 0));
-                for (int s = -1; s <= 1; s += 2)
-                {
-                    var arm = Pivot(p, new Vector3(0.25f * s, 1.5f, 0));
-                    Part(PrimitiveType.Capsule, arm, new Vector3(0, -0.3f, 0), new Vector3(0.12f, 0.3f, 0.12f), pale);
-                    Part(PrimitiveType.Cube, arm, new Vector3(0.38f * s, -0.2f, -0.05f), new Vector3(0.75f, 0.55f, 0.03f), deep, new Vector3(0, 0, -12 * s));
-                    var leg = Pivot(p, new Vector3(0.13f * s, 0.8f, 0));
-                    Part(PrimitiveType.Capsule, leg, new Vector3(0, -0.4f, 0), new Vector3(0.13f, 0.4f, 0.13f), deep);
-                    if (s < 0) { A(arm); B(leg); } else { B(arm); A(leg); }
-                }
-                break;
-            }
-            case 4: // Pip: a round little bug (the watch shrinks you to bug size)
-            {
-                var green = Toon("A4Green", new Color(0.38f, 0.85f, 0.25f));
-                var dark = Toon("A4Dark", new Color(0.15f, 0.4f, 0.1f));
-                var white = Toon("A4White", new Color(1f, 1f, 1f), 0.7f);
-                var black = Toon("A4Black", new Color(0.03f, 0.03f, 0.03f));
-                var tip = Toon("A4Tip", new Color(1f, 0.9f, 0.2f), 1f);
-                Part(PrimitiveType.Sphere, p, new Vector3(0, 0.9f, -0.1f), new Vector3(1f, 0.9f, 1.2f), green);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.34f, -0.15f), new Vector3(0.12f, 0.05f, 0.95f), dark);
-                Part(PrimitiveType.Sphere, p, new Vector3(0, 1.45f, 0.3f), Vector3.one * 0.62f, green);
-                for (int s = -1; s <= 1; s += 2)
-                {
-                    Part(PrimitiveType.Sphere, p, new Vector3(0.15f * s, 1.6f, 0.52f), Vector3.one * 0.26f, white);
-                    Part(PrimitiveType.Sphere, p, new Vector3(0.15f * s, 1.6f, 0.64f), Vector3.one * 0.1f, black);
-                    Part(PrimitiveType.Cylinder, p, new Vector3(0.14f * s, 1.88f, 0.3f), new Vector3(0.03f, 0.2f, 0.03f), dark, new Vector3(0, 0, -22 * s));
-                    P(Part(PrimitiveType.Sphere, p, new Vector3(0.22f * s, 2.06f, 0.3f), Vector3.one * 0.09f, tip));
-                    for (int f = -1; f <= 1; f += 2)
-                    {
-                        var leg = Pivot(p, new Vector3(0.42f * s, 0.62f, 0.25f * f - 0.1f));
-                        Part(PrimitiveType.Capsule, leg, new Vector3(0.05f * s, -0.3f, 0), new Vector3(0.13f, 0.32f, 0.13f), dark, new Vector3(0, 0, 12 * s));
-                        if (s * f < 0) A(leg); else B(leg);
-                    }
-                }
-                break;
-            }
-            default: // Shardling: living crystal
-            {
-                var purple = Toon("A5Purple", new Color(0.5f, 0.25f, 0.75f));
-                var gem = Toon("A5Gem", new Color(1f, 0.5f, 0.92f), 0.6f);
-                var dark = Toon("A5Dark", new Color(0.22f, 0.1f, 0.32f));
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.15f, 0), new Vector3(0.56f, 0.72f, 0.38f), purple);
-                Part(PrimitiveType.Cube, p, new Vector3(0, 1.7f, 0), Vector3.one * 0.3f, gem, new Vector3(45, 45, 0));
-                for (int s = -1; s <= 1; s += 2)
-                {
-                    P(Part(PrimitiveType.Cube, p, new Vector3(0.36f * s, 1.62f, -0.05f), new Vector3(0.12f, 0.48f, 0.12f), gem, new Vector3(0, 0, -25 * s)));
-                    P(Part(PrimitiveType.Cube, p, new Vector3(0.13f * s, 1.42f, -0.26f), new Vector3(0.1f, 0.52f, 0.1f), gem, new Vector3(-30, 0, -15 * s)));
-                    var arm = Pivot(p, new Vector3(0.37f * s, 1.45f, 0));
-                    Part(PrimitiveType.Cube, arm, new Vector3(0, -0.33f, 0), new Vector3(0.15f, 0.6f, 0.15f), dark);
-                    Part(PrimitiveType.Cube, arm, new Vector3(0, -0.72f, 0), new Vector3(0.13f, 0.22f, 0.13f), gem, new Vector3(0, 45, 0));
-                    var leg = Pivot(p, new Vector3(0.15f * s, 0.8f, 0));
-                    Part(PrimitiveType.Cube, leg, new Vector3(0, -0.4f, 0), new Vector3(0.21f, 0.8f, 0.23f), dark);
-                    if (s < 0) { A(arm); B(leg); } else { B(arm); A(leg); }
-                }
-                break;
+                result[i] = root;
             }
         }
+        finally { EditorUtility.ClearProgressBar(); }
+        AssetDatabase.SaveAssets();
+        return result;
     }
 
-    static void Eyes(Transform p, float y, float z, float x, float size, Material m)
-    {
-        for (int s = -1; s <= 1; s += 2)
-            Part(PrimitiveType.Sphere, p, new Vector3(x * s, y, z), Vector3.one * size, m);
-    }
+    // ------------------------------------------------------------------ alien bodies
 
-    static XenoBody BuildBodyTemplate(Transform parent, Dictionary<string, AudioClip> clips)
+    static XenoBody BuildBodyTemplate(Transform parent, Dictionary<string, AudioClip> clips, GameObject[] library,
+                                      List<XenoDialAliens.Alien> roster)
     {
         var go = new GameObject("XenoBody (per player)");
         go.transform.SetParent(parent, false);
@@ -386,15 +291,6 @@ public static class XenoDialWorldBuilder
 
         var modelRoot = new GameObject("Model").transform;
         modelRoot.SetParent(go.transform, false);
-        var models = new GameObject[Names.Length];
-        var a = new List<Transform>(); var b = new List<Transform>(); var pulse = new List<Transform>();
-        for (int i = 0; i < Names.Length; i++)
-        {
-            var m = new GameObject(Names[i]);
-            m.transform.SetParent(modelRoot, false);
-            AlienModel(i, m.transform, a, b, pulse);
-            models[i] = m;
-        }
         var voice = modelRoot.gameObject.AddComponent<AudioSource>();
         voice.playOnAwake = false;
         voice.spatialBlend = 1f;
@@ -432,20 +328,21 @@ public static class XenoDialWorldBuilder
         }
 
         body.modelRoot = modelRoot;
-        body.formModels = models;
-        body.formColors = Colors;
-        body.swingA = a.ToArray();
-        body.swingB = b.ToArray();
-        body.pulse = pulse.ToArray();
+        body.library = library;
+        body.glowColors = roster.Select(x => x.glow).ToArray();
         body.wristWatch = wrist;
         body.flash = flash.GetComponent<Renderer>();
         body.fireball = fire.transform;
+        body.fireballHalo = fire.transform.GetChild(0).GetComponent<Renderer>();
         body.burst = burst.GetComponent<Renderer>();
         body.ring = ring.transform;
         body.trail = trail.transform;
         body.crystals = crystals;
         body.voice = voice;
-        body.powerClips = new[] { clips["fire"], clips["slam"], clips["dash"], clips["flap"], clips["hop"], clips["crystal"] };
+        // indexed by power type: fire slam dash flap hop crystal lightning blink thrust grapple launch spin blast
+        body.powerClips = new[] { clips["fire"], clips["slam"], clips["dash"], clips["flap"], clips["hop"], clips["crystal"],
+                                  clips["lightning"], clips["blink"], clips["thrust"], clips["grapple"], clips["launch"],
+                                  clips["spin"], clips["blast"] };
         body.shiftClip = clips["shift"];
         body.revertClip = clips["revert"];
         return body;
@@ -760,7 +657,6 @@ public static class XenoDialWorldBuilder
         var vd = door.AddComponent<XenoVaultDoor>();
         Setup(vd);
         vd.watch = watch;
-        vd.requiredForm = 4;
         vd.destination = inSpot;
         vd.sound = snd;
 
@@ -792,9 +688,41 @@ public static class XenoDialWorldBuilder
     {
         var hub = new Vector3(3.6f, 0, 1.2f);
         Prim(PrimitiveType.Cylinder, "SignPost", env, hub + new Vector3(0, 1.2f, 0), new Vector3(0.15f, 1.2f, 0.15f), post, true);
-        string[] labels = { "Training Arena  >", "<  Speed Track", "Sky Tower  ^", "Strange tunnel  v" };
+        string[] labels = { "Training Arena  >", "<  Speed Track", "Sky Tower  ^", "Strange tunnel  v", "Alien Codex  v<" };
         for (int i = 0; i < labels.Length; i++)
             Board("Sign" + i, env, hub + new Vector3(0, 2.3f - i * 0.36f, -0.1f), new Vector2(1.9f, 0.3f), new Vector3(0, 2.3f - i * 0.36f, -4f), board, font, labels[i]);
+    }
+
+    /// <summary>The Alien Codex: every alien as a numbered statue, ten to a row, in dial order.</summary>
+    static void BuildGallery(Transform env, Vector3 at, List<XenoDialAliens.Alien> roster, GameObject[] library,
+                             Material font, Material board, Material rock)
+    {
+        const float DX = 4.2f, DZ = 4.6f;
+        int rows = (roster.Count + PAGE - 1) / PAGE;
+        var tiles = Toon("CodexTiles", new Color(0.62f, 0.6f, 0.56f));
+        var g = new GameObject("Alien Codex").transform;
+        g.SetParent(env, false);
+        Prim(PrimitiveType.Cube, "Plaza", g, at + new Vector3(0, 0.02f, 0), new Vector3(PAGE * DX + 4, 0.04f, rows * DZ + 6), tiles, false);
+        for (int i = 0; i < roster.Count; i++)
+        {
+            var a = roster[i];
+            int row = i / PAGE, col = i % PAGE;
+            var p = at + new Vector3((col - (PAGE - 1) / 2f) * DX, 0, ((rows - 1) / 2f - row) * DZ);
+            Prim(PrimitiveType.Cylinder, "Pedestal", g, p + new Vector3(0, 0.15f, 0), new Vector3(1.7f, 0.15f, 1.7f), rock, true);
+            var statue = Object.Instantiate(library[i], g);
+            statue.name = "Statue " + a.name;
+            statue.transform.position = p + new Vector3(0, 0.3f, 0);
+            statue.transform.rotation = Quaternion.identity;
+            statue.transform.localScale = Vector3.one * XenoDialAliens.StatueScale(a);
+            statue.SetActive(true);
+            var lp = p + new Vector3(0, 0.55f, 1.2f);
+            Board("Plaque " + (i + 1), g, lp, new Vector2(2f, 0.55f), lp + new Vector3(0, 0, 5), board, font,
+                  $"<b>#{i + 1} {a.name}</b>\n<size=70%>{a.Description}</size>");
+        }
+        var top = at + new Vector3(0, 3.4f, (rows * DZ + 6) / 2f + 0.5f);
+        Board("CodexSign", g, top, new Vector2(6f, 1.6f), top + new Vector3(0, 0, 10), board, font,
+              $"<b><color=#2effcc>ALIEN CODEX</color></b>\n<size=60%>All {roster.Count} forms in the XenoDial, in dial order " +
+              "(ten to a page). Find one you like and dial its number.</size>");
     }
 
     static void BuildScenery(Transform env, Material rock, Material bark)
@@ -805,7 +733,7 @@ public static class XenoDialWorldBuilder
         float R() => (float)rnd.NextDouble();
         // Keep the play areas clear.
         var clear = new[] { (new Vector3(0, 0, 3), 16f), (new Vector3(42, 0, 0), 20f), (new Vector3(-52, 0, 0), 29f),
-                            (new Vector3(0, 0, 48), 12f), (new Vector3(0, 0, -40), 11f), (new Vector3(0, 0, -20), 4f),
+                            (new Vector3(0, 0, 48), 12f), (new Vector3(0, 0, -40), 11f), (new Vector3(-45, 0, -62), 36f), (new Vector3(0, 0, -20), 4f),
                             (new Vector3(20, 0, 0), 4f), (new Vector3(-20, 0, 0), 4f), (new Vector3(0, 0, 25), 4f) };
         int placed = 0;
         for (int tries = 0; placed < 170 && tries < 3000; tries++)
@@ -899,7 +827,8 @@ public static class XenoDialWorldBuilder
     static Dictionary<string, AudioClip> LoadClips()
     {
         var d = new Dictionary<string, AudioClip>();
-        foreach (var n in new[] { "shift", "revert", "click", "open", "beep", "fire", "slam", "dash", "flap", "hop", "crystal", "smash", "bell", "win" })
+        foreach (var n in new[] { "shift", "revert", "click", "open", "beep", "fire", "slam", "dash", "flap", "hop", "crystal", "smash", "bell", "win",
+                                   "lightning", "blink", "thrust", "grapple", "launch", "spin", "blast" })
         {
             var c = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/" + n + ".wav");
             if (c == null) Debug.LogWarning("XenoDial: missing sound " + n);

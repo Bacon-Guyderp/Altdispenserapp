@@ -1,0 +1,112 @@
+# XenoDial alien roster. One alien per line; the order is the dial order.
+#
+#   name | body | power | size | main colour | glow colour | extras
+#
+# body:   biped brute slim avian quad bug floater serpent
+# power:  fire slam dash flap hop crystal lightning blink thrust grapple launch spin blast
+#         (append *1.3 etc. to make it stronger or weaker)
+# size:   tiny (fits the vault tunnel), small, normal, large, giant
+# extras: any of  h horns  s spikes  t tail  f flame crown  c crystals  a antennae  y one big eye
+#                 e three eyes  m mane  n fins  k shell  x four arms  w wings  b beak  g tusks
+#
+# Edit freely, then run XenoDial > Build World.
+Emberjack    | biped   | fire       | normal | 2b1f1a | ff6a10 | f
+Bedrock      | brute   | slam       | giant  | 80766a | 70ff5a | s
+Zipwire      | slim    | dash       | normal | 1a59f2 | 5af2ff | t
+Skyfin       | avian   | flap       | normal | 99e0ea | ffffff | n
+Pip          | bug     | hop        | tiny   | 60d940 | ffe633 | a
+Shardling    | biped   | crystal    | normal | 8040bf | ff80eb | c
+Cinderwick   | floater | fire       | normal | 3a2a24 | ff8a2a | f
+Magmaw       | brute   | slam*1.2   | giant  | 4a2318 | ff4a00 | hs
+Flarefox     | quad    | dash       | normal | d9581a | ffd060 | tf
+Scorchback   | quad    | blast      | large  | 5a3a2a | ff7020 | s
+Kilnhorn     | brute   | blast      | large  | 7a4030 | ffa040 | h
+Pyrelily     | slim    | fire*1.2   | normal | e86a8a | ffb060 | m
+Ashwhisper   | floater | blink      | normal | 6a6a70 | ffb080 | y
+Smeltor      | biped   | thrust     | normal | 6a5a50 | ff9a30 | x
+Blazeshell   | bug     | blast      | normal | b0401a | ffd040 | k
+Sunmote      | floater | launch     | tiny   | ffd060 | fff0a0 | y
+Voltwing     | avian   | lightning  | normal | 2a2a5a | a0f0ff | a
+Sparkrat     | quad    | lightning  | tiny   | e0d040 | a0f0ff | ta
+Thunderhide  | brute   | slam       | giant  | 3a4a70 | c0e0ff | h
+Arcflare     | slim    | lightning  | normal | 1a1a2a | 60e0ff | t
+Gigawatt     | biped   | lightning*1.3 | large | 404050 | f0f060 | x
+Staticlaw    | bug     | spin       | normal | 6070a0 | c0f0ff | a
+Ohmbear      | brute   | lightning  | large  | 4a4a60 | ffe060 | m
+Ionix        | floater | grapple    | normal | 20304a | 60ffd0 | a
+Tidecoil     | serpent | thrust     | normal | 1a6a9a | 80e0ff | n
+Brineback    | quad    | slam       | large  | 2a5a6a | a0ffe0 | k
+Reefsprite   | floater | hop        | tiny   | ff8aa0 | a0fff0 | a
+Squalltooth  | biped   | dash       | normal | 3a6aa0 | e0ffff | n
+Glacimaw     | brute   | crystal    | large  | a0d0f0 | e0ffff | c
+Frostling    | bug     | crystal    | tiny   | c0e8ff | ffffff | c
+Hailstride   | slim    | dash*1.1   | normal | d0e8f8 | 80c0ff | c
+Snowquill    | avian   | flap       | normal | f0f4ff | a0d0ff | s
+Drizzlemote  | floater | flap       | tiny   | 7ab0d0 | c0f0ff | y
+Mossgiant    | brute   | slam       | giant  | 3a5a2a | a0ff60 | m
+Thornlash    | slim    | grapple    | normal | 2a5a1a | d0ff40 | s
+Sporecap     | bug     | blast      | normal | b06a40 | f0ffa0 | k
+Bramblehog   | quad    | spin       | normal | 5a4a2a | a0ff40 | s
+Petalwisp    | floater | flap       | normal | ff9ad0 | ffffff | m
+Rootstomp    | brute   | launch     | large  | 5a3a1a | 80ff40 | h
+Vinewhip     | serpent | grapple    | normal | 3a8a2a | c0ff60 | n
+Gearhound    | quad    | dash       | normal | 8a8a90 | 40ffa0 | a
+Cogwright    | biped   | crystal    | normal | a08a40 | 40e0ff | x
+Rivetron     | brute   | slam       | large  | 6a6a70 | ff4040 | h
+Boltbug      | bug     | lightning  | tiny   | 9090a0 | 40ffff | a
+Servoskate   | slim    | thrust     | normal | c0c0c8 | ff60a0 | t
+Pistonpaw    | quad    | launch     | normal | 7a7a80 | ffa040 | g
+Chromewing   | avian   | dash       | normal | d0d0e0 | 60a0ff | b
+Gloomwisp    | floater | blink      | normal | 2a1a3a | c060ff | y
+Shadeclaw    | biped   | blink*1.2  | normal | 1a1a24 | a040ff | h
+Nightstalk   | slim    | blink      | normal | 20202a | 60ff60 | t
+Duskmoth     | avian   | flap       | normal | 4a3a5a | ffd0ff | a
+Hollowfang   | quad    | dash       | normal | 2a2a30 | ff3030 | hg
+Eclipsor     | brute   | blast      | large  | 1a1a2a | ffb040 | y
+Lumenray     | serpent | lightning  | normal | f0f0ff | 80ffff | n
+Glowtoad     | quad    | launch     | normal | 3aa060 | f0ff60 | e
+Prismite     | bug     | crystal    | tiny   | a060f0 | ffa0ff | c
+Starmote     | floater | blink      | tiny   | 2a2a6a | ffffa0 | y
+Novaflare    | biped   | blast      | normal | f06a20 | fff060 | f
+Orbitron     | floater | grapple    | large  | 404a70 | a0c0ff | a
+Quasarch     | brute   | launch*1.2 | giant  | 30205a | c080ff | c
+Cometail     | serpent | dash       | normal | 3050a0 | c0f0ff | t
+Gravibloom   | floater | launch     | normal | 60308a | ffa0e0 | m
+Meteorb      | quad    | spin       | large  | 5a4030 | ff8040 | s
+Dustdevil    | floater | spin       | normal | c0a070 | fff0c0 | e
+Sandsifter   | serpent | spin       | large  | c0a060 | ffe080 | s
+Mirageon     | slim    | blink      | normal | e0c080 | ffffff | y
+Scarabolt    | bug     | dash       | normal | 3a6a5a | 60ffc0 | k
+Dunecrusher  | brute   | slam       | giant  | a08050 | ffd060 | k
+Cactusk      | biped   | spin       | normal | 4a8a3a | ffff80 | sg
+Galeglider   | avian   | flap*1.2   | large  | a0c0d0 | ffffff | t
+Cyclonyx     | floater | spin*1.2   | normal | 6080a0 | e0ffff | e
+Zephyrling   | bug     | flap       | tiny   | c0f0e0 | ffffff | w
+Tempestrider | quad    | thrust     | normal | 404a60 | a0e0ff | n
+Stormcrest   | avian   | lightning  | large  | 303a50 | fff060 | h
+Chirrflit    | bug     | blink      | tiny   | 8a6a9a | ffc0ff | a
+Rumbleback   | quad    | slam       | giant  | 6a6050 | ffb060 | k
+Sonicurl     | serpent | blast      | normal | c040a0 | ffa0ff | e
+Bassboom     | brute   | blast*1.2  | large  | 2a2a3a | 40ff80 | x
+Chimewing    | avian   | crystal    | normal | e0d0a0 | ffffc0 | c
+Gloopix      | floater | hop        | normal | 40c060 | c0ff80 | e
+Slimespan    | serpent | grapple    | normal | 80c040 | f0ff80 | y
+Jellodrift   | floater | flap       | large  | a080ff | ffd0ff | m
+Ooziroo      | quad    | launch     | normal | 60b080 | c0ffc0 | t
+Bubblor      | floater | launch     | tiny   | 80d0ff | ffffff | y
+Tinkerfly    | bug     | grapple    | tiny   | a0a060 | 80ffff | w
+Minimite     | bug     | dash       | tiny   | c04040 | ffd040 | a
+Nibblet      | quad    | hop        | tiny   | d0a070 | ffffff | t
+Specklet     | floater | blink      | tiny   | f0f0f0 | ff60ff | e
+Titanox      | brute   | slam*1.3   | giant  | 5a5a6a | ff6040 | hx
+Colossaur    | quad    | slam       | giant  | 4a6a3a | ffe060 | st
+Tuskram      | brute   | dash       | large  | 6a4a3a | ffb040 | g
+Towerjaw     | biped   | launch     | giant  | 6a6a7a | 80ffd0 | y
+Crystalisk   | serpent | crystal    | large  | c060c0 | ffa0ff | c
+Lavaling     | bug     | fire       | tiny   | ff5010 | ffe040 | f
+Frostfang    | quad    | fire       | normal | b0e0ff | ffffff | h
+Venomire     | serpent | fire       | normal | 4a8a2a | c0ff20 | e
+Quillshot    | quad    | fire       | normal | 7a5a3a | ffe0a0 | s
+Gravelgrip   | biped   | grapple    | normal | 8a8070 | ffd080 | k
+Wraithwind   | floater | thrust     | normal | a0a0c0 | e0e0ff | y
+Zenithar     | avian   | thrust*1.2 | large  | f0d040 | ffffff | hw

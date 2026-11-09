@@ -4,16 +4,20 @@ using VRC.SDKBase;
 
 /// <summary>
 /// One copy per player (spawned by VRCPlayerObject) and owned by that player.
-/// Holds the synced alien form and the last power used, and draws them for everyone:
-/// the alien body follows its owner, and powers (fireballs, shockwaves, crystals...)
-/// play on every client. The owner sees their own alien only in mirrors.
+/// Holds the synced alien form and the last power used, and draws them for everyone.
+/// The alien's model is copied from the shared alien library when the form changes, so
+/// a hundred aliens cost nothing until somebody becomes one. The owner sees their own
+/// alien only in mirrors.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class XenoBody : UdonSharpBehaviour
 {
-    public const int FIRE = 0, STONE = 1, SPEED = 2, WING = 3, TINY = 4, CRYSTAL = 5;
+    // Power types. Same numbers in XenoDialWatch.
+    public const int FIRE = 0, SLAM = 1, DASH = 2, FLAP = 3, HOP = 4, CRYSTAL = 5, LIGHTNING = 6,
+                     BLINK = 7, THRUST = 8, GRAPPLE = 9, LAUNCH = 10, SPIN = 11, BLAST = 12;
     private const float MODEL_EYE_HEIGHT = 1.6f;   // the alien models are built for this eye height
     private const int MIRROR_LAYER = 18;           // MirrorReflection: hidden from your own camera, shown in mirrors
+    private const int MAX_PARTS = 12;
 
     [UdonSynced] public int form = -1;
     [UdonSynced] public bool hasWatch;
@@ -23,52 +27,47 @@ public class XenoBody : UdonSharpBehaviour
     [UdonSynced] public Vector3 fxDir;
 
     [Header("Built by XenoDial > Build World")]
+    public GameObject[] library;        // one model per alien (inactive, shared by everyone)
+    public Color[] glowColors;          // per alien, tints its powers
     public Transform modelRoot;
-    public GameObject[] formModels;
-    public Color[] formColors;
-    public Transform[] swingA;          // limbs that swing forward while the other set swings back
-    public Transform[] swingB;
-    public Transform[] pulse;           // flames / crystals that pulse
     public Transform wristWatch;        // the watch other people see on your wrist
     public Renderer flash;              // transform flash (sphere)
     public Transform fireball;
+    public Renderer fireballHalo;
     public Renderer burst;
     public Transform ring;              // shockwave / flap ring
-    public Transform trail;             // dash streak
+    public Transform trail;             // dash streak, lightning bolt, grapple line
     public Transform[] crystals;        // crystal platforms (with colliders)
     public AudioSource voice;           // 3D, follows the body
-    public AudioClip[] powerClips;      // per form
+    public AudioClip[] powerClips;      // per power type
     public AudioClip shiftClip, revertClip;
     public float crystalLifetime = 30f;
 
     private VRCPlayerApi _owner;
     private bool _isMine;
     private int _shownForm = -1;
+    private GameObject _model;
     private int _lastFx;
     private bool _gotFirst;
     private float _walkPhase;
-    private Quaternion[] _restA, _restB;
-    private Vector3[] _pulseScale;
+
+    private Transform[] _swingA = new Transform[MAX_PARTS], _swingB = new Transform[MAX_PARTS], _pulse = new Transform[MAX_PARTS];
+    private Quaternion[] _restA = new Quaternion[MAX_PARTS], _restB = new Quaternion[MAX_PARTS];
+    private Vector3[] _pulseScale = new Vector3[MAX_PARTS];
+    private int _nA, _nB, _nP;
 
     private float _flashT = 99f;
-    private float _fireT = 99f, _fireLen;
+    private float _fireT = 99f, _fireLen, _burstSize = 2.2f;
     private Vector3 _fireFrom, _fireDir;
     private float _burstT = 99f;
     private float _ringT = 99f, _ringSize;
-    private float _trailT = 99f;
+    private float _trailT = 99f, _trailWidth = 0.5f;
     private float[] _crystalBorn;
 
     void Start()
     {
-        _restA = new Quaternion[swingA.Length];
-        for (int i = 0; i < swingA.Length; i++) _restA[i] = swingA[i].localRotation;
-        _restB = new Quaternion[swingB.Length];
-        for (int i = 0; i < swingB.Length; i++) _restB[i] = swingB[i].localRotation;
-        _pulseScale = new Vector3[pulse.Length];
-        for (int i = 0; i < pulse.Length; i++) _pulseScale[i] = pulse[i].localScale;
         _crystalBorn = new float[crystals.Length];
         for (int i = 0; i < crystals.Length; i++) { crystals[i].gameObject.SetActive(false); _crystalBorn[i] = -999f; }
-        ShowForm(-1);
         HideFx();
     }
 
@@ -78,7 +77,7 @@ public class XenoBody : UdonSharpBehaviour
         _owner = Networking.GetOwner(gameObject);
         if (_owner == null || !Utilities.IsValid(_owner)) return false;
         _isMine = _owner.isLocal;
-        if (_isMine) SetLayer(modelRoot, MIRROR_LAYER);
+        if (_isMine && _model != null) SetLayer(_model.transform, MIRROR_LAYER);
         return true;
     }
 
@@ -86,6 +85,12 @@ public class XenoBody : UdonSharpBehaviour
     {
         Transform[] all = t.GetComponentsInChildren<Transform>(true);
         for (int i = 0; i < all.Length; i++) all[i].gameObject.layer = layer;
+    }
+
+    private Color Glow()
+    {
+        if (form >= 0 && form < glowColors.Length) return glowColors[form];
+        return new Color(0.2f, 1f, 0.85f);
     }
 
     // ------------------------------------------------------------------ called by the owner's watch
@@ -133,10 +138,10 @@ public class XenoBody : UdonSharpBehaviour
     {
         if (form == _shownForm) return;
         bool turningBack = form < 0;
-        Color c = (!turningBack && form < formColors.Length) ? formColors[form] : new Color(0.2f, 1f, 0.85f);
         ShowForm(form);
         if (ResolveOwner())
         {
+            Color c = Glow();
             Vector3 at = _owner.GetPosition() + Vector3.up * _owner.GetAvatarEyeHeightAsMeters() * 0.6f;
             flash.transform.position = at;
             flash.material.SetColor("_Color", new Color(c.r, c.g, c.b, 0.9f));
@@ -149,7 +154,28 @@ public class XenoBody : UdonSharpBehaviour
     private void ShowForm(int f)
     {
         _shownForm = f;
-        for (int i = 0; i < formModels.Length; i++) formModels[i].SetActive(i == f);
+        if (_model != null) Destroy(_model);
+        _model = null;
+        _nA = _nB = _nP = 0;
+        if (f < 0 || f >= library.Length || library[f] == null) return;
+
+        _model = Instantiate(library[f]);
+        Transform t = _model.transform;
+        t.SetParent(modelRoot, false);
+        t.localPosition = Vector3.zero;
+        t.localRotation = Quaternion.identity;
+        t.localScale = Vector3.one;
+        _model.SetActive(true);
+        // Parts are named by role: A* and B* swing in opposite phase, P* pulses.
+        for (int i = 0; i < t.childCount; i++)
+        {
+            Transform c = t.GetChild(i);
+            string n = c.name;
+            if (n.StartsWith("A") && _nA < MAX_PARTS) { _swingA[_nA] = c; _restA[_nA] = c.localRotation; _nA++; }
+            else if (n.StartsWith("B") && _nB < MAX_PARTS) { _swingB[_nB] = c; _restB[_nB] = c.localRotation; _nB++; }
+            else if (n.StartsWith("P") && _nP < MAX_PARTS) { _pulse[_nP] = c; _pulseScale[_nP] = c.localScale; _nP++; }
+        }
+        if (_isMine) SetLayer(t, MIRROR_LAYER);
     }
 
     private void Play(AudioClip clip)
@@ -163,32 +189,37 @@ public class XenoBody : UdonSharpBehaviour
     private void PlayFx(int kind, Vector3 pos, Vector3 dir, int seq)
     {
         if (kind >= 0 && kind < powerClips.Length) Play(powerClips[kind]);
-        Color c = (kind >= 0 && kind < formColors.Length) ? formColors[kind] : Color.white;
-        if (kind == FIRE)
+        Color c = Glow();
+        if (kind == FIRE || kind == BLAST)
         {
             _fireFrom = pos;
             _fireLen = dir.magnitude;
             _fireDir = _fireLen > 0.001f ? dir / _fireLen : Vector3.forward;
             _fireT = 0f;
+            _burstSize = kind == BLAST ? 8f : 2.2f;
             fireball.position = pos;
+            fireball.localScale = Vector3.one * (kind == BLAST ? 0.6f : 0.35f);
+            fireballHalo.material.SetColor("_Color", new Color(c.r, c.g, c.b, 0.85f));
+            burst.material.SetColor("_Color", new Color(c.r, c.g, c.b, 0.9f));
             fireball.gameObject.SetActive(true);
         }
-        else if (kind == STONE)
+        else if (kind == SLAM || kind == FLAP || kind == HOP || kind == LAUNCH || kind == SPIN)
         {
-            StartRing(pos, dir.magnitude, c);
+            StartRing(pos, Mathf.Max(0.35f, dir.magnitude), c);
         }
-        else if (kind == SPEED)
+        else if (kind == DASH || kind == THRUST)
         {
-            float len = Mathf.Max(0.5f, dir.magnitude);
-            trail.position = pos + dir * 0.5f;
-            trail.rotation = Quaternion.LookRotation(dir.normalized) * Quaternion.Euler(90f, 0f, 0f);
-            trail.localScale = new Vector3(0.5f, len * 0.5f, 0.5f);
-            trail.gameObject.SetActive(true);
-            _trailT = 0f;
+            Beam(pos, dir, 0.5f, c);
         }
-        else if (kind == WING || kind == TINY)
+        else if (kind == LIGHTNING || kind == GRAPPLE)
         {
-            StartRing(pos, Mathf.Max(0.4f, dir.magnitude), c);
+            Beam(pos, dir, kind == LIGHTNING ? 0.18f : 0.07f, c);
+            if (kind == LIGHTNING) Burst(pos + dir, 2.5f, c);
+        }
+        else if (kind == BLINK)
+        {
+            Burst(pos + Vector3.up, 2f, c);
+            StartRing(pos + dir, 1.5f, c);
         }
         else if (kind == CRYSTAL && crystals.Length > 0)
         {
@@ -200,6 +231,29 @@ public class XenoBody : UdonSharpBehaviour
             cr.gameObject.SetActive(true);
             _crystalBorn[i] = Time.time;
         }
+    }
+
+    private void Beam(Vector3 from, Vector3 dir, float width, Color c)
+    {
+        float len = Mathf.Max(0.5f, dir.magnitude);
+        Vector3 d = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward;
+        trail.position = from + d * len * 0.5f;
+        trail.rotation = Quaternion.LookRotation(d) * Quaternion.Euler(90f, 0f, 0f);
+        trail.localScale = new Vector3(width, len * 0.5f, width);
+        Renderer r = trail.GetComponent<Renderer>();
+        if (r != null) r.material.SetColor("_Color", new Color(c.r, c.g, c.b, 0.85f));
+        trail.gameObject.SetActive(true);
+        _trailWidth = width;
+        _trailT = 0f;
+    }
+
+    private void Burst(Vector3 at, float size, Color c)
+    {
+        burst.transform.position = at;
+        burst.material.SetColor("_Color", new Color(c.r, c.g, c.b, 0.9f));
+        _burstSize = size;
+        burst.gameObject.SetActive(true);
+        _burstT = 0f;
     }
 
     private void StartRing(Vector3 pos, float size, Color c)
@@ -231,7 +285,7 @@ public class XenoBody : UdonSharpBehaviour
         if (eye <= 0.01f) eye = MODEL_EYE_HEIGHT;
 
         // body follows its owner
-        if (_shownForm >= 0)
+        if (_model != null)
         {
             modelRoot.position = _owner.GetPosition();
             Quaternion r = _owner.GetRotation();
@@ -242,11 +296,11 @@ public class XenoBody : UdonSharpBehaviour
             float speed = new Vector2(v.x, v.z).magnitude;
             _walkPhase += dt * Mathf.Clamp(speed * 2.2f / Mathf.Max(0.2f, eye), 0f, 30f);
             float amp = Mathf.Clamp01(speed / 2f) * 35f;
-            float s = Mathf.Sin(_walkPhase) * amp;
-            for (int i = 0; i < swingA.Length; i++) swingA[i].localRotation = _restA[i] * Quaternion.Euler(s, 0f, 0f);
-            for (int i = 0; i < swingB.Length; i++) swingB[i].localRotation = _restB[i] * Quaternion.Euler(-s, 0f, 0f);
-            float p = 1f + 0.15f * Mathf.Sin(Time.time * 9f);
-            for (int i = 0; i < pulse.Length; i++) pulse[i].localScale = _pulseScale[i] * p;
+            float s = Mathf.Sin(_walkPhase) * amp + Mathf.Sin(Time.time * 2f) * 4f;  // plus a gentle idle sway
+            for (int i = 0; i < _nA; i++) _swingA[i].localRotation = _restA[i] * Quaternion.Euler(s, 0f, 0f);
+            for (int i = 0; i < _nB; i++) _swingB[i].localRotation = _restB[i] * Quaternion.Euler(-s, 0f, 0f);
+            float p = 1f + 0.08f * Mathf.Sin(Time.time * 9f);
+            for (int i = 0; i < _nP; i++) _pulse[i].localScale = _pulseScale[i] * p;
         }
 
         // the watch other people see on your wrist (you see your own, interactive one)
@@ -295,7 +349,7 @@ public class XenoBody : UdonSharpBehaviour
         if (_burstT < 0.35f)
         {
             _burstT += dt;
-            burst.transform.localScale = Vector3.one * Mathf.Lerp(0.3f, 2.2f, _burstT / 0.35f);
+            burst.transform.localScale = Vector3.one * Mathf.Lerp(0.3f, _burstSize, _burstT / 0.35f);
             if (_burstT >= 0.35f) burst.gameObject.SetActive(false);
         }
         if (_ringT < 0.55f)
@@ -310,7 +364,7 @@ public class XenoBody : UdonSharpBehaviour
         {
             _trailT += dt;
             Vector3 ls = trail.localScale;
-            float th = Mathf.Lerp(0.5f, 0.02f, _trailT / 0.35f);
+            float th = Mathf.Lerp(_trailWidth, 0.02f, _trailT / 0.35f);
             trail.localScale = new Vector3(th, ls.y, th);
             if (_trailT >= 0.35f) trail.gameObject.SetActive(false);
         }

@@ -8,29 +8,36 @@ using TMPro;
 /// The XenoDial: the local player's alien-transformation watch. One copy in the scene;
 /// every client drives it for their own player only.
 ///
-/// VR:      tap the core with your right index finger to open the dial, tap an alien to
-///          pick it, tap the core again to transform. Tap the core while transformed to
-///          change back. Pull either trigger to use your power.
-/// Desktop: Q opens the dial, 1-6 picks an alien, F transforms.
+/// The dial shows ten aliens at a time (a "page"); there are as many pages as aliens / 10.
+/// VR:      tap the core with your right index finger to open the dial. Tap an alien to pick
+///          it, tap the arrows beside the ring to change page, tap the core to transform.
+///          Tap the core while transformed to change back. Pull a trigger to use your power.
+/// Desktop: Q opens the dial. 1-9 and 0 pick on the page, left/right step one alien,
+///          up/down change page, R picks at random, F transforms.
 ///          While transformed: left-click or F uses your power, Q changes back.
 ///
-/// Transforming changes how you move (speed, jump, gravity and even your size) and
-/// gives you a power. The form and powers are synced through your XenoBody so
-/// everybody sees your alien. After the time runs out the watch needs to recharge.
+/// Each alien has a power type, a strength, movement stats and a size. The form and
+/// powers are synced through your XenoBody so everybody sees them.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class XenoDialWatch : UdonSharpBehaviour
 {
     public const int IDLE = 0, DIAL = 1, ALIEN = 2, RECHARGE = 3;
-    public const int FIRE = 0, STONE = 1, SPEED = 2, WING = 3, TINY = 4, CRYSTAL = 5;  // same as XenoBody
+    // Power types. Same numbers in XenoBody.
+    public const int FIRE = 0, SLAM = 1, DASH = 2, FLAP = 3, HOP = 4, CRYSTAL = 5, LIGHTNING = 6,
+                     BLINK = 7, THRUST = 8, GRAPPLE = 9, LAUNCH = 10, SPIN = 11, BLAST = 12;
     private const float MODEL_EYE_HEIGHT = 1.6f;
+    private const int PAGE = 10;
 
     [Header("Scene")]
     public XenoBody bodyTemplate;
     public Transform watchRoot;          // local watch (face normal = local +Y)
     public Transform core;               // the tappable core on the face
     public Transform dialRoot;           // hologram ring, shown while choosing
-    public Transform[] icons;            // one mini alien per form, children of dialRoot
+    public Transform[] slots;            // ten icon slots around the ring
+    public Renderer[] slotDiscs;
+    public Transform[] slotMinis;        // holders the mini aliens are copied into
+    public Transform prevPage, nextPage; // arrows beside the ring (tap them in VR)
     public Transform selector;           // halo behind the chosen icon
     public Renderer faceRenderer;
     public Renderer coreRenderer;
@@ -41,24 +48,28 @@ public class XenoDialWatch : UdonSharpBehaviour
     public AudioClip clickClip, openClip, beepClip;
 
     [Header("Aliens (index = form)")]
+    public GameObject[] library;
     public string[] formNames;
     public string[] formPowers;
     public Color[] formColors;
+    public int[] powerType;
+    public float[] strength;
     public float[] walkSpeed, runSpeed, jumpImpulse, gravity, eyeHeight, cooldown;
 
     [Header("Rules")]
     public float transformSeconds = 45f;
     public float rechargeSeconds = 8f;
     public float fireRange = 45f;
-    public float slamRadius = 9f;
+    public float tinyEyeHeight = 0.45f;   // at or below this you fit through the vault tunnel
 
     [Header("Desktop keys")]
     public KeyCode dialKey = KeyCode.Q;
     public KeyCode actionKey = KeyCode.F;
+    public KeyCode randomKey = KeyCode.R;
     public KeyCode[] pickKeys;
 
     [Header("VR")]
-    public Vector3 handPointerEuler = Vector3.zero;  // tweak if fireballs don't leave along your hand
+    public Vector3 handPointerEuler = Vector3.zero;  // tweak if powers don't leave along your hand
     public float touchRadius = 0.035f;
 
     private VRCPlayerApi _lp;
@@ -66,10 +77,13 @@ public class XenoDialWatch : UdonSharpBehaviour
     private bool _hasWatch;
     private int _state = IDLE;
     private int _selected;
+    private int _shownPage = -1;
     private int _form = -1;
-    private float _endTime, _rechargeEnd, _nextPower, _dialOpenedAt, _nextBeep;
-    private bool _coreArmed = true, _iconArmed = true;
+    private float _endTime, _rechargeEnd, _nextPower, _dialOpenedAt, _nextBeep, _nextThrustFx;
+    private bool _coreArmed = true, _iconArmed = true, _pageArmed = true;
+    private bool _holdVR, _holdLeft;
     private int _smashed;
+    private GameObject[] _minis;
 
     private float _defWalk, _defRun, _defStrafe, _defJump, _defGravity, _defEye;
     private bool _eyeChanged;
@@ -81,7 +95,9 @@ public class XenoDialWatch : UdonSharpBehaviour
     {
         _lp = Networking.LocalPlayer;
         if (pickKeys == null || pickKeys.Length == 0)
-            pickKeys = new KeyCode[] { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6 };
+            pickKeys = new KeyCode[] { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5,
+                                       KeyCode.Alpha6, KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Alpha9, KeyCode.Alpha0 };
+        _minis = new GameObject[slots.Length];
         watchRoot.gameObject.SetActive(false);
         dialRoot.gameObject.SetActive(false);
         if (_lp != null)
@@ -110,6 +126,8 @@ public class XenoDialWatch : UdonSharpBehaviour
 
     public bool HasWatch() { return _hasWatch; }
     public int CurrentForm() { return _form; }
+    public bool IsTiny() { return _form >= 0 && eyeHeight[_form] > 0f && eyeHeight[_form] <= tinyEyeHeight; }
+    public int AlienCount() { return formNames.Length; }
 
     // ------------------------------------------------------------------ helpers
 
@@ -138,13 +156,16 @@ public class XenoDialWatch : UdonSharpBehaviour
         return Mathf.Clamp(eye / MODEL_EYE_HEIGHT, 0.12f, 3.5f);
     }
 
-    // ------------------------------------------------------------------ state changes
+    private int PageCount() { return (formNames.Length + PAGE - 1) / PAGE; }
+
+    // ------------------------------------------------------------------ the dial
 
     private void OpenDial()
     {
         _state = DIAL;
         _dialOpenedAt = Time.time;
         dialRoot.gameObject.SetActive(true);
+        ShowPage(_selected / PAGE);
         Play(openClip);
         Buzz(0.4f);
         Refresh();
@@ -158,15 +179,53 @@ public class XenoDialWatch : UdonSharpBehaviour
         Refresh();
     }
 
+    /// <summary>Copies this page's aliens from the library into the ring.</summary>
+    private void ShowPage(int page)
+    {
+        if (page == _shownPage) return;
+        _shownPage = page;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (_minis[i] != null) Destroy(_minis[i]);
+            _minis[i] = null;
+            int f = page * PAGE + i;
+            bool used = f < formNames.Length;
+            slots[i].gameObject.SetActive(used);
+            if (!used) continue;
+            slotDiscs[i].material.SetColor("_Color", new Color(formColors[f].r, formColors[f].g, formColors[f].b, 0.45f));
+            if (f < library.Length && library[f] != null)
+            {
+                GameObject m = Instantiate(library[f]);
+                m.transform.SetParent(slotMinis[i], false);
+                m.transform.localPosition = Vector3.zero;
+                m.transform.localRotation = Quaternion.identity;
+                m.transform.localScale = Vector3.one;
+                m.SetActive(true);
+                _minis[i] = m;
+            }
+        }
+    }
+
     private void Select(int i)
     {
-        if (i < 0 || i >= formNames.Length) return;
-        _selected = i;
+        int n = formNames.Length;
+        if (n == 0) return;
+        _selected = ((i % n) + n) % n;
         _dialOpenedAt = Time.time;
+        ShowPage(_selected / PAGE);
         Play(clickClip);
         Buzz(0.3f);
         Refresh();
     }
+
+    private void ChangePage(int delta)
+    {
+        int pages = PageCount();
+        int page = ((_selected / PAGE + delta) % pages + pages) % pages;
+        Select(page * PAGE);
+    }
+
+    // ------------------------------------------------------------------ transforming
 
     private void Shift()
     {
@@ -218,6 +277,7 @@ public class XenoDialWatch : UdonSharpBehaviour
     {
         if (_form < 0) return;
         _form = -1;
+        _holdVR = false;
         _lp.SetWalkSpeed(_defWalk);
         _lp.SetStrafeSpeed(_defStrafe);
         _lp.SetRunSpeed(_defRun);
@@ -265,12 +325,16 @@ public class XenoDialWatch : UdonSharpBehaviour
         }
         if (_state == DIAL)
         {
-            for (int i = 0; i < pickKeys.Length && i < formNames.Length; i++)
-                if (Input.GetKeyDown(pickKeys[i])) Select(i);
-            if (Input.GetKeyDown(KeyCode.RightArrow)) Select((_selected + 1) % formNames.Length);
-            if (Input.GetKeyDown(KeyCode.LeftArrow)) Select((_selected + formNames.Length - 1) % formNames.Length);
+            int pageStart = (_selected / PAGE) * PAGE;
+            for (int i = 0; i < pickKeys.Length && i < PAGE; i++)
+                if (Input.GetKeyDown(pickKeys[i]) && pageStart + i < formNames.Length) Select(pageStart + i);
+            if (Input.GetKeyDown(KeyCode.RightArrow)) Select(_selected + 1);
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) Select(_selected - 1);
+            if (Input.GetKeyDown(KeyCode.UpArrow)) ChangePage(1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) ChangePage(-1);
+            if (Input.GetKeyDown(randomKey)) Select(Random.Range(0, formNames.Length));
             if (Input.GetKeyDown(actionKey)) Shift();
-            else if (Time.time - _dialOpenedAt > 15f) CloseDial();
+            else if (Time.time - _dialOpenedAt > 20f) CloseDial();
         }
         else if (_state == ALIEN)
         {
@@ -278,11 +342,13 @@ public class XenoDialWatch : UdonSharpBehaviour
             float left = _endTime - Time.time;
             if (left <= 0f) { Revert(true); return; }
             if (Time.time >= _nextBeep) { Play(beepClip); _nextBeep += left < 2f ? 0.5f : 1f; }
-            if (_form == WING && !_lp.IsPlayerGrounded())
+            int pt = powerType[_form];
+            if (pt == FLAP && !_lp.IsPlayerGrounded())
             {
                 Vector3 v = _lp.GetVelocity();
                 if (v.y < -1.6f) _lp.SetVelocity(new Vector3(v.x, -1.6f, v.z));  // glide
             }
+            if (pt == THRUST && (_holdVR || Input.GetKey(actionKey))) Thrust();
             RefreshTimer(left);
         }
         else if (_state == RECHARGE)
@@ -294,114 +360,227 @@ public class XenoDialWatch : UdonSharpBehaviour
 
     public override void InputUse(bool value, UdonInputEventArgs args)
     {
-        if (!value || !_hasWatch || _state != ALIEN) return;
-        Power(args.handType == HandType.LEFT);
+        if (!_hasWatch || _state != ALIEN) { _holdVR = false; return; }
+        _holdLeft = args.handType == HandType.LEFT;
+        _holdVR = value;
+        if (value) Power(_holdLeft);
     }
 
     public override void InputJump(bool value, UdonInputEventArgs args)
     {
-        // Skyfin flaps when you jump in mid-air.
-        if (!value || _state != ALIEN || _form != WING || _lp == null || _lp.IsPlayerGrounded()) return;
+        // Flyers flap when you jump in mid-air.
+        if (!value || _state != ALIEN || _lp == null || powerType[_form] != FLAP || _lp.IsPlayerGrounded()) return;
         Power(false);
     }
 
     // ------------------------------------------------------------------ powers
 
+    private void Aim(bool leftHand, out Vector3 origin, out Vector3 dir)
+    {
+        VRCPlayerApi.TrackingData head = _lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+        if (_lp.IsUserInVR())
+        {
+            VRCPlayerApi.TrackingData hand = _lp.GetTrackingData(leftHand
+                ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
+            origin = hand.position;
+            dir = hand.rotation * Quaternion.Euler(handPointerEuler) * Vector3.forward;
+        }
+        else
+        {
+            dir = head.rotation * Vector3.forward;
+            origin = head.position + dir * 0.4f - head.rotation * Vector3.up * 0.15f;
+        }
+    }
+
+    private Vector3 Flat()
+    {
+        Vector3 fwd = _lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).rotation * Vector3.forward;
+        Vector3 flat = new Vector3(fwd.x, 0f, fwd.z);
+        return flat.sqrMagnitude > 0.001f ? flat.normalized : (_lp.GetRotation() * Vector3.forward);
+    }
+
+    /// <summary>Distance along the aim to the first wall, or max.</summary>
+    private float RayLength(Vector3 origin, Vector3 dir, float max)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(origin, dir, out hit, max, 1, QueryTriggerInteraction.Ignore)) return hit.distance;
+        return max;
+    }
+
+    /// <summary>The target nearest along the aim, within its hit radius plus slack.</summary>
+    private XenoTarget AimedTarget(Vector3 origin, Vector3 dir, float maxAlong, float slack, out float along)
+    {
+        XenoTarget best = null;
+        along = maxAlong;
+        for (int i = 0; i < targets.Length; i++)
+        {
+            XenoTarget t = targets[i];
+            if (t == null || t.IsBroken()) continue;
+            Vector3 to = t.transform.position - origin;
+            float a = Vector3.Dot(to, dir);
+            if (a < 0f || a > along) continue;
+            if ((to - dir * a).magnitude > t.hitRadius + slack) continue;
+            best = t;
+            along = a;
+        }
+        return best;
+    }
+
+    private void SmashAround(Vector3 center, float radius, float height)
+    {
+        for (int i = 0; i < targets.Length; i++)
+        {
+            XenoTarget t = targets[i];
+            if (t == null || t.IsBroken()) continue;
+            Vector3 d = t.transform.position - center;
+            if (new Vector2(d.x, d.z).magnitude <= radius && Mathf.Abs(d.y) < height) SmashTarget(t);
+        }
+    }
+
     private void Power(bool leftHand)
     {
-        if (Time.time < _nextPower || _form < 0) return;
+        if (_form < 0 || Time.time < _nextPower) return;
+        int pt = powerType[_form];
+        float k = strength[_form];
         _nextPower = Time.time + cooldown[_form];
         XenoBody b = Body();
-
-        VRCPlayerApi.TrackingData head = _lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
         Vector3 feet = _lp.GetPosition();
-        Vector3 fwd = head.rotation * Vector3.forward;
-        Vector3 flat = new Vector3(fwd.x, 0f, fwd.z);
-        flat = flat.sqrMagnitude > 0.001f ? flat.normalized : (_lp.GetRotation() * Vector3.forward);
+        Vector3 flat = Flat();
+        Vector3 v = _lp.GetVelocity();
         float s = Scale();
+        Vector3 origin, dir;
+        Aim(leftHand, out origin, out dir);
+        float along;
 
-        if (_form == FIRE)
+        if (pt == FIRE || pt == BLAST)
         {
-            Vector3 origin, dir;
-            if (_lp.IsUserInVR())
-            {
-                VRCPlayerApi.TrackingData hand = _lp.GetTrackingData(leftHand
-                    ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
-                origin = hand.position;
-                dir = hand.rotation * Quaternion.Euler(handPointerEuler) * Vector3.forward;
-            }
-            else
-            {
-                dir = fwd;
-                origin = head.position + fwd * 0.4f - head.rotation * Vector3.up * 0.15f;
-            }
-            float len = fireRange;
-            RaycastHit hit;
-            if (Physics.Raycast(origin, dir, out hit, fireRange, 1, QueryTriggerInteraction.Ignore)) len = hit.distance;
-            XenoTarget best = null;
-            float bestAlong = len + 1f;
-            for (int i = 0; i < targets.Length; i++)
-            {
-                XenoTarget t = targets[i];
-                if (t == null || t.IsBroken()) continue;
-                Vector3 to = t.transform.position - origin;
-                float along = Vector3.Dot(to, dir);
-                if (along < 0f || along > bestAlong) continue;
-                if ((to - dir * along).magnitude > t.hitRadius) continue;
-                best = t;
-                bestAlong = along;
-            }
-            if (best != null) len = bestAlong;
-            if (b != null) b.UsePower(FIRE, origin, dir * len);
-            if (best != null) SmashTarget(best);
+            float len = RayLength(origin, dir, fireRange);
+            XenoTarget t = AimedTarget(origin, dir, len + 1f, 0f, out along);
+            if (t != null) len = along;
+            if (b != null) b.UsePower(pt, origin, dir * len);
+            if (pt == BLAST) SmashAround(origin + dir * len, 4f * k, 5f);
+            else if (t != null) SmashTarget(t);
         }
-        else if (_form == STONE)
+        else if (pt == SLAM)
         {
-            float r = slamRadius;
-            for (int i = 0; i < targets.Length; i++)
-            {
-                XenoTarget t = targets[i];
-                if (t == null || t.IsBroken()) continue;
-                Vector3 d = t.transform.position - feet;
-                if (new Vector2(d.x, d.z).magnitude <= r && Mathf.Abs(d.y) < 8f) SmashTarget(t);
-            }
-            Vector3 v = _lp.GetVelocity();
+            SmashAround(feet, 9f * k, 8f);
             _lp.SetVelocity(new Vector3(v.x, Mathf.Max(v.y, 3f), v.z));
-            if (b != null) b.UsePower(STONE, feet, Vector3.forward * r);
+            if (b != null) b.UsePower(SLAM, feet, Vector3.forward * 9f * k);
         }
-        else if (_form == SPEED)
+        else if (pt == DASH)
         {
             Vector3 from = feet + Vector3.up * 0.9f * s;
-            _lp.SetVelocity(flat * 28f + Vector3.up * 2f);
+            _lp.SetVelocity(flat * 28f * k + Vector3.up * 2f);
             for (int i = 0; i < targets.Length; i++)
             {
                 XenoTarget t = targets[i];
                 if (t == null || t.IsBroken()) continue;
                 Vector3 to = t.transform.position - from;
-                float along = Vector3.Dot(to, flat);
-                if (along < 0f || along > 9f) continue;
-                if ((to - flat * along).magnitude < 2.2f) SmashTarget(t);
+                float a = Vector3.Dot(to, flat);
+                if (a < 0f || a > 9f * k) continue;
+                if ((to - flat * a).magnitude < 2.2f) SmashTarget(t);
             }
-            if (b != null) b.UsePower(SPEED, from, -flat * 5f);
+            if (b != null) b.UsePower(DASH, from, -flat * 5f);
         }
-        else if (_form == WING)
+        else if (pt == FLAP)
         {
-            Vector3 v = _lp.GetVelocity();
-            _lp.SetVelocity(new Vector3(v.x, 6.5f, v.z) + flat * 1.5f);
-            if (b != null) b.UsePower(WING, feet, Vector3.forward * 1.3f);
+            _lp.SetVelocity(new Vector3(v.x, 6.5f * k, v.z) + flat * 1.5f);
+            if (b != null) b.UsePower(FLAP, feet, Vector3.forward * 1.3f);
         }
-        else if (_form == TINY)
+        else if (pt == HOP)
         {
-            _lp.SetVelocity(flat * 3f + Vector3.up * 4.5f);
-            if (b != null) b.UsePower(TINY, feet, Vector3.forward * 0.35f);
+            _lp.SetVelocity(flat * 3f + Vector3.up * 4.5f * k);
+            if (b != null) b.UsePower(HOP, feet, Vector3.forward * 0.35f);
         }
-        else if (_form == CRYSTAL)
+        else if (pt == CRYSTAL)
         {
             // On the ground: a step ahead of you. In the air: a platform right under your feet.
             Vector3 at = _lp.IsPlayerGrounded()
                 ? feet + flat * 1.3f + Vector3.up * 0.3f
                 : feet + Vector3.down * 0.15f;
             if (b != null) b.UsePower(CRYSTAL, at, flat);
+        }
+        else if (pt == LIGHTNING)
+        {
+            // Strikes whatever you point near, then arcs to two more targets close by.
+            float range = 30f * k;
+            float len = RayLength(origin, dir, range);
+            XenoTarget first = AimedTarget(origin, dir, len + 1f, 1.8f, out along);
+            Vector3 end = origin + dir * len;
+            if (first != null)
+            {
+                end = first.transform.position;
+                SmashTarget(first);
+                int chained = 0;
+                for (int i = 0; i < targets.Length && chained < 2; i++)
+                {
+                    XenoTarget t = targets[i];
+                    if (t == null || t.IsBroken()) continue;
+                    if ((t.transform.position - end).magnitude < 7f) { SmashTarget(t); chained++; }
+                }
+            }
+            if (b != null) b.UsePower(LIGHTNING, origin, end - origin);
+        }
+        else if (pt == BLINK)
+        {
+            // Teleport forward, stopping short of walls, then find the ground.
+            Vector3 eye = feet + Vector3.up * 0.8f * s;
+            float d = RayLength(eye, flat, 10f * k);
+            Vector3 dest = feet + flat * Mathf.Max(0f, d - 0.6f);
+            RaycastHit hit;
+            if (Physics.Raycast(dest + Vector3.up * 2f, Vector3.down, out hit, 6f, 1, QueryTriggerInteraction.Ignore)) dest = hit.point;
+            if (b != null) b.UsePower(BLINK, feet, dest - feet);
+            _lp.TeleportTo(dest, _lp.GetRotation(), VRC_SceneDescriptor.SpawnOrientation.AlignPlayerWithSpawnPoint, true);
+        }
+        else if (pt == THRUST)
+        {
+            _nextThrustFx = 0f;   // held: Thrust() runs every frame from Update
+        }
+        else if (pt == GRAPPLE)
+        {
+            // Fire a line; if it catches anything, you're yanked toward it.
+            RaycastHit hit;
+            float range = 40f * k;
+            if (Physics.Raycast(origin, dir, out hit, range, 1, QueryTriggerInteraction.Ignore))
+            {
+                Vector3 pull = (hit.point - feet).normalized;
+                _lp.SetVelocity(pull * 18f * k + Vector3.up * 3f);
+                XenoTarget t = AimedTarget(origin, dir, hit.distance + 1f, 0f, out along);
+                if (t != null) SmashTarget(t);
+                if (b != null) b.UsePower(GRAPPLE, origin, hit.point - origin);
+            }
+            else if (b != null) b.UsePower(GRAPPLE, origin, dir * range);
+        }
+        else if (pt == LAUNCH)
+        {
+            _lp.SetVelocity(new Vector3(v.x, 14f * k, v.z));
+            if (b != null) b.UsePower(LAUNCH, feet, Vector3.forward * 2.5f);
+        }
+        else if (pt == SPIN)
+        {
+            float r = 4.5f * k;
+            SmashAround(feet, r, 4f);
+            _lp.SetVelocity(new Vector3(v.x, Mathf.Max(v.y, 3f), v.z));
+            if (b != null) b.UsePower(SPIN, feet, Vector3.forward * r);
+        }
+    }
+
+    /// <summary>Jet/rocket/water-jet aliens: while held, push along where you aim.</summary>
+    private void Thrust()
+    {
+        float k = strength[_form];
+        Vector3 origin, dir;
+        Aim(_holdLeft, out origin, out dir);
+        if (!_lp.IsUserInVR()) dir = (dir + Vector3.up * 0.6f).normalized;   // desktop: lean upward so you take off
+        Vector3 v = _lp.GetVelocity() + dir * 22f * k * Time.deltaTime + Vector3.up * 9.81f * gravity[_form] * 0.8f * Time.deltaTime;
+        float cap = 11f * k;
+        if (v.magnitude > cap) v = v.normalized * cap;
+        _lp.SetVelocity(v);
+        if (Time.time >= _nextThrustFx)
+        {
+            _nextThrustFx = Time.time + 0.4f;
+            XenoBody b = Body();
+            if (b != null) b.UsePower(THRUST, _lp.GetPosition() + Vector3.up * 0.8f * Scale(), -dir * 3f);
         }
     }
 
@@ -466,14 +645,17 @@ public class XenoDialWatch : UdonSharpBehaviour
         }
         if (_state == DIAL)
         {
-            for (int i = 0; i < icons.Length; i++)
+            int sel = _selected % PAGE;
+            for (int i = 0; i < slots.Length; i++)
             {
-                icons[i].rotation = Quaternion.LookRotation(head.position - icons[i].position, headUp);
-                float k = i == _selected ? 1.35f + 0.08f * Mathf.Sin(Time.time * 8f) : 1f;
-                icons[i].localScale = Vector3.one * k;
+                slots[i].rotation = Quaternion.LookRotation(head.position - slots[i].position, headUp);
+                float k = i == sel ? 1.35f + 0.08f * Mathf.Sin(Time.time * 8f) : 1f;
+                slots[i].localScale = Vector3.one * k;
             }
-            if (_selected >= 0 && _selected < icons.Length)
-                selector.position = icons[_selected].position - (head.position - icons[_selected].position).normalized * 0.01f * s;
+            if (sel < slots.Length)
+                selector.position = slots[sel].position - (head.position - slots[sel].position).normalized * 0.01f * s;
+            prevPage.rotation = Quaternion.LookRotation(prevPage.position - head.position, headUp);
+            nextPage.rotation = Quaternion.LookRotation(nextPage.position - head.position, headUp);
         }
 
         // Pulse the face in the last seconds.
@@ -499,15 +681,22 @@ public class XenoDialWatch : UdonSharpBehaviour
 
         if (_state != DIAL) return;
         bool near = false;
-        for (int i = 0; i < icons.Length; i++)
+        int pageStart = (_selected / PAGE) * PAGE;
+        for (int i = 0; i < slots.Length; i++)
         {
-            if (Vector3.Distance(tip, icons[i].position) < r * 0.9f)
+            if (!slots[i].gameObject.activeSelf) continue;
+            if (Vector3.Distance(tip, slots[i].position) < r * 0.9f)
             {
                 near = true;
-                if (_iconArmed && i != _selected) { _iconArmed = false; Select(i); }
+                if (_iconArmed && pageStart + i != _selected) { _iconArmed = false; Select(pageStart + i); }
             }
         }
         if (!near) _iconArmed = true;
+
+        float dPrev = Vector3.Distance(tip, prevPage.position), dNext = Vector3.Distance(tip, nextPage.position);
+        if (_pageArmed && dPrev < r) { _pageArmed = false; ChangePage(-1); }
+        else if (_pageArmed && dNext < r) { _pageArmed = false; ChangePage(1); }
+        else if (!_pageArmed && dPrev > r * 2f && dNext > r * 2f) _pageArmed = true;
     }
 
     // ------------------------------------------------------------------ display
@@ -529,9 +718,11 @@ public class XenoDialWatch : UdonSharpBehaviour
         else if (_state == DIAL)
         {
             SetFace(formColors[_selected]);
-            if (_selected < icons.Length) selector.gameObject.SetActive(true);
-            label.text = "<b>" + formNames[_selected] + "</b>\n<size=70%>" + formPowers[_selected] + "</size>\n<size=60%>" +
-                         (vr ? "Tap an alien, then tap the core" : "1-6 or arrows to pick, F to transform, Q to close") + "</size>";
+            selector.gameObject.SetActive(true);
+            label.text = "<size=60%>#" + (_selected + 1) + " of " + formNames.Length + "   page " + (_selected / PAGE + 1) + "/" + PageCount() +
+                         "</size>\n<b>" + formNames[_selected] + "</b>\n<size=65%>" + formPowers[_selected] + "</size>\n<size=55%>" +
+                         (vr ? "Tap an alien, arrows for more, tap the core to transform"
+                             : "1-0 pick, arrows browse, R random, F transform, Q close") + "</size>";
         }
         else if (_state == ALIEN)
         {
@@ -550,9 +741,12 @@ public class XenoDialWatch : UdonSharpBehaviour
         int secs = Mathf.CeilToInt(Mathf.Max(0f, left));
         bool vr = _lp != null && _lp.IsUserInVR();
         if (_state == ALIEN)
+        {
+            bool hold = powerType[_form] == THRUST;
             label.text = "<b>" + formNames[_form] + "</b>  " + secs + "s\n<size=60%>" +
-                         (vr ? "Trigger: " : "Click or F: ") + formPowers[_form] + "\n" +
+                         (vr ? (hold ? "Hold trigger: " : "Trigger: ") : (hold ? "Hold F: " : "Click or F: ")) + formPowers[_form] + "\n" +
                          (vr ? "Tap the core to change back" : "Q to change back") + "</size>";
+        }
         else if (_state == RECHARGE)
             label.text = "<color=#ff5544><b>Recharging</b>  " + secs + "s</color>";
     }

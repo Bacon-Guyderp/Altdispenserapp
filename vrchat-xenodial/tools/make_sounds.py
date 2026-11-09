@@ -90,6 +90,13 @@ def main():
     write("crystal", mix((tone(0.6, 2093, 2093, "sine", 0.002, 0.55), 0.5), (tone(0.6, 3136, 3136, "sine", 0.002, 0.5), 0.3),
                          (tone(0.6, 1568, 1568, "sine", 0.002, 0.5), 0.3)))
     write("smash", mix((noise(0.5, 0.001, 0.45, 0.35, seed=6), 0.9), (tone(0.5, 220, 60, "square", 0.001, 0.4), 0.2)))
+    write("lightning", mix((noise(0.5, 0.001, 0.45, 0.9, seed=7), 0.7), (tone(0.5, 2400, 300, "square", 0.001, 0.4), 0.25)))
+    write("blink", mix((tone(0.35, 400, 3000, "sine", 0.005, 0.2), 0.5), (tone(0.35, 3000, 400, "sine", 0.005, 0.2), 0.4)))
+    write("thrust", noise(0.45, 0.05, 0.2, 0.15, seed=8))
+    write("grapple", mix((tone(0.3, 900, 200, "saw", 0.001, 0.2), 0.4), (noise(0.3, 0.001, 0.25, 0.5, seed=9), 0.3)))
+    write("launch", mix((tone(0.6, 120, 900, "sine", 0.005, 0.3), 0.6), (noise(0.6, 0.01, 0.5, 0.1, seed=10), 0.5)))
+    write("spin", mix((noise(0.6, 0.05, 0.4, 0.2, seed=11), 0.6), (tone(0.6, 300, 300, "sine", 0.05, 0.4, vib=0.3), 0.4)))
+    write("blast", mix((noise(1.0, 0.002, 0.9, 0.08, seed=12), 1.0), (tone(1.0, 70, 30, "sine", 0.002, 0.8), 0.9)))
     # Bell at the top of the tower, and the vault / race finish fanfare
     write("bell", mix((tone(2.0, 660, 660, "sine", 0.002, 1.9), 0.6), (tone(2.0, 1650, 1650, "sine", 0.002, 1.2), 0.25),
                       (tone(2.0, 2640, 2640, "sine", 0.002, 0.8), 0.15)))
