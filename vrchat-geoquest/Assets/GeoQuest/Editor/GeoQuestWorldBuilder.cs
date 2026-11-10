@@ -270,6 +270,14 @@ public class GeoQuestWorldBuilder : EditorWindow
         Button(">", mapRoot, Bp(-0.34f), bs, cBtn, fontMat, map, nameof(MapBoard.PanRight));
         Button("^", mapRoot, Bp(-0.16f), bs, cBtn, fontMat, map, nameof(MapBoard.PanUp));
         Button("v", mapRoot, Bp(0.02f), bs, cBtn, fontMat, map, nameof(MapBoard.PanDown));
+        Button("Fix laser aim", mapRoot, Bp(-0.25f, -0.13f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, map, nameof(MapBoard.StartCalibration));
+        var calib = new GameObject("AimTarget");
+        calib.transform.SetParent(pinRoot, false);
+        calib.transform.localPosition = new Vector3(0, 0, -0.03f);
+        Prim(PrimitiveType.Sphere, "Dot", calib.transform, Vector3.zero, Vector3.one * 0.07f, cAnswer, false);
+        Text("Hint", calib.transform, new Vector3(0, 0.13f, -0.01f), new Vector2(1.6f, 0.14f), 0.7f, fontMat,
+            "<b>Point your controller at the red dot and pull the trigger</b>").color = new Color(0.75f, 0.1f, 0.1f);
+        map.calibrationTarget = calib;
         var zoomText = Text("ZoomText", mapRoot, Bp(-0.81f, -0.1f), new Vector2(0.4f, 0.08f), 0.5f, fontMat, "x1");
 
         var big = new Vector3(0.3f, 0.1f, 0.05f);

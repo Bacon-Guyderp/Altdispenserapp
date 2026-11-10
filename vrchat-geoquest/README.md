@@ -93,6 +93,11 @@ You can re-run **Build World** whenever you harvest more places. It replaces the
   back on the rack, and the **Hangout** button takes you back.
 * Only people in the game area count as players, so friends chilling in the hangout don't hold up rounds.
 
+## If the VR laser is off
+Controllers differ in which way they report "forward". Press **Fix laser aim** under the map,
+point your controller at the red dot the way that feels natural, and pull the trigger. The laser
+then follows your aim with both hands, and the setting is saved for your next visits.
+
 ## Picking counties
 In the lobby, press **Counties** under the map to open the county menu. It lists all 100
 counties in alphabetical order, 20 per page, with **Prev** and **Next** to turn pages. Press a
