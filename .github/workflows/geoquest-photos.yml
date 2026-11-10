@@ -103,3 +103,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 1800000   # ~1 GB of photos can take longer than the default 10 minutes to sync
