@@ -279,6 +279,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         Text("Hint", calib.transform, new Vector3(0, 0.13f, -0.01f), new Vector2(1.6f, 0.14f), 0.7f, fontMat,
             "<b>Point your controller at the red dot and pull the trigger</b>").color = new Color(0.75f, 0.1f, 0.1f);
         map.calibrationTarget = calib;
+        map.aimReadout = Text("AimReadout", mapRoot, Bp(-0.25f, -0.2f), new Vector2(0.5f, 0.035f), 0.22f, fontMat, "aim 0, 0, 0");
         var zoomText = Text("ZoomText", mapRoot, Bp(-0.81f, -0.1f), new Vector2(0.4f, 0.08f), 0.5f, fontMat, "x1");
 
         var big = new Vector3(0.3f, 0.1f, 0.05f);

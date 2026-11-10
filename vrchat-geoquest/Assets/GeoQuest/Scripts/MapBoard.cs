@@ -35,6 +35,8 @@ public class MapBoard : UdonSharpBehaviour
     public Vector3 handPointerEuler = new Vector3(0f, 0f, 0f);
     [Tooltip("Red target shown while calibrating the laser (Fix laser aim button).")]
     public GameObject calibrationTarget;
+    [Tooltip("Small text that shows the calibrated aim angles, so they can be made the default.")]
+    public TextMeshPro aimReadout;
 
     private Quaternion _aimR = Quaternion.identity, _aimL = Quaternion.identity;
     private bool _calibrating;
@@ -102,6 +104,11 @@ public class MapBoard : UdonSharpBehaviour
     /// <summary>Right-hand aim offset; the left hand uses its mirror image.</summary>
     private void SetAim(Quaternion right)
     {
+        if (aimReadout != null)
+        {
+            Vector3 e = right.eulerAngles;
+            aimReadout.text = "aim " + Mathf.RoundToInt(e.x) + ", " + Mathf.RoundToInt(e.y) + ", " + Mathf.RoundToInt(e.z);
+        }
         _aimR = right;
         _aimL = new Quaternion(right.x, -right.y, -right.z, right.w);
     }
