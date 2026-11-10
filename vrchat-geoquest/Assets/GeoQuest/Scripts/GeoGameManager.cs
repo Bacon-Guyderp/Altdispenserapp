@@ -27,6 +27,14 @@ public class GeoGameManager : UdonSharpBehaviour
     public string[] countries;
     public string[] credits;
     public int[] kinds;                 // 0 = 360° panorama, 1 = flat photo
+    public int[] locCounty;             // county index of each place (-1 = none)
+
+    [Header("County picker (written by Build World)")]
+    public string[] countyNames;
+    public byte[] countyGrid;           // gridW x gridH county indices over the map area, row 0 = south, 255 = not NC
+    public int gridW, gridH;
+    [Tooltip("128x1 readable texture: pixel i is white when county i is in play. The map shader greys out the rest.")]
+    public Texture2D selectionTexture;
 
     [Header("Scene")]
     public Material panoramaMaterial;
@@ -63,6 +71,7 @@ public class GeoGameManager : UdonSharpBehaviour
     [UdonSynced] public int roundSeconds = 120;
     [UdonSynced] public int deadline;
     [UdonSynced] public int photoMode;   // 0 = mixed, 1 = 360° only, 2 = flat only
+    [UdonSynced] public int[] countyMask = { -1, -1, -1, -1 };   // bit i = county i is in play
     [UdonSynced] public int[] roundLocations = new int[MAX_ROUNDS];
 
     private int[] _roundOptions = { 3, 5, 10 };
@@ -82,6 +91,12 @@ public class GeoGameManager : UdonSharpBehaviour
     private int _panoCount, _flatCount;
     private string _lastError = "";
     private int _recentHead;
+    private int[] _cntPano, _cntFlat;      // places per county
+    private int _nCounties, _hoverCounty = -1;
+    private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
+    private int[] _pool;
+    private int _poolSize, _poolGame = -1, _poolRound = -1;
+    private Color[] _selPixels;
 
     void Start()
     {
@@ -92,8 +107,136 @@ public class GeoGameManager : UdonSharpBehaviour
             if (IsFlat(i)) _flatCount++;
             else _panoCount++;
         }
+        _nCounties = countyNames == null ? 0 : countyNames.Length;
+        _cntPano = new int[_nCounties + 1];
+        _cntFlat = new int[_nCounties + 1];
+        for (int i = 0; i < n; i++)
+        {
+            int c = CountyOf(i);
+            if (c < 0) c = _nCounties;   // last slot: places outside any county outline
+            if (IsFlat(i)) _cntFlat[c]++;
+            else _cntPano[c]++;
+        }
         if (photoScreen != null) photoScreen.gameObject.SetActive(false);
         ApplyState();
+    }
+
+    // ================================================================ counties
+
+    private int CountyOf(int loc)
+    {
+        return (locCounty != null && loc < locCounty.Length) ? locCounty[loc] : -1;
+    }
+
+    public bool CountyOn(int c)
+    {
+        return c >= 0 && c < _nCounties && (countyMask[c >> 5] & (1 << (c & 31))) != 0;
+    }
+
+    private int SelectedCount()
+    {
+        int k = 0;
+        for (int c = 0; c < _nCounties; c++) if (CountyOn(c)) k++;
+        return k;
+    }
+
+    private bool AllCountiesOn() { return _nCounties == 0 || SelectedCount() == _nCounties; }
+
+    /// <summary>County index under a map position, or -1.</summary>
+    public int CountyAt(float lat, float lon)
+    {
+        if (countyGrid == null || gridW <= 0 || map == null) return -1;
+        int gx = Mathf.FloorToInt((lon - map.minLon) / (map.maxLon - map.minLon) * gridW);
+        int gy = Mathf.FloorToInt((lat - map.minLat) / (map.maxLat - map.minLat) * gridH);
+        if (gx < 0 || gy < 0 || gx >= gridW || gy >= gridH) return -1;
+        int v = countyGrid[gy * gridW + gx];
+        return v < _nCounties ? v : -1;
+    }
+
+    public bool CanPickCounty() { return (phase == PHASE_LOBBY || phase == PHASE_OVER) && _nCounties > 0; }
+
+    /// <summary>Lobby: clicking the map turns a county on or off. With everything on, the first click picks just that county.</summary>
+    public void ToggleCountyAt(float lat, float lon)
+    {
+        if (!CanPickCounty()) return;
+        int c = CountyAt(lat, lon);
+        if (c < 0) return;
+        TakeOwner();
+        int[] m = { countyMask[0], countyMask[1], countyMask[2], countyMask[3] };
+        if (AllCountiesOn()) { m[0] = 0; m[1] = 0; m[2] = 0; m[3] = 0; }
+        m[c >> 5] = m[c >> 5] ^ (1 << (c & 31));
+        countyMask = m;
+        Commit();
+    }
+
+    public void AllCounties()
+    {
+        if (!CanPickCounty()) return;
+        TakeOwner();
+        countyMask = new int[] { -1, -1, -1, -1 };
+        Commit();
+    }
+
+    public void ClearCounties()
+    {
+        if (!CanPickCounty()) return;
+        TakeOwner();
+        countyMask = new int[] { 0, 0, 0, 0 };
+        Commit();
+    }
+
+    /// <summary>Called by the map while you point at it in the lobby.</summary>
+    public void SetHover(bool hovering, float lat, float lon)
+    {
+        int c = (hovering && CanPickCounty()) ? CountyAt(lat, lon) : -1;
+        if (c == _hoverCounty) return;
+        _hoverCounty = c;
+        UpdateTexts();
+    }
+
+    private int PlacesIn(int c)
+    {
+        if (photoMode == 1) return _cntPano[c];
+        if (photoMode == 2) return _cntFlat[c];
+        return _cntPano[c] + _cntFlat[c];
+    }
+
+    /// <summary>How many places the current county + photo-type choice leaves.</summary>
+    private int PlacesInPlay()
+    {
+        int k = 0;
+        for (int c = 0; c < _nCounties; c++) if (CountyOn(c)) k += PlacesIn(c);
+        if (AllCountiesOn()) k += PlacesIn(_nCounties);
+        return k;
+    }
+
+    private void PaintSelection()
+    {
+        if (countyMask[0] == _m0 && countyMask[1] == _m1 && countyMask[2] == _m2 && countyMask[3] == _m3 && _selPixels != null) return;
+        _m0 = countyMask[0]; _m1 = countyMask[1]; _m2 = countyMask[2]; _m3 = countyMask[3];
+        if (selectionTexture == null) return;
+        if (_selPixels == null) _selPixels = new Color[selectionTexture.width];
+        for (int i = 0; i < _selPixels.Length; i++) _selPixels[i] = CountyOn(i) ? Color.white : Color.black;
+        selectionTexture.SetPixels(_selPixels);
+        selectionTexture.Apply();
+    }
+
+    private bool Allowed(int loc)
+    {
+        if (photoMode == 1 && IsFlat(loc)) return false;
+        if (photoMode == 2 && !IsFlat(loc)) return false;
+        int c = CountyOf(loc);
+        return c < 0 ? AllCountiesOn() : CountyOn(c);
+    }
+
+    /// <summary>List every place the current settings allow (done once per game by whoever runs it).</summary>
+    private void BuildPool()
+    {
+        int n = urls.Length;
+        if (_pool == null) _pool = new int[n];
+        _poolSize = 0;
+        for (int i = 0; i < n; i++) if (Allowed(i)) _pool[_poolSize++] = i;
+        _poolGame = gameId;
     }
 
     // ================================================================ helpers
@@ -149,25 +292,18 @@ public class GeoGameManager : UdonSharpBehaviour
         return kinds != null && loc >= 0 && loc < kinds.Length && kinds[loc] == 1;
     }
 
-    private bool ModeAllows(int loc)
-    {
-        if (photoMode == 1 && _panoCount > 0) return !IsFlat(loc);
-        if (photoMode == 2 && _flatCount > 0) return IsFlat(loc);
-        return true;
-    }
-
     private int PickLocation()
     {
-        int n = urls.Length;
-        int c = 0;
-        for (int attempt = 0; attempt < 80; attempt++)
+        if (_poolGame != gameId || _pool == null) BuildPool();   // e.g. the host changed mid-game
+        if (_poolSize == 0) return Random.Range(0, urls.Length);
+        int c = _pool[0];
+        for (int attempt = 0; attempt < 60; attempt++)
         {
-            c = Random.Range(0, n);
-            if (!ModeAllows(c)) continue;
+            c = _pool[Random.Range(0, _poolSize)];
             bool used = false;
             for (int r = 0; r < round - 1 && !used; r++) used = roundLocations[r] == c;
             // Avoid places seen in recent games too, as long as there are plenty to choose from.
-            if (attempt < 60) for (int i = 0; i < _recent.Length && !used; i++) used = _recent[i] == c;
+            if (attempt < 30 && _poolSize > 250) for (int i = 0; i < _recent.Length && !used; i++) used = _recent[i] == c;
             if (!used) break;
         }
         Remember(c);
@@ -208,8 +344,10 @@ public class GeoGameManager : UdonSharpBehaviour
     {
         if (phase == PHASE_GUESS || phase == PHASE_REVEAL) return;
         if (urls == null || urls.Length == 0) return;
+        if (PlacesInPlay() == 0) return;   // the status board says why
         TakeOwner();
         gameId++;
+        BuildPool();
         round = 1;
         roundLocations = new int[MAX_ROUNDS];
         for (int i = 0; i < MAX_ROUNDS; i++) roundLocations[i] = -1;
@@ -291,9 +429,21 @@ public class GeoGameManager : UdonSharpBehaviour
 
     private string ModeName()
     {
-        if (photoMode == 1) return "360° only (" + _panoCount.ToString("N0") + ")";
-        if (photoMode == 2) return "Flat only (" + _flatCount.ToString("N0") + ")";
-        return "Mixed (" + _panoCount.ToString("N0") + " 360° + " + _flatCount.ToString("N0") + " flat)";
+        if (photoMode == 1) return "360° only";
+        if (photoMode == 2) return "Flat only";
+        return "Mixed";
+    }
+
+    private string CountyChoice()
+    {
+        int k = SelectedCount();
+        if (_nCounties == 0 || k == _nCounties) return "All " + _nCounties;
+        if (k == 0) return "<color=#ff8080>none picked</color>";
+        if (k > 4) return k + " picked";
+        string s = "";
+        for (int c = 0; c < _nCounties; c++)
+            if (CountyOn(c)) s += (s == "" ? "" : ", ") + countyNames[c];
+        return s;
     }
 
     public void CycleTimer()
@@ -339,6 +489,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (g != null && gameId != _seenGame && g.gameId != gameId) g.ResetForGame(gameId);
         if (g != null) _seenGame = gameId;
 
+        PaintSelection();
         bool newStage = phase != _seenPhase || round != _seenRound;
         int loc = CurrentLocation();
 
@@ -549,8 +700,12 @@ public class GeoGameManager : UdonSharpBehaviour
         if (phase == PHASE_LOBBY || phase == PHASE_OVER)
         {
             string head = phase == PHASE_OVER ? "<b>Game over!</b>" : "<b>" + gameTitle + "</b>";
-            return head + "\n" + count.ToString("N0") + " places  |  Photos: " + ModeName() + "\nRounds: " + totalRounds + "  |  Timer: " +
-                   (roundSeconds == 0 ? "off" : roundSeconds + "s") + "\nYour best: " + GetBest().ToString("N0");
+            int inPlay = PlacesInPlay();
+            string places = inPlay > 0 ? inPlay.ToString("N0") + " places"
+                : "<color=#ff8080>0 places: pick more counties or change Photo type</color>";
+            return head + "\nCounties: " + CountyChoice() + "  |  Photos: " + ModeName() + "\n" + places +
+                   "\nRounds: " + totalRounds + "  |  Timer: " + (roundSeconds == 0 ? "off" : roundSeconds + "s") +
+                   "  |  Best: " + GetBest().ToString("N0");
         }
         string s = "Round " + round + " / " + totalRounds;
         if (phase == PHASE_GUESS)
@@ -607,6 +762,14 @@ public class GeoGameManager : UdonSharpBehaviour
             if (g != null && g.HasGuess(gameId, round, loc)) return "Guess locked in! Waiting for others...";
             if (map != null && map.hasPin) return "Pin placed. Press <b>GUESS</b> to lock it in.";
             return "";
+        }
+        if (CanPickCounty())
+        {
+            string s = "<b>Pick counties</b>\nPoint at the map and click a county to turn it on or off. Grey = not in play.";
+            if (_hoverCounty >= 0)
+                s += "\n\n<b>" + countyNames[_hoverCounty] + " County</b>  " + (CountyOn(_hoverCounty) ? "<color=#80ff80>in play</color>" : "<color=#aaaaaa>off</color>") +
+                     "\n" + _cntPano[_hoverCounty] + " 360° + " + _cntFlat[_hoverCounty] + " flat places";
+            return s;
         }
         if (phase == PHASE_REVEAL && loc >= 0)
         {

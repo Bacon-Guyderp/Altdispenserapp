@@ -68,7 +68,13 @@ public class MapBoard : UdonSharpBehaviour
         Vector3 origin, dir;
         GetRay(lp, _useLeftHand, out origin, out dir);
         _hovering = Raycast(origin, dir, out _hoverUv);
-        bool canPlace = game != null && game.CanPlacePin();
+        bool picking = game != null && game.CanPickCounty();
+        bool canPlace = picking || (game != null && game.CanPlacePin());
+        if (game != null)
+        {
+            Vector2 ht = ViewToTex(_hoverUv);
+            game.SetHover(_hovering && picking, minLat + ht.y * (maxLat - minLat), minLon + ht.x * (maxLon - minLon));
+        }
 
         if (hoverDot != null)
         {
@@ -91,13 +97,20 @@ public class MapBoard : UdonSharpBehaviour
     {
         if (!value) return;
         VRCPlayerApi lp = Networking.LocalPlayer;
-        if (lp == null || game == null || !game.CanPlacePin()) return;
+        if (lp == null || game == null) return;
+        bool picking = game.CanPickCounty();
+        if (!picking && !game.CanPlacePin()) return;
         if (lp.IsUserInVR()) _useLeftHand = args.handType == HandType.LEFT;
         Vector3 origin, dir;
         GetRay(lp, _useLeftHand, out origin, out dir);
         Vector2 uv;
         if (!Raycast(origin, dir, out uv)) return;
         Vector2 tex = ViewToTex(uv);
+        if (picking)
+        {
+            game.ToggleCountyAt(minLat + tex.y * (maxLat - minLat), minLon + tex.x * (maxLon - minLon));
+            return;
+        }
         pinLon = minLon + tex.x * (maxLon - minLon);
         pinLat = minLat + tex.y * (maxLat - minLat);
         hasPin = true;
