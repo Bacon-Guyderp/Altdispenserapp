@@ -156,7 +156,12 @@ public class GeoQuestWorldBuilder : EditorWindow
 
         // ---- materials
         var panoMat = Mat("Panorama", Shader.Find("GeoQuest/Panorama"), Color.white, lobbyPanorama);
-        var mapMat = Mat("Map", Shader.Find("Unlit/Texture"), Color.white, worldMap);
+        var mapMat = Mat("Map", Shader.Find("GeoQuest/Map") ?? Shader.Find("Unlit/Texture"), Color.white, worldMap);
+        // County picker data: an id per pixel, and a 128x1 texture the game repaints as counties are switched.
+        var idTex = ConfigureDataTexture(Root + "/Textures/CountyIds.png");
+        var selTex = ConfigureDataTexture(Root + "/Textures/CountySelection.png");
+        if (mapMat.HasProperty("_IdTex")) { mapMat.SetTexture("_IdTex", idTex); mapMat.SetTexture("_SelTex", selTex); }
+        EditorUtility.SetDirty(mapMat);
         var screenMat = Mat("PhotoScreen", Shader.Find("Unlit/Texture"), Color.white);
         var cMine = Mat("PinMine", ColorShader(), new Color(0.2f, 0.9f, 0.3f));
         var cAnswer = Mat("PinAnswer", ColorShader(), new Color(1f, 0.2f, 0.2f));
@@ -210,7 +215,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         var quad = Prim(PrimitiveType.Quad, "Map", mapRoot, Vector3.zero, new Vector3(W, H, 1), mapMat, false);
         var mapCol = quad.AddComponent<BoxCollider>();
         mapCol.size = new Vector3(1, 1, 0.02f);
-        Prim(PrimitiveType.Cube, "Frame", mapRoot, new Vector3(0, -0.06f, 0.025f), new Vector3(W + 0.08f, H + 0.32f, 0.03f), cFrame, false);
+        Prim(PrimitiveType.Cube, "Frame", mapRoot, new Vector3(0, -0.2f, 0.025f), new Vector3(W + 0.08f, H + 0.6f, 0.03f), cFrame, false);
         Prim(PrimitiveType.Cylinder, "Leg", root.transform, new Vector3(0, 0.45f, 0.95f), new Vector3(0.08f, 0.45f, 0.08f), cFrame, false);
         var pinRoot = new GameObject("Pins").transform;
         pinRoot.SetParent(mapRoot, false);
@@ -275,6 +280,8 @@ public class GeoQuestWorldBuilder : EditorWindow
         var roundsBtn = Button("Rounds", mapRoot, Bp(0.75f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleRounds));
         var timerBtn = Button("Timer", mapRoot, Bp(0.75f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleTimer));
         var modeBtn = Button("Photo type", mapRoot, Bp(0.42f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleMode));
+        var allBtn = Button("All counties", mapRoot, Bp(0.42f, -0.26f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.AllCounties));
+        var noneBtn = Button("Clear counties", mapRoot, Bp(0.75f, -0.26f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.ClearCounties));
         var nextBtn = Button("Next round", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.NextRound));
         var lobbyBtn = Button("Quit to lobby", mapRoot, Bp(0.75f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.BackToLobby));
 
@@ -389,7 +396,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.statusText = status;
         mgr.scoreboardText = score;
         mgr.infoText = info;
-        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn };
+        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn, allBtn, noneBtn };
         mgr.photoScreen = screen.transform;
         mgr.screenMaterial = screenMat;
         mgr.screenHeight = 4.6f;
@@ -417,6 +424,8 @@ public class GeoQuestWorldBuilder : EditorWindow
             mgr.kinds[i] = l.kind == "flat" ? 1 : 0;
             mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), " + (string.IsNullOrEmpty(l.source) ? "Wikimedia Commons" : l.source);
         }
+        if (world) { mgr.countyNames = new string[0]; mgr.locCounty = new int[locs.Length]; }
+        else FillCounties(mgr, locs, idTex, selTex, bounds);
 
         foreach (var b in new UdonSharpBehaviour[] { mgr, map, tmpl }) Sync(b);
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
@@ -491,6 +500,75 @@ public class GeoQuestWorldBuilder : EditorWindow
         { name = "Android", overridden = true, maxTextureSize = max, format = TextureImporterFormat.ASTC_6x6 });
         imp.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    /// <summary>Exact-value lookup texture: readable, uncompressed, linear, point sampled, no mipmaps.</summary>
+    static Texture2D ConfigureDataTexture(string path)
+    {
+        var imp = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (imp == null) { Debug.LogError("GeoQuest: missing " + path); return null; }
+        imp.textureType = TextureImporterType.Default;
+        imp.sRGBTexture = false;
+        imp.isReadable = true;
+        imp.mipmapEnabled = false;
+        imp.filterMode = FilterMode.Point;
+        imp.wrapMode = TextureWrapMode.Clamp;
+        imp.npotScale = TextureImporterNPOTScale.None;
+        imp.maxTextureSize = 2048;
+        imp.textureCompression = TextureImporterCompression.Uncompressed;
+        foreach (var platform in new[] { "Standalone", "Android" })
+            imp.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            { name = platform, overridden = true, maxTextureSize = 2048, format = TextureImporterFormat.RGBA32 });
+        imp.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    [Serializable] class CountyFile { public string[] names; }
+
+    /// <summary>County names, the click lookup grid and each place's county, for the in-game county picker.</summary>
+    static void FillCounties(GeoGameManager mgr, Loc[] locs, Texture2D idTex, Texture2D selTex, Bounds bounds)
+    {
+        var json = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/counties.json");
+        var names = json != null ? JsonUtility.FromJson<CountyFile>(json.text).names : null;
+        mgr.locCounty = new int[locs.Length];
+        for (int i = 0; i < locs.Length; i++) mgr.locCounty[i] = -1;
+        if (names == null || idTex == null)
+        {
+            mgr.countyNames = new string[0];
+            Debug.LogWarning("GeoQuest: county data missing, so the county picker is off.");
+            return;
+        }
+        const int GW = 512, GH = 256;
+        var px = idTex.GetPixels32();
+        var grid = new byte[GW * GH];
+        for (int y = 0; y < GH; y++)
+            for (int x = 0; x < GW; x++)
+                grid[y * GW + x] = px[(y * idTex.height / GH) * idTex.width + (x * idTex.width / GW)].r;
+        mgr.countyNames = names;
+        mgr.countyGrid = grid;
+        mgr.gridW = GW;
+        mgr.gridH = GH;
+        mgr.selectionTexture = selTex;
+
+        var byName = new System.Collections.Generic.Dictionary<string, int>();
+        for (int i = 0; i < names.Length; i++) byName[names[i] + " County, NC"] = i;
+        for (int i = 0; i < locs.Length; i++)
+        {
+            if (byName.TryGetValue(locs[i].country ?? "", out int c)) { mgr.locCounty[i] = c; continue; }
+            // Coastal spots the county outlines miss: use the nearest county on the grid.
+            int gx = Mathf.Clamp((int)((locs[i].lon - bounds.min_lon) / (bounds.max_lon - bounds.min_lon) * GW), 0, GW - 1);
+            int gy = Mathf.Clamp((int)((locs[i].lat - bounds.min_lat) / (bounds.max_lat - bounds.min_lat) * GH), 0, GH - 1);
+            int best = -1;
+            for (int r = 0; r <= 12 && best < 0; r++)
+                for (int dy = -r; dy <= r && best < 0; dy++)
+                    for (int dx = -r; dx <= r && best < 0; dx++)
+                    {
+                        int x = gx + dx, y = gy + dy;
+                        if (x < 0 || y < 0 || x >= GW || y >= GH) continue;
+                        if (grid[y * GW + x] < names.Length) best = grid[y * GW + x];
+                    }
+            mgr.locCounty[i] = best;
+        }
     }
 
     static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat, bool keepCollider)
