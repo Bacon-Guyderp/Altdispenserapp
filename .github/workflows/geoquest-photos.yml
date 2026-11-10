@@ -78,6 +78,8 @@ jobs:
       - name: Keep any one county from dominating
         if: ${{ inputs.harvest_more || inputs.reharvest }}
         run: python balance_counties.py --max-per-county 200
+      - name: Name each place's real town (US Census town boundaries)
+        run: python annotate_towns.py
       - name: Download + resize photos
         env:
           MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}

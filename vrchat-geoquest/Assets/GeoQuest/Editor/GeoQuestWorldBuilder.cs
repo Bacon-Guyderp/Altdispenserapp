@@ -24,7 +24,7 @@ public class GeoQuestWorldBuilder : EditorWindow
     const string Root = "Assets/GeoQuest";
     const string Gen = Root + "/Generated";
 
-    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source, kind; }
+    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source, kind, town; public float town_km = -1f; }
     [Serializable] class Bounds { public float min_lon = -84.7f, max_lon = -75.1f, min_lat = 33.25f, max_lat = 37.15f; }
     [Serializable] class LocFile { public string region; public Bounds bounds; public float score_km; public Loc[] locations; }
 
@@ -270,6 +270,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         Button(">", mapRoot, Bp(-0.34f), bs, cBtn, fontMat, map, nameof(MapBoard.PanRight));
         Button("^", mapRoot, Bp(-0.16f), bs, cBtn, fontMat, map, nameof(MapBoard.PanUp));
         Button("v", mapRoot, Bp(0.02f), bs, cBtn, fontMat, map, nameof(MapBoard.PanDown));
+        Button("Units: km / miles", mapRoot, Bp(-0.25f, -0.26f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleUnits));
         Button("Fix laser aim", mapRoot, Bp(-0.25f, -0.13f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, map, nameof(MapBoard.StartCalibration));
         var calib = new GameObject("AimTarget");
         calib.transform.SetParent(pinRoot, false);
@@ -462,6 +463,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.countries = new string[locs.Length];
         mgr.credits = new string[locs.Length];
         mgr.kinds = new int[locs.Length];
+        mgr.townKm = new float[locs.Length];
         string baseUrl = imageBaseUrl.Trim();
         if (!baseUrl.EndsWith("/")) baseUrl += "/";
         for (int i = 0; i < locs.Length; i++)
@@ -470,7 +472,9 @@ public class GeoQuestWorldBuilder : EditorWindow
             mgr.urls[i] = new VRCUrl(useCommonsUrls ? l.src : baseUrl + (string.IsNullOrEmpty(l.file) ? l.id.ToString("D5") + ".jpg" : l.file));
             mgr.lats[i] = l.lat;
             mgr.lons[i] = l.lon;
-            mgr.titles[i] = l.title ?? "";
+            bool hasTown = !string.IsNullOrEmpty(l.town) && l.town_km >= 0f;
+            mgr.titles[i] = hasTown ? l.town : (l.title ?? "");
+            mgr.townKm[i] = hasTown ? l.town_km : -1f;
             mgr.countries[i] = l.country ?? "";
             mgr.kinds[i] = l.kind == "flat" ? 1 : 0;
             mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), " + (string.IsNullOrEmpty(l.source) ? "Wikimedia Commons" : l.source);
