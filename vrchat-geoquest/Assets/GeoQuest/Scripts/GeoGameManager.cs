@@ -35,6 +35,7 @@ public class GeoGameManager : UdonSharpBehaviour
     public int gridW, gridH;
     [Tooltip("128x1 readable texture: pixel i is white when county i is in play. The map shader greys out the rest.")]
     public Texture2D selectionTexture;
+    public GeoCountyMenu countyMenu;
 
     [Header("Scene")]
     public Material panoramaMaterial;
@@ -92,7 +93,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private string _lastError = "";
     private int _recentHead;
     private int[] _cntPano, _cntFlat;      // places per county
-    private int _nCounties, _hoverCounty = -1;
+    private int _nCounties;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
     private int[] _pool;
     private int _poolSize, _poolGame = -1, _poolRound = -1;
@@ -133,7 +134,7 @@ public class GeoGameManager : UdonSharpBehaviour
         return c >= 0 && c < _nCounties && (countyMask[c >> 5] & (1 << (c & 31))) != 0;
     }
 
-    private int SelectedCount()
+    public int SelectedCount()
     {
         int k = 0;
         for (int c = 0; c < _nCounties; c++) if (CountyOn(c)) k++;
@@ -155,15 +156,12 @@ public class GeoGameManager : UdonSharpBehaviour
 
     public bool CanPickCounty() { return (phase == PHASE_LOBBY || phase == PHASE_OVER) && _nCounties > 0; }
 
-    /// <summary>Lobby: clicking the map turns a county on or off. With everything on, the first click picks just that county.</summary>
-    public void ToggleCountyAt(float lat, float lon)
+    /// <summary>Lobby: switch one county on or off (from the county menu).</summary>
+    public void ToggleCounty(int c)
     {
-        if (!CanPickCounty()) return;
-        int c = CountyAt(lat, lon);
-        if (c < 0) return;
+        if (!CanPickCounty() || c < 0 || c >= _nCounties) return;
         TakeOwner();
         int[] m = { countyMask[0], countyMask[1], countyMask[2], countyMask[3] };
-        if (AllCountiesOn()) { m[0] = 0; m[1] = 0; m[2] = 0; m[3] = 0; }
         m[c >> 5] = m[c >> 5] ^ (1 << (c & 31));
         countyMask = m;
         Commit();
@@ -185,16 +183,7 @@ public class GeoGameManager : UdonSharpBehaviour
         Commit();
     }
 
-    /// <summary>Called by the map while you point at it in the lobby.</summary>
-    public void SetHover(bool hovering, float lat, float lon)
-    {
-        int c = (hovering && CanPickCounty()) ? CountyAt(lat, lon) : -1;
-        if (c == _hoverCounty) return;
-        _hoverCounty = c;
-        UpdateTexts();
-    }
-
-    private int PlacesIn(int c)
+    public int PlacesIn(int c)
     {
         if (photoMode == 1) return _cntPano[c];
         if (photoMode == 2) return _cntFlat[c];
@@ -424,7 +413,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (phase == PHASE_GUESS || phase == PHASE_REVEAL) return;
         TakeOwner();
         photoMode = (photoMode + 1) % 3;
-        Commit();
+        Commit();   // also refreshes the county menu's place counts
     }
 
     private string ModeName()
@@ -490,6 +479,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (g != null) _seenGame = gameId;
 
         PaintSelection();
+        if (countyMenu != null) countyMenu.Refresh();
         bool newStage = phase != _seenPhase || round != _seenRound;
         int loc = CurrentLocation();
 
@@ -763,14 +753,7 @@ public class GeoGameManager : UdonSharpBehaviour
             if (map != null && map.hasPin) return "Pin placed. Press <b>GUESS</b> to lock it in.";
             return "";
         }
-        if (CanPickCounty())
-        {
-            string s = "<b>Pick counties</b>\nPoint at the map and click a county to turn it on or off. Grey = not in play.";
-            if (_hoverCounty >= 0)
-                s += "\n\n<b>" + countyNames[_hoverCounty] + " County</b>  " + (CountyOn(_hoverCounty) ? "<color=#80ff80>in play</color>" : "<color=#aaaaaa>off</color>") +
-                     "\n" + _cntPano[_hoverCounty] + " 360° + " + _cntFlat[_hoverCounty] + " flat places";
-            return s;
-        }
+        if (CanPickCounty()) return "Press <b>Counties</b> under the map to choose which counties are in play.";
         if (phase == PHASE_REVEAL && loc >= 0)
         {
             string s = "<b>" + titles[loc] + "</b>";
