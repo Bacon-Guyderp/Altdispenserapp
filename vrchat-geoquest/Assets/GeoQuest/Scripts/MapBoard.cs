@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon.Common;
+using VRC.SDK3.Persistence;
 using TMPro;
 
 /// <summary>
@@ -32,6 +33,13 @@ public class MapBoard : UdonSharpBehaviour
 
     [Tooltip("Rotation applied to the VR hand's tracking rotation to get the pointing direction.")]
     public Vector3 handPointerEuler = new Vector3(0f, 0f, 0f);
+    [Tooltip("Red target shown while calibrating the laser (Fix laser aim button).")]
+    public GameObject calibrationTarget;
+
+    private Quaternion _aimR = Quaternion.identity, _aimL = Quaternion.identity;
+    private bool _calibrating;
+    private float _calibrateFrom;
+    private const string AimKey = "geoquest.aim.";
     public float maxPointerDistance = 6f;
 
     [HideInInspector] public bool hasPin;
@@ -50,6 +58,8 @@ public class MapBoard : UdonSharpBehaviour
 
     void Start()
     {
+        SetAim(Quaternion.Euler(handPointerEuler));
+        if (calibrationTarget != null) calibrationTarget.SetActive(false);
         _mat = mapRenderer.material;
         int n = otherPins.Length;
         _otherLat = new float[n];
@@ -87,10 +97,62 @@ public class MapBoard : UdonSharpBehaviour
         }
     }
 
+    // ---------------------------------------------------------------- laser calibration
+
+    /// <summary>Right-hand aim offset; the left hand uses its mirror image.</summary>
+    private void SetAim(Quaternion right)
+    {
+        _aimR = right;
+        _aimL = new Quaternion(right.x, -right.y, -right.z, right.w);
+    }
+
+    /// <summary>"Fix laser aim" button: point at the red target and pull the trigger.</summary>
+    public void StartCalibration()
+    {
+        VRCPlayerApi lp = Networking.LocalPlayer;
+        if (lp == null || !lp.IsUserInVR() || calibrationTarget == null) return;
+        _calibrating = !_calibrating;
+        _calibrateFrom = Time.time + 0.6f;   // ignore the trigger pull that pressed the button
+        calibrationTarget.SetActive(_calibrating);
+    }
+
+    private void FinishCalibration(VRCPlayerApi lp, bool left)
+    {
+        VRCPlayerApi.TrackingData td = lp.GetTrackingData(left
+            ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
+        Vector3 want = calibrationTarget.transform.position - td.position;
+        if (want.sqrMagnitude < 0.0001f) return;
+        // The offset that turns this controller's tracked rotation into "pointing at the target".
+        Quaternion off = Quaternion.Inverse(td.rotation) * Quaternion.LookRotation(want.normalized, td.rotation * Vector3.up);
+        if (left) off = new Quaternion(off.x, -off.y, -off.z, off.w);
+        SetAim(off);
+        PlayerData.SetFloat(AimKey + "x", off.x);
+        PlayerData.SetFloat(AimKey + "y", off.y);
+        PlayerData.SetFloat(AimKey + "z", off.z);
+        PlayerData.SetFloat(AimKey + "w", off.w);
+        _calibrating = false;
+        calibrationTarget.SetActive(false);
+    }
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (player == null || !player.isLocal) return;
+        float x, y, z, w;
+        if (PlayerData.TryGetFloat(player, AimKey + "x", out x) && PlayerData.TryGetFloat(player, AimKey + "y", out y) &&
+            PlayerData.TryGetFloat(player, AimKey + "z", out z) && PlayerData.TryGetFloat(player, AimKey + "w", out w) &&
+            (x * x + y * y + z * z + w * w) > 0.5f)
+            SetAim(new Quaternion(x, y, z, w));
+    }
+
     public override void InputUse(bool value, UdonInputEventArgs args)
     {
         if (!value) return;
         VRCPlayerApi lp = Networking.LocalPlayer;
+        if (_calibrating && lp != null && lp.IsUserInVR())
+        {
+            if (Time.time >= _calibrateFrom) FinishCalibration(lp, args.handType == HandType.LEFT);
+            return;
+        }
         if (lp == null || game == null || !game.CanPlacePin()) return;
         if (lp.IsUserInVR()) _useLeftHand = args.handType == HandType.LEFT;
         Vector3 origin, dir;
@@ -112,7 +174,7 @@ public class MapBoard : UdonSharpBehaviour
             VRCPlayerApi.TrackingData td = lp.GetTrackingData(left
                 ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
             origin = td.position;
-            dir = td.rotation * Quaternion.Euler(handPointerEuler) * Vector3.forward;
+            dir = td.rotation * (left ? _aimL : _aimR) * Vector3.forward;
         }
         else
         {
