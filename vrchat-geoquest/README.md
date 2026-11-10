@@ -94,15 +94,13 @@ You can re-run **Build World** whenever you harvest more places. It replaces the
 * Only people in the game area count as players, so friends chilling in the hangout don't hold up rounds.
 
 ## Picking counties
-In the lobby, point at the map and click a county to turn it on or off. Counties that are off
-turn grey on every map. With all 100 on, the first click picks **just that county**, and further
-clicks add or remove more. **All counties** and **Clear counties** reset the choice. While you
-point at a county, the info board shows its name and how many places it has. The status board
-shows how many places your choice leaves. A game won't start with zero, for example a county
-with no 360° photos while Photo type is "360° only".
-
-The picker data comes from `python tools/make_county_data.py`: a county-id image, a 128×1
-selection texture the game repaints, and the county names.
+In the lobby, press **Counties** under the map to open the county menu. It lists all 100
+counties in alphabetical order, 20 per page, with **Prev** and **Next** to turn pages. Press a
+county to switch it on (green) or off (dark). The number beside each name is how many places
+it has for the current Photo type. **All** and **Clear** set everything at once, so for a
+single county press **Clear** and then that county. The choice is shared by everyone, and
+counties that are off are greyed on the maps. The status board shows how many places your
+choice leaves, and a game won't start with zero.
 
 ## How to play
 * Press **START**. **Rounds** cycles 3/5/10, **Timer** cycles off, 30s, 60s, 120s, 180s and 300s, and

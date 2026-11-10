@@ -280,8 +280,51 @@ public class GeoQuestWorldBuilder : EditorWindow
         var roundsBtn = Button("Rounds", mapRoot, Bp(0.75f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleRounds));
         var timerBtn = Button("Timer", mapRoot, Bp(0.75f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleTimer));
         var modeBtn = Button("Photo type", mapRoot, Bp(0.42f, -0.13f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.CycleMode));
-        var allBtn = Button("All counties", mapRoot, Bp(0.42f, -0.26f), big, cBtn, fontMat, mgr, nameof(GeoGameManager.AllCounties));
-        var noneBtn = Button("Clear counties", mapRoot, Bp(0.75f, -0.26f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.ClearCounties));
+        // ---- county sub-menu: A-Z pages of 20, opened by the Counties button
+        var menuRoot = new GameObject("CountyMenu").transform;
+        menuRoot.SetParent(root.transform, false);
+        var menuPos = new Vector3(2.35f, 1.35f, 0.1f);
+        menuRoot.localPosition = menuPos;
+        menuRoot.localRotation = Quaternion.LookRotation(new Vector3(menuPos.x, 0, menuPos.z + 0.7f));
+        var menu = menuRoot.gameObject.AddComponent<GeoCountyMenu>();
+        Setup(menu);
+        var panel = new GameObject("Panel").transform;
+        panel.SetParent(menuRoot, false);
+        Prim(PrimitiveType.Quad, "Background", panel, new Vector3(0, 0, 0.02f), new Vector3(1.6f, 1.85f, 1), cBoard, false);
+        var menuTitle = Text("Title", panel, new Vector3(0, 0.8f, 0), new Vector2(1.5f, 0.14f), 0.7f, fontMat, "COUNTIES");
+        var cRowOn = Mat("CountyOn", ColorShader(), new Color(0.15f, 0.6f, 0.25f));
+        var cRowOff = Mat("CountyOff", ColorShader(), new Color(0.16f, 0.18f, 0.22f));
+        var rowSize = new Vector3(0.72f, 0.105f, 0.04f);
+        var rowLabels = new TextMeshPro[20];
+        var rowVisuals = new Renderer[20];
+        var rowObjects = new GameObject[20];
+        for (int i = 0; i < 20; i++)
+        {
+            // two columns of ten, reading down the left column first
+            var rp = new Vector3(i < 10 ? -0.38f : 0.38f, 0.62f - (i % 10) * 0.125f, -0.03f);
+            var row = Button("County " + i, panel, rp, rowSize, cRowOn, fontMat, menu, "Row" + i);
+            var rowUdon = Backing(row.GetComponent<GeoButton>());
+            if (rowUdon != null) rowUdon.interactText = "On / off";
+            rowObjects[i] = row;
+            rowVisuals[i] = row.transform.Find("Visual").GetComponent<Renderer>();
+            rowLabels[i] = row.GetComponentInChildren<TextMeshPro>();
+        }
+        var fs = new Vector3(0.27f, 0.11f, 0.04f);
+        Button("< Prev", panel, new Vector3(-0.6f, -0.75f, -0.03f), fs, cBtn, fontMat, menu, nameof(GeoCountyMenu.PrevPage));
+        Button("Next >", panel, new Vector3(-0.3f, -0.75f, -0.03f), fs, cBtn, fontMat, menu, nameof(GeoCountyMenu.NextPage));
+        Button("All", panel, new Vector3(0f, -0.75f, -0.03f), fs, cGo, fontMat, menu, nameof(GeoCountyMenu.All));
+        Button("Clear", panel, new Vector3(0.3f, -0.75f, -0.03f), fs, cWarn, fontMat, menu, nameof(GeoCountyMenu.Clear));
+        Button("Close", panel, new Vector3(0.6f, -0.75f, -0.03f), fs, cBtn, fontMat, menu, nameof(GeoCountyMenu.Close));
+        menu.game = mgr;
+        menu.panel = panel.gameObject;
+        menu.titleText = menuTitle;
+        menu.rowLabels = rowLabels;
+        menu.rowVisuals = rowVisuals;
+        menu.rowObjects = rowObjects;
+        menu.onMaterial = cRowOn;
+        menu.offMaterial = cRowOff;
+        mgr.countyMenu = menu;
+        var countiesBtn = Button("Counties", mapRoot, Bp(0.585f, -0.26f), new Vector3(0.63f, 0.1f, 0.05f), cGo, fontMat, menu, nameof(GeoCountyMenu.ToggleOpen));
         var nextBtn = Button("Next round", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.NextRound));
         var lobbyBtn = Button("Quit to lobby", mapRoot, Bp(0.75f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.BackToLobby));
 
@@ -396,7 +439,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.statusText = status;
         mgr.scoreboardText = score;
         mgr.infoText = info;
-        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn, allBtn, noneBtn };
+        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn, countiesBtn };
         mgr.photoScreen = screen.transform;
         mgr.screenMaterial = screenMat;
         mgr.screenHeight = 4.6f;
@@ -867,7 +910,7 @@ public class GeoQuestWorldBuilder : EditorWindow
     // ------------------------------------------------------------------ UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "GeoGameManager", "MapBoard", "PlayerGuess", "GeoButton",
-                                         "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV" };
+                                         "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV", "GeoCountyMenu" };
 
     static bool EnsureProgramAssets()
     {
