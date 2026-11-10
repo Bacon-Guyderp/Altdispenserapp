@@ -20,7 +20,7 @@ with `--outside-fraction 0.25` and rebuild the map with `python make_nc_map.py -
 
 **The map** is bare: North Carolina's 100 county outlines on a white background, with no names, towns or labels. The artwork is `tools/art/nc_county_outlines.png`, and `python tools/warp_outline_map.py` lines it up with real county borders and writes `NCMap.png`, so you have to know your state (`python make_nc_map.py --labels` brings the towns and labels back), and it zooms to 32×. Scoring is scaled to the state: `5000 × e^(−km / 90)`. That's
 roughly 4,500 points at 10 km, 2,900 at 50 km and 500 at 200 km. The reveal tells you the
-county and the nearest town, for example "14 km from Raleigh, Wake County, NC". Photos are
+real town and the county, for example "Clayton, Johnston County, NC". Photos are
 **streamed one at a time** with VRChat's Image Loading. The upload stays a few MB and
 Quest memory stays flat however many places you add.
 
@@ -92,6 +92,14 @@ You can re-run **Build World** whenever you harvest more places. It replaces the
   pins. On the reveal, a red beam marks the real spot on the floor map. **Reset pins** puts them
   back on the rack, and the **Hangout** button takes you back.
 * Only people in the game area count as players, so friends chilling in the hangout don't hold up rounds.
+
+## Towns and units
+The reveal names the real town. `tools/annotate_towns.py` checks every place against official
+US Census Bureau town boundaries (cities, towns, villages and census-designated places). A place
+inside a town's limits shows that town, for example "Clayton". Anywhere else shows the nearest
+town and the distance to its boundary, for example "2.1 mi from Kenly". The **Units** button
+under the map switches every distance between km and miles. It's each player's own choice and is
+remembered between visits.
 
 ## If the VR laser is off
 Controllers differ in which way they report "forward". Press **Fix laser aim** under the map,

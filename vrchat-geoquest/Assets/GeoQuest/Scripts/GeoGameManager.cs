@@ -18,6 +18,7 @@ public class GeoGameManager : UdonSharpBehaviour
     public const int PHASE_LOBBY = 0, PHASE_GUESS = 1, PHASE_REVEAL = 2, PHASE_OVER = 3;
     private const int MAX_ROUNDS = 10;
     private const string BEST_KEY = "geoquest.best";
+    private const string UNITS_KEY = "geoquest.miles";
 
     [Header("Location table (written by GeoQuest > Build World)")]
     public VRCUrl[] urls;
@@ -28,6 +29,7 @@ public class GeoGameManager : UdonSharpBehaviour
     public string[] credits;
     public int[] kinds;                 // 0 = 360° panorama, 1 = flat photo
     public int[] locCounty;             // county index of each place (-1 = none)
+    public float[] townKm;              // 0 = inside the town named in titles[], >0 = km to it, <0 = titles[] is a full label
 
     [Header("County picker (written by Build World)")]
     public string[] countyNames;
@@ -94,6 +96,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private int _recentHead;
     private int[] _cntPano, _cntFlat;      // places per county
     private int _nCounties;
+    private bool _miles;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
     private int[] _pool;
     private int _poolSize, _poolGame = -1, _poolRound = -1;
@@ -320,11 +323,44 @@ public class GeoGameManager : UdonSharpBehaviour
         return Mathf.RoundToInt(5000f * Mathf.Exp(-km / scoreScaleKm));
     }
 
+    /// <summary>A distance in the local player's units (km or miles).</summary>
     private string FormatKm(float km)
     {
+        if (_miles)
+        {
+            float mi = km * 0.621371f;
+            if (mi < 0.2f) return Mathf.RoundToInt(km * 3280.84f).ToString("N0") + " ft";
+            if (mi < 100f) return mi.ToString("0.0") + " mi";
+            return Mathf.RoundToInt(mi).ToString("N0") + " mi";
+        }
         if (km < 1f) return Mathf.RoundToInt(km * 1000f) + " m";
         if (km < 100f) return km.ToString("0.0") + " km";
         return Mathf.RoundToInt(km).ToString("N0") + " km";
+    }
+
+    /// <summary>Units button: km or miles. Your own choice, remembered between visits.</summary>
+    public void ToggleUnits()
+    {
+        _miles = !_miles;
+        PlayerData.SetBool(UNITS_KEY, _miles);
+        UpdateTexts();
+    }
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (player == null || !player.isLocal) return;
+        bool mi;
+        if (PlayerData.TryGetBool(player, UNITS_KEY, out mi)) _miles = mi;
+        UpdateTexts();
+    }
+
+    /// <summary>"Clayton" when inside the town limits, otherwise "2.1 mi from Kenly".</summary>
+    private string PlaceName(int loc)
+    {
+        float d = (townKm != null && loc < townKm.Length) ? townKm[loc] : -1f;
+        if (d < 0f || titles[loc] == "") return titles[loc];   // older place lists carry a ready-made title
+        if (d < 0.05f) return titles[loc];
+        return FormatKm(d) + " from " + titles[loc];
     }
 
     // ================================================================ buttons (anyone)
@@ -695,7 +731,7 @@ public class GeoGameManager : UdonSharpBehaviour
                 : "<color=#ff8080>0 places: pick more counties or change Photo type</color>";
             return head + "\nCounties: " + CountyChoice() + "  |  Photos: " + ModeName() + "\n" + places +
                    "\nRounds: " + totalRounds + "  |  Timer: " + (roundSeconds == 0 ? "off" : roundSeconds + "s") +
-                   "  |  Best: " + GetBest().ToString("N0");
+                   "  |  Units: " + (_miles ? "miles" : "km") + "  |  Best: " + GetBest().ToString("N0");
         }
         string s = "Round " + round + " / " + totalRounds;
         if (phase == PHASE_GUESS)
@@ -756,7 +792,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (CanPickCounty()) return "Press <b>Counties</b> under the map to choose which counties are in play.";
         if (phase == PHASE_REVEAL && loc >= 0)
         {
-            string s = "<b>" + titles[loc] + "</b>";
+            string s = "<b>" + PlaceName(loc) + "</b>";
             if (countries[loc] != "") s += "\n" + countries[loc];
             if (g != null && g.HasGuess(gameId, round, loc))
                 s += "\nYou were " + FormatKm(g.distanceKm) + " away: <b>+" + g.roundScore.ToString("N0") + "</b>";
