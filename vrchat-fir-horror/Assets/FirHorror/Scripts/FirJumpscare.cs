@@ -13,6 +13,8 @@ using VRC.Udon.Common.Interfaces;
 ///  kind 5  group: every tree in `groupChapter` screams, lights out
 ///  kind 6  peek: `target` stands there until you look at it, then it's gone
 ///  kind 7  flicker: the lights stutter and `anim` starts talking
+///  kind 8  creeper: `target` steps closer every time you look away, then it gets you
+///  kind 9  dark reveal: the lights die, and when they come back `target` is standing there
 /// `global` makes it happen to everyone in the game, not just the player who walked in.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -35,8 +37,10 @@ public class FirJumpscare : UdonSharpBehaviour
 
     bool fired;
     float nextAllowed;
-    int state;           // 1 dropping, 2 peeking
-    float stateT;
+    int state;           // 1 dropping, 2 peeking, 3 creeping
+    float stateT, stepAt;
+    Vector3 homePos;
+    bool homeSet;
     Vector3 dropFrom;
 
     void Start() { if (target != null && kind != 3) target.SetActive(false); }
@@ -46,6 +50,7 @@ public class FirJumpscare : UdonSharpBehaviour
         fired = false; nextAllowed = 0; state = 0;
         if (target != null && kind != 3) target.SetActive(false);
         if (target != null && kind == 3 && dropFrom != Vector3.zero) target.transform.position = dropFrom;
+        if (target != null && kind == 8 && homeSet) target.transform.position = homePos;
     }
 
     public override void OnPlayerTriggerEnter(VRCPlayerApi player)
@@ -105,6 +110,27 @@ public class FirJumpscare : UdonSharpBehaviour
             game.Flicker(duration);
             if (sound != null) sound.Play();
         }
+        else if (kind == 8)
+        {
+            if (target == null) return;
+            if (!homeSet) { homeSet = true; homePos = target.transform.position; }
+            target.transform.position = homePos;
+            target.SetActive(true);
+            state = 3; stateT = Time.time + 45f; stepAt = Time.time + 1.5f;
+        }
+        else if (kind == 9)
+        {
+            game.Blackout(1.6f);
+            SendCustomEventDelayedSeconds("_DarkReveal", 1.6f);
+        }
+    }
+
+    public void _DarkReveal()
+    {
+        if (target != null) target.SetActive(true);
+        if (sound != null) sound.Play();
+        if (anim != null) anim.SetMode(4, duration);
+        SendCustomEventDelayedSeconds("_Hide", duration);
     }
 
     public void _Hide() { if (target != null) target.SetActive(false); }
@@ -129,6 +155,33 @@ public class FirJumpscare : UdonSharpBehaviour
                 state = 0;
                 target.SetActive(false);
                 game.PlaySfx(game.clipWhoosh);
+            }
+        }
+        else if (state == 3)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            VRCPlayerApi.TrackingData h = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            Vector3 tp = target.transform.position;
+            Vector3 flat = h.position - tp; flat.y = 0;
+            float dist = flat.magnitude;
+            if (Time.time > stateT) { state = 0; target.SetActive(false); return; }
+            if (dist < 1.6f)
+            {
+                state = 0;
+                target.SetActive(false);
+                game.FaceScare(screamIndex, 1.0f);
+                return;
+            }
+            Vector3 to = (tp + Vector3.up * 1f - h.position).normalized;
+            bool looking = Vector3.Dot(h.rotation * Vector3.forward, to) > 0.5f;
+            if (!looking && Time.time > stepAt)
+            {
+                stepAt = Time.time + 0.9f;
+                float step = Mathf.Min(1.3f, dist - 1.2f);
+                target.transform.position = tp + flat / dist * step;
+                target.transform.rotation = Quaternion.LookRotation(flat / dist, Vector3.up);
+                if (sound != null) sound.Play();
             }
         }
     }

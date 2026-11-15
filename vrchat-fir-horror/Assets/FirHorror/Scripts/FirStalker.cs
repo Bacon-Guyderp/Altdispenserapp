@@ -131,6 +131,7 @@ public class FirStalker : UdonSharpBehaviour
 
     bool AnyoneLooking()
     {
+        if (Time.time < game.lightsOutUntil) return false;   // nobody can see it in the dark
         int n = VRCPlayerApi.GetPlayerCount();
         VRCPlayerApi.GetPlayers(players);
         Vector3 e = eyes != null ? eyes.position : transform.position + Vector3.up;

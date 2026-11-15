@@ -6,9 +6,9 @@ It's Christmas Eve, 1996, and the talking-tree factory has shut down for good. T
 You and your friends are the night clean-up crew. You go room by room through the factory and finish
 on the Recall Floor, where you burn the "imitation" trees in the furnace while **the Original** hunts you.
 
-* **About 45 minutes** for a group playing for the first time, across six chapters.
+* **About 45–50 minutes** for a group playing for the first time, across six puzzle chapters. Every answer is randomised each game.
 * **1–8 players**, co-op. Progress, doors and items are synced, and late joiners can catch up.
-* **33 placed jumpscares**, plus scares tied to events (finding the last item, wrong codes, getting caught) and random whispers, rustles and flickers between them.
+* **About 60 placed jumpscares**, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 25–60 seconds.
 * **Quest-friendly:** no realtime lights or shadows, no post-processing, one tiny shader, 512 px textures
   (ASTC on Android) and about 1 MB of mono Vorbis audio. The whole package is under 3 MB.
 
@@ -21,16 +21,24 @@ The songs use *O Tannenbaum*, which is public domain. The company in the world i
 | # | Room | Goal | Rough time | What goes wrong |
 |---|---|---|---|---|
 | — | Lobby | Story, rules, personal options, **START** | 2 min | Nothing. It's the one safe room. |
-| 1 | **Showroom** | Find 3 batteries (under the long table, behind the curtain, in the presents), then use the power panel | 6 min | The 2.6 m Original greets you, the trees sing and follow you with their eyes, something grabs you under the table, a tree stands in the corner until you look at it, and the lights die when the last battery is found |
-| 2 | **Stockroom** | Find 4 fuses in the shelf aisles, then use the fuse box | 9 min | **The stalker:** a tree that only moves when nobody is looking at it. Also a crate that screams, a falling box, singing from the dark and a face in the cross aisle |
-| 3 | **Voice Lab** | Collect 4 voice tapes (on the conveyor, in the booth, on the desks), then play them on the deck in the order on the whiteboard | 8 min | Tree heads on the conveyor stop and turn to you, the booth singer screams, and the wrong order makes every tree scream |
-| 4 | **Offices** | Read 4 memos (each gives one digit of the door code), then use the keypad | 8 min | The stalker is back among the cubicles. A phone rings, the employees turn round in their chairs, and something waits in a cubicle |
-| 5 | **Living Room** | The catalogue photo, but wrong. Put the small, medium and large Santa hats on the matching trees | 5 min | Every tree turns to stare when a hat goes on, the family sings out of tune, and something is behind you at the fireplace |
-| 6 | **Recall Floor** | Carry 5 small imitation trees (they whimper) to the furnace | 8 min | **The Original hunts you.** It's faster, and it creeps forward slowly even while you're watching it. A tree also drops from the ceiling |
+| 1 | **Showroom: the carol** | Find 3 batteries, power the panel, and the four table trees sing a 5-note carol. Repeat it by touching the trees in the same order | 7 min | The Original greets you, eyes follow you, a hand under the table and a tree behind the curtain, a tree that creeps closer when you look away, and a wrong note screams in your face |
+| 2 | **Stockroom: glow paint** | Find 4 fuses. The fuse box wants a 3-digit code painted in **glow paint, visible only in the dark**. Flip the light switch (8 s of darkness) and find the digits, but **the stalker can move while it's dark** | 9 min | The stalker, a screaming crate, a falling box, a creeper in the aisle, and a tree standing at the end of an aisle when the lights come back |
+| 3 | **Voice Lab: the tapes** | Collect 4 coloured tapes. The booth card maps colours to session names, and the whiteboard lists the names in order. Play the colours in that order | 8 min | Conveyor heads turn to you, the booth singer screams, something appears beside the whiteboard in a blackout, and a wrong order sets off every tree |
+| 4 | **Offices: the memos** | Each memo is a counting riddle for one digit ("count the telephones in the Offices, then add 3"). Count employees, Santa hats, phones and calendars, then enter the code | 9 min | The stalker among the cubicles, two phones ringing, employees turning in their chairs, a creeper in the back aisle and faces in the cubicles |
+| 5 | **Living Room: the hats** | A logic clue card on the mantle says who wears which colour hat. Name plaques sit under the trees. Put red, green and blue hats on the right family members | 6 min | Every tree turns to stare when a hat goes on, "THAT'S NOT MY HAT", something behind you at the fireplace, and a blackout reveal at the table |
+| 6 | **Recall Floor: the furnace** | Open 3 gas valves to light the furnace, then carry 5 whimpering imitation trees into it | 9 min | **The Original hunts you** and creeps forward even while watched. A tree drops from the ceiling, a chorus of screams, and scares on the valves |
 | 7 | Exit | Your time, the credits and the way back to the lobby | — | One last scare |
 
-The door code and tape order are randomised every game. If the group is stuck for six minutes, a hint
-appears under everyone's view, and another every four minutes after that.
+Every answer (carol, glow digits, tape order and labels, door code, hat clues) is generated from a synced
+seed, so groups can't share solutions. If the group is stuck for five minutes, a hint appears under
+everyone's view, and another every four minutes after that.
+
+### Scare types
+Face scares, something standing behind you that screams when you turn, reveals, drops, peeks that vanish
+when you look, group screams with blackouts, flickers, **creepers** (a tree that steps closer every time you
+look away, until it reaches you) and **dark reveals** (the lights die, and when they come back a tree is
+standing there). Glow-paint messages ("BEHIND YOU", "IT MOVES IN THE DARK") appear on the walls in every
+blackout.
 
 ### The stalker
 The owner of the stalker (normally the instance master) checks every player's head direction each frame,
@@ -100,7 +108,7 @@ python make_unitypackage.py
 | Sound and texture generators, package builder | `tools/` |
 
 ### Tuning
-* **Length:** the hint timer is `hintAt` in `FirGameManager.EnterPhase` (6 min, then every 4 min). The
+* **Length:** the hint timer is `hintAt` in `FirGameManager.EnterPhase` (5 min, then every 4 min). The
   stalker's speeds and catch distance are on the `Stalker` object.
 * **Scare density:** every scripted scare is a `Scare …` object under its chapter. Each one is a trigger
   box with a `FirJumpscare`. Move it, change its `kind` or `delay`, or delete it. `FirAmbience.minGap` and

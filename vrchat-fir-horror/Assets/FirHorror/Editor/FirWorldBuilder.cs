@@ -36,6 +36,7 @@ public static class FirWorldBuilder
     static readonly List<VRCObjectSync> carrySyncList = new List<VRCObjectSync>();
     static readonly List<UdonSharpBehaviour> allBehaviours = new List<UdonSharpBehaviour>();
     static readonly List<FirToilet> toilets = new List<FirToilet>();
+    static readonly List<GameObject> glowList = new List<GameObject>();
     static FirStalker stalkerRef;
 
     class TreeParts
@@ -60,7 +61,7 @@ public static class FirWorldBuilder
             return false;
         }
         if (!EnsureProgramAssets()) return false;
-        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); stalkerRef = null;
+        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null;
         Directory.CreateDirectory(Gen);
         ConfigureAssets();
 
@@ -89,7 +90,7 @@ public static class FirWorldBuilder
         game.clipPickup = Clip("pickup"); game.clipUnlock = Clip("unlock"); game.clipWrong = Clip("wrong");
         game.clipTalk = Clip("tree_talk"); game.clipLaugh = Clip("tree_laugh"); game.clipStatic = Clip("static");
         game.clipHit = Clip("scare_hit"); game.clipWhoosh = Clip("whoosh"); game.clipHeartbeat = Clip("heartbeat");
-        game.clipWhisper = Clip("whisper");
+        game.clipWhisper = Clip("whisper"); game.clipSwitch = Clip("switch");
 
         // ---- face-scare rig: a tree whose face sits exactly at the rig's origin
         var rig = new GameObject("ScareRig").transform;
@@ -111,12 +112,14 @@ public static class FirWorldBuilder
         var fa = Add<FirAmbience>(amb);
         fa.game = game;
         fa.emitter = Src(amb.transform, Vector3.zero, null, false, 1f, 0.9f, 12f, false);
-        fa.clips = new[] { Clip("whisper"), Clip("rustle"), Clip("creak"), Clip("tree_laugh"), Clip("servo"), Clip("tree_talk") };
+        fa.clips = new[] { Clip("whisper"), Clip("rustle"), Clip("creak"), Clip("tree_laugh"), Clip("servo"), Clip("tree_talk"), Clip("tree_note"), Clip("phone") };
+        fa.minGap = 25f; fa.maxGap = 60f;
 
         // ---- wire up the collected lists
         game.items = itemList.ToArray();
         game.itemChapter = itemChapterList.ToArray();
         foreach (var t in toilets) t.stalker = stalkerRef;
+        game.glowOnly = glowList.ToArray();
         game.carrySyncs = carrySyncList.ToArray();
         game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).ToArray();
         game.jumpscares = root.GetComponentsInChildren<FirJumpscare>(true);
@@ -180,7 +183,8 @@ public static class FirWorldBuilder
         // how to play on the east wall
         var e = Vector3.left;
         Text("HowTo", lobby, new Vector3(6.98f, 1.9f, -1.5f), Face(e), new Vector2(5.5f, 2.6f), 0.2f,
-            "<b>HOW TO PLAY</b>\n\n- Press <b>START</b>. Everyone here is taken in together.\n- Each room has a goal, shown under your view.\n" +
+            "<b>HOW TO PLAY</b>\n\n- Press <b>START</b>. Everyone here is taken in together.\n- Every room is a <b>puzzle</b>. The goal shows under your view; the answers change every game.\n" +
+            "- Read everything: memos, cards, whiteboards. Some writing only shows <b>in the dark</b>.\n" +
             "- Press (use) things to pick them up. Carry hats and little trees in your hands.\n- One tree <b>only moves when nobody looks at it</b>. " +
             "Watch it while your friends search. If it reaches you, you're sent back to the start of the room.\n" +
             "- Toilets can be picked up and thrown. A good hit stuns the hunting tree for a few seconds.\n" +
@@ -265,26 +269,26 @@ public static class FirWorldBuilder
         BuildExit(Group(f, "7 Exit", Vector3.zero));
     }
 
-    // ------------------------------------------------------------------- chapter 1
+    // ------------------------------------------------------------------- chapter 1: the carol
 
     static void BuildShowroom(Transform g)
     {
-        // the long red table on the left, like the catalogue photo
+        // the long red table on the left, like the catalogue photo. These four sing the carol.
         Table(g, new Vector3(-5.6f, 0, 9), new Vector3(1.6f, 0.8f, 9f), M("ClothRed"));
         var t1 = BuildTree(g, new Vector3(-5.6f, 0.82f, 6f), 90, 0.7f, 1, true, "TableTree1");
         var t2 = BuildTree(g, new Vector3(-5.6f, 0.82f, 8.5f), 90, 1.0f, 1, false, "TableTree2");
         var t3 = BuildTree(g, new Vector3(-5.6f, 0.82f, 11f), 90, 0.8f, 1, true, "TableTree3");
-        BuildTree(g, new Vector3(-5.6f, 0.82f, 13.3f), 90, 0.6f, 1, false, "TableTree4");
+        var t4 = BuildTree(g, new Vector3(-5.6f, 0.82f, 13.3f), 90, 0.6f, 1, false, "TableTree4");
+        var carol = new[] { t1, t2, t3, t4 };
+        float[] pitches = { 1.19f, 0.8f, 1.0f, 1.5f };   // four clearly different notes
         // the big one in the corner
         var big = BuildTree(g, new Vector3(5.6f, 0, 5.5f), -60, 2.6f, 1, false, "TheOriginal");
         big.anim.watchRange = 5f; big.anim.greetChance = 1f;
         // centre display: three singers on a stage
         Box(g, "Stage", new Vector3(0, 0.15f, 11), new Vector3(3.6f, 0.3f, 1.6f), M("ClothRed"), true);
         for (int i = 0; i < 3; i++) BuildTree(g, new Vector3(-1.1f + i * 1.1f, 0.3f, 11), 180, 0.9f + (i == 1 ? 0.3f : 0), 1, i != 1, "Singer" + i);
-        // presents round the big tree
         Gifts(g, new Vector3(5.2f, 0, 3.2f), 7);
         Gifts(g, new Vector3(-2f, 0, 17.5f), 4);
-        // window with curtains on the right wall
         Quad(g, "Window", new Vector3(7.98f, 1.7f, 14), Face(Vector3.left), new Vector2(2.2f, 1.6f), M("Window"));
         Box(g, "Sill", new Vector3(7.75f, 0.85f, 14), new Vector3(0.5f, 0.1f, 2.6f), M("Trim"), true);
         Box(g, "CurtainA", new Vector3(7.7f, 1.8f, 12.6f), new Vector3(0.12f, 2.6f, 0.7f), M("Curtain"), true);
@@ -293,17 +297,40 @@ public static class FirWorldBuilder
         Poster(g, "poster_original", new Vector3(-3.5f, 1.9f, 0.12f), Vector3.forward, 1.2f, false);
         Sign(g, "SHOWROOM", new Vector3(0, 3.4f, 0.2f), Vector3.forward);
 
-        // batteries: under the table (with a face scare), behind the curtain, in the presents
+        // batteries: under the table, behind the curtain, in the presents. Two of them bite.
         var under = Scare(g, "UnderTableScare", Vector3.zero, Vector3.zero, 0, 1, 1);
-        under.screamIndex = 0; under.duration = 1.1f; under.once = true;
+        under.screamIndex = 0; under.duration = 1.1f;
+        var curtain = Scare(g, "CurtainBehind", Vector3.zero, Vector3.zero, 4, 1, 1);
+        curtain.delay = 1.2f;
         Item(g, "Battery", 1, new Vector3(-5.6f, 0.06f, 10.4f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", under);
-        Item(g, "Battery", 1, new Vector3(7.62f, 0.95f, 15.0f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", null);
+        Item(g, "Battery", 1, new Vector3(7.62f, 0.95f, 15.0f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", curtain);
         Item(g, "Battery", 1, new Vector3(6.4f, 0.72f, 2.2f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", null);
 
-        // power panel by the door
+        // power panel by the door: it makes the table trees sing a 5-note carol, which you repeat by touching them
         var panel = Box(g, "PowerPanel", new Vector3(3.4f, 1.4f, 19.85f), new Vector3(0.9f, 1.1f, 0.2f), M("Metal"), true);
-        Station(panel, "Use power panel", "StationPower");
+        Station(panel, "Power on (the trees will sing)", "StationPower");
         Text("PanelLabel", g, new Vector3(3.4f, 2.1f, 19.74f), Face(Vector3.back), new Vector2(1.2f, 0.2f), 0.12f, "POWER PANEL");
+        var lk = Add<FirSequenceLock>(Group(g, "CarolLock", new Vector3(3.4f, 1.4f, 19.73f)).gameObject);
+        lk.game = game; lk.chapter = 1; lk.length = 5; lk.needsItems = true; lk.needText = "BATTERIES";
+        lk.valueNames = new[] { "1", "2", "3", "4" };
+        lk.display = Text("CarolDisplay", lk.transform, new Vector3(0, -0.15f, -0.01f), Face(Vector3.back), new Vector2(0.8f, 0.2f), 0.1f, "_ _ _ _ _");
+        lk.display.color = new Color(1f, 0.85f, 0.3f);
+        game.carolTrees = new FirAnimatronic[4];
+        for (int i = 0; i < 4; i++)
+        {
+            var tr = carol[i];
+            tr.anim.voice.pitch = pitches[i];
+            game.carolTrees[i] = tr.anim;
+            var touch = new GameObject("Touch");
+            touch.transform.SetParent(tr.root.transform, false);
+            touch.transform.localPosition = new Vector3(0, tr.faceHeight * 0.8f, 0);
+            touch.AddComponent<BoxCollider>().size = new Vector3(0.6f, tr.faceHeight * 1.4f, 0.6f);
+            var k = Add<FirKey>(touch);
+            k.lockTarget = lk; k.value = i; k.anim = tr.anim;
+            SetInteract(k, "Touch the tree", 2.5f);
+            Text("Number", tr.root.transform, new Vector3(0, 0.03f, 0.32f), Quaternion.Euler(90, 180, 0), new Vector2(0.2f, 0.12f), 0.08f,
+                 "<color=#ffd27a>" + (i + 1) + "</color>");
+        }
 
         // scares
         var hello = Scare(g, "Hello", new Vector3(0, 1.5f, 5.5f), new Vector3(16, 3, 0.4f), 7, 1, 1);
@@ -318,10 +345,16 @@ public static class FirWorldBuilder
         glance.anim = t1.anim; glance.animMode = 1; glance.duration = 6f;
         var behind = Scare(g, "PanelBehind", new Vector3(2.5f, 1.5f, 18.4f), new Vector3(5, 3, 0.4f), 4, 1, 1);
         behind.delay = 1.5f;
+        Creeper(g, "StageCreeper", new Vector3(0, 1.5f, 15f), new Vector3(16, 3, 0.4f), new Vector3(1.5f, 0, 2.5f), 0, 1.6f, 1);
+        DarkReveal(g, "GiftReveal", new Vector3(4.5f, 1.5f, 6.5f), new Vector3(0.4f, 3, 4), new Vector3(3.6f, 0, 4.0f), 60, 1.7f, 1);
+        var pop = Scare(g, "WindowKnock", new Vector3(6.5f, 1.5f, 14f), new Vector3(0.4f, 3, 3), 2, 1, 1);
+        pop.sound = Src(g, new Vector3(8.2f, 1.7f, 14f), Clip("creak"), false, 1f, 1f, 10f, false); pop.delay = 1f;
+        GlowWrite(g, new Vector3(-7.95f, 2.4f, 11f), Vector3.right, "THEY ALL SING\nTHE SAME SONG");
+        GlowWrite(g, new Vector3(7.95f, 2.6f, 6f), Vector3.left, "IT IS NOT\nA TOY");
         t3.anim.greetChance = 0.8f;
     }
 
-    // ------------------------------------------------------------------- chapter 2
+    // ------------------------------------------------------------------- chapter 2: glow paint
 
     static void BuildStockroom(Transform g, FirStalker stalker)
     {
@@ -331,7 +364,6 @@ public static class FirWorldBuilder
             Shelf(g, new Vector3(x, 0, 30f), 11f);
             Shelf(g, new Vector3(x, 0, 45.5f), 11f);
         }
-        // pallets of boxed trees in the main aisle for cover
         BoxStack(g, new Vector3(-1.5f, 0, 27f), 2, 3);
         BoxStack(g, new Vector3(1.8f, 0, 41f), 3, 2);
         BoxStack(g, new Vector3(-1.2f, 0, 49f), 2, 2);
@@ -339,18 +371,32 @@ public static class FirWorldBuilder
         Poster(g, "poster_recall", new Vector3(11.98f, 2.0f, 37.5f), Vector3.left, 1.3f, false);
         Sign(g, "STOCKROOM", new Vector3(0, 3.5f, 20.25f), Vector3.forward);
 
+        var deep = Scare(g, "DeepAisleFace", Vector3.zero, Vector3.zero, 0, 2, 2);
+        deep.screamIndex = 1; deep.duration = 1.0f;
+        var crateBehind = Scare(g, "CrateFuseBehind", Vector3.zero, Vector3.zero, 4, 2, 2);
+        crateBehind.delay = 1.5f;
         Item(g, "Fuse", 2, new Vector3(-10.8f, 0.1f, 50.6f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", null);
         Item(g, "Fuse", 2, new Vector3(-6.75f, 0.75f, 37.5f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", null);
         Box(g, "Crate", new Vector3(-6.75f, 0.35f, 37.5f), new Vector3(0.7f, 0.7f, 0.7f), M("Cardboard"), true, true, true);
-        var deep = Scare(g, "DeepAisleFace", Vector3.zero, Vector3.zero, 0, 2, 2);
-        deep.screamIndex = 1; deep.duration = 1.0f;
         Item(g, "Fuse", 2, new Vector3(6.75f, 0.1f, 24.5f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", deep);
-        Item(g, "Fuse", 2, new Vector3(10.8f, 0.85f, 44f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", null);
+        Item(g, "Fuse", 2, new Vector3(10.8f, 0.85f, 44f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", crateBehind);
         Box(g, "Crate", new Vector3(10.8f, 0.4f, 44f), new Vector3(0.8f, 0.8f, 0.8f), M("Cardboard"), true, true, true);
 
-        var fuseBox = Box(g, "FuseBox", new Vector3(-6f, 1.4f, 55.85f), new Vector3(0.9f, 1.1f, 0.2f), M("Metal"), true);
-        Station(fuseBox, "Use fuse box", "StationFuses");
+        // the fuse box wants a 3-digit code, painted in glow paint that only shows in the dark
+        Box(g, "FuseBox", new Vector3(-6f, 1.4f, 55.85f), new Vector3(0.9f, 1.1f, 0.2f), M("Metal"), true);
         Text("FuseLabel", g, new Vector3(-6f, 2.1f, 55.74f), Face(Vector3.back), new Vector2(1.2f, 0.2f), 0.12f, "FUSE BOX");
+        Keypad(g, new Vector3(-6f, 1.35f, 55.68f), 2, 3, true, "FUSES");
+        Button("LIGHTS", g, new Vector3(2.6f, 1.4f, 20.2f), Vector3.forward, new Vector3(0.5f, 0.35f, 0.1f), M("BtnWarn"), game, "StationLights");
+        Text("LightsLabel", g, new Vector3(2.6f, 1.75f, 20.16f), Face(Vector3.forward), new Vector2(1.2f, 0.15f), 0.07f, "LIGHT SWITCH (8 s)");
+        game.glowDigits = new[]
+        {
+            GlowWrite(g, new Vector3(-11.95f, 2.2f, 32f), Vector3.right, ""),
+            GlowWrite(g, new Vector3(11.95f, 2.4f, 49f), Vector3.left, ""),
+            GlowWrite(g, new Vector3(8f, 2.4f, 55.85f), Vector3.back, ""),
+        };
+        GlowWrite(g, new Vector3(0, 2.8f, 20.15f), Vector3.forward, "IT MOVES\nIN THE DARK");
+        GlowWrite(g, new Vector3(-11.95f, 1.4f, 44f), Vector3.right, "DON'T BLINK");
+        GlowWrite(g, new Vector3(11.95f, 1.6f, 26f), Vector3.left, "BEHIND YOU");
 
         stalker.spawnByPhase[2] = Marker(g, "StalkerSpawn2", new Vector3(8.5f, 0, 52f), 180);
 
@@ -371,16 +417,21 @@ public static class FirWorldBuilder
         behind.delay = 2f;
         var crossFace = Scare(g, "CrossAisleFace", new Vector3(9f, 1.5f, 38.2f), new Vector3(0.4f, 3, 2.6f), 0, 2, 2);
         crossFace.screamIndex = 2; crossFace.duration = 0.9f;
+        Creeper(g, "AisleCreeper", new Vector3(-10.75f, 1.5f, 40.5f), new Vector3(2.4f, 3, 0.4f), new Vector3(-10.75f, 0, 25.5f), 0, 1.5f, 2);
+        DarkReveal(g, "AisleEndReveal", new Vector3(-2.25f, 1.5f, 46f), new Vector3(0.4f, 3, 8), new Vector3(-2.6f, 0, 52.5f), 180, 2.0f, 2);
+        var shelfTalk = Scare(g, "ShelfWhisper", new Vector3(2.25f, 1.5f, 30f), new Vector3(0.4f, 3, 8), 2, 2, 2);
+        shelfTalk.sound = Src(g, new Vector3(4.5f, 1.4f, 30f), Clip("whisper"), false, 1f, 1f, 8f, false);
+        var hum = Scare(g, "BoxRattle", new Vector3(6.75f, 1.5f, 45f), new Vector3(2.4f, 3, 0.4f), 7, 2, 2);
+        hum.duration = 1.2f; hum.sound = Src(g, new Vector3(9f, 1.4f, 46f), Clip("rustle"), false, 1f, 1f, 10f, false);
     }
 
-    // ------------------------------------------------------------------- chapter 3
+    // ------------------------------------------------------------------- chapter 3: the tapes
 
     static void BuildVoiceLab(Transform g)
     {
         Sign(g, "VOICE LAB", new Vector3(0, 3.1f, 56.25f), Vector3.forward);
         Poster(g, "poster_warning_scrawl", new Vector3(7.98f, 1.8f, 60f), Vector3.left, 1.2f, false);
 
-        // conveyor carrying tree heads across the room (one carries a tape)
         Box(g, "ConveyorBelt", new Vector3(0, 0.75f, 64f), new Vector3(12f, 0.12f, 1.0f), M("Rubber"), true);
         Box(g, "ConveyorBase", new Vector3(0, 0.35f, 64f), new Vector3(12f, 0.7f, 0.9f), M("Metal"), true);
         var conv = Group(g, "ConveyorItems", new Vector3(0, 0.81f, 64f));
@@ -395,10 +446,10 @@ public static class FirWorldBuilder
             h.anim.watchRange = 2.5f;
             heads.Add(h);
         }
-        var tapeOnBelt = Item(conv, "Tape", 3, new Vector3(-4.3f, 0.04f, 0), M("TapeRed"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape", null);
+        var tapeOnBelt = Item(conv, "Tape", 3, new Vector3(-4.3f, 0.04f, 0), M("TapeRed"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (red)", null);
         tapeOnBelt.transform.SetParent(conv, true);
 
-        // recording booth on the right
+        // recording booth: the label card that maps tape colours to session names
         var booth = Group(g, "Booth", new Vector3(5.5f, 0, 72f));
         Box(booth, "BackWall", new Vector3(0, 1.5f, 3f), new Vector3(4.6f, 3f, 0.15f), M("Foam"), true);
         Box(booth, "SideWall", new Vector3(-2.3f, 1.5f, 0.6f), new Vector3(0.15f, 3f, 4.8f), M("Foam"), true);
@@ -408,27 +459,31 @@ public static class FirWorldBuilder
         var singer = BuildTree(booth, new Vector3(0.6f, 0.6f, 1.5f), 180, 1.3f, 3, false, "BoothSinger");
         Box(booth, "MicStand", new Vector3(0.6f, 0.8f, 0.7f), new Vector3(0.04f, 1.6f, 0.04f), M("Metal"), false);
         Box(booth, "Mic", new Vector3(0.6f, 1.6f, 0.65f), new Vector3(0.08f, 0.14f, 0.08f), M("Black"), false);
-        Item(booth, "Tape", 3, new Vector3(-1.6f, 0.03f, 2.4f), M("TapeBlue"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape", null);
+        Item(booth, "Tape", 3, new Vector3(-1.6f, 0.03f, 2.4f), M("TapeBlue"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (blue)", null);
+        Quad(booth, "LabelCard", new Vector3(-1.2f, 1.6f, 2.92f), Face(Vector3.back), new Vector2(0.75f, 0.6f), M("Paper"));
+        game.tapeCard = Text("LabelCardText", booth, new Vector3(-1.2f, 1.6f, 2.9f), Face(Vector3.back), new Vector2(0.68f, 0.52f), 0.06f, "");
+        game.tapeCard.color = new Color(0.1f, 0.1f, 0.12f);
 
-        // desks with the other two tapes
         Desk(g, new Vector3(-5f, 0, 70f), 90);
         Desk(g, new Vector3(-5f, 0, 75.5f), 90);
         var deskScare = Scare(g, "DeskTapeFace", Vector3.zero, Vector3.zero, 0, 3, 3);
         deskScare.screamIndex = 0; deskScare.duration = 1.0f;
-        Item(g, "Tape", 3, new Vector3(-5f, 0.78f, 70.2f), M("TapeGreen"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape", null);
-        Item(g, "Tape", 3, new Vector3(-4.8f, 0.78f, 75.3f), M("TapeGold"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape", deskScare);
+        var greenScare = Scare(g, "GreenTapeDark", Vector3.zero, Vector3.zero, 7, 3, 3);
+        greenScare.duration = 2f; greenScare.sound = Src(g, new Vector3(-5f, 1f, 70f), Clip("tree_laugh"), false, 1f, 1f, 10f, false);
+        Item(g, "Tape", 3, new Vector3(-5f, 0.78f, 70.2f), M("TapeGreen"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (green)", greenScare);
+        Item(g, "Tape", 3, new Vector3(-4.8f, 0.78f, 75.3f), M("TapeGold"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (gold)", deskScare);
         Box(g, "ClerkChair", new Vector3(-6.2f, 0.22f, 75.5f), new Vector3(0.5f, 0.45f, 0.5f), M("Black"), true);
         var clerk = BuildTree(g, new Vector3(-6.2f, 0.45f, 75.5f), 90, 1.1f, 3, false, "Clerk");
         clerk.anim.watchRange = 2.5f;
 
-        // the whiteboard and the tape deck
+        // the whiteboard (order of session names) and the tape deck (colours)
         Box(g, "Whiteboard", new Vector3(-7.95f, 1.7f, 64f), new Vector3(0.05f, 1.2f, 2.2f), M("Whiteboard"), true);
         game.tapeBoard = Text("RecordingLog", g, new Vector3(-7.9f, 1.7f, 64f), Face(Vector3.right), new Vector2(2.0f, 1.1f), 0.14f, "");
         game.tapeBoard.color = new Color(0.1f, 0.1f, 0.15f);
         Desk(g, new Vector3(0, 0, 77.6f), 0);
         Box(g, "TapeDeck", new Vector3(0, 0.84f, 77.5f), new Vector3(0.9f, 0.14f, 0.45f), M("Black"), true);
         var lk = Add<FirSequenceLock>(Group(g, "TapeLock", new Vector3(0, 0.84f, 77.5f)).gameObject);
-        lk.game = game; lk.chapter = 3; lk.length = 4; lk.needsItems = true;
+        lk.game = game; lk.chapter = 3; lk.length = 4; lk.needsItems = true; lk.needText = "TAPES";
         lk.valueNames = new[] { "R", "B", "G", "Y" };
         lk.valueClips = new[] { Clip("tree_talk"), Clip("whisper"), Clip("tree_laugh"), Clip("static") };
         lk.beep = Src(lk.transform, Vector3.zero, Clip("servo"), false, 1f, 1f, 8f, false);
@@ -449,9 +504,14 @@ public static class FirWorldBuilder
         jam.sound = Src(g, new Vector3(0, 1, 64), Clip("tree_talk"), false, 1f, 1f, 15f, false);
         var deckBehind = Scare(g, "DeckBehind", new Vector3(0, 1.5f, 76f), new Vector3(4, 3, 0.4f), 4, 3, 3);
         deckBehind.delay = 3f;
+        DarkReveal(g, "WhiteboardReveal", new Vector3(-6.4f, 1.5f, 64f), new Vector3(0.4f, 3, 2.4f), new Vector3(-7.3f, 0, 65.9f), 90, 1.8f, 3);
+        Creeper(g, "LabCreeper", new Vector3(-3f, 1.5f, 72.5f), new Vector3(0.4f, 3, 8), new Vector3(2.5f, 0, 78.8f), 180, 1.4f, 3);
+        var boothFace = Scare(g, "BoothFace", new Vector3(4.0f, 1.5f, 72f), new Vector3(0.4f, 3, 1.4f), 0, 3, 3);
+        boothFace.screamIndex = 2; boothFace.duration = 0.9f; boothFace.delay = 2.5f;
+        GlowWrite(g, new Vector3(7.95f, 2.4f, 70f), Vector3.left, "SESSION 5\nIS STILL\nRECORDING");
     }
 
-    // ------------------------------------------------------------------- chapter 4
+    // ------------------------------------------------------------------- chapter 4: counting memos
 
     static void BuildOffices(Transform g, FirStalker stalker)
     {
@@ -460,7 +520,7 @@ public static class FirWorldBuilder
         float[] cz = { 85.5f, 91.5f, 97.5f };
         int[,] memoAt = { { 0, 0 }, { 3, 1 }, { 1, 2 }, { 2, 0 } };  // (col, row) of the four memos
         var memos = new TextMeshPro[4];
-        int n = 0;
+        int n = 0, employees = 0, hatted = 0, phones = 0, calendars = 0;
         for (int c = 0; c < 4; c++)
             for (int r = 0; r < 3; r++)
             {
@@ -472,11 +532,29 @@ public static class FirWorldBuilder
                 float deskX = leftSide ? -0.9f : 0.9f;
                 Box(cub, "Desk", new Vector3(deskX, 0.72f, 0), new Vector3(0.8f, 0.05f, 1.8f), M("DeskWood"), true);
                 Box(cub, "Monitor", new Vector3(deskX + (leftSide ? -0.15f : 0.15f), 0.97f, 0.3f), new Vector3(0.12f, 0.4f, 0.5f), M("Black"), true);
-                // a tree employee in about half the chairs
+                // countables for the memo riddles (the builder counts them as it places them)
+                if ((c * 3 + r) % 3 != 1)
+                {
+                    phones++;
+                    Box(cub, "Phone", new Vector3(deskX, 0.78f, 0.75f), new Vector3(0.2f, 0.07f, 0.22f), M("Black"), false, false);
+                    Box(cub, "Handset", new Vector3(deskX, 0.83f, 0.75f), new Vector3(0.06f, 0.04f, 0.24f), M("GiftRed"), false, false);
+                }
+                if ((c + 2 * r) % 3 == 0)
+                {
+                    calendars++;
+                    float bx = leftSide ? -1.35f : 1.35f;
+                    var normal = leftSide ? Vector3.right : Vector3.left;
+                    Quad(cub, "Calendar", new Vector3(bx, 1.15f, -0.6f), Face(normal), new Vector2(0.3f, 0.4f), M("Paper"));
+                    Text("CalendarText", cub, new Vector3(bx + (leftSide ? 0.005f : -0.005f), 1.15f, -0.6f), Face(normal), new Vector2(0.28f, 0.38f), 0.05f,
+                         "<color=#b00000><b>DECEMBER</b></color>\n<color=#202020>1996\n\n24</color>");
+                }
                 if ((c + r) % 2 == 0)
                 {
+                    employees++;
+                    bool hat = n % 3 == 0;
+                    if (hat) hatted++;
                     Box(cub, "Chair", new Vector3(deskX + (leftSide ? 0.75f : -0.75f), 0.25f, 0), new Vector3(0.5f, 0.5f, 0.5f), M("Black"), true);
-                    var emp = BuildTree(cub, new Vector3(deskX + (leftSide ? 0.75f : -0.75f), 0.5f, 0), leftSide ? -90 : 90, 1.2f, 4, n % 3 == 0, "Employee");
+                    var emp = BuildTree(cub, new Vector3(deskX + (leftSide ? 0.75f : -0.75f), 0.5f, 0), leftSide ? -90 : 90, 1.2f, 4, hat, "Employee");
                     emp.anim.watchRange = 3f; emp.anim.greetChance = 0.25f;
                 }
                 n++;
@@ -484,12 +562,14 @@ public static class FirWorldBuilder
                     if (memoAt[k, 0] == c && memoAt[k, 1] == r)
                     {
                         var paperPos = new Vector3(deskX, 0.752f, -0.45f);
-                        Quad(cub, "Memo", paperPos, Quaternion.Euler(90, 0, 0), new Vector2(0.3f, 0.4f), M("Paper"));
-                        memos[k] = Text("MemoText", cub, paperPos + new Vector3(0, 0.002f, 0), Quaternion.Euler(90, 0, 0), new Vector2(0.27f, 0.37f), 0.025f, "");
+                        Quad(cub, "Memo", paperPos, Quaternion.Euler(90, 0, 0), new Vector2(0.36f, 0.46f), M("Paper"));
+                        memos[k] = Text("MemoText", cub, paperPos + new Vector3(0, 0.002f, 0), Quaternion.Euler(90, 0, 0), new Vector2(0.33f, 0.43f), 0.025f, "");
                         memos[k].color = new Color(0.1f, 0.1f, 0.12f);
                     }
             }
         game.memoTexts = memos;
+        game.countNames = new[] { "employees sitting at desks", "employees wearing Santa hats", "telephones", "calendars" };
+        game.countValues = new[] { employees, hatted, phones, calendars };
         Poster(g, "poster_recall", new Vector3(-9.98f, 1.7f, 102f), Vector3.right, 1.1f, false);
 
         // staff restroom by the entrance: three stalls, three throwable toilets
@@ -503,20 +583,7 @@ public static class FirWorldBuilder
         var flushScare = Scare(g, "StallFlush", new Vector3(-7.5f, 1.5f, 82.2f), new Vector3(0.4f, 3, 3.4f), 2, 4, 4);
         flushScare.sound = Src(g, new Vector3(-9.6f, 0.6f, 82.15f), Clip("toilet_flush"), false, 1f, 1f, 12f, false);
 
-        // keypad beside the door
-        var kp = Add<FirSequenceLock>(Group(g, "Keypad", new Vector3(2.8f, 1.35f, 103.85f)).gameObject);
-        kp.game = game; kp.chapter = 4; kp.length = 4;
-        Box(kp.transform, "Plate", new Vector3(0, 0, 0.05f), new Vector3(0.5f, 0.75f, 0.06f), M("Metal"), true);
-        kp.display = Text("Display", kp.transform, new Vector3(0, 0.27f, -0.01f), Face(Vector3.back), new Vector2(0.42f, 0.1f), 0.07f, "_ _ _ _");
-        kp.display.color = new Color(0.3f, 1f, 0.4f);
-        kp.beep = Src(kp.transform, Vector3.zero, Clip("pickup"), false, 1f, 0.6f, 8f, false);
-        string[] labels = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "CLR", "0", "" };
-        int[] values = { 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, 0, -1 };
-        for (int i = 0; i < 12; i++)
-        {
-            if (labels[i] == "") continue;
-            Key(kp, labels[i], values[i], new Vector3(-0.14f + (i % 3) * 0.14f, 0.13f - (i / 3) * 0.12f, 0), new Vector3(0.11f, 0.09f, 0.04f), M("Btn"), false);
-        }
+        Keypad(g, new Vector3(2.8f, 1.35f, 103.85f), 4, 4, false, "");
         Text("KeypadLabel", g, new Vector3(2.8f, 1.9f, 103.75f), Face(Vector3.back), new Vector2(0.8f, 0.15f), 0.08f, "DOOR CODE");
 
         stalker.spawnByPhase[4] = Marker(g, "StalkerSpawn4", new Vector3(-8.5f, 0, 102.5f), 150);
@@ -524,6 +591,8 @@ public static class FirWorldBuilder
         // scares
         var phone = Scare(g, "Phone", new Vector3(0, 1.5f, 88f), new Vector3(3, 3, 0.4f), 2, 4, 4);
         phone.sound = Src(g, new Vector3(7.2f, 0.9f, 91.5f), Clip("phone"), false, 1f, 1f, 20f, false);
+        var phone2 = Scare(g, "Phone2", new Vector3(0, 1.5f, 99.5f), new Vector3(3, 3, 0.4f), 2, 4, 4);
+        phone2.sound = Src(g, new Vector3(-7.2f, 0.9f, 85.5f), Clip("phone"), false, 1f, 1f, 20f, false); phone2.delay = 2f;
         var stare = Scare(g, "AllStare", new Vector3(0, 1.5f, 94f), new Vector3(3, 3, 0.4f), 7, 4, 4);
         stare.duration = 1.5f; stare.sound = Src(g, new Vector3(0, 2.5f, 94f), Clip("static"), false, 1f, 0.7f, 20f, false);
         var cubFace = Scare(g, "CubicleFace", new Vector3(-7.2f, 1.5f, 97.5f), new Vector3(2, 3, 2), 0, 4, 4);
@@ -532,15 +601,20 @@ public static class FirWorldBuilder
         peek.target = BuildTree(g, new Vector3(0.5f, 0, 103f), 180, 1.8f, 0, false, "OfficePeekTree").root;
         var group = Scare(g, "KeypadGroup", new Vector3(2.8f, 1.5f, 102.4f), new Vector3(3, 3, 0.4f), 5, 4, 4);
         group.groupChapter = 4; group.duration = 2.2f; group.screamIndex = 0; group.delay = 5f;
-        var behind = Scare(g, "BackCorner", new Vector3(8.5f, 1.5f, 101f), new Vector3(2.5f, 3, 0.4f), 4, 4, 4);
+        Scare(g, "BackCorner", new Vector3(8.5f, 1.5f, 101f), new Vector3(2.5f, 3, 0.4f), 4, 4, 4);
+        Creeper(g, "BackAisleCreeper", new Vector3(9.3f, 1.5f, 90f), new Vector3(1.4f, 3, 0.4f), new Vector3(9.3f, 0, 99.5f), 180, 1.6f, 4);
+        DarkReveal(g, "MemoReveal", new Vector3(3.6f, 1.5f, 85.5f), new Vector3(2.4f, 3, 2.4f), new Vector3(2.0f, 0, 84.0f), -60, 1.7f, 4);
+        var memoFace = Scare(g, "MemoFace", new Vector3(-3.6f, 1.5f, 97.5f), new Vector3(2.4f, 3, 2.4f), 0, 4, 4);
+        memoFace.screamIndex = 1; memoFace.duration = 0.9f; memoFace.delay = 3.5f;
+        GlowWrite(g, new Vector3(9.95f, 2.2f, 88f), Vector3.left, "COUNT US\nAGAIN");
+        GlowWrite(g, new Vector3(0, 2.6f, 103.85f), Vector3.back, "DON'T TELL IT\nTHE CODE");
     }
 
-    // ------------------------------------------------------------------- chapter 5
+    // ------------------------------------------------------------------- chapter 5: the family's hats
 
     static void BuildLivingRoom(Transform g)
     {
         Sign(g, "HOME", new Vector3(0, 3.0f, 104.25f), Vector3.forward);
-        // wainscot, window, curtains, fireplace, table: the catalogue photo, wrong
         Box(g, "WainscotL", new Vector3(-6.95f, 0.5f, 112), new Vector3(0.1f, 1f, 16), M("Trim"), true);
         Box(g, "WainscotR", new Vector3(6.95f, 0.5f, 112), new Vector3(0.1f, 1f, 16), M("Trim"), true);
         Quad(g, "Window", new Vector3(-3.5f, 1.8f, 119.88f), Face(Vector3.back), new Vector2(2.4f, 1.8f), M("Window"));
@@ -555,6 +629,11 @@ public static class FirWorldBuilder
         Gifts(g, new Vector3(4.5f, 0, 117.4f), 6);
         Poster(g, "poster_original", new Vector3(6.98f, 1.9f, 112f), Vector3.left, 1.1f, false);
 
+        // the Christmas card on the mantle holds the logic clues
+        Quad(g, "ChristmasCard", new Vector3(-5.86f, 1.75f, 108.7f), Face(Vector3.right), new Vector2(0.55f, 0.45f), M("Paper"));
+        game.hatClue = Text("ChristmasCardText", g, new Vector3(-5.85f, 1.75f, 108.7f), Face(Vector3.right), new Vector2(0.5f, 0.4f), 0.04f, "");
+        game.hatClue.color = new Color(0.12f, 0.1f, 0.1f);
+
         // the family: small and medium on the table, large on the floor, and the Original
         var small = BuildTree(g, new Vector3(-4.9f, 0.77f, 113.3f), 140, 0.65f, 5, false, "FamilySmall");
         var medium = BuildTree(g, new Vector3(-4.4f, 0.77f, 114.8f), 140, 1.0f, 5, false, "FamilyMedium");
@@ -562,29 +641,38 @@ public static class FirWorldBuilder
         var orig = BuildTree(g, new Vector3(4.6f, 0, 115.8f), -150, 2.7f, 5, false, "TheOriginalAtHome");
         orig.anim.watchRange = 6f; orig.anim.greetChance = 1f;
         var family = new[] { small, medium, large };
-        var hatsOn = new GameObject[3];
-        var hatPicks = new GameObject[3];
-        string[] sizeName = { "small", "medium", "large" };
-        Vector3[] hatSpots = { new Vector3(-6.4f, 1.58f, 107.6f), new Vector3(5.1f, 0.65f, 108f), new Vector3(3.0f, 0.05f, 118.6f) };
+        string[] names = { "JUNIOR", "MAMA", "GRANDPA" };
+        float[] yaws = { 140, 140, 170 };
+        Vector3[] at = { new Vector3(-4.9f, 0.77f, 113.3f), new Vector3(-4.4f, 0.77f, 114.8f), new Vector3(-1.4f, 0, 116.6f) };
+        string[] hatMats = { "HatRed", "HatGreen", "HatBlue" };
+        string[] colourName = { "red", "green", "blue" };
+        var hatsOn = new GameObject[9];
         for (int s = 0; s < 3; s++)
         {
             var tr = family[s];
-            float scale = 0.6f + 0.35f * s;
-            // the hat that appears on the tree when it's filled
-            hatsOn[s] = Hat(tr.head, new Vector3(0, tr.topHeight - 0.08f * scale, 0), scale * 0.9f, "HatOnTree");
-            hatsOn[s].SetActive(false);
-            // the socket on the tree's head
+            float size = (0.6f + 0.35f * s) * 0.9f;
+            for (int k = 0; k < 3; k++)
+            {
+                hatsOn[s * 3 + k] = Hat(tr.head, new Vector3(0, tr.topHeight - 0.07f * size, 0), size, "HatOnTree " + colourName[k], hatMats[k]);
+                hatsOn[s * 3 + k].SetActive(false);
+            }
             var sock = new GameObject("HatSocket");
             sock.transform.SetParent(tr.head, false);
             sock.transform.localPosition = new Vector3(0, tr.topHeight - 0.05f, 0);
             var sc = sock.AddComponent<BoxCollider>();
-            sc.isTrigger = true; sc.size = Vector3.one * (0.35f + 0.2f * s);
+            sc.isTrigger = true; sc.size = Vector3.one * (0.4f + 0.2f * s);
             var fs = Add<FirSocket>(sock);
             fs.game = game; fs.acceptKind = 0; fs.socketId = s; fs.tree = tr.anim;
-            // the pickup somewhere in the room
-            hatPicks[s] = CarryHat(g, hatSpots[s], scale, s, "Santa hat (" + sizeName[s] + ")");
+            // a brass name plaque at the tree's feet
+            var fwd = Quaternion.Euler(0, yaws[s], 0) * Vector3.forward;
+            var plaquePos = at[s] + fwd * (0.25f + 0.1f * s) + Vector3.up * 0.06f;
+            Box(g, "Plaque", plaquePos - fwd * 0.012f, new Vector3(0.32f, 0.1f, 0.02f), M("GiftGold"), false, false).transform.localRotation = Quaternion.LookRotation(fwd);
+            Text("PlaqueText", g, plaquePos + fwd * 0.002f, Face(fwd), new Vector2(0.3f, 0.08f), 0.06f, "<color=#2a1a00><b>" + names[s] + "</b></color>");
         }
         game.hatsOnTrees = hatsOn;
+        Vector3[] hatSpots = { new Vector3(-6.4f, 1.58f, 107.4f), new Vector3(5.1f, 0.65f, 108f), new Vector3(3.0f, 0.05f, 118.6f) };
+        var hatPicks = new GameObject[3];
+        for (int k = 0; k < 3; k++) hatPicks[k] = CarryHat(g, hatSpots[k], 0.9f, k, "Santa hat (" + colourName[k] + ")", hatMats[k]);
         game.hatPickups = hatPicks;
 
         // scares
@@ -593,22 +681,30 @@ public static class FirWorldBuilder
         welcome.anim = orig.anim; welcome.animMode = 3; welcome.duration = 25f;
         var winPeek = Scare(g, "WindowPeek", new Vector3(-3.5f, 1.5f, 112f), new Vector3(4, 3, 0.4f), 6, 5, 5);
         winPeek.target = BuildTree(g, new Vector3(1.0f, 0, 119.2f), 180, 2.0f, 0, false, "CornerWatcher").root;
-        var fire = Scare(g, "FireplaceBehind", new Vector3(-5f, 1.5f, 108f), new Vector3(0.4f, 3, 2.5f), 4, 5, 5);
+        Scare(g, "FireplaceBehind", new Vector3(-5f, 1.5f, 108f), new Vector3(0.4f, 3, 2.5f), 4, 5, 5);
         var chair = Scare(g, "ArmchairFace", new Vector3(4.3f, 1.5f, 108f), new Vector3(0.4f, 3, 2.5f), 0, 5, 5);
         chair.screamIndex = 1; chair.duration = 1.0f; chair.delay = 0.8f;
+        DarkReveal(g, "TableReveal", new Vector3(-3f, 1.5f, 113f), new Vector3(0.4f, 3, 3), new Vector3(-2.4f, 0, 111.4f), -90, 1.6f, 5);
+        Creeper(g, "GiftCreeper", new Vector3(2.5f, 1.5f, 115f), new Vector3(0.4f, 3, 4), new Vector3(6.2f, 0, 118.8f), -135, 1.4f, 5);
+        var knock = Scare(g, "WindowKnock", new Vector3(-3.5f, 1.5f, 117.5f), new Vector3(3, 3, 0.4f), 2, 5, 5);
+        knock.sound = Src(g, new Vector3(-3.5f, 1.8f, 120.2f), Clip("creak"), false, 1f, 1f, 10f, false);
+        GlowWrite(g, new Vector3(6.95f, 2.4f, 107f), Vector3.left, "WE ARE NOT\nYOUR FAMILY");
     }
 
-    // ------------------------------------------------------------------- chapter 6
+    // ------------------------------------------------------------------- chapter 6: the furnace
 
     static void BuildRecallFloor(Transform g, FirStalker stalker)
     {
         Sign(g, "RECALL FLOOR", new Vector3(0, 3.2f, 120.25f), Vector3.forward);
         Poster(g, "poster_recall", new Vector3(-3f, 2.0f, 120.25f), Vector3.forward, 1.3f, false);
-        // the furnace, front left
         Box(g, "Furnace", new Vector3(-7.5f, 2.2f, 147.6f), new Vector3(4.5f, 4.4f, 3.6f), M("Brick"), true);
-        Box(g, "FurnaceMouth", new Vector3(-7.5f, 1.1f, 145.78f), new Vector3(2.0f, 1.3f, 0.05f), M("GlowOrange"), false);
+        Box(g, "FurnaceMouthCold", new Vector3(-7.5f, 1.1f, 145.77f), new Vector3(2.0f, 1.3f, 0.04f), M("Black"), false);
+        var fire = Group(g, "FurnaceFire", Vector3.zero);
+        Box(fire, "FurnaceMouth", new Vector3(-7.5f, 1.1f, 145.74f), new Vector3(2.0f, 1.3f, 0.05f), M("GlowOrange"), false, false);
+        Src(fire, new Vector3(-7.5f, 1.2f, 145.5f), Clip("amb_furnace"), true, 1f, 0.7f, 14f, true);
+        game.furnaceFire = fire.gameObject;
+        fire.gameObject.SetActive(false);
         Box(g, "Chimney", new Vector3(-7.5f, 5.0f, 148f), new Vector3(1.2f, 2f, 1.2f), M("Brick"), true);
-        Src(g, new Vector3(-7.5f, 1.2f, 145.5f), Clip("amb_furnace"), true, 1f, 0.7f, 14f, true);
         var mouth = new GameObject("FurnaceSocket");
         mouth.transform.SetParent(g, false);
         mouth.transform.localPosition = new Vector3(-7.5f, 1.1f, 145.4f);
@@ -618,7 +714,6 @@ public static class FirWorldBuilder
         fs.game = game; fs.acceptKind = 1;
         Text("FurnaceLabel", g, new Vector3(-7.5f, 2.3f, 145.7f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.25f, "<color=#ffaa55>DISPOSAL</color>");
 
-        // pallets, cages and dead conveyors for cover
         BoxStack(g, new Vector3(-4f, 0, 126f), 3, 2);
         BoxStack(g, new Vector3(5f, 0, 130f), 2, 3);
         BoxStack(g, new Vector3(-2f, 0, 136f), 3, 3);
@@ -626,12 +721,20 @@ public static class FirWorldBuilder
         BoxStack(g, new Vector3(-8.5f, 0, 133f), 2, 3);
         Box(g, "DeadConveyor", new Vector3(3f, 0.45f, 135f), new Vector3(0.9f, 0.9f, 8f), M("Metal"), true);
 
-        // five imitations to burn
+        // three gas valves light the furnace
+        var valveFace = Scare(g, "ValveFace", Vector3.zero, Vector3.zero, 0, 6, 6);
+        valveFace.screamIndex = 1; valveFace.duration = 1.0f;
+        var valveBehind = Scare(g, "ValveBehind", Vector3.zero, Vector3.zero, 4, 6, 6);
+        valveBehind.delay = 1f;
+        Valve(g, new Vector3(-10.85f, 1.3f, 129f), Vector3.right, null);
+        Valve(g, new Vector3(10.85f, 1.3f, 137f), Vector3.left, valveFace);
+        Valve(g, new Vector3(4f, 1.3f, 149.85f), Vector3.back, valveBehind);
+
         Vector3[] spots = { new Vector3(-9.5f, 0.2f, 123.5f), new Vector3(9.8f, 0.2f, 127f), new Vector3(3f, 1.05f, 133.5f),
                             new Vector3(-9f, 0.2f, 141f), new Vector3(9.5f, 0.2f, 146f) };
         for (int i = 0; i < spots.Length; i++) CarryImitation(g, spots[i], i);
 
-        // hanging tree that drops
+        // scares
         var hangDrop = Scare(g, "CeilingDrop", new Vector3(0, 1.5f, 138.5f), new Vector3(8, 3, 0.4f), 3, 6, 6);
         var hanger = BuildTree(g, new Vector3(0.5f, 4.6f, 140.5f), 180, 1.3f, 6, false, "HangingTree");
         hangDrop.target = hanger.root; hangDrop.anim = hanger.anim; hangDrop.animMode = 4; hangDrop.duration = 2f;
@@ -643,6 +746,12 @@ public static class FirWorldBuilder
         peek.target = BuildTree(g, new Vector3(-10f, 0, 148.5f), 135, 2.0f, 0, false, "FurnacePeek").root;
         var behind = Scare(g, "FurnaceBehind", new Vector3(-7.5f, 1.5f, 143.5f), new Vector3(3, 3, 0.4f), 4, 6, 6);
         behind.delay = 1f;
+        Creeper(g, "FloorCreeper", new Vector3(8.5f, 1.5f, 132f), new Vector3(4, 3, 0.4f), new Vector3(9.5f, 0, 122.5f), 0, 1.7f, 6);
+        DarkReveal(g, "ConveyorReveal", new Vector3(1.5f, 1.5f, 131f), new Vector3(0.4f, 3, 4), new Vector3(1.5f, 0, 134f), 180, 1.9f, 6);
+        var group = Scare(g, "ImitationChorus", new Vector3(0, 1.5f, 143f), new Vector3(10, 3, 0.4f), 5, 6, 6);
+        group.groupChapter = 6; group.duration = 2f; group.screamIndex = 0;
+        GlowWrite(g, new Vector3(-10.95f, 3f, 138f), Vector3.right, "WHICH ONE\nIS THE COPY?");
+        GlowWrite(g, new Vector3(10.95f, 3f, 128f), Vector3.left, "BURN THEM\nBURN THEM\nBURN THEM");
 
         stalker.spawnByPhase[6] = Marker(g, "StalkerSpawn6", new Vector3(9f, 0, 148f), 200);
     }
@@ -744,12 +853,12 @@ public static class FirWorldBuilder
         var a = Add<FirAnimatronic>(root);
         a.head = head; a.mouth = mouthPivot; a.pupilL = pupL.transform; a.pupilR = pupR.transform;
         a.voice = voice; a.chapter = chapter;
-        a.talkClip = Clip("tree_talk"); a.singClip = Clip("tree_sing"); a.screamClip = Clip(height > 1.8f ? "scream2" : "scream1");
+        a.talkClip = Clip("tree_talk"); a.singClip = Clip("tree_sing"); a.noteClip = Clip("tree_note"); a.screamClip = Clip(height > 1.8f ? "scream2" : "scream1");
         tr.anim = a;
         return tr;
     }
 
-    static GameObject Hat(Transform parent, Vector3 pos, float size, string name)
+    static GameObject Hat(Transform parent, Vector3 pos, float size, string name, string mat = "HatRed")
     {
         var hat = new GameObject(name);
         hat.transform.SetParent(parent, false);
@@ -758,18 +867,19 @@ public static class FirWorldBuilder
         var cone = new GameObject("Cone");
         cone.transform.SetParent(hat.transform, false);
         cone.AddComponent<MeshFilter>().sharedMesh = FirMesh(1, size * 0.55f, size * 0.17f, 12, 1f);
-        NoShadows(cone.AddComponent<MeshRenderer>(), M("HatRed"));
+        NoShadows(cone.AddComponent<MeshRenderer>(), M(mat));
         Prim(PrimitiveType.Cylinder, "Brim", hat.transform, new Vector3(0, 0.01f, 0), new Vector3(size * 0.38f, size * 0.03f, size * 0.38f), M("HatWhite"));
         Prim(PrimitiveType.Sphere, "Pompom", hat.transform, new Vector3(0, size * 0.55f, 0), Vector3.one * size * 0.09f, M("HatWhite"));
         return hat;
     }
 
-    static GameObject CarryHat(Transform g, Vector3 pos, float scale, int sizeId, string label)
+    /// <summary>A Santa hat to carry. sizeId is its colour (0 red, 1 green, 2 blue).</summary>
+    static GameObject CarryHat(Transform g, Vector3 pos, float scale, int sizeId, string label, string mat)
     {
         var go = new GameObject("SantaHat " + sizeId);
         go.transform.SetParent(g, false);
         go.transform.localPosition = pos;
-        Hat(go.transform, Vector3.zero, scale * 0.9f, "Visual");
+        Hat(go.transform, Vector3.zero, scale * 0.9f, "Visual", mat);
         var col = go.AddComponent<BoxCollider>();
         col.center = new Vector3(0, scale * 0.22f, 0); col.size = new Vector3(scale * 0.35f, scale * 0.45f, scale * 0.35f);
         var c = MakePickup(go, label);
@@ -864,6 +974,68 @@ public static class FirWorldBuilder
         itemList.Add(go);
         itemChapterList.Add(chapter);
         return go;
+    }
+
+    /// <summary>A 3x4 keypad (digits, CLR) driving a sequence lock for the given chapter.</summary>
+    static FirSequenceLock Keypad(Transform g, Vector3 pos, int chapter, int length, bool needsItems, string needText)
+    {
+        var kp = Add<FirSequenceLock>(Group(g, "Keypad " + chapter, pos).gameObject);
+        kp.game = game; kp.chapter = chapter; kp.length = length; kp.needsItems = needsItems; kp.needText = needText;
+        Box(kp.transform, "Plate", new Vector3(0, 0, 0.05f), new Vector3(0.5f, 0.75f, 0.06f), M("Metal"), true, false);
+        string blanks = "";
+        for (int i = 0; i < length; i++) blanks += "_ ";
+        kp.display = Text("Display", kp.transform, new Vector3(0, 0.27f, -0.01f), Face(Vector3.back), new Vector2(0.42f, 0.1f), 0.07f, blanks);
+        kp.display.color = new Color(0.3f, 1f, 0.4f);
+        kp.beep = Src(kp.transform, Vector3.zero, Clip("pickup"), false, 1f, 0.6f, 8f, false);
+        string[] labels = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "CLR", "0", "" };
+        int[] values = { 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, 0, -1 };
+        for (int i = 0; i < 12; i++)
+        {
+            if (labels[i] == "") continue;
+            Key(kp, labels[i], values[i], new Vector3(-0.14f + (i % 3) * 0.14f, 0.13f - (i / 3) * 0.12f, 0), new Vector3(0.11f, 0.09f, 0.04f), M("Btn"), false);
+        }
+        return kp;
+    }
+
+    /// <summary>Glow paint: green writing that only shows while the lights are out.</summary>
+    static TextMeshPro GlowWrite(Transform g, Vector3 pos, Vector3 normal, string text)
+    {
+        var t = Text("GlowPaint", g, pos, Face(normal), new Vector2(1.6f, 0.9f), 0.3f, text);
+        t.color = new Color(0.45f, 1f, 0.45f);
+        t.fontStyle = FontStyles.Bold;
+        glowList.Add(t.gameObject);
+        return t;
+    }
+
+    /// <summary>A tree that steps closer whenever you look away. Walking into the trigger starts it.</summary>
+    static void Creeper(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
+    {
+        var s = Scare(g, name, trigPos, trigSize, 8, phase, phase);
+        var t = BuildTree(g, treePos, yaw, height, 0, false, name + " Tree");
+        t.anim.watchRange = 12f; t.anim.greetChance = 0f;
+        s.target = t.root;
+        s.sound = Src(t.root.transform, new Vector3(0, 0.8f, 0), Clip("rustle"), false, 1f, 1f, 12f, false);
+        s.screamIndex = phase % 3;
+    }
+
+    /// <summary>The lights die; when they come back a tree is standing there, screaming.</summary>
+    static void DarkReveal(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
+    {
+        var s = Scare(g, name, trigPos, trigSize, 9, phase, phase);
+        var t = BuildTree(g, treePos, yaw, height, 0, false, name + " Tree");
+        t.anim.watchRange = 10f; t.anim.greetChance = 0f;
+        s.target = t.root; s.anim = t.anim; s.duration = 1.4f;
+        s.sound = Src(t.root.transform, new Vector3(0, 1.2f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 14f, false);
+    }
+
+    /// <summary>A gas valve wheel on a wall pipe (Recall Floor). Opening all three lights the furnace.</summary>
+    static void Valve(Transform g, Vector3 pos, Vector3 normal, FirJumpscare scare)
+    {
+        Box(g, "ValvePipe", pos - normal * 0.08f, new Vector3(0.08f, 0.08f, 0.08f) + new Vector3(Mathf.Abs(normal.x), Mathf.Abs(normal.y), Mathf.Abs(normal.z)) * 0.1f, M("Metal"), false);
+        Box(g, "WallPipe", pos - normal * 0.03f + Vector3.up * 1.4f, new Vector3(0.1f, 2.8f, 0.1f), M("Metal"), false);
+        var v = Item(g, "Valve", FirGameManager.ValveChapter, pos, M("Valve"), new Vector3(0.32f, 0.03f, 0.32f), PrimitiveType.Cylinder, "Open gas valve", scare);
+        v.transform.Find("Visual").localRotation = Quaternion.FromToRotation(Vector3.up, normal);
+        v.GetComponent<BoxCollider>().size = Vector3.one * 0.4f;
     }
 
     static void Station(GameObject go, string label, string evt)
@@ -1313,6 +1485,9 @@ public static class FirWorldBuilder
         A("GiftBlue", null, new Color(0.15f, 0.25f, 0.6f));
         A("HatRed", null, new Color(0.75f, 0.05f, 0.08f));
         A("HatWhite", null, new Color(0.95f, 0.95f, 0.95f));
+        A("HatGreen", null, new Color(0.05f, 0.5f, 0.12f));
+        A("HatBlue", null, new Color(0.1f, 0.2f, 0.7f));
+        A("Valve", null, new Color(0.8f, 0.1f, 0.08f), 0f, new Color(0.18f, 0.03f, 0.02f));
         A("Porcelain", null, new Color(0.93f, 0.93f, 0.9f));
         A("ToiletWater", null, new Color(0.45f, 0.6f, 0.65f));
         // tree faces: eyes stay faintly visible in the dark, which is the point

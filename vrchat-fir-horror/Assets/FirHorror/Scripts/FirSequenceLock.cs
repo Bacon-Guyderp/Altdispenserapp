@@ -3,8 +3,9 @@ using UdonSharp;
 using UnityEngine;
 
 /// <summary>
-/// A local entry lock: the tape deck in chapter 3 (values 0-3 = tape colours, needs the tapes
-/// first) and the office keypad in chapter 4 (digits). The answer comes from the synced seed.
+/// A local entry lock: the Showroom carol (values 0-3 = trees), the Stockroom fuse box and the
+/// office door (digits), and the tape deck (values 0-3 = tape colours). The answer comes from the
+/// synced seed via FirGameManager.CodeAt.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirSequenceLock : UdonSharpBehaviour
@@ -13,6 +14,7 @@ public class FirSequenceLock : UdonSharpBehaviour
     public int chapter;
     public int length = 4;
     public bool needsItems;
+    public string needText = "TAPES";
     public TextMeshPro display;
     public AudioSource beep;
     public AudioClip[] valueClips;   // optional: a sound per value (the tapes)
@@ -29,7 +31,7 @@ public class FirSequenceLock : UdonSharpBehaviour
         if (game.phase > chapter) { ShowMsg("OPEN"); return; }
         if (needsItems && !game.ChapterItemsDone(chapter))
         {
-            ShowMsg("TAPES " + game.ChapterItemsHave(chapter) + "/4");
+            ShowMsg(needText + " " + game.ChapterItemsHave(chapter) + "/" + game.ChapterItemsNeed(chapter));
             game.PlaySfx(game.clipWrong);
             return;
         }

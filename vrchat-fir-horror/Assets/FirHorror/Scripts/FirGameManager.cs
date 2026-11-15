@@ -6,15 +6,26 @@ using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
 /// <summary>
-/// Runs Fir Warning: the synced story state (which chapter, what's been found), doors, the
+/// Runs Fir Warning: the synced story state (which chapter, what's been found), the puzzles'
+/// answers (all derived from one synced seed, so every game is different), doors, the
 /// head-locked HUD and subtitles, the global "lantern" lighting, and the shared jumpscare rig.
 ///
 /// Chapters (phase): 0 lobby, 1 Showroom, 2 Stockroom, 3 Voice Lab, 4 Offices, 5 Living Room,
 /// 6 Recall Floor, 7 escaped. Door i opens once phase >= i + 2.
+///
+/// Puzzles:
+///  1 Carol      find 3 batteries, power the panel, repeat the 5-note carol on the table trees
+///  2 Glow paint find 4 fuses, kill the lights to read 3 glow-paint digits, enter them at the fuse box
+///  3 Tapes      find 4 tapes; booth card maps colour to session name, whiteboard gives name order
+///  4 Memos      each memo is a counting riddle for one digit of the door code
+///  5 Hats       a Christmas card of logic clues says which tree wears which colour of hat
+///  6 Furnace    open 3 gas valves to light it, then burn 5 imitations while the Original hunts you
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirGameManager : UdonSharpBehaviour
 {
+    public const int ValveChapter = 9;   // pseudo-chapter for the furnace valves (collected in phase 6)
+
     // ------------------------------------------------------------ synced
     [UdonSynced] public int phase;
     [UdonSynced] public int itemMask;
@@ -31,12 +42,20 @@ public class FirGameManager : UdonSharpBehaviour
     public GameObject[] items;               // by global item index
     public int[] itemChapter;
     public VRCObjectSync[] carrySyncs;       // every pickup, respawned on reset
-    public GameObject[] hatsOnTrees;         // by hat socket
-    public GameObject[] hatPickups;
+    public GameObject[] hatsOnTrees;         // [socket * 3 + colour]
+    public GameObject[] hatPickups;          // by colour
     public FirAnimatronic[] animatronics;
+    public FirAnimatronic[] carolTrees;      // the four Showroom table trees
     public FirJumpscare[] jumpscares;
     public TextMeshPro[] memoTexts;          // office memos, one code digit each
-    public TextMeshPro tapeBoard;
+    public string[] countNames;              // what each memo asks you to count
+    public int[] countValues;                // how many of them the builder placed
+    public TextMeshPro tapeBoard;            // whiteboard: session-name order
+    public TextMeshPro tapeCard;             // booth card: colour -> session name
+    public TextMeshPro hatClue;              // Christmas card on the mantle
+    public TextMeshPro[] glowDigits;         // Stockroom glow paint, one digit each
+    public GameObject[] glowOnly;            // everything only visible in the dark
+    public GameObject furnaceFire;
     public TextMeshPro lobbyStatus;
     public TextMeshPro endingBoard;
     public TextMeshPro optionsText;
@@ -47,19 +66,23 @@ public class FirGameManager : UdonSharpBehaviour
     public AudioSource music;                // 2D, chapter loops
     public AudioClip[] chapterMusic;         // by phase 0..7
     public AudioClip[] screams;
-    public AudioClip clipPickup, clipUnlock, clipWrong, clipTalk, clipLaugh, clipStatic, clipHit, clipWhoosh, clipHeartbeat, clipWhisper;
+    public AudioClip clipPickup, clipUnlock, clipWrong, clipTalk, clipLaugh, clipStatic, clipHit, clipWhoosh, clipHeartbeat, clipWhisper, clipSwitch;
     public Transform scareRig;               // a tree whose face sits at the rig's origin
     public FirAnimatronic scareAnim;
 
+    /// <summary>While this is in the future, the lights are out for everyone and nobody can see the stalker.</summary>
+    public float lightsOutUntil;
+
     // ------------------------------------------------------------ local
     VRCPlayerApi local;
-    bool synced, inGame;
+    bool synced, inGame, glowShown;
     int lastRound, lastPhase;
     int[] chapterMask;
-    float blackoutUntil, flickerUntil, subtitleUntil, hintAt, nextHud, phaseEnteredAt, resetArmedUntil;
+    float blackoutUntil, flickerUntil, subtitleUntil, hintAt, nextHud, resetArmedUntil, lightsCooldown;
     int brightness = 1;                      // 0 dark, 1 normal, 2 bright
     bool flashing = true, reducedScares;
     int idLight, idDark, idAmbient;
+    int carolStep = -1; float carolNext;
 
     // face scare: 0 idle, 1 pre-blink, 2 showing, 3 post-dark
     int scareState; float scareNext; float scareLen; int scareClip;
@@ -67,24 +90,30 @@ public class FirGameManager : UdonSharpBehaviour
     bool behindActive; float behindTimeout;
     float teleportAfterScareAt = -1;
 
-    string[] objectiveName;
+    string[] colourNames, sessionNames, hatColourNames, familyNames, ordinals;
 
     void Start()
     {
         local = Networking.LocalPlayer;
-        chapterMask = new int[8];
-        objectiveName = new string[] { "", "Batteries", "Fuses", "Voice tapes", "Door code", "Santa hats", "Imitations burned", "" };
+        chapterMask = new int[10];
+        colourNames = new string[] { "<color=#ff4040>RED</color>", "<color=#40c0ff>BLUE</color>", "<color=#50ff60>GREEN</color>", "<color=#ffd030>GOLD</color>" };
+        sessionNames = new string[] { "\"JINGLE\"", "\"GREETING\"", "\"LAUGHTER\"", "\"GOODNIGHT\"" };
+        hatColourNames = new string[] { "<color=#c00000>red</color>", "<color=#007a10>green</color>", "<color=#1040c0>blue</color>" };
+        familyNames = new string[] { "Junior", "Mama", "Grandpa" };
+        ordinals = new string[] { "1st", "2nd", "3rd", "4th" };
         idLight = VRCShader.PropertyToID("_UdonFirLight");
         idDark = VRCShader.PropertyToID("_UdonFirDark");
         idAmbient = VRCShader.PropertyToID("_UdonFirAmbient");
         for (int i = 0; i < itemChapter.Length && i < 31; i++) chapterMask[itemChapter[i]] |= 1 << i;
         if (scareRig != null) scareRig.gameObject.SetActive(false);
+        for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(false);
         if (Networking.IsOwner(gameObject))
         {
             if (seed == 0) seed = Random.Range(1, 1 << 30);
             RequestSerialization();
             ApplyState();
         }
+        else RefreshTexts();
         PlayMusic(0);
         UpdateOptionsText();
     }
@@ -158,14 +187,15 @@ public class FirGameManager : UdonSharpBehaviour
         int bit = 1 << index;
         if ((itemMask & bit) != 0) return;
         int ch = itemChapter[index];
-        if (ch != phase) { Say("<i>It won't come loose. Not yet.</i>", 3f); return; }
+        bool allowed = ch == phase || (ch == ValveChapter && phase == 6);
+        if (!allowed) { Say("<i>It won't come loose. Not yet.</i>", 3f); return; }
         TakeOwnership();
         itemMask |= bit;
         PlaySfx(clipPickup);
-        bool done = (itemMask & chapterMask[ch]) == chapterMask[ch];
-        if (done && ch == 6) Advance();  // the last imitation in the furnace ends the game
+        bool done = ChapterItemsDone(ch);
+        if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();  // last imitation burned
         Commit();
-        if (done) SendCustomNetworkEvent(NetworkEventTarget.All, "NetChapterItemsDone");
+        if (done) SendCustomNetworkEvent(NetworkEventTarget.All, ch == ValveChapter ? "NetFurnaceLit" : "NetChapterItemsDone");
     }
 
     public void FillSocket(int socket)
@@ -175,32 +205,35 @@ public class FirGameManager : UdonSharpBehaviour
         TakeOwnership();
         hatMask |= bit;
         PlaySfx(clipPickup);
-        if (hatMask == (1 << hatsOnTrees.Length) - 1) Advance();
+        if (hatMask == 7) Advance();
         Commit();
         SendCustomNetworkEvent(NetworkEventTarget.All, "NetHatPlaced");
     }
 
-    public void StationPower() { Station(1); }
-    public void StationFuses() { Station(2); }
-
-    void Station(int ch)
+    /// <summary>Showroom power panel: once the batteries are in, it makes the trees sing the carol.</summary>
+    public void StationPower()
     {
-        if (phase > ch) { Say("It's already running.", 2f); return; }
-        if (phase < ch) { Say("<i>Dead. No power.</i>", 2f); return; }
-        int have = CountBits(itemMask & chapterMask[ch]);
-        int need = CountBits(chapterMask[ch]);
-        if (have < need)
+        if (phase > 1) { Say("It's already running.", 2f); return; }
+        if (phase < 1) return;
+        if (!ChapterItemsDone(1))
         {
             PlaySfx(clipWrong);
-            Say("It needs " + (need - have) + " more " + objectiveName[ch].ToLower() + ".", 3f);
+            Say("It needs " + (CountBits(chapterMask[1]) - ChapterItemsHave(1)) + " more batteries.", 3f);
             return;
         }
-        TakeOwnership();
-        Advance();
-        Commit();
+        SendCustomNetworkEvent(NetworkEventTarget.All, "NetPlayCarol");
     }
 
-    /// <summary>The tape deck (chapter 3) and keypad (chapter 4) call this when solved.</summary>
+    /// <summary>Stockroom light switch: lights out for everyone for 8 seconds.</summary>
+    public void StationLights()
+    {
+        if (phase != 2) { PlaySfx(clipSwitch); Say("<i>Click. Nothing.</i>", 2f); return; }
+        if (Time.time < lightsCooldown) { Say("<i>The switch is still warm. Wait a moment.</i>", 2f); return; }
+        lightsCooldown = Time.time + 20f;
+        SendCustomNetworkEvent(NetworkEventTarget.All, "NetLightsOut");
+    }
+
+    /// <summary>Every sequence lock (carol, fuse box, tape deck, door keypad) calls this when solved.</summary>
     public void SolveLock(int ch)
     {
         if (phase != ch) return;
@@ -212,22 +245,47 @@ public class FirGameManager : UdonSharpBehaviour
     public void WrongCode(int ch)
     {
         PlaySfx(clipWrong);
-        if (ch == 3) { GroupMode(3, 4, 2f); Blackout(1.2f); Say("<color=#ff5555>\"THAT'S NOT HOW I SOUND.\"</color>", 3f); }
+        if (ch == 1) { FaceScare(0, 1.0f); Say("<color=#ff5555>\"WRONG NOTE.\"</color>", 3f); }
+        else if (ch == 3) { GroupMode(3, 4, 2f); Blackout(1.2f); Say("<color=#ff5555>\"THAT'S NOT HOW I SOUND.\"</color>", 3f); }
+        else if (ch == 2) { Flicker(1.5f); BehindScare(); }
         else FaceScare(1, 1.0f);
     }
 
     public bool ChapterItemsDone(int ch) { return (itemMask & chapterMask[ch]) == chapterMask[ch]; }
     public int ChapterItemsHave(int ch) { return CountBits(itemMask & chapterMask[ch]); }
+    public int ChapterItemsNeed(int ch) { return CountBits(chapterMask[ch]); }
+    public bool ValvesOpen() { return ChapterItemsDone(ValveChapter); }
 
-    /// <summary>The solution for a lock. Chapter 3: tape colour order (0-3). Chapter 4: keypad digits.</summary>
+    /// <summary>
+    /// The answer for each puzzle step, from the synced seed.
+    /// ch1: carol note i (0-3, a tree), ch2: digit i, ch3: tape colour at log position i,
+    /// ch4: door digit i, ch5: hat colour for socket i (0-2), ch30: session name of tape colour i.
+    /// </summary>
     public int CodeAt(int ch, int i)
     {
+        if (ch == 1) return Hash(1, i) % 4;
+        if (ch == 2) return Hash(2, i) % 10;
+        if (ch == 3) return Perm(3, 4, i);
+        if (ch == 30) return Perm(30, 4, i);
         if (ch == 4) return (seed / Pow10(i)) % 10;
+        if (ch == 5) return Perm(5, 3, i);
+        return 0;
+    }
+
+    int Hash(int salt, int i)
+    {
+        int h = (seed % 99991 + salt * 977 + i * 7919) % 100003;
+        for (int k = 0; k < 4; k++) h = (h * 73 + 41 + i) % 100003;
+        return h;
+    }
+
+    int Perm(int salt, int n, int i)
+    {
         int[] order = { 0, 1, 2, 3 };
-        int s = seed;
-        for (int k = 3; k > 0; k--)
+        int s = (seed % 100003 + salt * 1013) % 100003;
+        for (int k = n - 1; k > 0; k--)
         {
-            s = ((s % 100003) * 73 + 41) % 100003;
+            s = (s * 73 + 41) % 100003;
             int j = s % (k + 1);
             int tmp = order[k]; order[k] = order[j]; order[j] = tmp;
         }
@@ -245,9 +303,18 @@ public class FirGameManager : UdonSharpBehaviour
     public void NetChapterItemsDone()
     {
         if (!inGame) return;
-        if (lastPhase == 1) { Blackout(2.5f); GroupMode(1, 4, 2.5f); PlaySfx(screams[0]); Say("\"<b>Thank you!</b> Now put them in the panel.\"", 4f); }
-        else if (lastPhase == 2) { PlaySfx(clipLaugh); Say("\"Four fuses. Four little fuses. <b>Hurry.</b>\"", 4f); }
+        if (lastPhase == 1) { Blackout(2.5f); GroupMode(1, 4, 2.5f); PlaySfx(screams[0]); Say("\"<b>Thank you!</b> Now turn on the panel. We want to <b>sing</b> for you.\"", 5f); }
+        else if (lastPhase == 2) { PlaySfx(clipLaugh); Say("\"Four little fuses. The fuse box wants a <b>code</b>. It's written where only the <b>dark</b> can read it.\"", 6f); }
         else if (lastPhase == 3) { GroupMode(3, 2, 3f); Say("\"Play them for me. In the <b>right</b> order.\"", 4f); }
+        else if (lastPhase == 6) { PlaySfx(clipLaugh); }
+    }
+
+    public void NetFurnaceLit()
+    {
+        if (!inGame) return;
+        Blackout(1.5f);
+        PlaySfx(clipHit);
+        Say("<color=#ffaa55>The furnace roars into life.</color> \"You'd burn your own <b>family</b>?\"", 5f);
     }
 
     public void NetHatPlaced()
@@ -255,7 +322,23 @@ public class FirGameManager : UdonSharpBehaviour
         if (!inGame) return;
         GroupMode(5, 1, 6f);
         PlaySfx(clipWhoosh);
-        if (hatMask != 0 && hatMask != (1 << hatsOnTrees.Length) - 1) Say("<i>Every tree in the room turns to look at you.</i>", 3f);
+        if (hatMask != 0 && hatMask != 7) Say("<i>Every tree in the room turns to look at you.</i>", 3f);
+    }
+
+    public void NetPlayCarol()
+    {
+        if (!inGame || phase != 1) return;
+        carolStep = 0;
+        carolNext = Time.time + 1.2f;
+        Say("\"Listen carefully. Then <b>touch us</b> in the same order.\"", 4f);
+    }
+
+    public void NetLightsOut()
+    {
+        lightsOutUntil = Time.time + 8f;
+        if (!inGame) return;
+        PlaySfx(clipSwitch);
+        Blackout(8f);
     }
 
     // ============================================================ state
@@ -268,12 +351,24 @@ public class FirGameManager : UdonSharpBehaviour
             bool got = (itemMask & (1 << i)) != 0;
             if (items[i].activeSelf == got) items[i].SetActive(!got);
         }
-        for (int s = 0; s < hatsOnTrees.Length; s++)
+        int usedColours = 0;
+        for (int s = 0; s < 3; s++)
         {
             bool on = (hatMask & (1 << s)) != 0;
-            hatsOnTrees[s].SetActive(on);
-            if (hatPickups[s] != null && hatPickups[s].activeSelf == on) hatPickups[s].SetActive(!on);
+            int c = CodeAt(5, s);
+            if (on) usedColours |= 1 << c;
+            for (int k = 0; k < 3; k++)
+            {
+                GameObject h = hatsOnTrees[s * 3 + k];
+                if (h != null) h.SetActive(on && k == c);
+            }
         }
+        for (int k = 0; k < hatPickups.Length; k++)
+        {
+            bool used = (usedColours & (1 << k)) != 0;
+            if (hatPickups[k] != null && hatPickups[k].activeSelf == used) hatPickups[k].SetActive(!used);
+        }
+        if (furnaceFire != null) furnaceFire.SetActive(ValvesOpen() && phase >= 6);
         for (int d = 0; d < doors.Length; d++) if (doors[d] != null) doors[d].SetActive(phase < d + 2);
         RefreshTexts();
 
@@ -285,6 +380,7 @@ public class FirGameManager : UdonSharpBehaviour
         if (round != lastRound)
         {
             lastRound = round; lastPhase = phase;
+            carolStep = -1;
             for (int j = 0; j < jumpscares.Length; j++) if (jumpscares[j] != null) jumpscares[j].Rearm();
             if (phase == 0) { if (inGame) ReturnToLobby(); }
             else
@@ -303,10 +399,11 @@ public class FirGameManager : UdonSharpBehaviour
 
     void EnterPhase(int p)
     {
-        phaseEnteredAt = Time.time;
-        hintAt = Time.time + 360f;   // a hint after six minutes stuck
+        hintAt = Time.time + 300f;   // a hint after five minutes stuck
         PlayMusic(p);
         Say(ChapterIntro(p), 10f);
+        if (p == 2) { Blackout(1.5f); PlaySfx(screams[1]); }
+        if (p == 4) Flicker(3f);
         if (p == 6) { Blackout(2.5f); GroupMode(5, 4, 2.5f); PlaySfx(screams[2]); }
         if (p == 7) PlaySfx(clipLaugh);
     }
@@ -314,23 +411,25 @@ public class FirGameManager : UdonSharpBehaviour
     string ChapterIntro(int p)
     {
         if (p == 1) return "\"Ho ho ho! Welcome to the <b>Showroom</b>! The power's out, friends. Find <b>three batteries</b> for the panel by the far door.\"";
-        if (p == 2) return "\"Thank you! The <b>stockroom</b> lost its <b>four fuses</b>. Oh, and one of my brothers got out of his box. <b>Keep your eyes on him.</b>\"";
-        if (p == 3) return "\"The <b>Voice Lab</b>! Where we learned to talk. Find the <b>four voice tapes</b>, then play them in the order on the recording log.\"";
-        if (p == 4) return "\"Management left the door code on their <b>memos</b>. Four memos, four digits. Don't mind the staff. They're... resting.\"";
-        if (p == 5) return "\"Just like the catalogue photo! But my family is so cold. Give each tree the <b>Santa hat that fits</b>.\"";
-        if (p == 6) return "<color=#ff4444>\"You put hats on them. You think they're REAL. THEY ARE IMITATIONS. Burn all <b>five</b> in the furnace. I am the ORIGINAL. I will be watching.\"</color>";
+        if (p == 2) return "\"Bravo! The <b>stockroom</b> lost its <b>four fuses</b>. Oh, and one of my brothers got out of his box. <b>Keep your eyes on him.</b>\"";
+        if (p == 3) return "\"The <b>Voice Lab</b>! Where we learned to talk. Find the <b>four voice tapes</b> and play them in the order on the recording log.\"";
+        if (p == 4) return "\"Management locked the door. The code is in their <b>memos</b>. Management liked <b>counting</b> things. Don't mind the staff. They're... resting.\"";
+        if (p == 5) return "\"Just like the catalogue photo! But my family is so cold. Read our <b>Christmas card</b> and give everyone the right hat.\"";
+        if (p == 6) return "<color=#ff4444>\"You put hats on them. You think they're REAL. THEY ARE IMITATIONS. Light the furnace. Burn all <b>five</b>. I am the ORIGINAL. I will be watching.\"</color>";
         if (p == 7) return "\"Thank you for choosing the ORIGINAL. <b>Play it safe.</b>\"";
         return "";
     }
 
     string Hint(int p)
     {
-        if (p == 1) return "Hint: look inside the gift boxes, behind the window curtain and under the long table.";
-        if (p == 2) return "Hint: the fuses are at the ends of the shelf aisles. Make someone watch the tree while others search.";
-        if (p == 3) return "Hint: tapes are on the desks, the conveyor and in the booth. The log on the whiteboard gives the order.";
-        if (p == 4) return "Hint: each memo is on a different desk and says which digit it is (1st, 2nd...).";
-        if (p == 5) return "Hint: small hat, small tree. Hold the hat right on top of the tree's head and let go.";
-        if (p == 6) return "Hint: pick up the little trees and drop them into the furnace's glowing mouth.";
+        if (p == 1) return ChapterItemsDone(1) ? "Hint: press the power panel to hear the carol again. Touch the table trees in the order they sang. The display shows how far you've got."
+                                              : "Hint: look inside the presents, behind the window curtain and under the long red table.";
+        if (p == 2) return ChapterItemsDone(2) ? "Hint: the light switch is by the entrance. In the dark, look for green writing on the walls. Someone should keep watching the tree."
+                                              : "Hint: the fuses are at the ends of the shelf aisles and on crates. Have someone watch the tree while others search.";
+        if (p == 3) return "Hint: the card in the booth tells you each tape colour's session name. The whiteboard gives the order of the names.";
+        if (p == 4) return "Hint: walk every aisle and count carefully. Calendars hang inside the cubicles. Add the memo's number and keep only the last digit.";
+        if (p == 5) return "Hint: the card is on the mantle. One clue says who wears what. The other rules a colour out. Plaques under the trees give their names.";
+        if (p == 6) return ValvesOpen() ? "Hint: drop the little trees into the furnace's glowing mouth." : "Hint: three gas valves glint along the walls. Open all three to light the furnace.";
         return "";
     }
 
@@ -338,17 +437,28 @@ public class FirGameManager : UdonSharpBehaviour
     {
         for (int i = 0; i < memoTexts.Length; i++)
         {
-            if (memoTexts[i] == null) continue;
-            string[] ord = { "1st", "2nd", "3rd", "4th" };
+            if (memoTexts[i] == null || i >= countNames.Length) continue;
             string[] who = { "R. Pine, Quality Control", "D. Spruce, Voice Department", "H. Holly, Shipping", "M. Balsam, Plant Manager" };
-            memoTexts[i].text = "<b>MEMO</b>\nFrom: " + who[i] + "\n\nThe Living Room door code changed again. The <b>" + ord[i] +
-                                "</b> digit is <size=150%><b>" + CodeAt(4, i) + "</b></size>.\n\nIf a unit asks you for the code, <b>do not answer it.</b>";
+            int d = CodeAt(4, i);
+            int add = ((d - countValues[i] % 10) % 10 + 10) % 10;
+            memoTexts[i].text = "<b>MEMO</b>\nFrom: " + who[i] + "\n\nThe <b>" + ordinals[i] + "</b> digit of the door code:\ncount the <b>" + countNames[i] +
+                                "</b> in the Offices, then add <b>" + add + "</b>.\n(If it's 10 or more, keep only the last digit.)\n\n<i>If a unit asks you for the code, do not answer it.</i>";
         }
         if (tapeBoard != null)
+            tapeBoard.text = "<b>RECORDING LOG - DF-96 voice</b>\nPlay the sessions in this order:\n\n1. " + sessionNames[CodeAt(30, CodeAt(3, 0))] +
+                             "\n2. " + sessionNames[CodeAt(30, CodeAt(3, 1))] + "\n3. " + sessionNames[CodeAt(30, CodeAt(3, 2))] +
+                             "\n4. " + sessionNames[CodeAt(30, CodeAt(3, 3))] + "\n\n<size=70%>never play session 5</size>";
+        if (tapeCard != null)
+            tapeCard.text = "<b>TAPE LABELS</b>\n" + colourNames[0] + " = " + sessionNames[CodeAt(30, 0)] + "\n" + colourNames[1] + " = " + sessionNames[CodeAt(30, 1)] +
+                            "\n" + colourNames[2] + " = " + sessionNames[CodeAt(30, 2)] + "\n" + colourNames[3] + " = " + sessionNames[CodeAt(30, 3)];
+        for (int i = 0; i < glowDigits.Length; i++)
+            if (glowDigits[i] != null) glowDigits[i].text = ordinals[i] + " digit\n<size=200%>" + CodeAt(2, i) + "</size>";
+        if (hatClue != null)
         {
-            string[] names = { "<color=#ff4040>RED</color>", "<color=#40c0ff>BLUE</color>", "<color=#50ff60>GREEN</color>", "<color=#ffd030>GOLD</color>" };
-            tapeBoard.text = "<b>RECORDING LOG - DF-96 voice</b>\nPlay the sessions in order:\n\n1. " + names[CodeAt(3, 0)] + "\n2. " + names[CodeAt(3, 1)] +
-                             "\n3. " + names[CodeAt(3, 2)] + "\n4. " + names[CodeAt(3, 3)] + "\n\n<size=70%>never play session 5</size>";
+            int r = (seed / 7) % 3;
+            int b = (r + 1) % 3, c = (r + 2) % 3;
+            hatClue.text = "<i>Merry Christmas from the Fir family!</i>\n\n" + familyNames[r] + " always wears " + hatColourNames[CodeAt(5, r)] + ".\n" +
+                           familyNames[b] + " would <b>never</b> wear " + hatColourNames[CodeAt(5, c)] + ".\n\n<i>We'll be watching you open your presents.</i>";
         }
         if (endingBoard != null)
         {
@@ -379,6 +489,14 @@ public class FirGameManager : UdonSharpBehaviour
         VRCShader.SetGlobalFloat(idLight, reach);
         VRCShader.SetGlobalFloat(idAmbient, amb);
 
+        // glow paint only shows in the dark
+        bool glow = dark > 0.5f && inGame;
+        if (glow != glowShown)
+        {
+            glowShown = glow;
+            for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(glow);
+        }
+
         // HUD follows the head
         VRCPlayerApi.TrackingData head = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
         if (hud != null)
@@ -393,25 +511,40 @@ public class FirGameManager : UdonSharpBehaviour
             if (hudObjective != null) hudObjective.text = ObjectiveText();
             if (hudSubtitle != null && t > subtitleUntil) hudSubtitle.text = "";
             if (lobbyStatus != null) lobbyStatus.text = LobbyText();
-            if (inGame && phase >= 1 && phase <= 6 && t > hintAt) { hintAt = t + 240f; Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 8f); }
+            if (inGame && phase >= 1 && phase <= 6 && t > hintAt) { hintAt = t + 240f; Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 9f); }
         }
 
+        UpdateCarol();
         UpdateFaceScare(head);
         UpdateBehindScare(head);
         if (teleportAfterScareAt > 0 && t > teleportAfterScareAt) { teleportAfterScareAt = -1; TeleportToCheckpoint(); }
     }
 
+    void UpdateCarol()
+    {
+        if (carolStep < 0 || Time.time < carolNext) return;
+        if (carolStep >= 5)
+        {
+            carolStep = -1;
+            if (Random.value < 0.5f) { Blackout(1.2f); PlaySfx(clipLaugh); }
+            return;
+        }
+        int tree = CodeAt(1, carolStep);
+        if (tree < carolTrees.Length && carolTrees[tree] != null) carolTrees[tree].Note();
+        carolStep++;
+        carolNext = Time.time + 1.1f;
+    }
+
     string ObjectiveText()
     {
         if (!inGame || phase < 1 || phase > 6) return "";
-        if (phase == 4) return "Find the four memos, then enter the code";
-        if (phase == 5) return objectiveName[5] + ": " + CountBits(hatMask) + "/" + hatsOnTrees.Length;
-        int need = CountBits(chapterMask[phase]);
-        string s = objectiveName[phase] + ": " + ChapterItemsHave(phase) + "/" + need;
-        if (phase == 1 && ChapterItemsHave(1) == need) s += "  -  use the power panel";
-        if (phase == 2 && ChapterItemsHave(2) == need) s += "  -  use the fuse box";
-        if (phase == 3 && ChapterItemsHave(3) == need) s += "  -  play them on the tape deck";
-        return s;
+        if (phase == 1) return ChapterItemsDone(1) ? "Power the panel, then repeat the carol on the table trees" : "Batteries: " + ChapterItemsHave(1) + "/3";
+        if (phase == 2) return ChapterItemsDone(2) ? "Find the 3 glow-paint digits (lights off!) and enter them at the fuse box" : "Fuses: " + ChapterItemsHave(2) + "/4";
+        if (phase == 3) return ChapterItemsDone(3) ? "Play the tapes on the deck in the log's order" : "Voice tapes: " + ChapterItemsHave(3) + "/4";
+        if (phase == 4) return "Solve the 4 memos, then enter the door code";
+        if (phase == 5) return "Santa hats: " + CountBits(hatMask) + "/3  -  read the Christmas card";
+        if (!ValvesOpen()) return "Gas valves: " + ChapterItemsHave(ValveChapter) + "/" + ChapterItemsNeed(ValveChapter);
+        return "Imitations burned: " + ChapterItemsHave(6) + "/" + ChapterItemsNeed(6);
     }
 
     string LobbyText()

@@ -234,6 +234,16 @@ def main():
     thud = sine(np.linspace(140, 50, len(ct))) * np.exp(-ct * 14) * 2 + lowpass(noise(0.6), 900) * np.exp(-ct * 25) * 2
     write("toilet_clunk", clink * 0.6 + thud)
 
+    # ---- puzzle sounds
+    nt = t(0.85)
+    f = MIDI(57) * (1 + 0.012 * np.sin(2 * np.pi * 5.5 * nt))
+    note = voice(f, "o") * env(len(nt), 0.04, 0.25) + sine(f * 2) * 0.08 * env(len(nt), 0.04, 0.25)
+    write("tree_note", note)
+    st2 = t(1.0)
+    click = lowpass(noise(1.0), 3000) * np.exp(-st2 * 60) * 2 + sine(np.linspace(110, 40, len(st2))) * np.exp(-st2 * 10)
+    hum_down = sine(np.linspace(120, 30, len(st2))) * 0.4 * np.exp(-st2 * 3)
+    write("switch", click + hum_down)
+
 
 if __name__ == "__main__":
     main()

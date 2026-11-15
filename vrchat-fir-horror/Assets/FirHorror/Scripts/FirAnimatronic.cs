@@ -15,7 +15,7 @@ public class FirAnimatronic : UdonSharpBehaviour
     public Transform mouth;           // scaled on Y to open
     public Transform pupilL, pupilR;
     public AudioSource voice;         // 3D
-    public AudioClip talkClip, singClip, screamClip;
+    public AudioClip talkClip, singClip, screamClip, noteClip;
     public int chapter;               // for group events
     public float watchRange = 3.5f;   // stares at you inside this range (0 = never)
     public float greetChance = 0.35f; // chance to say something when you walk up
@@ -46,6 +46,14 @@ public class FirAnimatronic : UdonSharpBehaviour
         if (voice == null) return;
         AudioClip c = m == 2 ? talkClip : m == 3 ? singClip : m == 4 ? screamClip : null;
         if (c != null) { voice.Stop(); voice.clip = c; voice.Play(); }
+    }
+
+    /// <summary>Sings one short note (the Showroom carol). Each tree's voice pitch is different.</summary>
+    public void Note()
+    {
+        mode = 3;
+        modeUntil = Time.time + 0.9f;
+        if (voice != null && noteClip != null) { voice.Stop(); voice.clip = noteClip; voice.Play(); }
     }
 
     void Update()
