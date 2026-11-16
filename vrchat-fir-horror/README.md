@@ -77,6 +77,81 @@ player gets their own torch, at no cost and with correct stereo. Udon drives thr
 which control blackouts, flicker and brightness. Tree eyes have a faint glow, so in a blackout all
 you can see is pairs of eyes.
 
+### Comedy gags (53)
+Between the scares, 53 things around the world want to make you laugh. Press them (or walk past the
+peekaboo and waddling ones) and, for everyone at once, they pop up, spin, inflate, flip, fall or waddle
+while saying their line in their own voice. They're all listed in `Data/gags.txt`, which the builder
+places from and `tools/make_voices.py` records the voices from. Add a line there to add a gag.
+
+**Lobby**
+* flip sign: *"Now look what you did."*
+* present pop-up: *"Surprise! I'm the present!"*
+* spinning tree: *"Wheee! I'm a festive tornado!"*
+* inflating ornament: *"Please don't pop me. Please."*
+* talking tree: *"I'd tell you a tree joke, but it's a bit sappy."*
+* shivering tree: *"Brr! Who left the front door open?"*
+
+**Showroom**
+* present pop-up: *"Is it Christmas yet? No? Bye."*
+* falling picture: *"Every month. Every single month."*
+* flip sign: *"Batteries not included."*
+* spinning tree: *"I'm not dizzy. The room is spinning."*
+* peekaboo (walk past): *"Is the coast clear? Oh. Hi."*
+* talking tree: *"I used to be a pine. Then I got my needles done."*
+* inflating tree: *"I've been working out!"*
+
+**Stockroom**
+* box pop-up: *"Return to sender!"*
+* flip sign: *"We don't even have a forklift."*
+* waddling tree (walk past): *"Excuse me. Tiny tree coming through."*
+* shivering tree: *"This aisle is haunted. By me. Boo."*
+* talking tree: *"I asked for a raise. They gave me a taller pot."*
+* inflating box: *"Bubble wrap! Bubble wrap!"*
+* spinning tree: *"Inventory complete! I counted myself twice."*
+
+**Voice Lab**
+* talking tree: *"Testing. Testing. Is this thing on?"*
+* box pop-up: *"Take two!"*
+* flip sign: *"Whoops. Wrong side."*
+* spinning tree: *"I do all my own stunts!"*
+* inflating tree: *"This is my big break!"*
+* falling picture: *"Ten copies. Ten!"*
+* peekaboo (walk past): *"Did somebody say audition?"*
+
+**Offices**
+* flip sign: *"The coffee machine is a tree now."*
+* talking tree: *"Did you hear? Gary from accounting got recycled."*
+* falling picture: *"I couldn't hang in there."*
+* box pop-up: *"I'm not hiding. I'm filing."*
+* spinning tree: *"Wheee! Office chair races!"*
+* inflating tree: *"I ate the whole holiday party."*
+* shivering tree: *"Who set the thermostat to winter?"*
+
+**Living Room**
+* falling picture: *"Everyone looks so wooden."*
+* present pop-up: *"I wrapped myself. Don't ask how."*
+* talking tree: *"Is the fire for warmth? Or for us?"*
+* spinning tree: *"Mistletoe? On me? No thank you!"*
+* flip sign: *"Not on that mat."*
+* inflating ornament: *"Shiny. Round. Terrified."*
+* peekaboo (walk past): *"I'm just here for the view."*
+
+**Recall Floor**
+* flip sign: *"Just kidding. Mostly."*
+* talking tree: *"I'm not an imitation. I'm a tribute."*
+* box pop-up: *"Do I look recalled to you?"*
+* spinning tree: *"If I spin fast enough, I'm a blender!"*
+* inflating tree: *"Too big for the furnace! Ha!"*
+* shivering tree: *"It's freezing. Can we light the furnace? Wait. No."*
+* waddling tree (walk past): *"I'm just going to... leave."*
+* falling picture: *"Zero accidents. Zero survivors."*
+
+**Exit**
+* talking tree: *"Leaving so soon? We made cake. Tree cake."*
+* flip sign: *"Sequel coming soon."*
+* present pop-up: *"Here's your participation trophy. It's me."*
+* spinning tree: *"Victory spin!"*
+
 ### Easter egg: the closet
 The Living Room has a closet marked "do not open". Open it and, for everyone at once, the classic cartoon
 gag plays out ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)): a white skeleton steps out through

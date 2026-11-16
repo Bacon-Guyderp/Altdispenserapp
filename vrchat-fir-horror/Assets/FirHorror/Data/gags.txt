@@ -1,0 +1,65 @@
+# Fir Warning: comedy gags. One per line, read by FirWorldBuilder (places them) and tools/make_voices.py (records the lines).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+# kinds: sign, pop_gift, pop_crate, spin, inflate_tree, inflate_orn, inflate_crate, talk, shiver, frame, peek, waddle
+# voices: tree, tiny, big, narrator, lady, old.  Positions are world metres (the lobby is at x = -60).
+# ---------------------------------------------------------------- lobby
+L1|sign|-65.5|0|2.5|90|narrator|Now look what you did.|DON'T FLIP\nTHIS SIGN|...you flipped it.
+L2|pop_gift|-54.5|0|2.0|-90|tiny|Surprise! I'm the present!||
+L3|spin|-62.5|0|4.6|180|tree|Wheee! I'm a festive tornado!||
+L4|inflate_orn|-57|0|4.6|180|tiny|Please don't pop me. Please.||
+L5|talk|-54.4|0|-1.8|-90|big|I'd tell you a tree joke, but it's a bit sappy.||
+L6|shiver|-65.6|0|-1.5|90|old|Brr! Who left the front door open?||
+# ---------------------------------------------------------------- 1 showroom
+S1|pop_gift|-3.2|0|18.6|180|tiny|Is it Christmas yet? No? Bye.||
+S2|frame|7.96|1.9|8.5|-90|narrator|Every month. Every single month.|EMPLOYEE OF THE MONTH\n\nThe Original\n<size=60%>(every month)</size>|
+S3|sign|2.6|0|3.6|180|narrator|Batteries not included.|SALE!\n$29.99|BATTERIES NOT INCLUDED.\nNEITHER IS SANITY.
+S4|spin|6.6|0|17.6|-135|tree|I'm not dizzy. The room is spinning.||
+S5|peek|7.3|0|16.3|-90|tiny|Is the coast clear? Oh. Hi.||
+S6|talk|-7.3|0|1.6|45|lady|I used to be a pine. Then I got my needles done.||
+S7|inflate_tree|-7.2|0|15.6|90|big|I've been working out!||
+# ---------------------------------------------------------------- 2 stockroom
+K1|pop_crate|-10.8|0|22|90|tiny|Return to sender!||
+K2|sign|-3.2|0|22.4|180|narrator|We don't even have a forklift.|DAYS WITHOUT A\nFORKLIFT ACCIDENT:\n0|WE DON'T HAVE\nA FORKLIFT
+K3|waddle|11.3|0|37.8|-90|tiny|Excuse me. Tiny tree coming through.||5.5
+K4|shiver|-10.8|0|38|90|old|This aisle is haunted. By me. Boo.||
+K5|talk|10.8|0|22.6|-90|tree|I asked for a raise. They gave me a taller pot.||
+K6|inflate_crate|-6.75|0|22.6|180|tiny|Bubble wrap! Bubble wrap!||
+K7|spin|-3|0|54.6|180|tree|Inventory complete! I counted myself twice.||
+# ---------------------------------------------------------------- 3 voice lab
+V1|talk|-6.8|0|58.5|90|big|Testing. Testing. Is this thing on?||
+V2|pop_crate|6.6|0|58.5|-90|tiny|Take two!||
+V3|sign|-6.6|0|68.4|90|narrator|Whoops. Wrong side.|QUIET:\nRECORDING|LOUD:\nRECORDING
+V4|spin|6.8|0|67.2|-90|tree|I do all my own stunts!||
+V5|inflate_tree|-6.8|0|79|90|big|This is my big break!||
+V6|frame|7.96|1.9|63|-90|lady|Ten copies. Ten!|GOLD RECORD\n\n"JINGLE"\n<size=60%>10 copies sold</size>|
+V7|peek|2.9|0|72|-90|lady|Did somebody say audition?||
+# ---------------------------------------------------------------- 4 offices
+O1|sign|5.2|0|82|180|narrator|The coffee machine is a tree now.|BREAK ROOM|BROKEN ROOM
+O2|talk|7.0|0|82.4|180|lady|Did you hear? Gary from accounting got recycled.||
+O3|frame|9.96|1.8|101|-90|old|I couldn't hang in there.|HANG IN THERE!\n\n<size=60%>(a kitten on a branch)</size>|
+O4|pop_crate|-5.2|0|101.8|180|tiny|I'm not hiding. I'm filing.||
+O5|spin|5.6|0|101.8|180|tree|Wheee! Office chair races!||
+O6|inflate_tree|8.9|0|99.6|-90|big|I ate the whole holiday party.||
+O7|shiver|-9.2|0|99.8|90|old|Who set the thermostat to winter?||
+# ---------------------------------------------------------------- 5 living room
+H1|frame|6.96|1.9|116.3|-90|lady|Everyone looks so wooden.|FAMILY PORTRAIT\n\n<size=60%>Grandpa, Mama, Junior\nand Douglas</size>|
+H2|pop_gift|6.2|0|119.2|-135|tiny|I wrapped myself. Don't ask how.||
+H3|talk|-6.3|0|110.6|90|old|Is the fire for warmth? Or for us?||
+H4|spin|6.2|0|105.3|-135|tree|Mistletoe? On me? No thank you!||
+H5|sign|-2.6|0|105.3|180|narrator|Not on that mat.|WIPE YOUR\nROOTS|...ON THE\nOTHER MAT
+H6|inflate_orn|2.4|0|114.6|180|tiny|Shiny. Round. Terrified.||
+H7|peek|-1.6|0|119.4|180|lady|I'm just here for the view.||
+# ---------------------------------------------------------------- 6 recall floor
+R1|sign|8|0|121.6|180|narrator|Just kidding. Mostly.|NO RETURNS|NO ESCAPE EITHER\n<size=70%>(jk)</size>
+R2|talk|-10.3|0|121.6|90|tree|I'm not an imitation. I'm a tribute.||
+R3|pop_crate|9.9|0|134.5|-90|tiny|Do I look recalled to you?||
+R4|spin|-6|0|139.6|90|tree|If I spin fast enough, I'm a blender!||
+R5|inflate_tree|8.6|0|143.6|-90|big|Too big for the furnace! Ha!||
+R6|shiver|-0.6|0|128.6|180|old|It's freezing. Can we light the furnace? Wait. No.||
+R7|waddle|10.4|0|149|-90|tiny|I'm just going to... leave.||4
+R8|frame|-10.96|2.2|124.5|90|narrator|Zero accidents. Zero survivors.|SAFETY AWARD\n\nZERO ACCIDENTS|
+# ---------------------------------------------------------------- exit
+E1|talk|-4|0|152.2|90|lady|Leaving so soon? We made cake. Tree cake.||
+E2|sign|4|0|152.2|180|narrator|Sequel coming soon.|THE END|THE BEGINNING?
+E3|pop_gift|-4.2|0|156.5|90|tiny|Here's your participation trophy. It's me.||
+E4|spin|1.6|0|157|180|tree|Victory spin!||

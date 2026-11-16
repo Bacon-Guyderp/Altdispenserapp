@@ -105,6 +105,7 @@ public static class FirWorldBuilder
         var spawn = BuildLobby(root);
         game.lobbySpawn = spawn;
         BuildFactory(root);
+        BuildGags(root);
 
         // ---- ambience
         var amb = new GameObject("Ambience");
@@ -188,6 +189,7 @@ public static class FirWorldBuilder
             "- Read everything: memos, cards, whiteboards. Some writing only shows <b>in the dark</b>.\n" +
             "- Press (use) things to pick them up. Carry hats and little trees in your hands.\n- One tree <b>only moves when nobody looks at it</b>. " +
             "Watch it while your friends search. If it reaches you, you're sent back to the start of the room.\n" +
+            "- 53 things around the factory are trying to make you laugh. Poke them.\n" +
             "- Toilets can be picked up and thrown. A good hit stuns the hunting tree for a few seconds.\n" +
             "- <b>Just two of you?</b> One watches the tree, one searches. Swap often. It slows down for small groups, but stray too far from your partner and things start to find you.\n" +
             "- Stuck? A hint appears after a few minutes.\n- Late? Press <b>Join game</b>.\n\nBest with headphones. Lights off.").color = Color.white;
@@ -1002,6 +1004,168 @@ public static class FirWorldBuilder
         song.anim = orig.anim; song.animMode = 3; song.duration = 19f;
         var lastBehind = Scare(g, "ButtonBehind", new Vector3(-3f, 1.5f, 158.4f), new Vector3(2, 3, 0.4f), 4, 7, 7);
         lastBehind.delay = 2f;
+    }
+
+    // =================================================================== comedy gags (Data/gags.txt)
+
+    static int BuildGags(Transform root)
+    {
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/gags.txt");
+        if (ta == null) { Debug.LogWarning("Fir Warning: no Data/gags.txt, so no gags"); return 0; }
+        var g = Group(root, "Gags", Vector3.zero);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        int n = 0;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Trim() == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 10) { Debug.LogWarning("Fir Warning: bad gag line: " + line); continue; }
+            var pos = new Vector3(float.Parse(f[2], inv), float.Parse(f[3], inv), float.Parse(f[4], inv));
+            Gag(g, f[0], f[1], pos, float.Parse(f[5], inv), f[7], f[8].Replace("\\n", "\n"), f[9].Replace("\\n", "\n"));
+            n++;
+        }
+        return n;
+    }
+
+    /// <summary>One gag: its prop, its voice line and a FirGag set up for its kind.</summary>
+    static void Gag(Transform parent, string id, string kind, Vector3 pos, float yaw, string say, string front, string back)
+    {
+        var go = new GameObject("Gag " + id + " (" + kind + ")");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Gags/gag_" + id + ".ogg");
+        if (clip == null) Debug.LogWarning("Fir Warning: no voice line for gag " + id + " (run tools/make_voices.py)");
+        var gag = Add<FirGag>(go);
+        gag.game = game;
+        gag.line = say;
+        gag.holdTime = Mathf.Max(1.5f, clip != null ? clip.length : 2f);
+        gag.voice = Src(go.transform, new Vector3(0, 1.0f, 0), clip, false, 1f, 1f, 14f, false);
+        var col = go.AddComponent<BoxCollider>();
+        col.center = new Vector3(0, 0.5f, 0); col.size = new Vector3(0.8f, 1.0f, 0.8f);
+        string verb = "Poke";
+        TreeParts tree = null;
+
+        TreeParts GagTree(Transform at, Vector3 p, float h, bool hat, string name)
+        {
+            var t = BuildTree(at, p, 0, h, 0, hat, name);
+            t.anim.talkClip = null;    // the voice line does the talking; the mouth just flaps
+            t.anim.greetChance = 0f; t.anim.snapChance = 0f; t.anim.watchRange = 3f;
+            return t;
+        }
+
+        switch (kind)
+        {
+            case "sign":
+            {
+                Box(go.transform, "Post", new Vector3(0, 0.6f, 0), new Vector3(0.06f, 1.2f, 0.06f), M("DeskWood"), false, false);
+                var board = Group(go.transform, "Board", new Vector3(0, 1.35f, 0));
+                Box(board, "Panel", Vector3.zero, new Vector3(1.0f, 0.6f, 0.04f), M("Trim"), false, false);
+                Text("Front", board, new Vector3(0, 0, 0.025f), Face(Vector3.forward), new Vector2(0.92f, 0.52f), 0.12f, "<color=#1a1a1a><b>" + front + "</b></color>");
+                Text("Back", board, new Vector3(0, 0, -0.025f), Face(Vector3.back), new Vector2(0.92f, 0.52f), 0.12f, "<color=#a00000><b>" + back + "</b></color>");
+                gag.target = board; gag.rotateBy = new Vector3(0, 180, 0);
+                gag.inTime = 0.45f; gag.outTime = 0.45f; gag.holdTime += 1.5f;
+                col.center = new Vector3(0, 1.0f, 0); col.size = new Vector3(1.0f, 1.7f, 0.25f);
+                verb = "Flip the sign";
+                break;
+            }
+            case "pop_gift":
+            case "pop_crate":
+            {
+                bool gift = kind == "pop_gift";
+                var bx = Box(go.transform, "Box", new Vector3(0, 0.3f, 0), new Vector3(0.6f, 0.6f, 0.6f), gift ? M("GiftRed") : M("Cardboard"), false, false, true);
+                if (gift)
+                {
+                    Prim(PrimitiveType.Cube, "Ribbon", bx.transform, Vector3.zero, new Vector3(1.02f, 1.02f, 0.15f), M("GiftGold"));
+                    Prim(PrimitiveType.Cube, "Ribbon2", bx.transform, Vector3.zero, new Vector3(0.15f, 1.02f, 1.02f), M("GiftGold"));
+                }
+                tree = GagTree(go.transform, new Vector3(0, 0.05f, 0), 0.6f, gift, "PopTree");
+                gag.target = tree.root.transform; gag.hideWhenIdle = true;
+                gag.moveBy = new Vector3(0, 0.62f, 0); gag.inTime = 0.18f; gag.outTime = 0.3f; gag.wobble = 4f;
+                gag.sfx = Src(go.transform, new Vector3(0, 0.6f, 0), Clip("whoosh"), false, 1f, 0.8f, 10f, false);
+                col.center = new Vector3(0, 0.3f, 0); col.size = new Vector3(0.65f, 0.65f, 0.65f);
+                verb = gift ? "Open the present" : "Open the box";
+                break;
+            }
+            case "spin":
+                tree = GagTree(go.transform, Vector3.zero, 0.95f, false, "SpinTree");
+                gag.target = tree.root.transform; gag.inTime = 0.25f; gag.outTime = 0.25f;
+                gag.spin = 720f / gag.holdTime;   // exactly two turns, so it ends facing you
+                verb = "Spin the tree";
+                break;
+            case "inflate_tree":
+                tree = GagTree(go.transform, Vector3.zero, 0.9f, false, "PuffTree");
+                gag.target = tree.root.transform; gag.scaleBy = 1.9f; gag.wobble = 4f; gag.inTime = 0.5f; gag.outTime = 0.4f;
+                break;
+            case "inflate_crate":
+            {
+                var crate = Group(go.transform, "Crate", new Vector3(0, 0.35f, 0));
+                Box(crate, "Box", Vector3.zero, new Vector3(0.7f, 0.7f, 0.7f), M("Cardboard"), false, false, true);
+                gag.target = crate; gag.scaleBy = 1.6f; gag.wobble = 6f; gag.inTime = 0.5f; gag.outTime = 0.3f;
+                col.center = new Vector3(0, 0.35f, 0);
+                verb = "Poke the box";
+                break;
+            }
+            case "inflate_orn":
+            {
+                Prim(PrimitiveType.Cylinder, "Stand", go.transform, new Vector3(0, 0.35f, 0), new Vector3(0.05f, 0.35f, 0.05f), M("Metal"));
+                var orn = Group(go.transform, "Ornament", new Vector3(0, 0.9f, 0));
+                Prim(PrimitiveType.Sphere, "Ball", orn, Vector3.zero, Vector3.one * 0.3f, M("HatRed"));
+                Prim(PrimitiveType.Cylinder, "Cap", orn, new Vector3(0, 0.16f, 0), new Vector3(0.07f, 0.03f, 0.07f), M("GiftGold"));
+                Prim(PrimitiveType.Sphere, "Shine", orn, new Vector3(-0.06f, 0.07f, 0.12f), Vector3.one * 0.05f, M("Glint"));
+                gag.target = orn; gag.scaleBy = 2.3f; gag.wobble = 6f; gag.inTime = 0.6f; gag.outTime = 0.25f;
+                col.center = new Vector3(0, 0.7f, 0); col.size = new Vector3(0.5f, 1.4f, 0.5f);
+                verb = "Poke the ornament";
+                break;
+            }
+            case "talk":
+                tree = GagTree(go.transform, Vector3.zero, 1.0f, false, "TalkTree");
+                gag.target = tree.root.transform; gag.inTime = 0.1f; gag.outTime = 0.1f;
+                verb = "Talk";
+                break;
+            case "shiver":
+                tree = GagTree(go.transform, Vector3.zero, 0.9f, true, "ColdTree");
+                gag.target = tree.root.transform; gag.wobble = 7f; gag.inTime = 0.2f; gag.outTime = 0.3f;
+                break;
+            case "frame":
+            {
+                var frame = Group(go.transform, "Frame", Vector3.zero);
+                Box(frame, "Border", Vector3.zero, new Vector3(0.75f, 0.95f, 0.03f), M("GiftGold"), false, false);
+                Quad(frame, "Canvas", new Vector3(0, 0, 0.017f), Face(Vector3.forward), new Vector2(0.62f, 0.82f), M("Paper"));
+                Text("Caption", frame, new Vector3(0, 0, 0.02f), Face(Vector3.forward), new Vector2(0.56f, 0.76f), 0.08f, "<color=#1a1410><b>" + front + "</b></color>");
+                float drop = Mathf.Max(0.3f, pos.y - 0.45f);
+                gag.target = frame; gag.moveBy = new Vector3(0, -drop, 0.2f); gag.rotateBy = new Vector3(0, 0, -70f);
+                gag.inTime = 0.35f; gag.outTime = 0.5f;
+                gag.sfx = Src(go.transform, new Vector3(0, -drop, 0.2f), Clip("toilet_clunk"), false, 1f, 1f, 12f, false);
+                gag.voice.transform.localPosition = new Vector3(0, 0, 0.3f);
+                col.center = Vector3.zero; col.size = new Vector3(0.8f, 1.0f, 0.15f);
+                verb = "Straighten the picture";
+                break;
+            }
+            case "peek":
+                tree = GagTree(go.transform, Vector3.zero, 0.75f, false, "PeekTree");
+                gag.target = tree.root.transform; gag.hideWhenIdle = true; gag.walkIn = true;
+                gag.moveBy = new Vector3(0.7f, 0, 0); gag.inTime = 0.4f; gag.outTime = 0.4f;
+                col.isTrigger = true; col.center = new Vector3(0, 1.5f, 1.5f); col.size = new Vector3(3f, 3f, 3f);
+                break;
+            case "waddle":
+            {
+                float dist = back != "" ? float.Parse(back, System.Globalization.CultureInfo.InvariantCulture) : 4f;
+                tree = GagTree(go.transform, Vector3.zero, 0.5f, true, "WaddleTree");
+                gag.target = tree.root.transform; gag.hideWhenIdle = true; gag.walkIn = true;
+                gag.moveBy = new Vector3(0, 0, dist); gag.bob = 0.06f; gag.wobble = 3f;
+                gag.inTime = dist / 1.3f; gag.outTime = dist / 1.3f; gag.holdTime = 0.8f;
+                col.isTrigger = true; col.center = new Vector3(0, 1.5f, dist / 2f); col.size = new Vector3(3f, 3f, dist + 1f);
+                break;
+            }
+            default:
+                Debug.LogWarning("Fir Warning: unknown gag kind " + kind + " (" + id + ")");
+                break;
+        }
+        if (tree != null) gag.anim = tree.anim;
+        if (gag.target == null) gag.target = go.transform;
+        SetInteract(gag, verb, 3f);
     }
 
     // =================================================================== stalker
@@ -1862,7 +2026,7 @@ public static class FirWorldBuilder
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "FirGameManager", "FirAnimatronic", "FirStalker", "FirJumpscare", "FirItem", "FirCarryItem",
-                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset" };
+                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag" };
 
     static bool EnsureProgramAssets()
     {
