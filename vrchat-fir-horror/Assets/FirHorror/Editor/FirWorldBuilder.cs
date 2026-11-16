@@ -61,7 +61,7 @@ public static class FirWorldBuilder
             return false;
         }
         if (!EnsureProgramAssets()) return false;
-        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null;
+        meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
         Directory.CreateDirectory(Gen);
         ConfigureAssets();
 
@@ -785,11 +785,80 @@ public static class FirWorldBuilder
         SetInteract(cl, "Open the closet", 2.5f);
     }
 
+    class SkelPart
+    {
+        public string name, parent;
+        public Vector3 pivot;
+        public List<Vector3> v = new List<Vector3>();
+        public List<Vector2> uv = new List<Vector2>();
+        public List<int> t = new List<int>();
+        public Mesh mesh;
+    }
+    static List<SkelPart> skelParts;
+
     /// <summary>
-    /// A primitive skeleton standing in the closet, facing +X. Returns its 9 pivots:
-    /// root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR, jaw.
+    /// Reads Models/skeleton_parts.txt (the skeleton model cut into rigid parts by
+    /// tools/make_skeleton_parts.py) and makes one Mesh asset per part. Null if it's missing.
+    /// </summary>
+    static List<SkelPart> LoadSkeletonParts()
+    {
+        if (skelParts != null) return skelParts;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Models/skeleton_parts.txt");
+        if (ta == null) { Debug.LogWarning("Fir Warning: no Models/skeleton_parts.txt, using primitive skeletons"); return null; }
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        System.Func<string, float> F = x => float.Parse(x, inv);
+        var list = new List<SkelPart>();
+        SkelPart cur = null;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var p = raw.Trim().Split(' ');
+            if (p.Length == 0 || p[0] == "" || p[0] == "#") continue;
+            if (p[0] == "part") { cur = new SkelPart { name = p[1], parent = p[2], pivot = new Vector3(F(p[3]), F(p[4]), F(p[5])) }; list.Add(cur); }
+            else if (p[0] == "v") { cur.v.Add(new Vector3(F(p[1]), F(p[2]), F(p[3]))); cur.uv.Add(new Vector2(F(p[4]), F(p[5]))); }
+            else if (p[0] == "t") { cur.t.Add(int.Parse(p[1])); cur.t.Add(int.Parse(p[2])); cur.t.Add(int.Parse(p[3])); }
+        }
+        foreach (var sp in list)
+        {
+            string path = Gen + "/Skeleton_" + sp.name + ".asset";
+            var m = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            bool isNew = m == null;
+            if (isNew) m = new Mesh();
+            m.Clear();
+            m.name = "Skeleton " + sp.name;
+            m.SetVertices(sp.v); m.SetUVs(0, sp.uv); m.SetTriangles(sp.t, 0);
+            m.RecalculateNormals(); m.RecalculateBounds();
+            if (isNew) AssetDatabase.CreateAsset(m, path); else EditorUtility.SetDirty(m);
+            sp.mesh = m;
+        }
+        skelParts = list;
+        return list;
+    }
+
+    /// <summary>
+    /// A skeleton standing in the closet, facing +X, from the skeleton model's parts. Returns its 10
+    /// pivots: root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR, jaw.
     /// </summary>
     static Transform[] SkeletonRig(Transform parent, string name, Material bone)
+    {
+        var parts = LoadSkeletonParts();
+        if (parts == null) return PrimitiveSkeletonRig(parent, name, bone);
+        var root = Group(parent, name, new Vector3(-0.05f, 0, 0));
+        root.localRotation = Quaternion.Euler(0, 90, 0);
+        var by = new Dictionary<string, Transform>();
+        foreach (var sp in parts)
+        {
+            Transform t = sp.parent == "-" ? root : Group(by[sp.parent], sp.name, sp.pivot);
+            var go = new GameObject(sp.name + " Mesh");
+            go.transform.SetParent(t, false);
+            go.AddComponent<MeshFilter>().sharedMesh = sp.mesh;
+            NoShadows(go.AddComponent<MeshRenderer>(), bone);
+            by[sp.name] = t;
+        }
+        return new[] { root, by["torso"], by["skull"], by["upperL"], by["upperR"], by["foreL"], by["foreR"], by["legL"], by["legR"], by["jaw"] };
+    }
+
+    /// <summary>Fallback skeleton built from primitives (used if the model's parts file is missing).</summary>
+    static Transform[] PrimitiveSkeletonRig(Transform parent, string name, Material bone)
     {
         var root = Group(parent, name, new Vector3(-0.05f, 0, 0));
         root.localRotation = Quaternion.Euler(0, 90, 0);
@@ -1733,8 +1802,8 @@ public static class FirWorldBuilder
         A("Eye", null, new Color(0.9f, 0.9f, 0.85f), 0f, new Color(0.22f, 0.22f, 0.2f));
         A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1f);
         A("EyeRed", null, new Color(0.6f, 0f, 0f), 1f, new Color(0.9f, 0.05f, 0.02f));
-        A("Bone", null, new Color(0.85f, 0.08f, 0.06f), 0f, new Color(0.22f, 0.02f, 0.01f));   // RED skeleton
-        A("BoneWhite", null, new Color(0.92f, 0.9f, 0.82f), 0f, new Color(0.14f, 0.14f, 0.12f));
+        A("Bone", "skeleton", new Color(1f, 0.16f, 0.12f), 0f, new Color(0.2f, 0.02f, 0.01f));   // RED skeleton
+        A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 0f, new Color(0.1f, 0.1f, 0.09f));
         A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1f, new Color(0.03f, 0.1f, 0.07f));
         A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 0f, new Color(0.08f, 0.07f, 0.05f));
         A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 0f, new Color(0.08f, 0f, 0f));

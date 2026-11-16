@@ -1,6 +1,8 @@
 <!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}</style></head><body>
 <script type="module">
 import * as THREE from './three.module.min.js';
+let texturesLoaded = false;
+THREE.DefaultLoadingManager.onLoad = () => { texturesLoaded = true; };
 const W = 1280, H = 720;
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(W, H); renderer.setPixelRatio(1);
@@ -121,7 +123,7 @@ const group = (parent, p) => { const g = new THREE.Group(); g.position.set(...p)
 const X = {
   wood: lantern({ map: tex('wood_floor.png', 4, 4) }), desk: lantern({ map: tex('wood_floor.png', 1, 2), color: [0.8, 0.7, 0.6] }),
   wall: lantern({ map: tex('wallpaper.png', 4, 2) }), trim: lantern({ color: [0.85, 0.83, 0.78] }),
-  red: lantern({ color: [0.85, 0.08, 0.06], glow: [0.22, 0.02, 0.01] }), white: lantern({ color: [0.92, 0.9, 0.82], glow: [0.14, 0.14, 0.12] }),
+  red: lantern({ map: loader.load('skeleton.png'), color: [1.0, 0.16, 0.12], glow: [0.2, 0.02, 0.01] }), white: lantern({ map: loader.load('skeleton.png'), color: [1.05, 1.02, 0.96], glow: [0.1, 0.1, 0.09] }),
   mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
   black: lantern({ color: [0.01, 0.01, 0.01], full: 1 }), gold: lantern({ color: [0.85, 0.65, 0.15] }),
 };
@@ -140,32 +142,30 @@ prim(sphere, X.gold, [0.04, 0, -0.5], [0.07, 0.07, 0.07], door);
   const t = new THREE.CanvasTexture(cv); const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.25), lantern({ map: t }));
   sign.position.set(0.03, 0.55, 0); sign.rotation.y = Math.PI / 2; door.add(sign);
 }
+// ---- port of FirWorldBuilder.SkeletonRig: the skeleton model, cut into rigid parts
+const partsText = await (await fetch('skeleton_parts.txt')).text();
+const parts = []; let cur = null;
+for (const raw of partsText.split('\n')) {
+  const p = raw.trim().split(' ');
+  if (!p[0] || p[0] == '#') continue;
+  if (p[0] == 'part') { cur = { name: p[1], parent: p[2], pivot: [+p[3], +p[4], +p[5]], v: [], uv: [], t: [] }; parts.push(cur); }
+  else if (p[0] == 'v') { cur.v.push(+p[1], +p[2], +p[3]); cur.uv.push(+p[4], +p[5]); }
+  else if (p[0] == 't') cur.t.push(+p[1], +p[2], +p[3]);
+}
+for (const sp of parts) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(sp.v, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(sp.uv, 2));
+  g.setIndex(sp.t); g.computeVertexNormals(); sp.geo = g;
+}
 function rig(B) {
   const root = group(c, [-0.05, 0, 0]); root.rotation.y = Math.PI / 2;
-  prim(sphere, B, [0, 0.93, 0], [0.3, 0.12, 0.16], root);
-  const legs = [];
-  for (const side of [-1, 1]) {
-    const hip = group(root, [side * 0.09, 0.9, 0]);
-    prim(cyl, B, [0, -0.22, 0], [0.05, 0.22, 0.05], hip); prim(sphere, B, [0, -0.44, 0], [0.07, 0.07, 0.07], hip);
-    prim(cyl, B, [side * 0.01, -0.65, 0], [0.045, 0.21, 0.045], hip); prim(sphere, B, [side * 0.01, -0.87, 0.06], [0.08, 0.05, 0.18], hip);
-    legs.push(hip);
+  const by = {};
+  for (const sp of parts) {
+    const t = sp.parent == '-' ? root : group(by[sp.parent], sp.pivot);
+    t.add(new THREE.Mesh(sp.geo, B)); by[sp.name] = t;
   }
-  const torso = group(root, [0, 0.93, 0]);
-  prim(cyl, B, [0, 0.27, 0], [0.05, 0.27, 0.05], torso);
-  for (let r = 0; r < 5; r++) prim(cyl, B, [0, 0.29 + r * 0.055, 0.03], [0.3 - Math.abs(r - 2) * 0.02, 0.012, 0.2], torso);
-  prim(cyl, B, [0, 0.54, 0], [0.04, 0.2, 0.04], torso).rotation.z = Math.PI / 2;
-  const skull = group(torso, [0, 0.57, 0]);
-  prim(sphere, B, [0, 0.13, 0], [0.2, 0.22, 0.21], skull);
-  const jaw = group(skull, [0, 0.08, -0.02]); prim(sphere, B, [0, -0.03, 0.06], [0.14, 0.07, 0.13], jaw);
-  prim(new THREE.BoxGeometry(1, 1, 1), X.black, [0, 0.065, 0.095], [0.09, 0.025, 0.02], skull);
-  for (const ex of [-0.045, 0.045]) prim(sphere, X.black, [ex, 0.14, 0.09], [0.055, 0.06, 0.04], skull);
-  const sh = [], el = [];
-  for (const side of [-1, 1]) {
-    const s = group(torso, [side * 0.2, 0.53, 0]); prim(cyl, B, [0, -0.15, 0], [0.04, 0.15, 0.04], s);
-    const e = group(s, [0, -0.3, 0]); prim(cyl, B, [0, -0.13, 0], [0.035, 0.13, 0.035], e); prim(sphere, B, [0, -0.29, 0], [0.08, 0.1, 0.03], e);
-    sh.push(s); el.push(e);
-  }
-  return [root, torso, skull, sh[0], sh[1], el[0], el[1], legs[0], legs[1], jaw];
+  return [root, by.torso, by.skull, by.upperL, by.upperR, by.foreL, by.foreR, by.legL, by.legR, by.jaw];
 }
 const whiteSk = rig(X.white), redSk = rig(X.red);
 const mist = group(c, [0, 0, 0]);
@@ -189,7 +189,7 @@ function apply(p, x, z, yaw, bob, lean, hx, hy, hz, shX, shZ, elX, elZ, leg) {
 }
 const T0 = 0.6;
 window.renderAt = (time) => {
-  camera.position.set(3.5, 1.5, -0.5); camera.lookAt(0, 1.1, -1.1); camera.updateMatrixWorld();
+  camera.position.set(2.6, 1.45, -0.4); camera.lookAt(0, 1.05, -0.8); camera.updateMatrixWorld();
   const t = time - T0, run = t >= 0 && t <= 9.0;
   mist.visible = run;
   const doorA = !run ? 0 : t < 0.4 ? S(t / 0.4) : t < 8.4 ? 1 : 1 - S((t - 8.4) / 0.4);
@@ -216,5 +216,9 @@ window.renderAt = (time) => {
   renderer.render(scene, camera);
   return true;
 };
-window.ready = new Promise(r => THREE.DefaultLoadingManager.onLoad = () => r(true));
+// textures may finish loading while the model file is still being fetched, so wait for whichever is last
+window.ready = new Promise(r => {
+  const check = () => texturesLoaded ? r(true) : setTimeout(check, 100);
+  check();
+});
 </script></body></html>

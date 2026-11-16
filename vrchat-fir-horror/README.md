@@ -82,7 +82,8 @@ The Living Room has a closet marked "do not open". Open it and, for everyone at 
 gag plays out ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)): a white skeleton steps out through
 green mist and shrugs (*"A skeleton."*), then strides off. A **red** skeleton leans out to watch it go, steps
 out with its hands on its hips (*"Red skeleton, ha."*), and slouches off after it before the door swings
-shut. Both skeletons are built from simple shapes; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`. The voices are synthesised by `tools/make_voices.py` (espeak-ng with MBROLA voices).
+shut. Both skeletons use the supplied skeleton model (`Models/skeleton_parts.txt` and `Textures/skeleton.png`), cut into
+moving parts at the joints by `tools/make_skeleton_parts.py`; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`. The voices are synthesised by `tools/make_voices.py` (espeak-ng with MBROLA voices).
 
 ### Throwable toilets
 There are two toilets in the lobby and a three-stall staff restroom by the Offices entrance. Pick one up and

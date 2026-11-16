@@ -8,7 +8,8 @@ Chromium (Playwright).
 ```
 cd tools/preview
 npm pack three@0.160.0 && tar xzf three-0.160.0.tgz && cp package/build/three.module.min.js .
-cp ../../Assets/FirHorror/Textures/{wallpaper,needles,wood_floor,ceiling,poster_warning_scrawl}.png .
+cp ../../Assets/FirHorror/Textures/{wallpaper,needles,wood_floor,ceiling,poster_warning_scrawl,skeleton}.png .
+cp ../../Assets/FirHorror/Models/skeleton_parts.txt .
 python -m http.server 8765 &          # serve this folder
 mkdir frames && node render.js frames index.html 4.6   # 138 frames at 30 fps
 ffmpeg -framerate 30 -i frames/f%04d.png -i ../../Assets/FirHorror/Audio/scream1.ogg \
