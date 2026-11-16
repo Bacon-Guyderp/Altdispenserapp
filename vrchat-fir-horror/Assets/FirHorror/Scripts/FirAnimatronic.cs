@@ -14,6 +14,7 @@ public class FirAnimatronic : UdonSharpBehaviour
     public Transform head;            // yaw/pitch pivot (the whole upper tree)
     public Transform mouth;           // scaled on Y to open
     public Transform pupilL, pupilR;
+    public GameObject screamEyes;     // red glowing eyes, only while screaming
     public AudioSource voice;         // 3D
     public AudioClip talkClip, singClip, screamClip, noteClip;
     public int chapter;               // for group events
@@ -26,7 +27,7 @@ public class FirAnimatronic : UdonSharpBehaviour
     int mode; float modeUntil;
     Quaternion headRest; Vector3 mouthRest, pupilRestL, pupilRestR;
     float seedT, nextTwitch, twitchYaw, nextGreet;
-    bool near;
+    bool near, eyesRed;
     VRCPlayerApi local;
 
     void Start()
@@ -102,6 +103,9 @@ public class FirAnimatronic : UdonSharpBehaviour
         else if (mode == 3) open = 0.45f + 0.45f * Mathf.Sin(t * 5.5f);
         else if (mode == 4) open = 1.6f + Random.Range(0f, 0.4f);
         if (mouth != null) mouth.localScale = new Vector3(mouthRest.x * (1f + open * 0.15f), mouthRest.y * (0.35f + open * 1.6f), mouthRest.z);
+
+        bool red = mode == 4;
+        if (screamEyes != null && red != eyesRed) { eyesRed = red; screamEyes.SetActive(red); }
 
         // pupils drift toward you
         if (pupilL != null && pupilR != null)

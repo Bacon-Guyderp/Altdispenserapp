@@ -2,6 +2,8 @@
 
 *"Don't get fooled by imitations. Unauthorized copies will not be tolerated."*
 
+![A face scare, rendered from the world's own tree, face and lighting code](jumpscare_preview.png)
+
 It's Christmas Eve, 1996, and the talking-tree factory has shut down for good. The trees never switched off.
 You and your friends are the night clean-up crew. You go room by room through the factory and finish
 on the Recall Floor, where you burn the "imitation" trees in the furnace while **the Original** hunts you.
@@ -125,6 +127,7 @@ python make_unitypackage.py
 | The whole world, built from code (rooms, procedural tree meshes, props, NavMesh, descriptor) | `Editor/FirWorldBuilder.cs` |
 | One-click setup | `Editor/FirSetup.cs` |
 | The lantern shader | `Shaders/FirLantern.shader` |
+| Jumpscare preview without Unity (three.js port of the tree, face and lighting) | `tools/preview/` |
 | Sound and texture generators, package builder | `tools/` |
 
 ### Tuning

@@ -924,13 +924,32 @@ public static class FirWorldBuilder
         mouthPivot.localScale = new Vector3(1, 1, 1);
         Prim(PrimitiveType.Sphere, "Lips", mouthPivot, Vector3.zero, new Vector3(eye * 3.2f, eye * 1.6f, eye * 1.2f), M("Mouth"));
         Prim(PrimitiveType.Sphere, "Throat", mouthPivot, new Vector3(0, 0, eye * 0.25f), new Vector3(eye * 2.4f, eye * 1.1f, eye * 0.9f), M("Black"));
+        // jagged teeth top and bottom: hidden behind the lips when the mouth is shut, bared when it screams
+        var toothMesh = FirMesh(1, eye * 0.55f, eye * 0.16f, 5, 1f);
+        for (int row = 0; row < 2; row++)
+            for (int k = 0; k < 6; k++)
+            {
+                float x = (-1.05f + k * 0.42f) * eye;
+                var tooth = new GameObject("Tooth");
+                tooth.transform.SetParent(mouthPivot, false);
+                tooth.transform.localPosition = new Vector3(x, (row == 0 ? 0.42f : -0.42f) * eye, eye * 0.5f);
+                tooth.transform.localRotation = Quaternion.Euler(row == 0 ? 180 : 0, 0, 0);
+                tooth.AddComponent<MeshFilter>().sharedMesh = toothMesh;
+                NoShadows(tooth.AddComponent<MeshRenderer>(), M("Teeth"));
+            }
+        // red eyes that only show while it screams
+        var redEyes = new GameObject("ScreamEyes");
+        redEyes.transform.SetParent(head, false);
+        foreach (var e in new[] { eyeL, eyeR })
+            Prim(PrimitiveType.Sphere, "RedEye", redEyes.transform, e.transform.localPosition + new Vector3(0, 0, eye * 0.95f), Vector3.one * eye * 0.75f, M("EyeRed"));
+        redEyes.SetActive(false);
         if (hat) Hat(head, new Vector3(0, canopyH - 0.08f * height, 0), height * 0.55f, "Hat");
 
         var voice = Src(head, new Vector3(0, faceY, faceZ), null, false, 1f, 1f, Mathf.Lerp(8f, 18f, height / 2.6f), false);
         voice.pitch = Mathf.Lerp(1.25f, 0.8f, height / 2.6f);
         var a = Add<FirAnimatronic>(root);
         a.head = head; a.mouth = mouthPivot; a.pupilL = pupL.transform; a.pupilR = pupR.transform;
-        a.voice = voice; a.chapter = chapter;
+        a.voice = voice; a.chapter = chapter; a.screamEyes = redEyes;
         a.talkClip = Clip("tree_talk"); a.singClip = Clip("tree_sing"); a.noteClip = Clip("tree_note"); a.screamClip = Clip(height > 1.8f ? "scream2" : "scream1");
         tr.anim = a;
         return tr;
@@ -1629,6 +1648,8 @@ public static class FirWorldBuilder
         // tree faces: eyes stay faintly visible in the dark, which is the point
         A("Eye", null, new Color(0.9f, 0.9f, 0.85f), 0f, new Color(0.22f, 0.22f, 0.2f));
         A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1f);
+        A("EyeRed", null, new Color(0.6f, 0f, 0f), 1f, new Color(0.9f, 0.05f, 0.02f));
+        A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 0f, new Color(0.08f, 0.07f, 0.05f));
         A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 0f, new Color(0.08f, 0f, 0f));
         // items glint so they can be found with the lantern
         A("Battery", null, new Color(0.85f, 0.7f, 0.1f), 0f, new Color(0.15f, 0.12f, 0.02f));

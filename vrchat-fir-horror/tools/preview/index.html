@@ -1,0 +1,161 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}</style></head><body>
+<script type="module">
+import * as THREE from './three.module.min.js';
+const W = 1280, H = 720;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0);
+const camera = new THREE.PerspectiveCamera(75, W / H, 0.02, 120);
+
+// ---- port of Shaders/FirLantern.shader
+const G = { reach: { value: 6 }, dark: { value: 0 }, amb: { value: 0.004 } };
+const loader = new THREE.TextureLoader();
+function tex(n, rx = 1, ry = 1) { const t = loader.load(n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; }
+const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+function lantern(o = {}) {
+  return new THREE.ShaderMaterial({
+    vertexColors: !!o.vc,
+    uniforms: { map: { value: o.map || white }, rep: { value: o.map ? o.map.repeat : new THREE.Vector2(1, 1) },
+      color: { value: new THREE.Color(...(o.color || [1, 1, 1])) }, full: { value: o.full || 0 },
+      glow: { value: new THREE.Color(...(o.glow || [0, 0, 0])) }, useVC: { value: o.vc ? 1 : 0 },
+      reach: G.reach, dark: G.dark, amb: G.amb },
+    vertexShader: `varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc; uniform vec2 rep;
+      void main(){ vUv = uv * rep; vec4 w = modelMatrix * vec4(position,1.); wpos = w.xyz; wn = normalize(mat3(modelMatrix) * normal);
+      #ifdef USE_COLOR
+        vc = color;
+      #else
+        vc = vec3(1.);
+      #endif
+      gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D map; uniform vec3 color; uniform float full; uniform vec3 glow; uniform float useVC;
+      uniform float reach; uniform float dark; uniform float amb; varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc;
+      void main(){ vec3 albedo = texture2D(map, vUv).rgb * color * mix(vec3(1.), vc, useVC);
+        vec3 toS = wpos - cameraPosition; float d = length(toS); vec3 dir = toS / max(d, 1e-4);
+        float fall = clamp(1. - d / reach, 0., 1.); fall *= fall;
+        vec3 camFwd = -vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
+        float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
+        float facing = clamp(dot(normalize(wn), -dir), 0., 1.) * 0.6 + 0.4;
+        float light = (0.006 + amb) + fall * facing * (0.3 + 0.9 * cone);
+        light *= 1. - clamp(dark, 0., 1.);
+        vec3 col = mix(albedo * light, albedo, full) + glow;
+        gl_FragColor = vec4(pow(col, vec3(1.0/2.2)), 1.); }`
+  });
+}
+
+// ---- port of FirWorldBuilder.FirMesh (stacked jagged cones)
+function firMesh(tiers, height, radius, seg, jag) {
+  const pos = [], col = [], uv = [];
+  const tierH = height / (tiers * 0.7 + 0.3);
+  function tri(a, b, c, out, sa, sb) {
+    const ab = b.clone().sub(a), ac = c.clone().sub(a);
+    if (ab.cross(ac).dot(out) < 0) { const t = b; b = c; c = t; }
+    for (const [p, sh] of [[a, sa], [b, sb], [c, sb]]) {
+      pos.push(p.x, p.y, p.z); col.push(sh, sh, sh);
+      uv.push((Math.atan2(p.z, p.x) / (Math.PI * 2) + 0.5) * 3, p.y / height * 3);
+    }
+  }
+  for (let k = 0; k < tiers; k++) {
+    const y0 = k * tierH * 0.7, y1 = Math.min(height, y0 + tierH), r = radius * (1 - k / (tiers + 0.4));
+    const apex = new THREE.Vector3(0, y1, 0), inner = new THREE.Vector3(0, y0 + tierH * 0.25, 0), pts = seg * 2;
+    for (let i = 0; i < pts; i++) {
+      const a0 = i * Math.PI * 2 / pts, a1 = (i + 1) * Math.PI * 2 / pts;
+      const r0 = i % 2 == 0 ? r : r * jag, r1 = (i + 1) % 2 == 0 ? r : r * jag;
+      const d0 = i % 2 == 0 ? -tierH * 0.06 : 0, d1 = (i + 1) % 2 == 0 ? -tierH * 0.06 : 0;
+      const p0 = new THREE.Vector3(Math.cos(a0) * r0, y0 + d0, Math.sin(a0) * r0);
+      const p1 = new THREE.Vector3(Math.cos(a1) * r1, y0 + d1, Math.sin(a1) * r1);
+      const out = new THREE.Vector3(Math.cos((a0 + a1) / 2), 0.3, Math.sin((a0 + a1) / 2));
+      tri(apex, p0, p1, out, 1, 0.55);
+      tri(inner, p1, p0, new THREE.Vector3(0, -1, 0), 0.3, 0.45);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  return g;
+}
+const sphere = new THREE.SphereGeometry(0.5, 24, 16), cyl = new THREE.CylinderGeometry(0.5, 0.5, 2, 24);
+const M = {
+  needles: lantern({ map: tex('needles.png'), vc: true }), pot: lantern({ color: [0.55, 0.12, 0.1] }), trunk: lantern({ color: [0.3, 0.2, 0.12] }),
+  eye: lantern({ color: [0.9, 0.9, 0.85], glow: [0.22, 0.22, 0.2] }), pupil: lantern({ color: [0.01, 0.01, 0.01], full: 1 }),
+  mouth: lantern({ color: [0.7, 0.05, 0.08], glow: [0.08, 0, 0] }), black: lantern({ color: [0.03, 0.03, 0.03] }),
+  red: lantern({ color: [0.6, 0, 0], full: 1, glow: [0.9, 0.05, 0.02] }), teeth: lantern({ color: [0.85, 0.82, 0.7], glow: [0.08, 0.07, 0.05] }),
+  wall: lantern({ map: tex('wallpaper.png', 3, 2) }), floor: lantern({ map: tex('wood_floor.png', 3, 7) }), ceil: lantern({ map: tex('ceiling.png', 3, 7) }),
+  poster: lantern({ map: loader.load('poster_warning_scrawl.png') }), cloth: lantern({ color: [0.45, 0.07, 0.08] }),
+};
+// ---- port of FirWorldBuilder.BuildTree (face looks along +z)
+function buildTree(height) {
+  const root = new THREE.Group();
+  const potH = Math.max(0.08, height * 0.09), trunkH = height * 0.08, canopyH = height - potH - trunkH, radius = height * 0.36;
+  const add = (geo, mat, p, s, parent = root) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
+  add(cyl, M.pot, [0, potH / 2, 0], [radius * 0.55, potH / 2, radius * 0.55]);
+  add(cyl, M.trunk, [0, potH + trunkH / 2, 0], [radius * 0.18, trunkH / 2 + 0.02, radius * 0.18]);
+  const head = new THREE.Group(); head.position.set(0, potH + trunkH, 0); root.add(head);
+  const tiers = Math.min(6, Math.max(3, Math.round(height * 2.2)));
+  head.add(new THREE.Mesh(firMesh(tiers, canopyH, radius, 14, 0.7), M.needles));
+  const faceY = canopyH * 0.5, rAt = radius * (1 - faceY / canopyH) * 1.05, eye = Math.max(0.035, canopyH * 0.055), faceZ = rAt * 0.92;
+  for (const sx of [-1, 1]) {
+    add(sphere, M.eye, [sx * eye * 1.25, faceY + eye * 1.1, faceZ], [eye * 2, eye * 2, eye * 2], head);
+    add(sphere, M.pupil, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.85], [eye * 0.8, eye * 0.8, eye * 0.8], head);
+  }
+  const mouth = new THREE.Group(); mouth.position.set(0, faceY - eye * 1.4, faceZ - eye * 0.2); head.add(mouth);
+  add(sphere, M.mouth, [0, 0, 0], [eye * 3.2, eye * 1.6, eye * 1.2], mouth);
+  add(sphere, M.black, [0, 0, eye * 0.25], [eye * 2.4, eye * 1.1, eye * 0.9], mouth);
+  const tooth = firMesh(1, eye * 0.55, eye * 0.16, 5, 1);
+  for (let row = 0; row < 2; row++) for (let k = 0; k < 6; k++) {
+    const m = new THREE.Mesh(tooth, M.teeth); m.position.set((-1.05 + k * 0.42) * eye, (row == 0 ? 0.42 : -0.42) * eye, eye * 0.5);
+    if (row == 0) m.rotation.x = Math.PI; mouth.add(m);
+  }
+  const redEyes = new THREE.Group(); redEyes.visible = false; head.add(redEyes);
+  for (const sx of [-1, 1]) add(sphere, M.red, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.95], [eye * 0.75, eye * 0.75, eye * 0.75], redEyes);
+  return { root, head, mouth, redEyes, faceHeight: potH + trunkH + faceY, faceZ };
+}
+
+// ---- the Showroom at night: a corridor of wallpaper, the long red table, a tree at the far end
+const room = new THREE.Group(); scene.add(room);
+const box = (mat, p, s) => { const m = new THREE.Mesh(new THREE.BoxGeometry(...s), mat); m.position.set(...p); room.add(m); return m; };
+box(M.floor, [0, -0.1, -4], [6, 0.2, 16]); box(M.ceil, [0, 4.1, -4], [6, 0.2, 16]);
+box(M.wall, [-3.1, 2, -4], [0.2, 4, 16]); box(M.wall, [3.1, 2, -4], [0.2, 4, 16]); box(M.wall, [0, 2, -12.1], [6, 4, 0.2]);
+box(M.cloth, [-2.2, 0.4, -3], [1.4, 0.8, 6]);
+const pst = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.12), M.poster); pst.position.set(2.99, 1.9, -2.5); pst.rotation.y = -Math.PI / 2; room.add(pst);
+const tableTrees = [];
+for (const [z, h] of [[-1, 0.7], [-3, 1.0], [-5, 0.8]]) { const t = buildTree(h); t.root.position.set(-2.2, 0.8, z); t.root.rotation.y = Math.PI / 2; room.add(t.root); tableTrees.push(t); }
+const far = buildTree(2.4); far.root.position.set(1.2, 0, -10.5); room.add(far.root);
+// ---- the scare rig: a 1.5 m tree whose face sits at the rig's origin
+const rig = new THREE.Group(); const scare = buildTree(1.5); scare.root.position.set(0, -scare.faceHeight, -scare.faceZ); rig.add(scare.root); scene.add(rig);
+const mouthRest = scare.mouth.scale.clone();
+
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const T_BLINK = 2.6, T_FACE = T_BLINK + 0.18, T_END = T_FACE + 1.1;
+window.renderAt = (t) => {
+  // walk slowly forward, glance toward the table
+  const walk = Math.min(t, T_BLINK);
+  camera.position.set(0.2, 1.6, 3 - walk * 0.55);
+  const yaw = 0.35 * Math.sin(Math.min(walk / T_BLINK, 1) * Math.PI) ;
+  camera.rotation.set(-0.04, yaw, 0, 'YXZ');
+  camera.updateMatrixWorld();
+  // the table trees turn to follow you
+  for (const tr of tableTrees) { const target = Math.min(1, t / 2) * 0.9; tr.head.rotation.y = -target; }
+  far.head.rotation.y = Math.sin(t * 0.7) * 0.1;
+  let dark = 0, amb = 0.004;
+  if (t > 1.7 && t < 2.1) dark = (Math.floor(t * 30) % 3 == 0) ? 0.9 : 0;   // the lights stutter
+  rig.visible = false;
+  if (t >= T_BLINK && t < T_FACE) dark = 1;                                 // pre-blink
+  else if (t >= T_FACE && t < T_END) {                                       // the face
+    rig.visible = true; amb += 0.1; scare.redEyes.visible = true;
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    rig.position.copy(camera.position).addScaledVector(fwd, 0.5).add(new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(0.03));
+    rig.lookAt(camera.position);
+    const open = 1.6 + rnd() * 0.4;
+    scare.mouth.scale.set(mouthRest.x * (1 + open * 0.15), mouthRest.y * (0.35 + open * 1.6), mouthRest.z);
+    scare.head.rotation.set((rnd() - .5) * 0.2, (rnd() - .5) * 0.28, (rnd() - .5) * 0.2);
+  } else if (t >= T_END) dark = 1;                                           // blackout after
+  G.dark.value = dark; G.amb.value = amb;
+  renderer.render(scene, camera);
+  return true;
+};
+window.ready = new Promise(r => THREE.DefaultLoadingManager.onLoad = () => r(true));
+</script></body></html>

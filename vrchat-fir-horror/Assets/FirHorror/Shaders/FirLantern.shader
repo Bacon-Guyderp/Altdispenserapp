@@ -6,7 +6,7 @@
 // Globals, set from Udon with VRCShader.SetGlobalFloat (names must start with _Udon):
 //   _UdonFirLight    lantern reach in metres (0 = default 7)
 //   _UdonFirDark     0 = normal, 1 = pitch black (blackouts and flicker)
-//   _UdonFirAmbient  extra ambient light added on top of the base 0.035
+//   _UdonFirAmbient  extra ambient light added on top of the base 0.006 (beyond your lantern it is nearly black)
 // Per material:
 //   _Fullbright      1 = ignore the lantern (lobby, signs), 0 = lantern lit
 //   _Glow            colour added after lighting (eyes, furnace, exit signs); ignores blackouts
@@ -69,13 +69,13 @@ Shader "FirHorror/Lantern"
                 float3 toSurf = i.wpos - _WorldSpaceCameraPos;
                 float d = length(toSurf);
                 float3 dir = toSurf / max(d, 1e-4);
-                float reach = _UdonFirLight > 0 ? _UdonFirLight : 7.0;
+                float reach = _UdonFirLight > 0 ? _UdonFirLight : 6.0;
                 float fall = saturate(1.0 - d / reach);
                 fall *= fall;
                 float3 camFwd = -UNITY_MATRIX_V[2].xyz;
                 float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
                 float facing = saturate(dot(normalize(i.wn), -dir)) * 0.6 + 0.4;
-                float light = (0.035 + _UdonFirAmbient) + fall * facing * (0.3 + 0.9 * cone);
+                float light = (0.006 + _UdonFirAmbient) + fall * facing * (0.3 + 0.9 * cone);
                 light *= 1.0 - saturate(_UdonFirDark);
                 fixed3 lit = albedo.rgb * light;
                 fixed3 col = lerp(lit, albedo.rgb, _Fullbright) + _Glow.rgb;

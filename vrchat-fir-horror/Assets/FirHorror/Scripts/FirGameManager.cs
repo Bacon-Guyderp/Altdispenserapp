@@ -484,10 +484,10 @@ public class FirGameManager : UdonSharpBehaviour
         if (t < blackoutUntil) dark = 1f;
         else if (t < flickerUntil && flashing) dark = Random.value < 0.35f ? 0.9f : 0f;
         if (scareState == 2) dark = 0f;
-        float reach = brightness == 0 ? 5.5f : brightness == 1 ? 7f : 9.5f;
-        float amb = brightness == 0 ? 0f : brightness == 1 ? 0.02f : 0.07f;
+        float reach = brightness == 0 ? 4.5f : brightness == 1 ? 6f : 8.5f;
+        float amb = brightness == 0 ? 0f : brightness == 1 ? 0.004f : 0.04f;
         if (phase == 7 || !inGame) { reach = 14f; amb += 0.12f; }
-        if (scareState == 2 && flashing) amb += 0.5f;
+        if (scareState == 2 && flashing) amb += 0.1f;
         VRCShader.SetGlobalFloat(idDark, dark);
         VRCShader.SetGlobalFloat(idLight, reach);
         VRCShader.SetGlobalFloat(idAmbient, amb);
