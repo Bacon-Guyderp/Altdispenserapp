@@ -43,7 +43,14 @@ public class FirSequenceLock : UdonSharpBehaviour
         }
         entry[count++] = v;
         Show();
-        if (count < length) return;
+        if (count < length)
+        {
+            // the building doesn't like being solved
+            float r = Random.value;
+            if (r < 0.12f) { game.Flicker(0.9f); game.PlaySfx(game.clipWhisper); }
+            else if (r < 0.17f) game.BehindScare();
+            return;
+        }
         bool ok = true;
         for (int i = 0; i < length; i++) if (entry[i] != game.CodeAt(chapter, i)) ok = false;
         count = 0;

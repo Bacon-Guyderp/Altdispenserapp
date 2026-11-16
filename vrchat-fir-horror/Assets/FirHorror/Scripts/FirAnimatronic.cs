@@ -19,6 +19,7 @@ public class FirAnimatronic : UdonSharpBehaviour
     public int chapter;               // for group events
     public float watchRange = 3.5f;   // stares at you inside this range (0 = never)
     public float greetChance = 0.35f; // chance to say something when you walk up
+    public float snapChance = 0.1f;   // chance to snap round and scream at you instead
     public float maxYaw = 80f;
     public float turnSpeed = 70f;
 
@@ -69,7 +70,9 @@ public class FirAnimatronic : UdonSharpBehaviour
         if (nowNear && !near && t > nextGreet)
         {
             nextGreet = t + 25f;
-            if (Random.value < greetChance && mode == 0) SetMode(2, 2.3f);
+            float roll = Random.value;
+            if (mode == 0 && roll < snapChance) SetMode(4, 1.1f);
+            else if (mode == 0 && roll < snapChance + greetChance) SetMode(2, 2.3f);
         }
         near = nowNear;
         bool watching = mode != 0 || near;

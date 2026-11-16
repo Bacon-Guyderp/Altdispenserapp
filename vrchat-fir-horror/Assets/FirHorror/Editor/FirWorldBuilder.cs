@@ -97,7 +97,7 @@ public static class FirWorldBuilder
         rig.SetParent(root, false);
         var scareTree = BuildTree(rig, Vector3.zero, 0f, 1.5f, 0, false, "ScareTree");
         scareTree.root.transform.localPosition = new Vector3(0, -scareTree.faceHeight, -scareTree.faceZ);
-        scareTree.anim.watchRange = 0; scareTree.anim.greetChance = 0;
+        scareTree.anim.watchRange = 0; scareTree.anim.greetChance = 0; scareTree.anim.snapChance = 0;
         game.scareRig = rig;
         game.scareAnim = scareTree.anim;
 
@@ -113,7 +113,7 @@ public static class FirWorldBuilder
         fa.game = game;
         fa.emitter = Src(amb.transform, Vector3.zero, null, false, 1f, 0.9f, 12f, false);
         fa.clips = new[] { Clip("whisper"), Clip("rustle"), Clip("creak"), Clip("tree_laugh"), Clip("servo"), Clip("tree_talk"), Clip("tree_note"), Clip("phone") };
-        fa.minGap = 18f; fa.maxGap = 45f;
+        fa.minGap = 14f; fa.maxGap = 36f;
         fa.laughClip = Clip("tree_laugh"); fa.whisperClip = Clip("whisper");
 
         // ---- wire up the collected lists
@@ -204,7 +204,7 @@ public static class FirWorldBuilder
         for (int i = 0; i < 3; i++)
         {
             var t = BuildTree(lobby, new Vector3(-5.5f + i * 0.9f, 0, -5.2f + (i % 2) * 0.3f), 0f, 0.8f + i * 0.35f, 0, i == 1, "LobbyTree" + i);
-            t.anim.greetChance = 0.6f;
+            t.anim.greetChance = 0.6f; t.anim.snapChance = 0f;   // the lobby stays safe
         }
         return spawn;
     }
@@ -306,7 +306,7 @@ public static class FirWorldBuilder
         curtain.delay = 1.2f;
         Item(g, "Battery", 1, new Vector3(-5.6f, 0.06f, 10.4f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", under);
         Item(g, "Battery", 1, new Vector3(7.62f, 0.95f, 15.0f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", curtain);
-        Item(g, "Battery", 1, new Vector3(6.4f, 0.72f, 2.2f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", null);
+        Item(g, "Battery", 1, new Vector3(6.4f, 0.72f, 2.2f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", ItemScare(g, "GiftBattery", 0, 1, 2));
 
         // power panel by the door: it makes the table trees sing a 5-note carol, which you repeat by touching them
         var panel = Box(g, "PowerPanel", new Vector3(3.4f, 1.4f, 19.85f), new Vector3(0.9f, 1.1f, 0.2f), M("Metal"), true);
@@ -322,6 +322,7 @@ public static class FirWorldBuilder
         {
             var tr = carol[i];
             tr.anim.voice.pitch = pitches[i];
+            tr.anim.snapChance = 0f;
             game.carolTrees[i] = tr.anim;
             var touch = new GameObject("Touch");
             touch.transform.SetParent(tr.root.transform, false);
@@ -383,8 +384,8 @@ public static class FirWorldBuilder
         deep.screamIndex = 1; deep.duration = 1.0f;
         var crateBehind = Scare(g, "CrateFuseBehind", Vector3.zero, Vector3.zero, 4, 2, 2);
         crateBehind.delay = 1.5f;
-        Item(g, "Fuse", 2, new Vector3(-10.8f, 0.1f, 50.6f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", null);
-        Item(g, "Fuse", 2, new Vector3(-6.75f, 0.75f, 37.5f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", null);
+        Item(g, "Fuse", 2, new Vector3(-10.8f, 0.1f, 50.6f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", ItemScare(g, "CornerFuse", 4, 2, 0));
+        Item(g, "Fuse", 2, new Vector3(-6.75f, 0.75f, 37.5f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", ItemScare(g, "CrateFuse", 7, 2, 0));
         Box(g, "Crate", new Vector3(-6.75f, 0.35f, 37.5f), new Vector3(0.7f, 0.7f, 0.7f), M("Cardboard"), true, true, true);
         Item(g, "Fuse", 2, new Vector3(6.75f, 0.1f, 24.5f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", deep);
         Item(g, "Fuse", 2, new Vector3(10.8f, 0.85f, 44f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", crateBehind);
@@ -406,6 +407,7 @@ public static class FirWorldBuilder
         GlowWrite(g, new Vector3(-11.95f, 1.4f, 44f), Vector3.right, "DON'T BLINK");
         GlowWrite(g, new Vector3(11.95f, 1.6f, 26f), Vector3.left, "BEHIND YOU");
 
+        EntryScare(g, "StockroomEntry", 20f, new Vector3(2.5f, 0, 23.2f), 200, 2);
         stalker.spawnByPhase[2] = Marker(g, "StalkerSpawn2", new Vector3(8.5f, 0, 52f), 180);
 
         // scares
@@ -447,6 +449,7 @@ public static class FirWorldBuilder
     {
         Sign(g, "VOICE LAB", new Vector3(0, 3.1f, 56.25f), Vector3.forward);
         Poster(g, "poster_warning_scrawl", new Vector3(7.98f, 1.8f, 60f), Vector3.left, 1.2f, false);
+        EntryScare(g, "VoiceLabEntry", 56f, new Vector3(-2.5f, 0, 58.6f), 160, 3);
 
         Box(g, "ConveyorBelt", new Vector3(0, 0.75f, 64f), new Vector3(12f, 0.12f, 1.0f), M("Rubber"), true);
         Box(g, "ConveyorBase", new Vector3(0, 0.35f, 64f), new Vector3(12f, 0.7f, 0.9f), M("Metal"), true);
@@ -462,7 +465,7 @@ public static class FirWorldBuilder
             h.anim.watchRange = 2.5f;
             heads.Add(h);
         }
-        var tapeOnBelt = Item(conv, "Tape", 3, new Vector3(-4.3f, 0.04f, 0), M("TapeRed"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (red)", null);
+        var tapeOnBelt = Item(conv, "Tape", 3, new Vector3(-4.3f, 0.04f, 0), M("TapeRed"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (red)", ItemScare(g, "BeltTape", 0, 3, 1));
         tapeOnBelt.transform.SetParent(conv, true);
 
         // recording booth: the label card that maps tape colours to session names
@@ -475,7 +478,7 @@ public static class FirWorldBuilder
         var singer = BuildTree(booth, new Vector3(0.6f, 0.6f, 1.5f), 180, 1.3f, 3, false, "BoothSinger");
         Box(booth, "MicStand", new Vector3(0.6f, 0.8f, 0.7f), new Vector3(0.04f, 1.6f, 0.04f), M("Metal"), false);
         Box(booth, "Mic", new Vector3(0.6f, 1.6f, 0.65f), new Vector3(0.08f, 0.14f, 0.08f), M("Black"), false);
-        Item(booth, "Tape", 3, new Vector3(-1.6f, 0.03f, 2.4f), M("TapeBlue"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (blue)", null);
+        Item(booth, "Tape", 3, new Vector3(-1.6f, 0.03f, 2.4f), M("TapeBlue"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (blue)", ItemScare(g, "BoothTape", 4, 3, 0));
         Quad(booth, "LabelCard", new Vector3(-1.2f, 1.6f, 2.92f), Face(Vector3.back), new Vector2(0.75f, 0.6f), M("Paper"));
         game.tapeCard = Text("LabelCardText", booth, new Vector3(-1.2f, 1.6f, 2.9f), Face(Vector3.back), new Vector2(0.68f, 0.52f), 0.06f, "");
         game.tapeCard.color = new Color(0.1f, 0.1f, 0.12f);
@@ -612,6 +615,7 @@ public static class FirWorldBuilder
         Keypad(g, new Vector3(2.8f, 1.35f, 103.85f), 4, 4, false, "");
         Text("KeypadLabel", g, new Vector3(2.8f, 1.9f, 103.75f), Face(Vector3.back), new Vector2(0.8f, 0.15f), 0.08f, "DOOR CODE");
 
+        EntryScare(g, "OfficesEntry", 80f, new Vector3(2.2f, 0, 82.6f), 200, 4);
         stalker.spawnByPhase[4] = Marker(g, "StalkerSpawn4", new Vector3(-8.5f, 0, 102.5f), 150);
 
         // scares
@@ -646,6 +650,7 @@ public static class FirWorldBuilder
     static void BuildLivingRoom(Transform g)
     {
         Sign(g, "HOME", new Vector3(0, 3.0f, 104.25f), Vector3.forward);
+        EntryScare(g, "HomeEntry", 104f, new Vector3(2.6f, 0, 106.4f), 210, 5);
         Box(g, "WainscotL", new Vector3(-6.95f, 0.5f, 112), new Vector3(0.1f, 1f, 16), M("Trim"), true);
         Box(g, "WainscotR", new Vector3(6.95f, 0.5f, 112), new Vector3(0.1f, 1f, 16), M("Trim"), true);
         Quad(g, "Window", new Vector3(-3.5f, 1.8f, 119.88f), Face(Vector3.back), new Vector2(2.4f, 1.8f), M("Window"));
@@ -734,6 +739,7 @@ public static class FirWorldBuilder
     static void BuildRecallFloor(Transform g, FirStalker stalker)
     {
         Sign(g, "RECALL FLOOR", new Vector3(0, 3.2f, 120.25f), Vector3.forward);
+        EntryScare(g, "RecallEntry", 120f, new Vector3(-2.5f, 0, 122.6f), 160, 6);
         Poster(g, "poster_recall", new Vector3(-3f, 2.0f, 120.25f), Vector3.forward, 1.3f, false);
         Box(g, "Furnace", new Vector3(-7.5f, 2.2f, 147.6f), new Vector3(4.5f, 4.4f, 3.6f), M("Brick"), true);
         Box(g, "FurnaceMouthCold", new Vector3(-7.5f, 1.1f, 145.77f), new Vector3(2.0f, 1.3f, 0.04f), M("Black"), false);
@@ -838,7 +844,7 @@ public static class FirWorldBuilder
         var visualRoot = new GameObject("Visual").transform;
         visualRoot.SetParent(go.transform, false);
         var t = BuildTree(visualRoot, Vector3.zero, 0, 2.3f, 0, false, "Stalker Tree");
-        t.anim.watchRange = 8f; t.anim.greetChance = 0f;
+        t.anim.watchRange = 8f; t.anim.greetChance = 0f; t.anim.snapChance = 0f;
         var st = Add<FirStalker>(go);
         st.game = game; st.agent = agent; st.visual = visualRoot.gameObject; st.anim = t.anim;
         var eyes = new GameObject("Eyes").transform;
@@ -971,6 +977,7 @@ public static class FirWorldBuilder
         var sync = go.AddComponent<VRCObjectSync>();
         carrySyncList.Add(sync);
         var c = Add<FirCarryItem>(go);
+        c.game = game;
         c.pickup = p;
         return c;
     }
@@ -1080,6 +1087,25 @@ public static class FirWorldBuilder
         s.target = t.root; s.anim = t.anim; s.duration = 1.4f;
         s.sound = Src(t.root.transform, new Vector3(0, 1.2f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 14f, false);
         return s;
+    }
+
+    /// <summary>A scare fired by taking an item (no trigger). kind 0 face, 4 behind you, 7 flicker + laugh.</summary>
+    static FirJumpscare ItemScare(Transform g, string name, int kind, int phase, int screamIndex)
+    {
+        var s = Scare(g, name, Vector3.zero, Vector3.zero, kind, phase, phase);
+        s.screamIndex = screamIndex; s.duration = kind == 7 ? 2f : 1.0f; s.delay = kind == 4 ? 1.2f : 0.3f;
+        if (kind == 7) s.sound = Src(g, Vector3.zero, Clip("tree_laugh"), false, 0f, 1f, 10f, false);
+        return s;
+    }
+
+    /// <summary>A tree waiting just inside a room's door. The first player through sets it off for everyone.</summary>
+    static void EntryScare(Transform g, string name, float doorZ, Vector3 treePos, float yaw, int phase)
+    {
+        var s = Scare(g, name, new Vector3(0, 1.5f, doorZ + 1.2f), new Vector3(3, 3, 0.4f), 1, phase, phase);
+        var t = BuildTree(g, treePos, yaw, 1.9f, 0, false, name + " Tree");
+        t.anim.watchRange = 0f;
+        s.target = t.root; s.anim = t.anim; s.animMode = 4; s.duration = 1.3f; s.global = true; s.once = true;
+        s.sound = Src(t.root.transform, new Vector3(0, 1.3f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 16f, false);
     }
 
     /// <summary>A gas valve wheel on a wall pipe (Recall Floor). Opening all three lights the furnace.</summary>

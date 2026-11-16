@@ -8,7 +8,7 @@ on the Recall Floor, where you burn the "imitation" trees in the furnace while *
 
 * **About 45–50 minutes** for a group playing for the first time, across six puzzle chapters. Every answer is randomised each game.
 * **1–8 players**, co-op, and **tuned for duos**: see "Playing with two" below. Progress, doors and items are synced, and late joiners can catch up.
-* **About 80 placed jumpscares**, some shared so everyone gets them at the same moment, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 15–45 seconds (more often when you split up).
+* **About 90 placed jumpscares**, some shared so everyone gets them at the same moment, plus a tree waiting inside every door, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 14–36 seconds (more often when you split up). Any animatronic may snap round and scream as you walk up, picked-up imitations and hats can turn on you, and entering puzzle codes can set off whispers or something behind you.
 * **Quest-friendly:** no realtime lights or shadows, no post-processing, one tiny shader, 512 px textures
   (ASTC on Android) and about 1 MB of mono Vorbis audio. The whole package is under 3 MB.
 
