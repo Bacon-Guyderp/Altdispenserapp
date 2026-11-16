@@ -1713,7 +1713,7 @@ public static class FirWorldBuilder
         A("Eye", null, new Color(0.9f, 0.9f, 0.85f), 0f, new Color(0.22f, 0.22f, 0.2f));
         A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1f);
         A("EyeRed", null, new Color(0.6f, 0f, 0f), 1f, new Color(0.9f, 0.05f, 0.02f));
-        A("Bone", null, new Color(0.92f, 0.9f, 0.82f), 0f, new Color(0.14f, 0.14f, 0.12f));
+        A("Bone", null, new Color(0.85f, 0.08f, 0.06f), 0f, new Color(0.22f, 0.02f, 0.01f));   // RED skeleton
         A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1f, new Color(0.03f, 0.1f, 0.07f));
         A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 0f, new Color(0.08f, 0.07f, 0.05f));
         A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 0f, new Color(0.08f, 0f, 0f));

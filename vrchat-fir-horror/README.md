@@ -78,7 +78,7 @@ which control blackouts, flicker and brightness. Tree eyes have a faint glow, so
 you can see is pairs of eyes.
 
 ### Easter egg: the closet
-The Living Room has a closet marked "do not open". Open it and, for everyone at once, a skeleton steps out
+The Living Room has a closet marked "do not open". Open it and, for everyone at once, a **red** skeleton steps out
 of the dark through green mist, gives a big palms-up shrug, and steps back in, with the subtitle
 **RED SKELETON**. It's a tribute to the classic cartoon gag ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)).
 The skeleton is built from simple shapes; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`.

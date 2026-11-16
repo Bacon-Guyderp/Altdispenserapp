@@ -121,7 +121,7 @@ const group = (parent, p) => { const g = new THREE.Group(); g.position.set(...p)
 const X = {
   wood: lantern({ map: tex('wood_floor.png', 4, 4) }), desk: lantern({ map: tex('wood_floor.png', 1, 2), color: [0.8, 0.7, 0.6] }),
   wall: lantern({ map: tex('wallpaper.png', 4, 2) }), trim: lantern({ color: [0.85, 0.83, 0.78] }),
-  bone: lantern({ color: [0.92, 0.9, 0.82], glow: [0.14, 0.14, 0.12] }), mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
+  bone: lantern({ color: [0.85, 0.08, 0.06], glow: [0.22, 0.02, 0.01] }), mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
   black: lantern({ color: [0.01, 0.01, 0.01], full: 1 }), gold: lantern({ color: [0.85, 0.65, 0.15] }),
 };
 box(X.wood, [2, -0.1, 0], [8, 0.2, 8]); box(X.wall, [-0.45, 1.7, 0], [0.2, 3.4, 8]); box(X.wall, [2, 1.7, -3.1], [8, 3.4, 0.2]);
