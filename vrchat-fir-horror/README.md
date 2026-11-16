@@ -152,6 +152,30 @@ places from and `tools/make_voices.py` records the voices from. Add a line there
 * present pop-up: *"Here's your participation trophy. It's me."*
 * spinning tree: *"Victory spin!"*
 
+### Skeleton routines (12)
+Your skeleton model also turns up for 12 routines of its own (`Data/skeleton_gags.txt`, played by
+`Scripts/FirSkeletonGag.cs`). Press one and, for everyone at once, it acts it out while saying its line:
+
+| Where | Routine |
+|---|---|
+| Lobby | A **skeleton crew** of three salutes in turn: *"Skeleton crew, reporting for duty!"* |
+| Lobby | A shimmy: *"I've got a funny bone. It's all of them."* |
+| Showroom | Dances wildly, then shrugs: *"I've got no body to dance with."* |
+| Stockroom | **Collapses into a pile of bones** and pulls itself together: *"I'm falling apart! ...I'm fine."* |
+| Stockroom | A red one shrugs: *"I'd help, but I don't have the stomach for it."* |
+| Voice Lab | Belts into a microphone: *"This next song is spine-tingling!"* |
+| Voice Lab | A red one points at you, then slaps its knee: *"Why didn't the skeleton go to the party? No body to go with!"* |
+| Offices | On the phone, tapping a foot: *"I've been on hold since nineteen ninety-six."* |
+| Offices | **Its forearm falls off:** *"Can somebody give me a hand?"* |
+| Living Room | A **green** skeleton, hands on hips: *"Green skeleton. Also, ha."* |
+| Recall Floor | Shaking with fear: *"I'd run, but I don't have the guts."* |
+| Exit | A white and a red skeleton take a bow: *"Thank you! We'll be here all century!"* |
+
+![Every skeleton routine, mid-act](skeleton_routines.png)
+
+Each skeleton is about 9,600 triangles. The lobby has four (the crew and the shimmy), about 38,000
+triangles, which Quest handles, but if you add more in one room, keep an eye on the frame rate.
+
 ### Easter egg: the closet
 The Living Room has a closet marked "do not open". Open it and, for everyone at once, the classic cartoon
 gag plays out ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)): a white skeleton steps out through

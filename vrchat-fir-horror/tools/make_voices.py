@@ -4,7 +4,8 @@
                             Debian/Ubuntu: apt install espeak-ng mbrola mbrola-us2 mbrola-us3
 
 Writes Assets/FirHorror/Audio/skeleton_white.ogg and skeleton_red.ogg, plus one line per comedy
-gag in Assets/FirHorror/Data/gags.txt to Assets/FirHorror/Audio/Gags/gag_<id>.ogg (mono Vorbis).
+gag in Assets/FirHorror/Data/gags.txt to Assets/FirHorror/Audio/Gags/gag_<id>.ogg and each skeleton routine
+in Data/skeleton_gags.txt to Audio/Gags/skel_<id>.ogg (mono Vorbis).
 Gag voices need mbrola-us1 too.
 """
 import os, subprocess, tempfile
@@ -29,6 +30,9 @@ PRESETS = {
     "narrator": ("mb-us1", 145, 45, 1.0),
     "lady": ("mb-us1", 150, 65, 1.05),
     "old": ("mb-us2", 110, 40, 0.95),
+    "skel": ("mb-us2", 125, 32, 0.93),
+    "skelred": ("mb-us3", 150, 62, 1.06),
+    "skelgreen": ("mb-us3", 140, 72, 1.12),
 }
 
 
@@ -44,11 +48,22 @@ def gag_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:30:0.12,volume=1.8")
 
 
+def skeleton_lines():
+    path = os.path.join(os.path.dirname(OUT), "Data", "skeleton_gags.txt")
+    for line in open(path, encoding="utf-8"):
+        if not line.strip() or line.startswith("#"):
+            continue
+        f = line.rstrip("\n").split("|")
+        v, speed, pitch, rate = PRESETS[f[7]]
+        yield ("Gags/skel_" + f[0], v, speed, pitch, f[9],
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(os.path.join(OUT, "Gags"), exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
-        for name, voice, speed, pitch, text, filt in list(LINES) + list(gag_lines()):
+        for name, voice, speed, pitch, text, filt in list(LINES) + list(gag_lines()) + list(skeleton_lines()):
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
             out = os.path.join(OUT, name + ".ogg")

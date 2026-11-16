@@ -1,0 +1,212 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}</style></head><body>
+<script type="module">
+import * as THREE from './three.module.min.js';
+let texturesLoaded = false;
+THREE.DefaultLoadingManager.onLoad = () => { texturesLoaded = true; };
+const W = 1280, H = 720;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0);
+const camera = new THREE.PerspectiveCamera(75, W / H, 0.02, 120);
+
+// ---- port of Shaders/FirLantern.shader
+const G = { reach: { value: 6 }, dark: { value: 0 }, amb: { value: 0.004 } };
+const loader = new THREE.TextureLoader();
+function tex(n, rx = 1, ry = 1) { const t = loader.load(n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; }
+const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+function lantern(o = {}) {
+  return new THREE.ShaderMaterial({
+    vertexColors: !!o.vc,
+    uniforms: { map: { value: o.map || white }, rep: { value: o.map ? o.map.repeat : new THREE.Vector2(1, 1) },
+      color: { value: new THREE.Color(...(o.color || [1, 1, 1])) }, full: { value: o.full || 0 },
+      glow: { value: new THREE.Color(...(o.glow || [0, 0, 0])) }, useVC: { value: o.vc ? 1 : 0 },
+      reach: G.reach, dark: G.dark, amb: G.amb },
+    vertexShader: `varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc; uniform vec2 rep;
+      void main(){ vUv = uv * rep; vec4 w = modelMatrix * vec4(position,1.); wpos = w.xyz; wn = normalize(mat3(modelMatrix) * normal);
+      #ifdef USE_COLOR
+        vc = color;
+      #else
+        vc = vec3(1.);
+      #endif
+      gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D map; uniform vec3 color; uniform float full; uniform vec3 glow; uniform float useVC;
+      uniform float reach; uniform float dark; uniform float amb; varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc;
+      void main(){ vec3 albedo = texture2D(map, vUv).rgb * color * mix(vec3(1.), vc, useVC);
+        vec3 toS = wpos - cameraPosition; float d = length(toS); vec3 dir = toS / max(d, 1e-4);
+        float fall = clamp(1. - d / reach, 0., 1.); fall *= fall;
+        vec3 camFwd = -vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
+        float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
+        float facing = clamp(dot(normalize(wn), -dir), 0., 1.) * 0.6 + 0.4;
+        float light = (0.006 + amb) + fall * facing * (0.3 + 0.9 * cone);
+        light *= 1. - clamp(dark, 0., 1.);
+        vec3 col = mix(albedo * light, albedo, full) + glow;
+        gl_FragColor = vec4(pow(col, vec3(1.0/2.2)), 1.); }`
+  });
+}
+
+// ---- port of FirWorldBuilder.FirMesh (stacked jagged cones)
+function firMesh(tiers, height, radius, seg, jag) {
+  const pos = [], col = [], uv = [];
+  const tierH = height / (tiers * 0.7 + 0.3);
+  function tri(a, b, c, out, sa, sb) {
+    const ab = b.clone().sub(a), ac = c.clone().sub(a);
+    if (ab.cross(ac).dot(out) < 0) { const t = b; b = c; c = t; }
+    for (const [p, sh] of [[a, sa], [b, sb], [c, sb]]) {
+      pos.push(p.x, p.y, p.z); col.push(sh, sh, sh);
+      uv.push((Math.atan2(p.z, p.x) / (Math.PI * 2) + 0.5) * 3, p.y / height * 3);
+    }
+  }
+  for (let k = 0; k < tiers; k++) {
+    const y0 = k * tierH * 0.7, y1 = Math.min(height, y0 + tierH), r = radius * (1 - k / (tiers + 0.4));
+    const apex = new THREE.Vector3(0, y1, 0), inner = new THREE.Vector3(0, y0 + tierH * 0.25, 0), pts = seg * 2;
+    for (let i = 0; i < pts; i++) {
+      const a0 = i * Math.PI * 2 / pts, a1 = (i + 1) * Math.PI * 2 / pts;
+      const r0 = i % 2 == 0 ? r : r * jag, r1 = (i + 1) % 2 == 0 ? r : r * jag;
+      const d0 = i % 2 == 0 ? -tierH * 0.06 : 0, d1 = (i + 1) % 2 == 0 ? -tierH * 0.06 : 0;
+      const p0 = new THREE.Vector3(Math.cos(a0) * r0, y0 + d0, Math.sin(a0) * r0);
+      const p1 = new THREE.Vector3(Math.cos(a1) * r1, y0 + d1, Math.sin(a1) * r1);
+      const out = new THREE.Vector3(Math.cos((a0 + a1) / 2), 0.3, Math.sin((a0 + a1) / 2));
+      tri(apex, p0, p1, out, 1, 0.55);
+      tri(inner, p1, p0, new THREE.Vector3(0, -1, 0), 0.3, 0.45);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  return g;
+}
+const sphere = new THREE.SphereGeometry(0.5, 24, 16), cyl = new THREE.CylinderGeometry(0.5, 0.5, 2, 24);
+const M = {
+  needles: lantern({ map: tex('needles.png'), vc: true }), pot: lantern({ color: [0.55, 0.12, 0.1] }), trunk: lantern({ color: [0.3, 0.2, 0.12] }),
+  eye: lantern({ color: [0.9, 0.9, 0.85], glow: [0.22, 0.22, 0.2] }), pupil: lantern({ color: [0.01, 0.01, 0.01], full: 1 }),
+  mouth: lantern({ color: [0.7, 0.05, 0.08], glow: [0.08, 0, 0] }), black: lantern({ color: [0.03, 0.03, 0.03] }),
+  red: lantern({ color: [0.6, 0, 0], full: 1, glow: [0.9, 0.05, 0.02] }), teeth: lantern({ color: [0.85, 0.82, 0.7], glow: [0.08, 0.07, 0.05] }),
+  wall: lantern({ map: tex('wallpaper.png', 3, 2) }), floor: lantern({ map: tex('wood_floor.png', 3, 7) }), ceil: lantern({ map: tex('ceiling.png', 3, 7) }),
+  poster: lantern({ map: loader.load('poster_warning_scrawl.png') }), cloth: lantern({ color: [0.45, 0.07, 0.08] }),
+};
+// ---- port of FirWorldBuilder.BuildTree (face looks along +z)
+function buildTree(height) {
+  const root = new THREE.Group();
+  const potH = Math.max(0.08, height * 0.09), trunkH = height * 0.08, canopyH = height - potH - trunkH, radius = height * 0.36;
+  const add = (geo, mat, p, s, parent = root) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
+  add(cyl, M.pot, [0, potH / 2, 0], [radius * 0.55, potH / 2, radius * 0.55]);
+  add(cyl, M.trunk, [0, potH + trunkH / 2, 0], [radius * 0.18, trunkH / 2 + 0.02, radius * 0.18]);
+  const head = new THREE.Group(); head.position.set(0, potH + trunkH, 0); root.add(head);
+  const tiers = Math.min(6, Math.max(3, Math.round(height * 2.2)));
+  head.add(new THREE.Mesh(firMesh(tiers, canopyH, radius, 14, 0.7), M.needles));
+  const faceY = canopyH * 0.5, rAt = radius * (1 - faceY / canopyH) * 1.05, eye = Math.max(0.035, canopyH * 0.055), faceZ = rAt * 0.92;
+  for (const sx of [-1, 1]) {
+    add(sphere, M.eye, [sx * eye * 1.25, faceY + eye * 1.1, faceZ], [eye * 2, eye * 2, eye * 2], head);
+    add(sphere, M.pupil, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.85], [eye * 0.8, eye * 0.8, eye * 0.8], head);
+  }
+  const mouth = new THREE.Group(); mouth.position.set(0, faceY - eye * 1.4, faceZ - eye * 0.2); head.add(mouth);
+  add(sphere, M.mouth, [0, 0, 0], [eye * 3.2, eye * 1.6, eye * 1.2], mouth);
+  add(sphere, M.black, [0, 0, eye * 0.25], [eye * 2.4, eye * 1.1, eye * 0.9], mouth);
+  const tooth = firMesh(1, eye * 0.55, eye * 0.16, 5, 1);
+  for (let row = 0; row < 2; row++) for (let k = 0; k < 6; k++) {
+    const m = new THREE.Mesh(tooth, M.teeth); m.position.set((-1.05 + k * 0.42) * eye, (row == 0 ? 0.42 : -0.42) * eye, eye * 0.5);
+    if (row == 0) m.rotation.x = Math.PI; mouth.add(m);
+  }
+  const redEyes = new THREE.Group(); redEyes.visible = false; head.add(redEyes);
+  for (const sx of [-1, 1]) add(sphere, M.red, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.95], [eye * 0.75, eye * 0.75, eye * 0.75], redEyes);
+  return { root, head, mouth, redEyes, faceHeight: potH + trunkH + faceY, faceZ };
+}
+
+
+const prim = (geo, mat, p, s, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
+const group = (parent, p) => { const g = new THREE.Group(); g.position.set(...p); parent.add(g); return g; };
+const X = {
+  wood: lantern({ map: tex('wood_floor.png', 4, 4) }), wall: lantern({ map: tex('wallpaper.png', 4, 2) }),
+  white: lantern({ map: loader.load('skeleton.png'), color: [1.05, 1.02, 0.96], glow: [0.1, 0.1, 0.09] }),
+  red: lantern({ map: loader.load('skeleton.png'), color: [1.0, 0.16, 0.12], glow: [0.2, 0.02, 0.01] }),
+  green: lantern({ map: loader.load('skeleton.png'), color: [0.25, 1.1, 0.3], glow: [0.02, 0.16, 0.03] }),
+  black: lantern({ color: [0.01, 0.01, 0.01], full: 1 }),
+};
+{ const f = new THREE.Mesh(new THREE.BoxGeometry(8, 0.2, 8), X.wood); f.position.set(0, -0.1, 0); scene.add(f);
+  const w = new THREE.Mesh(new THREE.BoxGeometry(8, 3.4, 0.2), X.wall); w.position.set(0, 1.7, -1.2); scene.add(w); }
+const partsText = await (await fetch('skeleton_parts.txt')).text();
+const parts = []; let cur = null;
+for (const raw of partsText.split('\n')) {
+  const p = raw.trim().split(' ');
+  if (!p[0] || p[0] == '#') continue;
+  if (p[0] == 'part') { cur = { name: p[1], parent: p[2], pivot: [+p[3], +p[4], +p[5]], v: [], uv: [], t: [] }; parts.push(cur); }
+  else if (p[0] == 'v') { cur.v.push(+p[1], +p[2], +p[3]); cur.uv.push(+p[4], +p[5]); }
+  else if (p[0] == 't') cur.t.push(+p[1], +p[2], +p[3]);
+}
+for (const sp of parts) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(sp.v, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(sp.uv, 2)); g.setIndex(sp.t); g.computeVertexNormals(); sp.geo = g; }
+const gagRoot = group(scene, [0, 0, 0]);
+let pivots = [], meshes = [];
+function buildRigs(colours) {
+  while (gagRoot.children.length) gagRoot.remove(gagRoot.children[0]);
+  pivots = []; meshes = [];
+  colours.forEach((c, r) => {
+    const root = group(gagRoot, [(r - (colours.length - 1) / 2) * 0.7, 0, 0]);
+    const by = {}, mesh = {};
+    for (const sp of parts) { const t = sp.parent == '-' ? root : group(by[sp.parent], sp.pivot); const m = new THREE.Mesh(sp.geo, X[c]); t.add(m); by[sp.name] = t; mesh[sp.name] = m; }
+    pivots.push(root, by.torso, by.skull, by.upperL, by.upperR, by.foreL, by.foreR, by.legL, by.legR, by.jaw);
+    for (const o of ['pelvis', 'torso', 'skull', 'upperL', 'upperR', 'foreL', 'foreR', 'legL', 'legR', 'jaw']) meshes.push(mesh[o]);
+  });
+  scene.updateMatrixWorld(true);
+  window.rest = pivots.map(p => p.position.clone());
+}
+// ---- port of FirSkeletonGag
+const S = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+const Ramp = (t, a, b, c, d) => t < a || t > d ? 0 : t < b ? S((t - a) / (b - a)) : t < c ? 1 : 1 - S((t - c) / (d - c));
+const D = Math.PI / 180, E = (x, y, z) => new THREE.Euler(x * D, y * D, z * D, 'YXZ');
+const sin = Math.sin, abs = Math.abs, max = Math.max;
+function Apply(r, x, z, yaw, bob, lean, hx, hy, hz, sLx, sLz, sRx, sRz, eLx, eLz, eRx, eRz, legL, legR) {
+  const b = r * 10;
+  pivots[b].position.copy(rest[b]).add(new THREE.Vector3(x, bob, z)); pivots[b].rotation.copy(E(0, yaw, 0));
+  pivots[b + 1].rotation.copy(E(lean, 0, 0)); pivots[b + 2].rotation.copy(E(hx, hy, hz));
+  pivots[b + 3].rotation.copy(E(sLx, 0, sLz)); pivots[b + 4].rotation.copy(E(sRx, 0, sRz));
+  pivots[b + 5].rotation.copy(E(eLx, 0, eLz)); pivots[b + 6].rotation.copy(E(eRx, 0, eRz));
+  pivots[b + 7].rotation.copy(E(legL, 0, 0)); pivots[b + 8].rotation.copy(E(legR, 0, 0));
+}
+function Pile(r, j, k) {
+  const i = r * 10 + j, m = meshes[i], owner = m.parent;
+  owner.updateMatrixWorld(true);
+  const homePos = owner.localToWorld(new THREE.Vector3()), homeRot = owner.getWorldQuaternion(new THREE.Quaternion());
+  const rootPos = pivots[r * 10].getWorldPosition(new THREE.Vector3());
+  const spot = rootPos.clone().add(new THREE.Vector3(sin(j * 12.9) * 0.35, 0.07 + 0.03 * (j % 3), 0.15 + Math.cos(j * 7.3) * 0.3));
+  const lie = new THREE.Quaternion().setFromEuler(E(90, j * 47, (j % 2) * 20));
+  const pos = homePos.lerp(spot, k), rot = homeRot.slerp(lie, k);
+  // world -> owner local
+  const inv = owner.getWorldQuaternion(new THREE.Quaternion()).invert();
+  m.position.copy(owner.worldToLocal(pos)); m.quaternion.copy(inv.multiply(rot));
+}
+function Pose(act, r, t, L) {
+  if (act == 0) { const w = Ramp(t, 0.3 + 0.25 * r, 0.6 + 0.25 * r, L - 1.0, L - 0.6); Apply(r, 0, 0, 0, 0, 0, -5 * w, 0, 0, 0, 0, -20 * w, 85 * w, 0, 0, 0, 120 * w, 0, 0); }
+  else if (act == 1) { const k = Ramp(t, 0.2, 0.5, L - 0.8, L - 0.4), o = sin(t * 9); Apply(r, 0.05 * o * k, 0, 0, 0.02 * abs(o) * k, 5 * k, 0, 0, 10 * sin(t * 4.5) * k, 25 * o * k, -10 * k, -25 * o * k, 10 * k, -90 * k, 0, -90 * k, 0, 10 * o * k, -10 * o * k); }
+  else if (act == 2) { const d = Ramp(t, 0.1, 0.4, 2.2, 2.5), s = Ramp(t, 2.5, 2.8, L - 0.8, L - 0.5), w = sin(t * 8), kick = sin(t * 6);
+    Apply(r, 0, 0, 0, 0.04 * abs(kick) * d, 0, 0, 0, 12 * s, 0, -(150 + 20 * w) * d - 12 * s, 0, (150 - 20 * w) * d + 12 * s, -100 * s, -38 * s, -100 * s, 38 * s, -30 * max(0, kick) * d, -30 * max(0, -kick) * d); }
+  else if (act == 3) { const shake = Ramp(t, 0, 0.1, 0.4, 0.5); Apply(r, 0, 0, 0, 0, 0, 0, 10 * sin(t * 40) * shake, 0, 0, -10 * shake, 0, 10 * shake, 0, 0, 0, 0, 0, 0);
+    const pile = t < 0.5 ? 0 : t < L - 1.4 ? S((t - 0.5) / 0.45) : 1 - S((t - (L - 1.4)) / 0.8); for (let j = 0; j < 10; j++) Pile(r, j, pile); }
+  else if (act == 4) { const k = Ramp(t, 0.2, 0.5, L - 0.7, L - 0.4); Apply(r, 0, 0, 0, 0.03 * k, -6 * k, 0, 20 * k, 15 * k, 0, -12 * k, 0, 12 * k, -100 * k, -38 * k, -100 * k, 38 * k, 0, 0); }
+  else if (act == 5) { const k = Ramp(t, 0.2, 0.6, L - 0.6, L - 0.3); Apply(r, 0, 0, 8 * sin(t * 2) * k, 0.015 * abs(sin(t * 4)) * k, -6 * k, -15 * k, 0, 0, -20 * k, -60 * k, -20 * k, 60 * k, -40 * k, 0, -40 * k, 0, 0, 0); }
+  else if (act == 6) { const p = Ramp(t, 0.2, 0.5, 2.0, 2.3), l = Ramp(t, 2.3, 2.6, L - 0.6, L - 0.3), b = sin(t * 14);
+    Apply(r, 0, 0, 0, 0.02 * abs(b) * l, 25 * l + 6 * b * l, -10 * l, 0, 0, -30 * l, 0, -80 * p - 30 * l, 0, -20 * l, 0, -20 * l, 0, 0, 0); }
+  else if (act == 7) { const k = Ramp(t, 0.2, 0.6, L - 0.7, L - 0.3); Apply(r, 0, 0, 0, 0, 0, 0, 10 * k, -15 * k, 0, 0, -10 * k, 35 * k, 0, 0, -150 * k, 0, -10 * max(0, sin(t * 6)) * k, 0); }
+  else if (act == 8) { const look = Ramp(t, 0.9, 1.2, L - 1.0, L - 0.6), tw = Ramp(t, 0.4, 0.5, 0.6, 0.8);
+    Apply(r, 0, 0, 0, 0, 10 * look, 35 * look, 0, 0, 0, 0, -20 * tw, 20 * tw, 0, 0, 0, 0, 0, 0);
+    const drop = t < 0.5 ? 0 : t < L - 0.9 ? S((t - 0.5) / 0.35) : 1 - S((t - (L - 0.9)) / 0.4); Pile(r, 6, drop); }
+  else if (act == 9) { const k = Ramp(t, 0.2, 0.5, L - 0.7, L - 0.4); Apply(r, 0, 0, 0, 0, -5 * k, 0, 0, -10 * k, 0, -40 * k, 0, 40 * k, 0, 100 * k, 0, -100 * k, 0, 0); }
+  else if (act == 10) { const k = Ramp(t, 0.1, 0.3, L - 0.5, L - 0.2), f = sin(t * 40); Apply(r, 0, 0, 0, 0.01 * f * k, 10 * k, 0, 8 * sin(t * 25) * k, 0, 0, -5 * k, 0, 5 * k, -100 * k, 50 * k, -100 * k, -50 * k, 6 * f * k, -6 * f * k); }
+  else if (act == 11) { const k = Ramp(t, 0.3 + 0.3 * r, 0.8 + 0.3 * r, L - 1.0, L - 0.6); Apply(r, 0, 0, 0, 0, 55 * k, 10 * k, 0, 0, 0, -50 * k, -40 * k, 0, 0, 0, -80 * k, -40 * k, 0, 0); }
+}
+window.show = (act, colours, t, L, camYaw) => {
+  renderer.setSize(640, 640); camera.aspect = 1; camera.fov = 55; camera.updateProjectionMatrix();
+  buildRigs(colours);
+  for (let r = 0; r < colours.length; r++) Pose(act, r, t, L);
+  const yaw = (camYaw || 0) * D;
+  camera.position.set(Math.sin(yaw) * 3.0, 1.15, Math.cos(yaw) * 3.0); camera.lookAt(0, 0.9, 0); camera.updateMatrixWorld();
+  G.dark.value = 0; G.amb.value = 0.25; G.reach.value = 9;
+  renderer.render(scene, camera);
+};
+window.renderAt = () => true;
+// textures may finish loading while the model file is still being fetched, so wait for whichever is last
+window.ready = new Promise(r => { const check = () => texturesLoaded ? r(true) : setTimeout(check, 100); check(); });
+</script></body></html>

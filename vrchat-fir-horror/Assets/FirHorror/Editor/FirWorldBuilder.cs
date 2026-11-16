@@ -106,6 +106,7 @@ public static class FirWorldBuilder
         game.lobbySpawn = spawn;
         BuildFactory(root);
         BuildGags(root);
+        BuildSkeletonGags(root);
 
         // ---- ambience
         var amb = new GameObject("Ambience");
@@ -797,6 +798,7 @@ public static class FirWorldBuilder
         public Mesh mesh;
     }
     static List<SkelPart> skelParts;
+    static Transform[] lastRigMeshes;   // the mesh of each pivot of the last rig built, same order
 
     /// <summary>
     /// Reads Models/skeleton_parts.txt (the skeleton model cut into rigid parts by
@@ -847,6 +849,7 @@ public static class FirWorldBuilder
         var root = Group(parent, name, new Vector3(-0.05f, 0, 0));
         root.localRotation = Quaternion.Euler(0, 90, 0);
         var by = new Dictionary<string, Transform>();
+        var mesh = new Dictionary<string, Transform>();
         foreach (var sp in parts)
         {
             Transform t = sp.parent == "-" ? root : Group(by[sp.parent], sp.name, sp.pivot);
@@ -855,7 +858,10 @@ public static class FirWorldBuilder
             go.AddComponent<MeshFilter>().sharedMesh = sp.mesh;
             NoShadows(go.AddComponent<MeshRenderer>(), bone);
             by[sp.name] = t;
+            mesh[sp.name] = go.transform;
         }
+        string[] order = { "pelvis", "torso", "skull", "upperL", "upperR", "foreL", "foreR", "legL", "legR", "jaw" };
+        lastRigMeshes = order.Select(o => mesh[o]).ToArray();
         return new[] { root, by["torso"], by["skull"], by["upperL"], by["upperR"], by["foreL"], by["foreR"], by["legL"], by["legR"], by["jaw"] };
     }
 
@@ -901,7 +907,9 @@ public static class FirWorldBuilder
             Prim(PrimitiveType.Sphere, "Hand", elbow, new Vector3(0, -0.29f, 0), new Vector3(0.08f, 0.1f, 0.03f), bone);
             shoulders[i] = shoulder; elbows[i] = elbow;
         }
-        return new[] { root, torso, skull, shoulders[0], shoulders[1], elbows[0], elbows[1], legs[0], legs[1], jaw };
+        var rig = new[] { root, torso, skull, shoulders[0], shoulders[1], elbows[0], elbows[1], legs[0], legs[1], jaw };
+        lastRigMeshes = rig;   // primitives hang straight off their pivots
+        return rig;
     }
 
     // ------------------------------------------------------------------- chapter 6: the furnace
@@ -1166,6 +1174,72 @@ public static class FirWorldBuilder
         if (tree != null) gag.anim = tree.anim;
         if (gag.target == null) gag.target = go.transform;
         SetInteract(gag, verb, 3f);
+    }
+
+    // =================================================================== skeleton routines (Data/skeleton_gags.txt)
+
+    static int BuildSkeletonGags(Transform root)
+    {
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/skeleton_gags.txt");
+        if (ta == null) { Debug.LogWarning("Fir Warning: no Data/skeleton_gags.txt, so no skeleton routines"); return 0; }
+        var g = Group(root, "SkeletonGags", Vector3.zero);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        int n = 0;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Trim() == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 11) { Debug.LogWarning("Fir Warning: bad skeleton gag line: " + line); continue; }
+            string id = f[0];
+            int act = int.Parse(f[1], inv);
+            var go = new GameObject("Skeleton " + id + " (act " + act + ")");
+            go.transform.SetParent(g, false);
+            go.transform.localPosition = new Vector3(float.Parse(f[2], inv), float.Parse(f[3], inv), float.Parse(f[4], inv));
+            go.transform.localRotation = Quaternion.Euler(0, float.Parse(f[5], inv), 0);
+            var colours = f[6].Split(',');
+            var pivots = new List<Transform>();
+            var meshes = new List<Transform>();
+            for (int r = 0; r < colours.Length; r++)
+            {
+                string c = colours[r].Trim();
+                var bone = c == "red" ? M("Bone") : c == "green" ? M("BoneGreen") : M("BoneWhite");
+                var rig = SkeletonRig(go.transform, "Rig" + r + " " + c, bone);
+                rig[0].localPosition = new Vector3((r - (colours.Length - 1) / 2f) * 0.7f, 0, 0);
+                rig[0].localRotation = Quaternion.identity;
+                pivots.AddRange(rig);
+                meshes.AddRange(lastRigMeshes);
+            }
+            var sg = Add<FirSkeletonGag>(go);
+            sg.game = game; sg.act = act; sg.rigCount = colours.Length;
+            sg.pivots = pivots.ToArray(); sg.meshes = meshes.ToArray();
+            sg.voiceDelay = float.Parse(f[8], inv);
+            sg.line = f[9];
+            sg.baseLength = act == 3 ? 5f : act == 2 ? 5.5f : 4f;
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Gags/skel_" + id + ".ogg");
+            if (clip == null) Debug.LogWarning("Fir Warning: no voice line for skeleton " + id + " (run tools/make_voices.py)");
+            sg.voice = Src(go.transform, new Vector3(0, 1.6f, 0.1f), clip, false, 1f, 1f, 14f, false);
+            var col = go.AddComponent<BoxCollider>();
+            col.center = new Vector3(0, 0.9f, 0); col.size = new Vector3(colours.Length * 0.7f + 0.2f, 1.8f, 0.5f);
+            // props
+            if (act == 5)
+            {
+                Box(go.transform, "MicStand", new Vector3(0, 0.75f, 0.45f), new Vector3(0.03f, 1.5f, 0.03f), M("Metal"), false, false);
+                Prim(PrimitiveType.Sphere, "Mic", go.transform, new Vector3(0, 1.52f, 0.42f), new Vector3(0.07f, 0.1f, 0.07f), M("Black"));
+            }
+            if (act == 7)
+                Box(pivots[6], "Phone", new Vector3(0, -0.4f, 0.03f), new Vector3(0.05f, 0.2f, 0.06f), M("GiftRed"), false, false);
+            if (f[10].Trim() != "")
+            {
+                var plac = Group(go.transform, "Placard", new Vector3(0, 0, 0.75f));
+                Box(plac, "Post", new Vector3(0, 0.35f, 0), new Vector3(0.04f, 0.7f, 0.04f), M("DeskWood"), false, false);
+                Box(plac, "Board", new Vector3(0, 0.78f, 0), new Vector3(1.1f, 0.3f, 0.03f), M("Trim"), false, false);
+                Text("Text", plac, new Vector3(0, 0.78f, 0.02f), Face(Vector3.forward), new Vector2(1.0f, 0.26f), 0.14f, "<color=#1a1a1a><b>" + f[10] + "</b></color>");
+            }
+            SetInteract(sg, act == 3 || act == 8 ? "Poke the skeleton" : "Say hi", 3f);
+            n++;
+        }
+        return n;
     }
 
     // =================================================================== stalker
@@ -1968,6 +2042,7 @@ public static class FirWorldBuilder
         A("EyeRed", null, new Color(0.6f, 0f, 0f), 1f, new Color(0.9f, 0.05f, 0.02f));
         A("Bone", "skeleton", new Color(1f, 0.16f, 0.12f), 0f, new Color(0.2f, 0.02f, 0.01f));   // RED skeleton
         A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 0f, new Color(0.1f, 0.1f, 0.09f));
+        A("BoneGreen", "skeleton", new Color(0.25f, 1.1f, 0.3f), 0f, new Color(0.02f, 0.16f, 0.03f));
         A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1f, new Color(0.03f, 0.1f, 0.07f));
         A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 0f, new Color(0.08f, 0.07f, 0.05f));
         A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 0f, new Color(0.08f, 0f, 0f));
@@ -2026,7 +2101,7 @@ public static class FirWorldBuilder
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "FirGameManager", "FirAnimatronic", "FirStalker", "FirJumpscare", "FirItem", "FirCarryItem",
-                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag" };
+                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag", "FirSkeletonGag" };
 
     static bool EnsureProgramAssets()
     {
