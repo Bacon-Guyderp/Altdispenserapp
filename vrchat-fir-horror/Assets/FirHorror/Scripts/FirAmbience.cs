@@ -55,7 +55,10 @@ public class FirAmbience : UdonSharpBehaviour
         if (Time.time > nextBig && roll < 0.14f + phase * 0.025f + (alone ? 0.1f : 0f))
         {
             nextBig = Time.time + Random.Range(70f, 120f);
-            if (Random.value < 0.5f) game.BehindScare();
+            float pick = Random.value;
+            if (pick < 0.35f) game.BehindScare();
+            else if (pick < 0.55f) game.Subliminal();
+            else if (pick < 0.7f) game.Glitch();
             else
             {
                 game.Blackout(1.8f);
@@ -65,6 +68,7 @@ public class FirAmbience : UdonSharpBehaviour
             return;
         }
         PlayBehind(h, clips[Random.Range(0, clips.Length)]);
+        if (Random.value < 0.06f + phase * 0.01f) game.Subliminal();
         if (alone && Random.value < 0.45f) { PlayBehind(h, whisperClip); game.Say(lonely[Random.Range(0, lonely.Length)], 3f); }
         if (Random.value < 0.3f + phase * 0.03f) game.Flicker(1.2f);
     }

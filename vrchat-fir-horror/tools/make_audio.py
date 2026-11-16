@@ -244,6 +244,16 @@ def main():
     hum_down = sine(np.linspace(120, 30, len(st2))) * 0.4 * np.exp(-st2 * 3)
     write("switch", click + hum_down)
 
+    # ---- door banging from the other side
+    bang = np.zeros(int(2.4 * SR))
+    for k, at in enumerate((0.0, 0.55, 1.1, 1.35)):
+        bt = t(0.6)
+        hit = sine(np.linspace(95, 40, len(bt))) * np.exp(-bt * 9) * 2 + lowpass(noise(0.6), 700) * np.exp(-bt * 14) * 1.5
+        rattle = bandpass(noise(0.6), 2200, 4) * np.exp(-bt * 7) * 0.6
+        i = int(at * SR)
+        bang[i:i + len(bt)] += (hit + rattle)[:len(bang) - i] * (1.0 if k < 3 else 1.3)
+    write("door_bang", bang)
+
 
 if __name__ == "__main__":
     main()

@@ -361,6 +361,9 @@ public static class FirWorldBuilder
         shared1.groupChapter = 1; shared1.duration = 2f; shared1.screamIndex = 1; shared1.global = true; shared1.delay = 0.5f;
         var corner = Scare(g, "OriginalCorner", new Vector3(4.5f, 1.5f, 2.2f), new Vector3(0.4f, 3, 3.5f), 4, 1, 1);
         corner.delay = 1f;
+        Charger(g, "ShowroomCharger", new Vector3(-2.5f, 1.5f, 13.8f), new Vector3(3, 3, 0.4f), new Vector3(0, 0, 19.2f), 180, 1);
+        Mimic(g, "StageBattery", new Vector3(1.5f, 0.34f, 11.6f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", 1, 0);
+        DoorBang(g, 20f, 16f, 1);
     }
 
     // ------------------------------------------------------------------- chapter 2: glow paint
@@ -441,6 +444,9 @@ public static class FirWorldBuilder
         fusePeek.target = BuildTree(g, new Vector3(-10.6f, 0, 55.2f), 120, 1.9f, 0, false, "FuseBoxPeekTree").root;
         var sharedDark = DarkReveal(g, "SharedCrossAisle", new Vector3(0, 1.5f, 37.5f), new Vector3(8, 3, 0.4f), new Vector3(3.2f, 0, 38.5f), -90, 2.1f, 2);
         sharedDark.global = true;
+        Charger(g, "AisleCharger", new Vector3(0, 1.5f, 46f), new Vector3(3, 3, 0.4f), new Vector3(0.4f, 0, 54.8f), 180, 2);
+        Mimic(g, "AisleFuse", new Vector3(6.75f, 0.1f, 50.6f), M("Fuse"), new Vector3(0.06f, 0.07f, 0.06f), PrimitiveType.Cylinder, "Take fuse", 2, 0);
+        DoorBang(g, 56f, 24f, 2);
     }
 
     // ------------------------------------------------------------------- chapter 3: the tapes
@@ -538,6 +544,9 @@ public static class FirWorldBuilder
         headDrop.target = falling.root; headDrop.anim = falling.anim; headDrop.animMode = 4; headDrop.duration = 1.5f;
         headDrop.dropTo = Marker(g, "HeadDropEnd", new Vector3(-2.6f, 0, 70.5f), 90);
         headDrop.sound = Src(g, new Vector3(-2.6f, 1.5f, 70.5f), Clip("scream1"), false, 1f, 1f, 12f, false);
+        Charger(g, "LabCharger", new Vector3(3f, 1.5f, 77f), new Vector3(0.4f, 3, 3), new Vector3(7f, 0, 78.6f), -90, 3);
+        Mimic(g, "DeckTape", new Vector3(0.62f, 0.79f, 77.9f), M("TapeRed"), new Vector3(0.12f, 0.03f, 0.08f), PrimitiveType.Cube, "Take tape (red)", 3, 4);
+        DoorBang(g, 80f, 16f, 3);
     }
 
     // ------------------------------------------------------------------- chapter 4: counting memos
@@ -642,6 +651,9 @@ public static class FirWorldBuilder
         var sharedOffice = Scare(g, "SharedStaffScream", new Vector3(0, 1.5f, 91f), new Vector3(4, 3, 0.4f), 5, 4, 4);
         sharedOffice.groupChapter = 4; sharedOffice.duration = 2.2f; sharedOffice.screamIndex = 2; sharedOffice.global = true; sharedOffice.delay = 0.5f;
         Creeper(g, "LeftAisleCreeper", new Vector3(-9.3f, 1.5f, 95f), new Vector3(1.4f, 3, 0.4f), new Vector3(-9.3f, 0, 86.5f), 0, 1.6f, 4);
+        Charger(g, "OfficeCharger", new Vector3(0, 1.5f, 86.5f), new Vector3(4, 3, 0.4f), new Vector3(0, 0, 100.5f), 180, 4);
+        Mimic(g, "SpareKey", new Vector3(1.4f, 0.03f, 93.6f), M("GiftGold"), new Vector3(0.1f, 0.02f, 0.04f), PrimitiveType.Cube, "Take key", 4, 0);
+        DoorBang(g, 104f, 20f, 4);
         DarkReveal(g, "KeypadReveal", new Vector3(-2.5f, 1.5f, 101.8f), new Vector3(3, 3, 0.4f), new Vector3(-4.2f, 0, 103.2f), 150, 1.8f, 4);
     }
 
@@ -732,6 +744,9 @@ public static class FirWorldBuilder
         cardFace.screamIndex = 2; cardFace.duration = 1.0f; cardFace.delay = 7f;
         var doorPeek = Scare(g, "DoorwayPeek", new Vector3(0, 1.5f, 118f), new Vector3(10, 3, 0.4f), 6, 5, 5);
         doorPeek.target = BuildTree(g, new Vector3(0.3f, 0, 105.2f), 0, 1.8f, 0, false, "DoorwayWatcher").root;
+        Charger(g, "HomeCharger", new Vector3(5f, 1.5f, 112f), new Vector3(4, 3, 0.4f), new Vector3(3f, 0, 105.4f), 0, 5);
+        Mimic(g, "PresentHat", new Vector3(-1.2f, 0.3f, 109f), M("HatRed"), new Vector3(0.25f, 0.3f, 0.25f), PrimitiveType.Capsule, "Santa hat?", 5, 0);
+        DoorBang(g, 120f, 14f, 5);
     }
 
     // ------------------------------------------------------------------- chapter 6: the furnace
@@ -808,6 +823,11 @@ public static class FirWorldBuilder
         drop2.sound = Src(g, new Vector3(8.5f, 2f, 133f), Clip("scream2"), false, 1f, 1f, 18f, false);
         var valveLeft = Scare(g, "LeftValveFace", new Vector3(-9.8f, 1.5f, 129f), new Vector3(0.4f, 3, 2f), 0, 6, 6);
         valveLeft.screamIndex = 0; valveLeft.duration = 1.0f; valveLeft.delay = 1.5f;
+        Charger(g, "FurnaceCharger", new Vector3(0, 1.5f, 140.5f), new Vector3(10, 3, 0.4f), new Vector3(0.5f, 0, 149.2f), 180, 6);
+        var fakeValve = Mimic(g, "FakeValve", new Vector3(10.85f, 1.3f, 124f), M("Valve"), new Vector3(0.32f, 0.03f, 0.32f), PrimitiveType.Cylinder, "Open gas valve", 6, 0);
+        fakeValve.transform.Find("Visual").localRotation = Quaternion.FromToRotation(Vector3.up, Vector3.left);
+        Box(g, "FakeValvePipe", new Vector3(10.93f, 1.3f, 124f), new Vector3(0.18f, 0.08f, 0.08f), M("Metal"), false);
+        DoorBang(g, 150f, 22f, 6);
 
         stalker.spawnByPhase[6] = Marker(g, "StalkerSpawn6", new Vector3(9f, 0, 148f), 200);
     }
@@ -1106,6 +1126,42 @@ public static class FirWorldBuilder
         t.anim.watchRange = 0f;
         s.target = t.root; s.anim = t.anim; s.animMode = 4; s.duration = 1.3f; s.global = true; s.once = true;
         s.sound = Src(t.root.transform, new Vector3(0, 1.3f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 16f, false);
+    }
+
+    /// <summary>A tree that sprints at you screaming from `home` when you cross the trigger.</summary>
+    static void Charger(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 home, float yaw, int phase)
+    {
+        var s = Scare(g, name, trigPos, trigSize, 10, phase, phase);
+        var t = BuildTree(g, home, yaw, 1.8f, 0, false, name + " Tree");
+        t.anim.watchRange = 0f; t.anim.snapChance = 0f;
+        s.target = t.root; s.anim = t.anim; s.screamIndex = (phase + 1) % 3;
+        s.sound = Src(t.root.transform, new Vector3(0, 1.3f, 0), Clip("scream" + (1 + (phase + 1) % 3)), false, 1f, 1f, 18f, false);
+    }
+
+    /// <summary>A fake item. Take it and it turns out to be a tree. It's back next game.</summary>
+    static GameObject Mimic(Transform g, string name, Vector3 pos, Material mat, Vector3 size, PrimitiveType shape, string label, int phase, int scareKind)
+    {
+        var go = new GameObject("Mimic " + name);
+        go.transform.SetParent(g, false);
+        go.transform.localPosition = pos;
+        Prim(shape, "Visual", go.transform, Vector3.zero, size, mat);
+        Prim(PrimitiveType.Sphere, "Glint", go.transform, new Vector3(0, size.y * 0.6f, 0), Vector3.one * 0.02f, M("Glint"));
+        go.AddComponent<BoxCollider>().size = Vector3.one * 0.28f;
+        var it = Add<FirItem>(go);
+        it.game = game; it.fake = true;
+        var sc = ItemScare(g, name + "Bite", scareKind, phase, (phase + 2) % 3);
+        sc.restore = go;
+        it.scareOnTake = sc;
+        SetInteract(it, label, 2.5f);
+        return go;
+    }
+
+    /// <summary>Something pounds on a locked door from the other side when you get close to it.</summary>
+    static void DoorBang(Transform g, float doorZ, float width, int phase)
+    {
+        var s = Scare(g, "DoorBang " + phase, new Vector3(0, 1.5f, doorZ - 2.5f), new Vector3(width, 3, 0.4f), 7, phase, phase);
+        s.duration = 1.2f; s.once = true; s.delay = 0.4f;
+        s.sound = Src(g, new Vector3(0, 1.3f, doorZ + 0.6f), Clip("door_bang"), false, 1f, 1f, 22f, false);
     }
 
     /// <summary>A gas valve wheel on a wall pipe (Recall Floor). Opening all three lights the furnace.</summary>

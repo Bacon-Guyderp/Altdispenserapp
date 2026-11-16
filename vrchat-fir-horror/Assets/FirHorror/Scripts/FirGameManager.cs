@@ -605,9 +605,12 @@ public class FirGameManager : UdonSharpBehaviour
         {
             scareState = 2; scareNext = t + scareLen;
             scareRig.gameObject.SetActive(true);
-            if (scareAnim != null) scareAnim.SetMode(4, scareLen);
-            PlaySfx(screams[scareClip % screams.Length]);
-            PlaySfx(clipHit);
+            if (scareClip >= 0)
+            {
+                if (scareAnim != null) scareAnim.SetMode(4, scareLen);
+                PlaySfx(screams[scareClip % screams.Length]);
+                PlaySfx(clipHit);
+            }
         }
         else if (scareState == 2)
         {
@@ -616,6 +619,24 @@ public class FirGameManager : UdonSharpBehaviour
             Blackout(0.7f);
         }
         else scareState = 0;
+    }
+
+    /// <summary>A face for a split second, no sound. Did you see that?</summary>
+    public void Subliminal()
+    {
+        if (scareState != 0 || behindActive || reducedScares) return;
+        scareClip = -1; scareLen = 0.12f;
+        scareState = 1; scareNext = Time.time + 0.05f;
+    }
+
+    /// <summary>The HUD corrupts for a moment.</summary>
+    public void Glitch()
+    {
+        string[] lines = { "Y O U   C A N ' T   L E A V E", "BUY ONLY THE ORIGINAL", "it is behind the next door",
+                           "I SEE YOU", "PLAY IT SAFE PLAY IT SAFE PLAY IT SAFE", "who is standing next to you?" };
+        Say("<color=#ff2020><b>" + lines[Random.Range(0, lines.Length)] + "</b></color>", 1.4f);
+        PlaySfx(clipStatic);
+        Flicker(0.6f);
     }
 
     /// <summary>Whispers, and a tree is standing behind you. It screams when you turn round.</summary>

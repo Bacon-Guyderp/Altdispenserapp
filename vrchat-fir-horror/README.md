@@ -8,7 +8,7 @@ on the Recall Floor, where you burn the "imitation" trees in the furnace while *
 
 * **About 45–50 minutes** for a group playing for the first time, across six puzzle chapters. Every answer is randomised each game.
 * **1–8 players**, co-op, and **tuned for duos**: see "Playing with two" below. Progress, doors and items are synced, and late joiners can catch up.
-* **About 90 placed jumpscares**, some shared so everyone gets them at the same moment, plus a tree waiting inside every door, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 14–36 seconds (more often when you split up). Any animatronic may snap round and scream as you walk up, picked-up imitations and hats can turn on you, and entering puzzle codes can set off whispers or something behind you.
+* **About 110 placed jumpscares**, some shared so everyone gets them at the same moment, plus a tree waiting inside every door, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 14–36 seconds (more often when you split up). Any animatronic may snap round and scream as you walk up, picked-up imitations and hats can turn on you, and entering puzzle codes can set off whispers or something behind you.
 * **Quest-friendly:** no realtime lights or shadows, no post-processing, one tiny shader, 512 px textures
   (ASTC on Android) and about 1 MB of mono Vorbis audio. The whole package is under 3 MB.
 
@@ -39,6 +39,10 @@ when you look, group screams with blackouts, flickers, **creepers** (a tree that
 look away, until it reaches you) and **dark reveals** (the lights die, and when they come back a tree is
 standing there). Glow-paint messages ("BEHIND YOU", "IT MOVES IN THE DARK") appear on the walls in every
 blackout.
+
+New in the latest pass: **chargers** (a tree sprints at you screaming, one per chapter), **mimics** (a battery,
+fuse, tape, key, hat or valve that turns out to be a tree), **banging** on every locked door from the far side,
+**subliminal flashes** (a face for a split second, no sound) and **HUD glitches** ("Y O U   C A N ' T   L E A V E").
 
 Between the scripted scares, a **scare director** plays sounds just behind you, flickers the lights and
 sometimes stages a bigger moment: something standing behind you, or a blackout with laughter. It speeds up
