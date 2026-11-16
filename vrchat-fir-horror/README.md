@@ -78,10 +78,11 @@ which control blackouts, flicker and brightness. Tree eyes have a faint glow, so
 you can see is pairs of eyes.
 
 ### Easter egg: the closet
-The Living Room has a closet marked "do not open". Open it and, for everyone at once, a **red** skeleton steps out
-of the dark through green mist, gives a big palms-up shrug, and steps back in, with the subtitle
-**RED SKELETON**. It's a tribute to the classic cartoon gag ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)).
-The skeleton is built from simple shapes; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`.
+The Living Room has a closet marked "do not open". Open it and, for everyone at once, the classic cartoon
+gag plays out ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)): a white skeleton steps out through
+green mist and shrugs (*"A skeleton."*), then strides off. A **red** skeleton leans out to watch it go, steps
+out with its hands on its hips (*"Red skeleton, ha."*), and slouches off after it before the door swings
+shut. Both skeletons are built from simple shapes; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`.
 
 ### Throwable toilets
 There are two toilets in the lobby and a three-stall staff restroom by the Offices entrance. Pick one up and

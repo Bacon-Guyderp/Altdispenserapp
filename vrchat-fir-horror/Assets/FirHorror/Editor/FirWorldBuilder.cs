@@ -751,66 +751,82 @@ public static class FirWorldBuilder
     }
 
     /// <summary>
-    /// Easter egg: a closet against a wall (its door faces +X). Open it and a skeleton steps out and
-    /// shrugs. A tribute to the classic cartoon "RED SKELETON" gag, built from primitives.
+    /// Easter egg: a closet against a wall (its door faces +X). Open it for the classic cartoon
+    /// "RED SKELETON" gag: a white skeleton shrugs and walks off, a red one follows. Built from primitives.
     /// </summary>
     static void BuildSkeletonCloset(Transform g, Vector3 at)
     {
         var c = Group(g, "SkeletonCloset", at);
         Box(c, "ClosetBody", new Vector3(0, 1.15f, 0), new Vector3(0.7f, 2.3f, 1.5f), M("DeskWood"), true);
         Quad(c, "Doorway", new Vector3(0.352f, 1.05f, 0), Face(Vector3.right), new Vector2(1.3f, 2.1f), M("Pupil"));
-        var hinge = Group(c, "Hinge", new Vector3(0.38f, 0, -0.66f));
-        var door = Box(hinge, "Door", new Vector3(0, 1.05f, 0.66f), new Vector3(0.05f, 2.1f, 1.3f), M("Trim"), true, false);
-        Prim(PrimitiveType.Sphere, "Knob", door.transform, new Vector3(0.04f, 0, 0.5f), Vector3.one * 0.07f, M("GiftGold"));
+        // hinged on the +Z edge so it swings open away from where the skeletons walk off (-Z)
+        var hinge = Group(c, "Hinge", new Vector3(0.38f, 0, 0.66f));
+        var door = Box(hinge, "Door", new Vector3(0, 1.05f, -0.66f), new Vector3(0.05f, 2.1f, 1.3f), M("Trim"), true, false);
+        Prim(PrimitiveType.Sphere, "Knob", door.transform, new Vector3(0.04f, 0, -0.5f), Vector3.one * 0.07f, M("GiftGold"));
         Text("Sign", door.transform, new Vector3(0.03f, 0.55f, 0), Face(Vector3.right), new Vector2(0.9f, 0.3f), 0.09f,
              "<color=#3a1a10><b>CLOSET</b>\n<size=70%>do not open</size></color>");
 
-        // the skeleton, facing +X (out of the closet), hidden inside until it's opened
-        var sk = Group(c, "Skeleton", new Vector3(-0.05f, 0, 0));
-        sk.localRotation = Quaternion.Euler(0, 90, 0);
-        var bone = M("Bone");
-        Prim(PrimitiveType.Cylinder, "Spine", sk, new Vector3(0, 1.2f, 0), new Vector3(0.05f, 0.27f, 0.05f), bone);
-        for (int r = 0; r < 5; r++)
-            Prim(PrimitiveType.Cylinder, "Rib", sk, new Vector3(0, 1.22f + r * 0.055f, 0.03f), new Vector3(0.3f - Mathf.Abs(r - 2) * 0.02f, 0.012f, 0.2f), bone);
-        Prim(PrimitiveType.Sphere, "Pelvis", sk, new Vector3(0, 0.93f, 0), new Vector3(0.3f, 0.12f, 0.16f), bone);
-        Prim(PrimitiveType.Cylinder, "Collar", sk, new Vector3(0, 1.47f, 0), new Vector3(0.04f, 0.2f, 0.04f), bone).transform.localRotation = Quaternion.Euler(0, 0, 90);
-        foreach (int side in new[] { -1, 1 })
-        {
-            Prim(PrimitiveType.Cylinder, "Thigh", sk, new Vector3(side * 0.09f, 0.68f, 0), new Vector3(0.05f, 0.22f, 0.05f), bone);
-            Prim(PrimitiveType.Cylinder, "Shin", sk, new Vector3(side * 0.1f, 0.25f, 0), new Vector3(0.045f, 0.21f, 0.045f), bone);
-            Prim(PrimitiveType.Sphere, "Foot", sk, new Vector3(side * 0.1f, 0.03f, 0.06f), new Vector3(0.08f, 0.05f, 0.16f), bone);
-        }
-        var skullPivot = Group(sk, "SkullPivot", new Vector3(0, 1.5f, 0));
-        Prim(PrimitiveType.Sphere, "Skull", skullPivot, new Vector3(0, 0.13f, 0), new Vector3(0.2f, 0.22f, 0.21f), bone);
-        Prim(PrimitiveType.Sphere, "Jaw", skullPivot, new Vector3(0, 0.05f, 0.04f), new Vector3(0.14f, 0.07f, 0.13f), bone);
-        foreach (float ex in new[] { -0.045f, 0.045f })
-            Prim(PrimitiveType.Sphere, "Socket", skullPivot, new Vector3(ex, 0.14f, 0.09f), new Vector3(0.055f, 0.06f, 0.04f), M("Pupil"));
-        Prim(PrimitiveType.Cube, "Grin", skullPivot, new Vector3(0, 0.06f, 0.1f), new Vector3(0.09f, 0.012f, 0.02f), M("Pupil"));
-        Transform[] arms = new Transform[2], fores = new Transform[2];
-        for (int i = 0; i < 2; i++)
-        {
-            int side = i == 0 ? -1 : 1;
-            var shoulder = Group(sk, i == 0 ? "ShoulderL" : "ShoulderR", new Vector3(side * 0.2f, 1.46f, 0));
-            Prim(PrimitiveType.Cylinder, "UpperArm", shoulder, new Vector3(0, -0.15f, 0), new Vector3(0.04f, 0.15f, 0.04f), bone);
-            var elbow = Group(shoulder, "Elbow", new Vector3(0, -0.3f, 0));
-            Prim(PrimitiveType.Cylinder, "Forearm", elbow, new Vector3(0, -0.13f, 0), new Vector3(0.035f, 0.13f, 0.035f), bone);
-            Prim(PrimitiveType.Sphere, "Hand", elbow, new Vector3(0, -0.29f, 0), new Vector3(0.08f, 0.1f, 0.03f), bone);
-            arms[i] = shoulder; fores[i] = elbow;
-        }
+        var white = SkeletonRig(c, "WhiteSkeleton", M("BoneWhite"));
+        var red = SkeletonRig(c, "RedSkeleton", M("Bone"));
 
         // low clumps of mist rolling out of the doorway
         var mist = Group(c, "Mist", Vector3.zero).gameObject;
         float[,] puffs = { { 0.5f, 0.1f, 0.9f, 0.7f }, { 0.9f, -0.35f, 0.8f, 0.6f }, { 1.0f, 0.4f, 0.7f, 0.55f },
-                           { 1.35f, 0.0f, 0.9f, 0.7f }, { 1.6f, -0.5f, 0.6f, 0.45f }, { 1.7f, 0.55f, 0.55f, 0.4f } };
+                           { 1.35f, 0.0f, 0.9f, 0.7f }, { 1.6f, -0.5f, 0.6f, 0.45f }, { 1.7f, 0.55f, 0.55f, 0.4f },
+                           { 0.9f, -1.3f, 0.8f, 0.9f }, { 0.8f, -2.3f, 0.7f, 0.8f } };
         for (int i = 0; i < puffs.GetLength(0); i++)
             Prim(PrimitiveType.Sphere, "Puff", mist.transform, new Vector3(puffs[i, 0], 0.02f, puffs[i, 1]),
                  new Vector3(puffs[i, 2], 0.08f + 0.03f * (i % 2), puffs[i, 3]), M("Mist"));
         var cl = Add<FirCloset>(door);
-        cl.game = game; cl.hinge = hinge; cl.skeleton = sk; cl.skull = skullPivot;
-        cl.armL = arms[0]; cl.armR = arms[1]; cl.foreL = fores[0]; cl.foreR = fores[1];
-        cl.mist = mist;
+        cl.game = game; cl.hinge = hinge; cl.white = white; cl.red = red; cl.mist = mist;
         cl.creak = Src(c, new Vector3(0.4f, 1.2f, 0), Clip("creak"), false, 1f, 1f, 14f, false);
         SetInteract(cl, "Open the closet", 2.5f);
+    }
+
+    /// <summary>
+    /// A primitive skeleton standing in the closet, facing +X. Returns its 9 pivots:
+    /// root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR.
+    /// </summary>
+    static Transform[] SkeletonRig(Transform parent, string name, Material bone)
+    {
+        var root = Group(parent, name, new Vector3(-0.05f, 0, 0));
+        root.localRotation = Quaternion.Euler(0, 90, 0);
+        Prim(PrimitiveType.Sphere, "Pelvis", root, new Vector3(0, 0.93f, 0), new Vector3(0.3f, 0.12f, 0.16f), bone);
+        var legs = new Transform[2];
+        for (int i = 0; i < 2; i++)
+        {
+            int side = i == 0 ? -1 : 1;
+            var hip = Group(root, i == 0 ? "LegL" : "LegR", new Vector3(side * 0.09f, 0.9f, 0));
+            Prim(PrimitiveType.Cylinder, "Thigh", hip, new Vector3(0, -0.22f, 0), new Vector3(0.05f, 0.22f, 0.05f), bone);
+            Prim(PrimitiveType.Sphere, "Knee", hip, new Vector3(0, -0.44f, 0), Vector3.one * 0.07f, bone);
+            Prim(PrimitiveType.Cylinder, "Shin", hip, new Vector3(side * 0.01f, -0.65f, 0), new Vector3(0.045f, 0.21f, 0.045f), bone);
+            Prim(PrimitiveType.Sphere, "Foot", hip, new Vector3(side * 0.01f, -0.87f, 0.06f), new Vector3(0.08f, 0.05f, 0.18f), bone);
+            legs[i] = hip;
+        }
+        var torso = Group(root, "Torso", new Vector3(0, 0.93f, 0));
+        Prim(PrimitiveType.Cylinder, "Spine", torso, new Vector3(0, 0.27f, 0), new Vector3(0.05f, 0.27f, 0.05f), bone);
+        for (int r = 0; r < 5; r++)
+            Prim(PrimitiveType.Cylinder, "Rib", torso, new Vector3(0, 0.29f + r * 0.055f, 0.03f), new Vector3(0.3f - Mathf.Abs(r - 2) * 0.02f, 0.012f, 0.2f), bone);
+        Prim(PrimitiveType.Cylinder, "Collar", torso, new Vector3(0, 0.54f, 0), new Vector3(0.04f, 0.2f, 0.04f), bone).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        var skull = Group(torso, "SkullPivot", new Vector3(0, 0.57f, 0));
+        Prim(PrimitiveType.Sphere, "Skull", skull, new Vector3(0, 0.13f, 0), new Vector3(0.2f, 0.22f, 0.21f), bone);
+        Prim(PrimitiveType.Sphere, "Jaw", skull, new Vector3(0, 0.05f, 0.04f), new Vector3(0.14f, 0.07f, 0.13f), bone);
+        foreach (float ex in new[] { -0.045f, 0.045f })
+            Prim(PrimitiveType.Sphere, "Socket", skull, new Vector3(ex, 0.14f, 0.09f), new Vector3(0.055f, 0.06f, 0.04f), M("Pupil"));
+        Prim(PrimitiveType.Cube, "Grin", skull, new Vector3(0, 0.06f, 0.1f), new Vector3(0.09f, 0.012f, 0.02f), M("Pupil"));
+        var shoulders = new Transform[2];
+        var elbows = new Transform[2];
+        for (int i = 0; i < 2; i++)
+        {
+            int side = i == 0 ? -1 : 1;
+            var shoulder = Group(torso, i == 0 ? "ShoulderL" : "ShoulderR", new Vector3(side * 0.2f, 0.53f, 0));
+            Prim(PrimitiveType.Cylinder, "UpperArm", shoulder, new Vector3(0, -0.15f, 0), new Vector3(0.04f, 0.15f, 0.04f), bone);
+            var elbow = Group(shoulder, "Elbow", new Vector3(0, -0.3f, 0));
+            Prim(PrimitiveType.Cylinder, "Forearm", elbow, new Vector3(0, -0.13f, 0), new Vector3(0.035f, 0.13f, 0.035f), bone);
+            Prim(PrimitiveType.Sphere, "Hand", elbow, new Vector3(0, -0.29f, 0), new Vector3(0.08f, 0.1f, 0.03f), bone);
+            shoulders[i] = shoulder; elbows[i] = elbow;
+        }
+        return new[] { root, torso, skull, shoulders[0], shoulders[1], elbows[0], elbows[1], legs[0], legs[1] };
     }
 
     // ------------------------------------------------------------------- chapter 6: the furnace
@@ -1714,6 +1730,7 @@ public static class FirWorldBuilder
         A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1f);
         A("EyeRed", null, new Color(0.6f, 0f, 0f), 1f, new Color(0.9f, 0.05f, 0.02f));
         A("Bone", null, new Color(0.85f, 0.08f, 0.06f), 0f, new Color(0.22f, 0.02f, 0.01f));   // RED skeleton
+        A("BoneWhite", null, new Color(0.92f, 0.9f, 0.82f), 0f, new Color(0.14f, 0.14f, 0.12f));
         A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1f, new Color(0.03f, 0.1f, 0.07f));
         A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 0f, new Color(0.08f, 0.07f, 0.05f));
         A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 0f, new Color(0.08f, 0f, 0f));

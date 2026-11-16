@@ -114,81 +114,100 @@ function buildTree(height) {
   return { root, head, mouth, redEyes, faceHeight: potH + trunkH + faceY, faceZ };
 }
 
-// ---- the Living Room corner with the closet (port of FirWorldBuilder.BuildSkeletonCloset; door faces +x)
+// ---- the Living Room corner with the closet (port of FirWorldBuilder.BuildSkeletonCloset / SkeletonRig; door faces +x)
 const box = (mat, p, sz, parent = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(...sz), mat); m.position.set(...p); parent.add(m); return m; };
 const prim = (geo, mat, p, s, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
 const group = (parent, p) => { const g = new THREE.Group(); g.position.set(...p); parent.add(g); return g; };
 const X = {
   wood: lantern({ map: tex('wood_floor.png', 4, 4) }), desk: lantern({ map: tex('wood_floor.png', 1, 2), color: [0.8, 0.7, 0.6] }),
   wall: lantern({ map: tex('wallpaper.png', 4, 2) }), trim: lantern({ color: [0.85, 0.83, 0.78] }),
-  bone: lantern({ color: [0.85, 0.08, 0.06], glow: [0.22, 0.02, 0.01] }), mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
+  red: lantern({ color: [0.85, 0.08, 0.06], glow: [0.22, 0.02, 0.01] }), white: lantern({ color: [0.92, 0.9, 0.82], glow: [0.14, 0.14, 0.12] }),
+  mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
   black: lantern({ color: [0.01, 0.01, 0.01], full: 1 }), gold: lantern({ color: [0.85, 0.65, 0.15] }),
 };
-box(X.wood, [2, -0.1, 0], [8, 0.2, 8]); box(X.wall, [-0.45, 1.7, 0], [0.2, 3.4, 8]); box(X.wall, [2, 1.7, -3.1], [8, 3.4, 0.2]);
-box(X.trim, [-0.3, 0.5, 0], [0.1, 1, 8]);
+box(X.wood, [2, -0.1, -1], [8, 0.2, 10]); box(X.wall, [-0.45, 1.7, -1], [0.2, 3.4, 10]); box(X.wall, [2, 1.7, -4.6], [8, 3.4, 0.2]);
+box(X.trim, [-0.3, 0.5, -1], [0.1, 1, 10]);
 const c = group(scene, [0, 0, 0]);
 box(X.desk, [0, 1.15, 0], [0.7, 2.3, 1.5], c);
 const doorway = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.1), X.black); doorway.position.set(0.352, 1.05, 0); doorway.rotation.y = Math.PI / 2; c.add(doorway);
-const hinge = group(c, [0.38, 0, -0.66]);
-const door = box(X.trim, [0, 1.05, 0.66], [0.05, 2.1, 1.3], hinge);
-prim(sphere, X.gold, [0.04, 0, 0.5], [0.07, 0.07, 0.07], door);
-{ // the door sign
+const hinge = group(c, [0.38, 0, 0.66]);
+const door = box(X.trim, [0, 1.05, -0.66], [0.05, 2.1, 1.3], hinge);
+prim(sphere, X.gold, [0.04, 0, -0.5], [0.07, 0.07, 0.07], door);
+{
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 170; const g = cv.getContext('2d');
   g.fillStyle = '#d8d4c8'; g.fillRect(0, 0, 512, 170); g.fillStyle = '#3a1a10'; g.textAlign = 'center';
   g.font = 'bold 72px sans-serif'; g.fillText('CLOSET', 256, 80); g.font = '48px sans-serif'; g.fillText('do not open', 256, 145);
   const t = new THREE.CanvasTexture(cv); const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.25), lantern({ map: t }));
   sign.position.set(0.03, 0.55, 0); sign.rotation.y = Math.PI / 2; door.add(sign);
 }
-const sk = group(c, [-0.05, 0, 0]); sk.rotation.y = Math.PI / 2;
-const B = X.bone;
-prim(cyl, B, [0, 1.2, 0], [0.05, 0.27, 0.05], sk);
-for (let r = 0; r < 5; r++) prim(cyl, B, [0, 1.22 + r * 0.055, 0.03], [0.3 - Math.abs(r - 2) * 0.02, 0.012, 0.2], sk);
-prim(sphere, B, [0, 0.93, 0], [0.3, 0.12, 0.16], sk);
-prim(cyl, B, [0, 1.47, 0], [0.04, 0.2, 0.04], sk).rotation.z = Math.PI / 2;
-for (const side of [-1, 1]) {
-  prim(cyl, B, [side * 0.09, 0.68, 0], [0.05, 0.22, 0.05], sk);
-  prim(cyl, B, [side * 0.1, 0.25, 0], [0.045, 0.21, 0.045], sk);
-  prim(sphere, B, [side * 0.1, 0.03, 0.06], [0.08, 0.05, 0.16], sk);
+function rig(B) {
+  const root = group(c, [-0.05, 0, 0]); root.rotation.y = Math.PI / 2;
+  prim(sphere, B, [0, 0.93, 0], [0.3, 0.12, 0.16], root);
+  const legs = [];
+  for (const side of [-1, 1]) {
+    const hip = group(root, [side * 0.09, 0.9, 0]);
+    prim(cyl, B, [0, -0.22, 0], [0.05, 0.22, 0.05], hip); prim(sphere, B, [0, -0.44, 0], [0.07, 0.07, 0.07], hip);
+    prim(cyl, B, [side * 0.01, -0.65, 0], [0.045, 0.21, 0.045], hip); prim(sphere, B, [side * 0.01, -0.87, 0.06], [0.08, 0.05, 0.18], hip);
+    legs.push(hip);
+  }
+  const torso = group(root, [0, 0.93, 0]);
+  prim(cyl, B, [0, 0.27, 0], [0.05, 0.27, 0.05], torso);
+  for (let r = 0; r < 5; r++) prim(cyl, B, [0, 0.29 + r * 0.055, 0.03], [0.3 - Math.abs(r - 2) * 0.02, 0.012, 0.2], torso);
+  prim(cyl, B, [0, 0.54, 0], [0.04, 0.2, 0.04], torso).rotation.z = Math.PI / 2;
+  const skull = group(torso, [0, 0.57, 0]);
+  prim(sphere, B, [0, 0.13, 0], [0.2, 0.22, 0.21], skull); prim(sphere, B, [0, 0.05, 0.04], [0.14, 0.07, 0.13], skull);
+  for (const ex of [-0.045, 0.045]) prim(sphere, X.black, [ex, 0.14, 0.09], [0.055, 0.06, 0.04], skull);
+  prim(new THREE.BoxGeometry(1, 1, 1), X.black, [0, 0.06, 0.1], [0.09, 0.012, 0.02], skull);
+  const sh = [], el = [];
+  for (const side of [-1, 1]) {
+    const s = group(torso, [side * 0.2, 0.53, 0]); prim(cyl, B, [0, -0.15, 0], [0.04, 0.15, 0.04], s);
+    const e = group(s, [0, -0.3, 0]); prim(cyl, B, [0, -0.13, 0], [0.035, 0.13, 0.035], e); prim(sphere, B, [0, -0.29, 0], [0.08, 0.1, 0.03], e);
+    sh.push(s); el.push(e);
+  }
+  return [root, torso, skull, sh[0], sh[1], el[0], el[1], legs[0], legs[1]];
 }
-const skull = group(sk, [0, 1.5, 0]);
-prim(sphere, B, [0, 0.13, 0], [0.2, 0.22, 0.21], skull);
-prim(sphere, B, [0, 0.05, 0.04], [0.14, 0.07, 0.13], skull);
-for (const ex of [-0.045, 0.045]) prim(sphere, X.black, [ex, 0.14, 0.09], [0.055, 0.06, 0.04], skull);
-prim(new THREE.BoxGeometry(1, 1, 1), X.black, [0, 0.06, 0.1], [0.09, 0.012, 0.02], skull);
-const arms = [], fores = [];
-for (const side of [-1, 1]) {
-  const sh = group(sk, [side * 0.2, 1.46, 0]);
-  prim(cyl, B, [0, -0.15, 0], [0.04, 0.15, 0.04], sh);
-  const el = group(sh, [0, -0.3, 0]);
-  prim(cyl, B, [0, -0.13, 0], [0.035, 0.13, 0.035], el);
-  prim(sphere, B, [0, -0.29, 0], [0.08, 0.1, 0.03], el);
-  arms.push(sh); fores.push(el);
-}
+const whiteSk = rig(X.white), redSk = rig(X.red);
 const mist = group(c, [0, 0, 0]);
-for (const [x, z, sx, sz, i] of [[0.5, 0.1, 0.9, 0.7, 0], [0.9, -0.35, 0.8, 0.6, 1], [1.0, 0.4, 0.7, 0.55, 2], [1.35, 0, 0.9, 0.7, 3], [1.6, -0.5, 0.6, 0.45, 4], [1.7, 0.55, 0.55, 0.4, 5]]) prim(sphere, X.mist, [x, 0.02, z], [sx, 0.08 + 0.03 * (i % 2), sz], mist);
-const skelRest = sk.position.clone();
-// HUD subtitle, as the game shows it
+for (const [x, z, sx, sz, i] of [[0.5, 0.1, 0.9, 0.7, 0], [0.9, -0.35, 0.8, 0.6, 1], [1.0, 0.4, 0.7, 0.55, 2], [1.35, 0, 0.9, 0.7, 3], [1.6, -0.5, 0.6, 0.45, 4], [1.7, 0.55, 0.55, 0.4, 5], [0.9, -1.3, 0.8, 0.9, 6], [0.8, -2.3, 0.7, 0.8, 7]])
+  prim(sphere, X.mist, [x, 0.02, z], [sx, 0.08 + 0.03 * (i % 2), sz], mist);
 const sub = document.createElement('div');
-sub.style.cssText = 'position:absolute;left:0;right:0;bottom:120px;text-align:center;font:600 34px sans-serif;color:#fff;text-shadow:0 0 6px #000;display:none';
-sub.innerHTML = '<b style="color:#ff3030">RED SKELETON</b>&nbsp; <i>*shrugs*</i>'; document.body.appendChild(sub);
+sub.style.cssText = 'position:absolute;left:0;right:0;bottom:110px;text-align:center;font:600 40px sans-serif;color:#fff;text-shadow:0 0 6px #000,0 0 2px #000';
+document.body.appendChild(sub);
 
-// ---- port of FirCloset.Update
-const sm = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
-const T0 = 0.8, D = Math.PI / 180;
+// ---- port of FirCloset.cs
+const S = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+const Ramp = (t, a, b, c2, d) => t < a || t > d ? 0 : t < b ? S((t - a) / (b - a)) : t < c2 ? 1 : 1 - S((t - c2) / (d - c2));
+const D = Math.PI / 180, E = (x, y, z) => new THREE.Euler(x * D, y * D, z * D, 'YXZ');
+function apply(p, x, z, yaw, bob, lean, hx, hy, hz, shX, shZ, elX, elZ, leg) {
+  p[0].position.set(x, bob, z); p[0].rotation.copy(E(0, yaw, 0));
+  p[1].rotation.copy(E(lean, 0, 0)); p[2].rotation.copy(E(hx, hy, hz));
+  const swing = -0.8 * leg;
+  p[3].rotation.copy(E(shX + swing, 0, shZ)); p[4].rotation.copy(E(shX - swing, 0, -shZ));
+  p[5].rotation.copy(E(elX, 0, elZ)); p[6].rotation.copy(E(elX, 0, -elZ));
+  p[7].rotation.copy(E(leg, 0, 0)); p[8].rotation.copy(E(-leg, 0, 0));
+}
+const T0 = 0.6;
 window.renderAt = (time) => {
-  camera.position.set(2.9, 1.55, 0.75); camera.lookAt(0, 1.15, -0.1); camera.updateMatrixWorld();
-  const t = time - T0, on = t >= 0 && t <= 3.7;
-  sk.visible = on; mist.visible = on; sub.style.display = (t >= 0 && t < 3.2) ? 'block' : 'none';
-  const tt = Math.max(0, t);
-  const doorA = !on ? 0 : tt < 0.4 ? sm(tt / 0.4) : tt < 3.2 ? 1 : 1 - sm((tt - 3.2) / 0.4);
-  hinge.rotation.set(0, 100 * D * doorA, 0);
-  const step = tt < 0.4 ? 0 : tt < 1.0 ? sm((tt - 0.4) / 0.6) : tt < 2.6 ? 1 : tt < 3.2 ? 1 - sm((tt - 2.6) / 0.6) : 0;
-  const bob = (step > 0 && step < 1) ? Math.abs(Math.sin(time * 14)) * 0.03 : 0;
-  const shrug = tt < 1.1 ? 0 : tt < 1.4 ? sm((tt - 1.1) / 0.3) : tt < 2.2 ? 1 : tt < 2.5 ? 1 - sm((tt - 2.2) / 0.3) : 0;
-  sk.position.set(skelRest.x + 0.75 * step, bob + 0.04 * shrug, 0);
-  arms[0].rotation.set(0, 0, -12 * D * shrug); arms[1].rotation.set(0, 0, 12 * D * shrug);
-  fores[0].rotation.set(-100 * D * shrug, 0, -38 * D * shrug, 'YXZ'); fores[1].rotation.set(-100 * D * shrug, 0, 38 * D * shrug, 'YXZ');
-  skull.rotation.set(0, 0, 12 * D * shrug);
+  camera.position.set(3.5, 1.5, -0.5); camera.lookAt(0, 1.1, -1.1); camera.updateMatrixWorld();
+  const t = time - T0, run = t >= 0 && t <= 9.0;
+  mist.visible = run;
+  const doorA = !run ? 0 : t < 0.4 ? S(t / 0.4) : t < 8.4 ? 1 : 1 - S((t - 8.4) / 0.4);
+  hinge.rotation.set(0, -100 * D * doorA, 0);
+  const wOn = run && t < 4.0; whiteSk[0].visible = wOn;
+  if (wOn) {
+    const wx = -0.05 + 0.8 * S((t - 0.4) / 0.6), wz = t > 2.8 ? -2.6 * (t - 2.8) / 1.2 : 0, yaw = 90 + 90 * S((t - 2.5) / 0.3);
+    const walking = (t > 0.4 && t < 1.0) || t > 2.8, sw = walking ? Math.sin(t * 10) : 0, sh = Ramp(t, 1.1, 1.4, 2.2, 2.5);
+    apply(whiteSk, wx, wz, yaw, walking ? Math.abs(sw) * 0.03 : 0.04 * sh, 0, 0, 0, 12 * sh, 0, -12 * sh, -100 * sh, -38 * sh, 25 * sw);
+  }
+  const rOn = run && t >= 2.9 && t < 8.4; redSk[0].visible = rOn;
+  if (rOn) {
+    const lw = Ramp(t, 3.0, 3.5, 4.0, 4.6), hw = Ramp(t, 4.6, 4.9, 6.2, 6.5), uw = S((t - 6.2) / 0.3);
+    const rx = -0.05 + 0.35 * S((t - 3.0) / 0.5) + 0.45 * S((t - 4.0) / 0.6), rz = t > 6.5 ? -3.2 * (t - 6.5) / 1.9 : 0, yaw = 90 + 55 * lw + 90 * uw;
+    const walking = (t > 4.0 && t < 4.6) || t > 6.5, sw = walking ? Math.sin(t * 8) : 0;
+    apply(redSk, rx, rz, yaw, walking ? Math.abs(sw) * 0.025 : 0, 40 * lw - 5 * hw + 35 * uw, -25 * uw, 25 * lw, -10 * hw,
+          -40 * lw - 25 * uw, -40 * hw, -20 * lw - 30 * uw, 100 * hw, -35 * lw + 20 * sw);
+  }
+  sub.textContent = run && t > 1.25 && t < 3.45 ? 'A skeleton.' : run && t > 4.75 && t < 7.15 ? 'Red skeleton, ha.' : '';
   G.dark.value = 0; G.amb.value = 0.004;
   renderer.render(scene, camera);
   return true;

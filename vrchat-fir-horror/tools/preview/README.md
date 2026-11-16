@@ -15,6 +15,6 @@ ffmpeg -framerate 30 -i frames/f%04d.png -i ../../Assets/FirHorror/Audio/scream1
        -filter_complex "[1]adelay=2780|2780[a]" -map 0:v -map "[a]" -pix_fmt yuv420p preview.mp4
 ```
 `closet.html` is the RED SKELETON closet easter egg (ported from `BuildSkeletonCloset` and `FirCloset.cs`):
-`node render.js frames closet.html 4.9`.
+`node render.js frames closet.html 10.2`.
 
 If you change the tree, face, closet or lighting code in the world, change it here too.
