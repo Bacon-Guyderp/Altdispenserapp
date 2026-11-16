@@ -7,8 +7,8 @@ You and your friends are the night clean-up crew. You go room by room through th
 on the Recall Floor, where you burn the "imitation" trees in the furnace while **the Original** hunts you.
 
 * **About 45–50 minutes** for a group playing for the first time, across six puzzle chapters. Every answer is randomised each game.
-* **1–8 players**, co-op. Progress, doors and items are synced, and late joiners can catch up.
-* **About 60 placed jumpscares**, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 25–60 seconds.
+* **1–8 players**, co-op, and **tuned for duos**: see "Playing with two" below. Progress, doors and items are synced, and late joiners can catch up.
+* **About 80 placed jumpscares**, some shared so everyone gets them at the same moment, plus scares tied to events (finding the last item, wrong answers, getting caught) and random whispers, rustles and flickers every 15–45 seconds (more often when you split up).
 * **Quest-friendly:** no realtime lights or shadows, no post-processing, one tiny shader, 512 px textures
   (ASTC on Android) and about 1 MB of mono Vorbis audio. The whole package is under 3 MB.
 
@@ -39,6 +39,22 @@ when you look, group screams with blackouts, flickers, **creepers** (a tree that
 look away, until it reaches you) and **dark reveals** (the lights die, and when they come back a tree is
 standing there). Glow-paint messages ("BEHIND YOU", "IT MOVES IN THE DARK") appear on the walls in every
 blackout.
+
+Between the scripted scares, a **scare director** plays sounds just behind you, flickers the lights and
+sometimes stages a bigger moment: something standing behind you, or a blackout with laughter. It speeds up
+every chapter, and it targets whoever is alone.
+
+### Playing with two
+The game counts the players inside the factory and adjusts for small groups:
+* With **2 players** the hunting tree moves at 75% speed and has a shorter reach. In the finale it barely
+  creeps (0.18 m/s instead of 0.35) while one of you watches it. With **1 player** it moves at 55% speed and
+  stops completely when watched.
+* The Stockroom lights-out lasts 6 s instead of 8, and the tree moves even slower in the dark.
+* Hints come after 3.5 minutes instead of 5, then every 3 minutes.
+* The plan for two: one watches the tree, one searches, and you swap often.
+* The scare director punishes splitting up. If you're more than 10 m from your partner (or playing alone),
+  scares come faster and you get whispered subtitles ("...where did your friend go?").
+* Shared scares (blackout reveals, choirs of screaming trees) hit both of you at once, so you can scream together.
 
 ### The stalker
 The owner of the stalker (normally the instance master) checks every player's head direction each frame,

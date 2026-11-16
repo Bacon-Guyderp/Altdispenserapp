@@ -33,7 +33,7 @@ public class FirStalker : UdonSharpBehaviour
 
     VRCPlayerApi[] players;
     int lastPhase = -1, lastRound = -1;
-    float nextThink, nextCatch, nextCreak, nextBeat;
+    float nextThink, nextCatch, nextCreak, nextBeat, nextWhisper;
     Vector3 lastPos;
     bool seen;
     float stunUntil;
@@ -92,7 +92,13 @@ public class FirStalker : UdonSharpBehaviour
         Vector3 flat = transform.position - me; flat.y = 0;
         float d = flat.magnitude;
         if (d < 7f && Time.time > nextBeat) { nextBeat = Time.time + 3.6f; game.PlaySfx(game.clipHeartbeat); }
-        if (d < catchDistance && Mathf.Abs(transform.position.y - me.y) < 1.5f && Time.time > nextCatch)
+        if (d < 4.5f && Time.time > nextWhisper && anim != null)
+        {
+            nextWhisper = Time.time + Random.Range(7f, 12f);
+            anim.SetMode(2, 2f);   // it talks to you when it's close
+        }
+        float reach = game.SmallGroup() ? catchDistance * 0.85f : catchDistance;
+        if (d < reach && Mathf.Abs(transform.position.y - me.y) < 1.5f && Time.time > nextCatch)
         {
             nextCatch = Time.time + 6f;
             game.Caught();
@@ -119,7 +125,12 @@ public class FirStalker : UdonSharpBehaviour
         if (Time.time < stunUntil) { agent.isStopped = true; agent.velocity = Vector3.zero; return; }
         seen = AnyoneLooking();
         bool finale = phase == 6;
-        float speed = seen ? (finale ? finaleSeenSpeed : 0f) : (finale ? finaleUnseenSpeed : unseenSpeed);
+        // ease off for small groups: one player can't watch it and search at the same time
+        int group = game.PlayersInGame();
+        float scale = group <= 1 ? 0.55f : group == 2 ? 0.75f : 1f;
+        if (Time.time < game.lightsOutUntil && group <= 2) scale *= 0.6f;
+        float seenFinale = group <= 1 ? 0f : group == 2 ? 0.18f : finaleSeenSpeed;
+        float speed = seen ? (finale ? seenFinale : 0f) : (finale ? finaleUnseenSpeed : unseenSpeed) * scale;
         agent.speed = speed;
         agent.isStopped = speed <= 0f;
         if (speed <= 0f) agent.velocity = Vector3.zero;

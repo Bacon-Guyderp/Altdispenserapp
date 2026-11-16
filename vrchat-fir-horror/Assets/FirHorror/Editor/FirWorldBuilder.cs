@@ -113,7 +113,8 @@ public static class FirWorldBuilder
         fa.game = game;
         fa.emitter = Src(amb.transform, Vector3.zero, null, false, 1f, 0.9f, 12f, false);
         fa.clips = new[] { Clip("whisper"), Clip("rustle"), Clip("creak"), Clip("tree_laugh"), Clip("servo"), Clip("tree_talk"), Clip("tree_note"), Clip("phone") };
-        fa.minGap = 25f; fa.maxGap = 60f;
+        fa.minGap = 18f; fa.maxGap = 45f;
+        fa.laughClip = Clip("tree_laugh"); fa.whisperClip = Clip("whisper");
 
         // ---- wire up the collected lists
         game.items = itemList.ToArray();
@@ -188,6 +189,7 @@ public static class FirWorldBuilder
             "- Press (use) things to pick them up. Carry hats and little trees in your hands.\n- One tree <b>only moves when nobody looks at it</b>. " +
             "Watch it while your friends search. If it reaches you, you're sent back to the start of the room.\n" +
             "- Toilets can be picked up and thrown. A good hit stuns the hunting tree for a few seconds.\n" +
+            "- <b>Just two of you?</b> One watches the tree, one searches. Swap often. It slows down for small groups, but stray too far from your partner and things start to find you.\n" +
             "- Stuck? A hint appears after a few minutes.\n- Late? Press <b>Join game</b>.\n\nBest with headphones. Lights off.").color = Color.white;
         Poster(lobby, "poster_warning", new Vector3(6.98f, 1.7f, 3.6f), e, 1.1f, true);
         Poster(lobby, "poster_original", new Vector3(-6.98f, 1.7f, -4.4f), w, 1.1f, true);
@@ -352,6 +354,12 @@ public static class FirWorldBuilder
         GlowWrite(g, new Vector3(-7.95f, 2.4f, 11f), Vector3.right, "THEY ALL SING\nTHE SAME SONG");
         GlowWrite(g, new Vector3(7.95f, 2.6f, 6f), Vector3.left, "IT IS NOT\nA TOY");
         t3.anim.greetChance = 0.8f;
+        // more scares
+        DarkReveal(g, "SideReveal", new Vector3(4.5f, 1.5f, 10f), new Vector3(0.4f, 3, 4), new Vector3(6.6f, 0, 10.5f), -90, 1.8f, 1);
+        var shared1 = Scare(g, "SharedChoir", new Vector3(0, 1.5f, 16.5f), new Vector3(16, 3, 0.4f), 5, 1, 1);
+        shared1.groupChapter = 1; shared1.duration = 2f; shared1.screamIndex = 1; shared1.global = true; shared1.delay = 0.5f;
+        var corner = Scare(g, "OriginalCorner", new Vector3(4.5f, 1.5f, 2.2f), new Vector3(0.4f, 3, 3.5f), 4, 1, 1);
+        corner.delay = 1f;
     }
 
     // ------------------------------------------------------------------- chapter 2: glow paint
@@ -387,7 +395,7 @@ public static class FirWorldBuilder
         Text("FuseLabel", g, new Vector3(-6f, 2.1f, 55.74f), Face(Vector3.back), new Vector2(1.2f, 0.2f), 0.12f, "FUSE BOX");
         Keypad(g, new Vector3(-6f, 1.35f, 55.68f), 2, 3, true, "FUSES");
         Button("LIGHTS", g, new Vector3(2.6f, 1.4f, 20.2f), Vector3.forward, new Vector3(0.5f, 0.35f, 0.1f), M("BtnWarn"), game, "StationLights");
-        Text("LightsLabel", g, new Vector3(2.6f, 1.75f, 20.16f), Face(Vector3.forward), new Vector2(1.2f, 0.15f), 0.07f, "LIGHT SWITCH (8 s)");
+        Text("LightsLabel", g, new Vector3(2.6f, 1.75f, 20.16f), Face(Vector3.forward), new Vector2(1.2f, 0.15f), 0.07f, "LIGHT SWITCH");
         game.glowDigits = new[]
         {
             GlowWrite(g, new Vector3(-11.95f, 2.2f, 32f), Vector3.right, ""),
@@ -423,6 +431,14 @@ public static class FirWorldBuilder
         shelfTalk.sound = Src(g, new Vector3(4.5f, 1.4f, 30f), Clip("whisper"), false, 1f, 1f, 8f, false);
         var hum = Scare(g, "BoxRattle", new Vector3(6.75f, 1.5f, 45f), new Vector3(2.4f, 3, 0.4f), 7, 2, 2);
         hum.duration = 1.2f; hum.sound = Src(g, new Vector3(9f, 1.4f, 46f), Clip("rustle"), false, 1f, 1f, 10f, false);
+        // more scares
+        Creeper(g, "RightAisleCreeper", new Vector3(10.75f, 1.5f, 40.5f), new Vector3(2.4f, 3, 0.4f), new Vector3(10.75f, 0, 53.5f), 180, 1.6f, 2);
+        var palletFace = Scare(g, "PalletFace", new Vector3(0, 1.5f, 44f), new Vector3(3, 3, 0.4f), 0, 2, 2);
+        palletFace.screamIndex = 0; palletFace.duration = 1.0f; palletFace.delay = 1f;
+        var fusePeek = Scare(g, "FuseBoxPeek", new Vector3(-6.75f, 1.5f, 50f), new Vector3(2.4f, 3, 0.4f), 6, 2, 2);
+        fusePeek.target = BuildTree(g, new Vector3(-10.6f, 0, 55.2f), 120, 1.9f, 0, false, "FuseBoxPeekTree").root;
+        var sharedDark = DarkReveal(g, "SharedCrossAisle", new Vector3(0, 1.5f, 37.5f), new Vector3(8, 3, 0.4f), new Vector3(3.2f, 0, 38.5f), -90, 2.1f, 2);
+        sharedDark.global = true;
     }
 
     // ------------------------------------------------------------------- chapter 3: the tapes
@@ -509,6 +525,16 @@ public static class FirWorldBuilder
         var boothFace = Scare(g, "BoothFace", new Vector3(4.0f, 1.5f, 72f), new Vector3(0.4f, 3, 1.4f), 0, 3, 3);
         boothFace.screamIndex = 2; boothFace.duration = 0.9f; boothFace.delay = 2.5f;
         GlowWrite(g, new Vector3(7.95f, 2.4f, 70f), Vector3.left, "SESSION 5\nIS STILL\nRECORDING");
+        // more scares
+        var beltReveal = DarkReveal(g, "SharedBeltReveal", new Vector3(0, 1.5f, 61.5f), new Vector3(16, 3, 0.4f), new Vector3(-1f, 0, 66.2f), 180, 1.7f, 3);
+        beltReveal.global = true; beltReveal.delay = 1.5f;
+        var boothBehind = Scare(g, "BoothBehind", new Vector3(5.5f, 1.5f, 74f), new Vector3(3, 3, 0.4f), 4, 3, 3);
+        boothBehind.delay = 1.5f;
+        var headDrop = Scare(g, "HeadDrop", new Vector3(-2f, 1.5f, 70f), new Vector3(0.4f, 3, 4), 3, 3, 3);
+        var falling = BuildTree(g, new Vector3(-2.6f, 3.0f, 70.5f), 90, 0.55f, 3, false, "FallingHead");
+        headDrop.target = falling.root; headDrop.anim = falling.anim; headDrop.animMode = 4; headDrop.duration = 1.5f;
+        headDrop.dropTo = Marker(g, "HeadDropEnd", new Vector3(-2.6f, 0, 70.5f), 90);
+        headDrop.sound = Src(g, new Vector3(-2.6f, 1.5f, 70.5f), Clip("scream1"), false, 1f, 1f, 12f, false);
     }
 
     // ------------------------------------------------------------------- chapter 4: counting memos
@@ -608,6 +634,11 @@ public static class FirWorldBuilder
         memoFace.screamIndex = 1; memoFace.duration = 0.9f; memoFace.delay = 3.5f;
         GlowWrite(g, new Vector3(9.95f, 2.2f, 88f), Vector3.left, "COUNT US\nAGAIN");
         GlowWrite(g, new Vector3(0, 2.6f, 103.85f), Vector3.back, "DON'T TELL IT\nTHE CODE");
+        // more scares
+        var sharedOffice = Scare(g, "SharedStaffScream", new Vector3(0, 1.5f, 91f), new Vector3(4, 3, 0.4f), 5, 4, 4);
+        sharedOffice.groupChapter = 4; sharedOffice.duration = 2.2f; sharedOffice.screamIndex = 2; sharedOffice.global = true; sharedOffice.delay = 0.5f;
+        Creeper(g, "LeftAisleCreeper", new Vector3(-9.3f, 1.5f, 95f), new Vector3(1.4f, 3, 0.4f), new Vector3(-9.3f, 0, 86.5f), 0, 1.6f, 4);
+        DarkReveal(g, "KeypadReveal", new Vector3(-2.5f, 1.5f, 101.8f), new Vector3(3, 3, 0.4f), new Vector3(-4.2f, 0, 103.2f), 150, 1.8f, 4);
     }
 
     // ------------------------------------------------------------------- chapter 5: the family's hats
@@ -689,6 +720,13 @@ public static class FirWorldBuilder
         var knock = Scare(g, "WindowKnock", new Vector3(-3.5f, 1.5f, 117.5f), new Vector3(3, 3, 0.4f), 2, 5, 5);
         knock.sound = Src(g, new Vector3(-3.5f, 1.8f, 120.2f), Clip("creak"), false, 1f, 1f, 10f, false);
         GlowWrite(g, new Vector3(6.95f, 2.4f, 107f), Vector3.left, "WE ARE NOT\nYOUR FAMILY");
+        // more scares
+        var sharedHome = DarkReveal(g, "SharedHomeReveal", new Vector3(0, 1.5f, 110f), new Vector3(14, 3, 0.4f), new Vector3(1.2f, 0, 112.6f), 180, 1.9f, 5);
+        sharedHome.global = true; sharedHome.delay = 2f;
+        var cardFace = Scare(g, "CardFace", new Vector3(-4.6f, 1.5f, 108.7f), new Vector3(0.4f, 3, 1.2f), 0, 5, 5);
+        cardFace.screamIndex = 2; cardFace.duration = 1.0f; cardFace.delay = 7f;
+        var doorPeek = Scare(g, "DoorwayPeek", new Vector3(0, 1.5f, 118f), new Vector3(10, 3, 0.4f), 6, 5, 5);
+        doorPeek.target = BuildTree(g, new Vector3(0.3f, 0, 105.2f), 0, 1.8f, 0, false, "DoorwayWatcher").root;
     }
 
     // ------------------------------------------------------------------- chapter 6: the furnace
@@ -753,6 +791,18 @@ public static class FirWorldBuilder
         GlowWrite(g, new Vector3(-10.95f, 3f, 138f), Vector3.right, "WHICH ONE\nIS THE COPY?");
         GlowWrite(g, new Vector3(10.95f, 3f, 128f), Vector3.left, "BURN THEM\nBURN THEM\nBURN THEM");
 
+        // more scares
+        Creeper(g, "LeftWallCreeper", new Vector3(-10f, 1.5f, 137f), new Vector3(2, 3, 0.4f), new Vector3(-10f, 0, 126.5f), 0, 1.8f, 6);
+        var sharedFurnace = DarkReveal(g, "SharedFurnaceReveal", new Vector3(0, 1.5f, 145f), new Vector3(10, 3, 0.4f), new Vector3(2.5f, 0, 147.5f), 180, 2.2f, 6);
+        sharedFurnace.global = true;
+        var drop2 = Scare(g, "CeilingDrop2", new Vector3(6f, 1.5f, 134f), new Vector3(0.4f, 3, 6), 3, 6, 6);
+        var hanger2 = BuildTree(g, new Vector3(8.5f, 4.6f, 133f), -90, 1.3f, 6, false, "HangingTree2");
+        drop2.target = hanger2.root; drop2.anim = hanger2.anim; drop2.animMode = 4; drop2.duration = 2f;
+        drop2.dropTo = Marker(g, "HangDropEnd2", new Vector3(8.5f, 0, 133f), -90);
+        drop2.sound = Src(g, new Vector3(8.5f, 2f, 133f), Clip("scream2"), false, 1f, 1f, 18f, false);
+        var valveLeft = Scare(g, "LeftValveFace", new Vector3(-9.8f, 1.5f, 129f), new Vector3(0.4f, 3, 2f), 0, 6, 6);
+        valveLeft.screamIndex = 0; valveLeft.duration = 1.0f; valveLeft.delay = 1.5f;
+
         stalker.spawnByPhase[6] = Marker(g, "StalkerSpawn6", new Vector3(9f, 0, 148f), 200);
     }
 
@@ -771,6 +821,8 @@ public static class FirWorldBuilder
         var song = Scare(g, "Credits", new Vector3(0, 1.5f, 152f), new Vector3(10, 3, 0.4f), 2, 7, 7);
         song.sound = Src(g, new Vector3(3.6f, 1.5f, 158f), Clip("tree_sing"), false, 1f, 0.9f, 20f, false);
         song.anim = orig.anim; song.animMode = 3; song.duration = 19f;
+        var lastBehind = Scare(g, "ButtonBehind", new Vector3(-3f, 1.5f, 158.4f), new Vector3(2, 3, 0.4f), 4, 7, 7);
+        lastBehind.delay = 2f;
     }
 
     // =================================================================== stalker
@@ -1008,7 +1060,7 @@ public static class FirWorldBuilder
     }
 
     /// <summary>A tree that steps closer whenever you look away. Walking into the trigger starts it.</summary>
-    static void Creeper(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
+    static FirJumpscare Creeper(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
     {
         var s = Scare(g, name, trigPos, trigSize, 8, phase, phase);
         var t = BuildTree(g, treePos, yaw, height, 0, false, name + " Tree");
@@ -1016,16 +1068,18 @@ public static class FirWorldBuilder
         s.target = t.root;
         s.sound = Src(t.root.transform, new Vector3(0, 0.8f, 0), Clip("rustle"), false, 1f, 1f, 12f, false);
         s.screamIndex = phase % 3;
+        return s;
     }
 
     /// <summary>The lights die; when they come back a tree is standing there, screaming.</summary>
-    static void DarkReveal(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
+    static FirJumpscare DarkReveal(Transform g, string name, Vector3 trigPos, Vector3 trigSize, Vector3 treePos, float yaw, float height, int phase)
     {
         var s = Scare(g, name, trigPos, trigSize, 9, phase, phase);
         var t = BuildTree(g, treePos, yaw, height, 0, false, name + " Tree");
         t.anim.watchRange = 10f; t.anim.greetChance = 0f;
         s.target = t.root; s.anim = t.anim; s.duration = 1.4f;
         s.sound = Src(t.root.transform, new Vector3(0, 1.2f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 14f, false);
+        return s;
     }
 
     /// <summary>A gas valve wheel on a wall pipe (Recall Floor). Opening all three lights the furnace.</summary>

@@ -65,7 +65,11 @@ public class FirJumpscare : UdonSharpBehaviour
         else Fire();
     }
 
-    public void NetFire() { fired = true; Fire(); }
+    public void NetFire()
+    {
+        fired = true;
+        if (game.IsInGame()) Fire();   // shared scares skip people waiting in the lobby
+    }
 
     public void Fire()
     {

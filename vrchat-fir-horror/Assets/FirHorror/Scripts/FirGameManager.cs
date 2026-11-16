@@ -83,6 +83,8 @@ public class FirGameManager : UdonSharpBehaviour
     bool flashing = true, reducedScares;
     int idLight, idDark, idAmbient;
     int carolStep = -1; float carolNext;
+    VRCPlayerApi[] countBuf;
+    float nextCount; int cachedInGame = 1;
 
     // face scare: 0 idle, 1 pre-blink, 2 showing, 3 post-dark
     int scareState; float scareNext; float scareLen; int scareClip;
@@ -335,10 +337,11 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void NetLightsOut()
     {
-        lightsOutUntil = Time.time + 8f;
+        float len = SmallGroup() ? 6f : 8f;
+        lightsOutUntil = Time.time + len;
         if (!inGame) return;
         PlaySfx(clipSwitch);
-        Blackout(8f);
+        Blackout(len);
     }
 
     // ============================================================ state
@@ -399,7 +402,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     void EnterPhase(int p)
     {
-        hintAt = Time.time + 300f;   // a hint after five minutes stuck
+        hintAt = Time.time + (SmallGroup() ? 210f : 300f);   // a hint after 3.5 min (1-2 players) or 5 min stuck
         PlayMusic(p);
         Say(ChapterIntro(p), 10f);
         if (p == 2) { Blackout(1.5f); PlaySfx(screams[1]); }
@@ -511,7 +514,7 @@ public class FirGameManager : UdonSharpBehaviour
             if (hudObjective != null) hudObjective.text = ObjectiveText();
             if (hudSubtitle != null && t > subtitleUntil) hudSubtitle.text = "";
             if (lobbyStatus != null) lobbyStatus.text = LobbyText();
-            if (inGame && phase >= 1 && phase <= 6 && t > hintAt) { hintAt = t + 240f; Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 9f); }
+            if (inGame && phase >= 1 && phase <= 6 && t > hintAt) { hintAt = t + (SmallGroup() ? 180f : 240f); Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 9f); }
         }
 
         UpdateCarol();
@@ -549,7 +552,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     string LobbyText()
     {
-        if (phase == 0) return "Nobody is playing.\nPress <b>START</b> when everyone is here.";
+        if (phase == 0) return "Nobody is playing.\nPress <b>START</b> when everyone is here.\n<size=70%>Plays well with 1-8. With 1 or 2 players the hunting tree is slower and hints come sooner.</size>";
         int now = Networking.GetServerTimeInMilliseconds();
         if (phase == 7) return "The last group escaped in " + Clock(finishMs - startMs) + ".\nPress <b>START</b> to play again.";
         string[] names = { "", "The Showroom", "The Stockroom", "The Voice Lab", "The Offices", "The Living Room", "The Recall Floor" };
@@ -651,6 +654,50 @@ public class FirGameManager : UdonSharpBehaviour
         FaceScare(phase == 6 ? 2 : 0, 1.1f);
         Say("<color=#ff5555>It got you.</color> Back to the start of the room.", 4f);
         teleportAfterScareAt = Time.time + 1.4f;
+    }
+
+    // ============================================================ group size
+
+    /// <summary>Players inside the factory (everyone not in the lobby). At least 1. Refreshed once a second.</summary>
+    public int PlayersInGame()
+    {
+        if (Time.time < nextCount) return cachedInGame;
+        nextCount = Time.time + 1f;
+        if (countBuf == null) countBuf = new VRCPlayerApi[96];
+        int n = VRCPlayerApi.GetPlayerCount();
+        VRCPlayerApi.GetPlayers(countBuf);
+        int c = 0;
+        for (int i = 0; i < n && i < countBuf.Length; i++)
+        {
+            VRCPlayerApi p = countBuf[i];
+            if (Utilities.IsValid(p) && Vector3.Distance(p.GetPosition(), lobbySpawn.position) > 25f) c++;
+        }
+        cachedInGame = Mathf.Max(1, c);
+        return cachedInGame;
+    }
+
+    /// <summary>True once this player has been taken into the factory (not waiting in the lobby).</summary>
+    public bool IsInGame() { return inGame; }
+
+    /// <summary>Solo or duo: the stalker eases off and hints come sooner.</summary>
+    public bool SmallGroup() { return PlayersInGame() <= 2; }
+
+    /// <summary>Distance from a point to the nearest other player in the factory (999 if there's nobody else).</summary>
+    public float NearestOtherPlayer(Vector3 from)
+    {
+        if (countBuf == null) countBuf = new VRCPlayerApi[96];
+        int n = VRCPlayerApi.GetPlayerCount();
+        VRCPlayerApi.GetPlayers(countBuf);
+        float best = 999f;
+        for (int i = 0; i < n && i < countBuf.Length; i++)
+        {
+            VRCPlayerApi p = countBuf[i];
+            if (!Utilities.IsValid(p) || p.isLocal) continue;
+            if (Vector3.Distance(p.GetPosition(), lobbySpawn.position) < 25f) continue;
+            float d = Vector3.Distance(p.GetPosition(), from);
+            if (d < best) best = d;
+        }
+        return best;
     }
 
     // ============================================================ helpers
