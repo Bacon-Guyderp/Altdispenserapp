@@ -10,8 +10,8 @@ using VRC.Udon.Common.Interfaces;
 ///   2. it walks off, and a red skeleton leans out of the closet to watch it go
 ///   3. the red one steps out, hands on hips: "Red skeleton, ha."
 ///   4. it walks off hunched over, and the door swings shut.
-/// Each skeleton is a rig of 9 transforms: root, torso, skull, shoulderL, shoulderR, elbowL,
-/// elbowR, legL, legR. Roots slide along the closet's +X (out) and -Z (off to the side).
+/// Each skeleton is a rig of 10 transforms: root, torso, skull, shoulderL, shoulderR, elbowL,
+/// elbowR, legL, legR, jaw. Each says its line out loud (3D voice on its skull) and its jaw flaps. Roots slide along the closet's +X (out) and -Z (off to the side).
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirCloset : UdonSharpBehaviour
@@ -22,10 +22,12 @@ public class FirCloset : UdonSharpBehaviour
     public Transform[] red;
     public GameObject mist;
     public AudioSource creak;
+    public AudioSource whiteVoice, redVoice;
 
     float sceneLength = 9.0f;
     float startT, busyUntil;
     bool running, saidA, saidB;
+    float whiteTalkUntil, redTalkUntil;
 
     void Start()
     {
@@ -73,7 +75,13 @@ public class FirCloset : UdonSharpBehaviour
             Apply(white, wx, wz, yaw, walking ? Mathf.Abs(sw) * 0.03f : 0.04f * sh,
                   0f, 0f, 0f, 12f * sh,
                   0f, -12f * sh, -100f * sh, -38f * sh, 25f * sw);
-            if (sh > 0.5f && !saidA) { saidA = true; Say("A skeleton.", 2.2f); }
+            if (sh > 0.3f && !saidA)
+            {
+                saidA = true;
+                Say("A skeleton.", 2.2f);
+                if (whiteVoice != null && whiteVoice.clip != null) { whiteVoice.Play(); whiteTalkUntil = Time.time + whiteVoice.clip.length - 0.25f; }
+            }
+            Jaw(white, whiteTalkUntil);
         }
 
         // ---- the red skeleton: lean out, step out, hands on hips, hunch off
@@ -93,7 +101,13 @@ public class FirCloset : UdonSharpBehaviour
                   40f * lw - 5f * hw + 35f * uw, -25f * uw, 25f * lw, -10f * hw,
                   -40f * lw - 25f * uw, -40f * hw, -20f * lw - 30f * uw, 100f * hw,
                   -35f * lw + 20f * sw);
-            if (hw > 0.5f && !saidB) { saidB = true; Say("Red skeleton, ha.", 2.4f); }
+            if (hw > 0.3f && !saidB)
+            {
+                saidB = true;
+                Say("Red skeleton, ha.", 2.4f);
+                if (redVoice != null && redVoice.clip != null) { redVoice.Play(); redTalkUntil = Time.time + redVoice.clip.length - 0.25f; }
+            }
+            Jaw(red, redTalkUntil);
         }
 
         if (t > sceneLength)
@@ -122,6 +136,13 @@ public class FirCloset : UdonSharpBehaviour
         p[6].localRotation = Quaternion.Euler(elX, 0, -elZ);
         p[7].localRotation = Quaternion.Euler(leg, 0, 0);
         p[8].localRotation = Quaternion.Euler(-leg, 0, 0);
+    }
+
+    /// <summary>Flaps the jaw while the line is playing.</summary>
+    void Jaw(Transform[] p, float until)
+    {
+        float open = Time.time < until ? Mathf.Abs(Mathf.Sin(Time.time * 17f)) * (0.6f + 0.4f * Mathf.Sin(Time.time * 5f)) : 0f;
+        p[9].localRotation = Quaternion.Euler(28f * open, 0, 0);
     }
 
     void Say(string line, float seconds)

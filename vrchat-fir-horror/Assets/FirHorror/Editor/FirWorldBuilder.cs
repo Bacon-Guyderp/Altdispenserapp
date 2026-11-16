@@ -780,12 +780,14 @@ public static class FirWorldBuilder
         var cl = Add<FirCloset>(door);
         cl.game = game; cl.hinge = hinge; cl.white = white; cl.red = red; cl.mist = mist;
         cl.creak = Src(c, new Vector3(0.4f, 1.2f, 0), Clip("creak"), false, 1f, 1f, 14f, false);
+        cl.whiteVoice = Src(white[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_white"), false, 1f, 1f, 16f, false);
+        cl.redVoice = Src(red[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_red"), false, 1f, 1f, 16f, false);
         SetInteract(cl, "Open the closet", 2.5f);
     }
 
     /// <summary>
     /// A primitive skeleton standing in the closet, facing +X. Returns its 9 pivots:
-    /// root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR.
+    /// root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR, jaw.
     /// </summary>
     static Transform[] SkeletonRig(Transform parent, string name, Material bone)
     {
@@ -810,10 +812,12 @@ public static class FirWorldBuilder
         Prim(PrimitiveType.Cylinder, "Collar", torso, new Vector3(0, 0.54f, 0), new Vector3(0.04f, 0.2f, 0.04f), bone).transform.localRotation = Quaternion.Euler(0, 0, 90);
         var skull = Group(torso, "SkullPivot", new Vector3(0, 0.57f, 0));
         Prim(PrimitiveType.Sphere, "Skull", skull, new Vector3(0, 0.13f, 0), new Vector3(0.2f, 0.22f, 0.21f), bone);
-        Prim(PrimitiveType.Sphere, "Jaw", skull, new Vector3(0, 0.05f, 0.04f), new Vector3(0.14f, 0.07f, 0.13f), bone);
+        // the jaw hinges just under the ears so it can flap when the skeleton talks
+        var jaw = Group(skull, "JawPivot", new Vector3(0, 0.08f, -0.02f));
+        Prim(PrimitiveType.Sphere, "Jaw", jaw, new Vector3(0, -0.03f, 0.06f), new Vector3(0.14f, 0.07f, 0.13f), bone);
+        Prim(PrimitiveType.Cube, "Mouth", skull, new Vector3(0, 0.065f, 0.095f), new Vector3(0.09f, 0.025f, 0.02f), M("Pupil"));
         foreach (float ex in new[] { -0.045f, 0.045f })
             Prim(PrimitiveType.Sphere, "Socket", skull, new Vector3(ex, 0.14f, 0.09f), new Vector3(0.055f, 0.06f, 0.04f), M("Pupil"));
-        Prim(PrimitiveType.Cube, "Grin", skull, new Vector3(0, 0.06f, 0.1f), new Vector3(0.09f, 0.012f, 0.02f), M("Pupil"));
         var shoulders = new Transform[2];
         var elbows = new Transform[2];
         for (int i = 0; i < 2; i++)
@@ -826,7 +830,7 @@ public static class FirWorldBuilder
             Prim(PrimitiveType.Sphere, "Hand", elbow, new Vector3(0, -0.29f, 0), new Vector3(0.08f, 0.1f, 0.03f), bone);
             shoulders[i] = shoulder; elbows[i] = elbow;
         }
-        return new[] { root, torso, skull, shoulders[0], shoulders[1], elbows[0], elbows[1], legs[0], legs[1] };
+        return new[] { root, torso, skull, shoulders[0], shoulders[1], elbows[0], elbows[1], legs[0], legs[1], jaw };
     }
 
     // ------------------------------------------------------------------- chapter 6: the furnace
