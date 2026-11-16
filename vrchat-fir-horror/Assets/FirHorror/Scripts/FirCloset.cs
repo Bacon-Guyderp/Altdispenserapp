@@ -65,10 +65,11 @@ public class FirCloset : UdonSharpBehaviour
         // the shrug
         float shrug = t < 1.1f ? 0f : t < 1.4f ? Smooth((t - 1.1f) / 0.3f) : t < 2.2f ? 1f : t < 2.5f ? 1f - Smooth((t - 2.2f) / 0.3f) : 0f;
         skeleton.localPosition = skelRest + new Vector3(stepOut * step, bob + 0.04f * shrug, 0);
-        armL.localRotation = Quaternion.Euler(0, 0, -35f * shrug);
-        armR.localRotation = Quaternion.Euler(0, 0, 35f * shrug);
-        foreL.localRotation = Quaternion.Euler(-95f * shrug, 0, -30f * shrug);
-        foreR.localRotation = Quaternion.Euler(-95f * shrug, 0, 30f * shrug);
+        // elbows stay by the ribs, forearms come forward and out, palms up
+        armL.localRotation = Quaternion.Euler(0, 0, -12f * shrug);
+        armR.localRotation = Quaternion.Euler(0, 0, 12f * shrug);
+        foreL.localRotation = Quaternion.Euler(-100f * shrug, 0, -38f * shrug);
+        foreR.localRotation = Quaternion.Euler(-100f * shrug, 0, 38f * shrug);
         skull.localRotation = Quaternion.Euler(0, 0, 12f * shrug);
         if (t > 3.7f)
         {

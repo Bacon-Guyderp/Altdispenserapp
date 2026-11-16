@@ -1,0 +1,197 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}</style></head><body>
+<script type="module">
+import * as THREE from './three.module.min.js';
+const W = 1280, H = 720;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0);
+const camera = new THREE.PerspectiveCamera(75, W / H, 0.02, 120);
+
+// ---- port of Shaders/FirLantern.shader
+const G = { reach: { value: 6 }, dark: { value: 0 }, amb: { value: 0.004 } };
+const loader = new THREE.TextureLoader();
+function tex(n, rx = 1, ry = 1) { const t = loader.load(n); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; }
+const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+function lantern(o = {}) {
+  return new THREE.ShaderMaterial({
+    vertexColors: !!o.vc,
+    uniforms: { map: { value: o.map || white }, rep: { value: o.map ? o.map.repeat : new THREE.Vector2(1, 1) },
+      color: { value: new THREE.Color(...(o.color || [1, 1, 1])) }, full: { value: o.full || 0 },
+      glow: { value: new THREE.Color(...(o.glow || [0, 0, 0])) }, useVC: { value: o.vc ? 1 : 0 },
+      reach: G.reach, dark: G.dark, amb: G.amb },
+    vertexShader: `varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc; uniform vec2 rep;
+      void main(){ vUv = uv * rep; vec4 w = modelMatrix * vec4(position,1.); wpos = w.xyz; wn = normalize(mat3(modelMatrix) * normal);
+      #ifdef USE_COLOR
+        vc = color;
+      #else
+        vc = vec3(1.);
+      #endif
+      gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D map; uniform vec3 color; uniform float full; uniform vec3 glow; uniform float useVC;
+      uniform float reach; uniform float dark; uniform float amb; varying vec2 vUv; varying vec3 wpos; varying vec3 wn; varying vec3 vc;
+      void main(){ vec3 albedo = texture2D(map, vUv).rgb * color * mix(vec3(1.), vc, useVC);
+        vec3 toS = wpos - cameraPosition; float d = length(toS); vec3 dir = toS / max(d, 1e-4);
+        float fall = clamp(1. - d / reach, 0., 1.); fall *= fall;
+        vec3 camFwd = -vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
+        float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
+        float facing = clamp(dot(normalize(wn), -dir), 0., 1.) * 0.6 + 0.4;
+        float light = (0.006 + amb) + fall * facing * (0.3 + 0.9 * cone);
+        light *= 1. - clamp(dark, 0., 1.);
+        vec3 col = mix(albedo * light, albedo, full) + glow;
+        gl_FragColor = vec4(pow(col, vec3(1.0/2.2)), 1.); }`
+  });
+}
+
+// ---- port of FirWorldBuilder.FirMesh (stacked jagged cones)
+function firMesh(tiers, height, radius, seg, jag) {
+  const pos = [], col = [], uv = [];
+  const tierH = height / (tiers * 0.7 + 0.3);
+  function tri(a, b, c, out, sa, sb) {
+    const ab = b.clone().sub(a), ac = c.clone().sub(a);
+    if (ab.cross(ac).dot(out) < 0) { const t = b; b = c; c = t; }
+    for (const [p, sh] of [[a, sa], [b, sb], [c, sb]]) {
+      pos.push(p.x, p.y, p.z); col.push(sh, sh, sh);
+      uv.push((Math.atan2(p.z, p.x) / (Math.PI * 2) + 0.5) * 3, p.y / height * 3);
+    }
+  }
+  for (let k = 0; k < tiers; k++) {
+    const y0 = k * tierH * 0.7, y1 = Math.min(height, y0 + tierH), r = radius * (1 - k / (tiers + 0.4));
+    const apex = new THREE.Vector3(0, y1, 0), inner = new THREE.Vector3(0, y0 + tierH * 0.25, 0), pts = seg * 2;
+    for (let i = 0; i < pts; i++) {
+      const a0 = i * Math.PI * 2 / pts, a1 = (i + 1) * Math.PI * 2 / pts;
+      const r0 = i % 2 == 0 ? r : r * jag, r1 = (i + 1) % 2 == 0 ? r : r * jag;
+      const d0 = i % 2 == 0 ? -tierH * 0.06 : 0, d1 = (i + 1) % 2 == 0 ? -tierH * 0.06 : 0;
+      const p0 = new THREE.Vector3(Math.cos(a0) * r0, y0 + d0, Math.sin(a0) * r0);
+      const p1 = new THREE.Vector3(Math.cos(a1) * r1, y0 + d1, Math.sin(a1) * r1);
+      const out = new THREE.Vector3(Math.cos((a0 + a1) / 2), 0.3, Math.sin((a0 + a1) / 2));
+      tri(apex, p0, p1, out, 1, 0.55);
+      tri(inner, p1, p0, new THREE.Vector3(0, -1, 0), 0.3, 0.45);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.computeVertexNormals();
+  return g;
+}
+const sphere = new THREE.SphereGeometry(0.5, 24, 16), cyl = new THREE.CylinderGeometry(0.5, 0.5, 2, 24);
+const M = {
+  needles: lantern({ map: tex('needles.png'), vc: true }), pot: lantern({ color: [0.55, 0.12, 0.1] }), trunk: lantern({ color: [0.3, 0.2, 0.12] }),
+  eye: lantern({ color: [0.9, 0.9, 0.85], glow: [0.22, 0.22, 0.2] }), pupil: lantern({ color: [0.01, 0.01, 0.01], full: 1 }),
+  mouth: lantern({ color: [0.7, 0.05, 0.08], glow: [0.08, 0, 0] }), black: lantern({ color: [0.03, 0.03, 0.03] }),
+  red: lantern({ color: [0.6, 0, 0], full: 1, glow: [0.9, 0.05, 0.02] }), teeth: lantern({ color: [0.85, 0.82, 0.7], glow: [0.08, 0.07, 0.05] }),
+  wall: lantern({ map: tex('wallpaper.png', 3, 2) }), floor: lantern({ map: tex('wood_floor.png', 3, 7) }), ceil: lantern({ map: tex('ceiling.png', 3, 7) }),
+  poster: lantern({ map: loader.load('poster_warning_scrawl.png') }), cloth: lantern({ color: [0.45, 0.07, 0.08] }),
+};
+// ---- port of FirWorldBuilder.BuildTree (face looks along +z)
+function buildTree(height) {
+  const root = new THREE.Group();
+  const potH = Math.max(0.08, height * 0.09), trunkH = height * 0.08, canopyH = height - potH - trunkH, radius = height * 0.36;
+  const add = (geo, mat, p, s, parent = root) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
+  add(cyl, M.pot, [0, potH / 2, 0], [radius * 0.55, potH / 2, radius * 0.55]);
+  add(cyl, M.trunk, [0, potH + trunkH / 2, 0], [radius * 0.18, trunkH / 2 + 0.02, radius * 0.18]);
+  const head = new THREE.Group(); head.position.set(0, potH + trunkH, 0); root.add(head);
+  const tiers = Math.min(6, Math.max(3, Math.round(height * 2.2)));
+  head.add(new THREE.Mesh(firMesh(tiers, canopyH, radius, 14, 0.7), M.needles));
+  const faceY = canopyH * 0.5, rAt = radius * (1 - faceY / canopyH) * 1.05, eye = Math.max(0.035, canopyH * 0.055), faceZ = rAt * 0.92;
+  for (const sx of [-1, 1]) {
+    add(sphere, M.eye, [sx * eye * 1.25, faceY + eye * 1.1, faceZ], [eye * 2, eye * 2, eye * 2], head);
+    add(sphere, M.pupil, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.85], [eye * 0.8, eye * 0.8, eye * 0.8], head);
+  }
+  const mouth = new THREE.Group(); mouth.position.set(0, faceY - eye * 1.4, faceZ - eye * 0.2); head.add(mouth);
+  add(sphere, M.mouth, [0, 0, 0], [eye * 3.2, eye * 1.6, eye * 1.2], mouth);
+  add(sphere, M.black, [0, 0, eye * 0.25], [eye * 2.4, eye * 1.1, eye * 0.9], mouth);
+  const tooth = firMesh(1, eye * 0.55, eye * 0.16, 5, 1);
+  for (let row = 0; row < 2; row++) for (let k = 0; k < 6; k++) {
+    const m = new THREE.Mesh(tooth, M.teeth); m.position.set((-1.05 + k * 0.42) * eye, (row == 0 ? 0.42 : -0.42) * eye, eye * 0.5);
+    if (row == 0) m.rotation.x = Math.PI; mouth.add(m);
+  }
+  const redEyes = new THREE.Group(); redEyes.visible = false; head.add(redEyes);
+  for (const sx of [-1, 1]) add(sphere, M.red, [sx * eye * 1.25, faceY + eye * 1.1, faceZ + eye * 0.95], [eye * 0.75, eye * 0.75, eye * 0.75], redEyes);
+  return { root, head, mouth, redEyes, faceHeight: potH + trunkH + faceY, faceZ };
+}
+
+// ---- the Living Room corner with the closet (port of FirWorldBuilder.BuildSkeletonCloset; door faces +x)
+const box = (mat, p, sz, parent = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(...sz), mat); m.position.set(...p); parent.add(m); return m; };
+const prim = (geo, mat, p, s, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); m.scale.set(...s); parent.add(m); return m; };
+const group = (parent, p) => { const g = new THREE.Group(); g.position.set(...p); parent.add(g); return g; };
+const X = {
+  wood: lantern({ map: tex('wood_floor.png', 4, 4) }), desk: lantern({ map: tex('wood_floor.png', 1, 2), color: [0.8, 0.7, 0.6] }),
+  wall: lantern({ map: tex('wallpaper.png', 4, 2) }), trim: lantern({ color: [0.85, 0.83, 0.78] }),
+  bone: lantern({ color: [0.92, 0.9, 0.82], glow: [0.14, 0.14, 0.12] }), mist: lantern({ color: [0.05, 0.14, 0.1], full: 1, glow: [0.03, 0.1, 0.07] }),
+  black: lantern({ color: [0.01, 0.01, 0.01], full: 1 }), gold: lantern({ color: [0.85, 0.65, 0.15] }),
+};
+box(X.wood, [2, -0.1, 0], [8, 0.2, 8]); box(X.wall, [-0.45, 1.7, 0], [0.2, 3.4, 8]); box(X.wall, [2, 1.7, -3.1], [8, 3.4, 0.2]);
+box(X.trim, [-0.3, 0.5, 0], [0.1, 1, 8]);
+const c = group(scene, [0, 0, 0]);
+box(X.desk, [0, 1.15, 0], [0.7, 2.3, 1.5], c);
+const doorway = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.1), X.black); doorway.position.set(0.352, 1.05, 0); doorway.rotation.y = Math.PI / 2; c.add(doorway);
+const hinge = group(c, [0.38, 0, -0.66]);
+const door = box(X.trim, [0, 1.05, 0.66], [0.05, 2.1, 1.3], hinge);
+prim(sphere, X.gold, [0.04, 0, 0.5], [0.07, 0.07, 0.07], door);
+{ // the door sign
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 170; const g = cv.getContext('2d');
+  g.fillStyle = '#d8d4c8'; g.fillRect(0, 0, 512, 170); g.fillStyle = '#3a1a10'; g.textAlign = 'center';
+  g.font = 'bold 72px sans-serif'; g.fillText('CLOSET', 256, 80); g.font = '48px sans-serif'; g.fillText('do not open', 256, 145);
+  const t = new THREE.CanvasTexture(cv); const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.25), lantern({ map: t }));
+  sign.position.set(0.03, 0.55, 0); sign.rotation.y = Math.PI / 2; door.add(sign);
+}
+const sk = group(c, [-0.05, 0, 0]); sk.rotation.y = Math.PI / 2;
+const B = X.bone;
+prim(cyl, B, [0, 1.2, 0], [0.05, 0.27, 0.05], sk);
+for (let r = 0; r < 5; r++) prim(cyl, B, [0, 1.22 + r * 0.055, 0.03], [0.3 - Math.abs(r - 2) * 0.02, 0.012, 0.2], sk);
+prim(sphere, B, [0, 0.93, 0], [0.3, 0.12, 0.16], sk);
+prim(cyl, B, [0, 1.47, 0], [0.04, 0.2, 0.04], sk).rotation.z = Math.PI / 2;
+for (const side of [-1, 1]) {
+  prim(cyl, B, [side * 0.09, 0.68, 0], [0.05, 0.22, 0.05], sk);
+  prim(cyl, B, [side * 0.1, 0.25, 0], [0.045, 0.21, 0.045], sk);
+  prim(sphere, B, [side * 0.1, 0.03, 0.06], [0.08, 0.05, 0.16], sk);
+}
+const skull = group(sk, [0, 1.5, 0]);
+prim(sphere, B, [0, 0.13, 0], [0.2, 0.22, 0.21], skull);
+prim(sphere, B, [0, 0.05, 0.04], [0.14, 0.07, 0.13], skull);
+for (const ex of [-0.045, 0.045]) prim(sphere, X.black, [ex, 0.14, 0.09], [0.055, 0.06, 0.04], skull);
+prim(new THREE.BoxGeometry(1, 1, 1), X.black, [0, 0.06, 0.1], [0.09, 0.012, 0.02], skull);
+const arms = [], fores = [];
+for (const side of [-1, 1]) {
+  const sh = group(sk, [side * 0.2, 1.46, 0]);
+  prim(cyl, B, [0, -0.15, 0], [0.04, 0.15, 0.04], sh);
+  const el = group(sh, [0, -0.3, 0]);
+  prim(cyl, B, [0, -0.13, 0], [0.035, 0.13, 0.035], el);
+  prim(sphere, B, [0, -0.29, 0], [0.08, 0.1, 0.03], el);
+  arms.push(sh); fores.push(el);
+}
+const mist = group(c, [0, 0, 0]);
+for (const [x, z, sx, sz, i] of [[0.5, 0.1, 0.9, 0.7, 0], [0.9, -0.35, 0.8, 0.6, 1], [1.0, 0.4, 0.7, 0.55, 2], [1.35, 0, 0.9, 0.7, 3], [1.6, -0.5, 0.6, 0.45, 4], [1.7, 0.55, 0.55, 0.4, 5]]) prim(sphere, X.mist, [x, 0.02, z], [sx, 0.08 + 0.03 * (i % 2), sz], mist);
+const skelRest = sk.position.clone();
+// HUD subtitle, as the game shows it
+const sub = document.createElement('div');
+sub.style.cssText = 'position:absolute;left:0;right:0;bottom:120px;text-align:center;font:600 34px sans-serif;color:#fff;text-shadow:0 0 6px #000;display:none';
+sub.innerHTML = '<b style="color:#ff3030">RED SKELETON</b>&nbsp; <i>*shrugs*</i>'; document.body.appendChild(sub);
+
+// ---- port of FirCloset.Update
+const sm = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+const T0 = 0.8, D = Math.PI / 180;
+window.renderAt = (time) => {
+  camera.position.set(2.9, 1.55, 0.75); camera.lookAt(0, 1.15, -0.1); camera.updateMatrixWorld();
+  const t = time - T0, on = t >= 0 && t <= 3.7;
+  sk.visible = on; mist.visible = on; sub.style.display = (t >= 0 && t < 3.2) ? 'block' : 'none';
+  const tt = Math.max(0, t);
+  const doorA = !on ? 0 : tt < 0.4 ? sm(tt / 0.4) : tt < 3.2 ? 1 : 1 - sm((tt - 3.2) / 0.4);
+  hinge.rotation.set(0, 100 * D * doorA, 0);
+  const step = tt < 0.4 ? 0 : tt < 1.0 ? sm((tt - 0.4) / 0.6) : tt < 2.6 ? 1 : tt < 3.2 ? 1 - sm((tt - 2.6) / 0.6) : 0;
+  const bob = (step > 0 && step < 1) ? Math.abs(Math.sin(time * 14)) * 0.03 : 0;
+  const shrug = tt < 1.1 ? 0 : tt < 1.4 ? sm((tt - 1.1) / 0.3) : tt < 2.2 ? 1 : tt < 2.5 ? 1 - sm((tt - 2.2) / 0.3) : 0;
+  sk.position.set(skelRest.x + 0.75 * step, bob + 0.04 * shrug, 0);
+  arms[0].rotation.set(0, 0, -12 * D * shrug); arms[1].rotation.set(0, 0, 12 * D * shrug);
+  fores[0].rotation.set(-100 * D * shrug, 0, -38 * D * shrug, 'YXZ'); fores[1].rotation.set(-100 * D * shrug, 0, 38 * D * shrug, 'YXZ');
+  skull.rotation.set(0, 0, 12 * D * shrug);
+  G.dark.value = 0; G.amb.value = 0.004;
+  renderer.render(scene, camera);
+  return true;
+};
+window.ready = new Promise(r => THREE.DefaultLoadingManager.onLoad = () => r(true));
+</script></body></html>
