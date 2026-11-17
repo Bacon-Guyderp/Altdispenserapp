@@ -82,6 +82,13 @@ can see is pairs of eyes and the fairy lights.
 
 ![Before and after the colour pass](colour_before_after.png)
 
+### Baked-in textures
+The package contains no image files for Unity to import. Every texture is baked into one data file,
+`Data/textures_baked.txt`, and **Build World** decodes them itself, makes mipmaps, compresses them for the
+current platform (ASTC on Android/Quest, DXT1 on PC) and saves them as texture assets in `Generated/`.
+Switching platform re-bakes them automatically. So textures can't go missing or show up white because of
+an import problem. The source PNGs live in `tools/textures/`.
+
 ### Why nothing blocks the pointer
 VRChat's interact pointer stops at the first collider it hits, even an invisible trigger. So the world has
 **no trigger zones at all**: scares and walk-past gags check your position in code, and the hat and furnace
@@ -192,7 +199,7 @@ The Living Room has a closet marked "do not open". Open it and, for everyone at 
 gag plays out ([this clip](https://www.youtube.com/watch?v=ZuG1woeW3gs)): a white skeleton steps out through
 green mist and shrugs (*"A skeleton."*), then strides off. A **red** skeleton leans out to watch it go, steps
 out with its hands on its hips (*"Red skeleton, ha."*), and slouches off after it before the door swings
-shut. Both skeletons use the supplied skeleton model (`Models/skeleton_parts.txt` and `Textures/skeleton.png`), cut into
+shut. Both skeletons use the supplied skeleton model (`Models/skeleton_parts.txt` and the baked `skeleton` texture), cut into
 moving parts at the joints by `tools/make_skeleton_parts.py`; nothing from the cartoon is used. Code: `Scripts/FirCloset.cs`. The voices are synthesised by `tools/make_voices.py` (espeak-ng with MBROLA voices).
 
 ### Throwable toilets
@@ -225,7 +232,8 @@ Re-run it after changing the builder, and save the scene first so the NavMesh ba
 ```
 cd tools
 python make_audio.py       # numpy + ffmpeg: writes Assets/FirHorror/Audio/*.ogg
-python make_textures.py    # numpy + Pillow: writes Assets/FirHorror/Textures/*.png
+python make_textures.py    # numpy + Pillow: writes the source PNGs to tools/textures/
+python bake_textures.py    # packs them into Assets/FirHorror/Data/textures_baked.txt (run after any texture change)
 python make_voices.py      # espeak-ng + mbrola-us2/us3: the two skeleton voice lines
 python make_unitypackage.py
 ```

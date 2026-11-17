@@ -1973,11 +1973,8 @@ public static class FirWorldBuilder
             return false;
         }
         var opts = ImportAssetOptions.ForceUpdate | ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceSynchronousImport;
-        if (Bad(Root + "/Textures", ".png", typeof(Texture2D)))
-        {
-            Debug.LogWarning("Fir Warning: some textures weren't imported as textures; re-importing Textures/");
-            AssetDatabase.ImportAsset(Root + "/Textures", opts);
-        }
+        if (AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/textures_baked.txt") == null)
+            AssetDatabase.ImportAsset(Root + "/Data/textures_baked.txt", ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
         if (Bad(Root + "/Audio", ".ogg", typeof(AudioClip)))
         {
             Debug.LogWarning("Fir Warning: some sounds weren't imported as sounds; re-importing Audio/");
@@ -2001,29 +1998,74 @@ public static class FirWorldBuilder
         Shader.SetGlobalFloat("_UdonFirLanR", 1f); Shader.SetGlobalFloat("_UdonFirLanG", 0.9f); Shader.SetGlobalFloat("_UdonFirLanB", 0.75f);
     }
 
+    static readonly Dictionary<string, Texture2D> baked = new Dictionary<string, Texture2D>();
+
     static Texture2D Tex(string name)
     {
-        var t = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/" + name + ".png");
-        if (t == null) { Debug.LogWarning("Fir Warning: missing texture " + name); missingAssets.Add("Textures/" + name + ".png"); }
+        if (baked.TryGetValue(name, out var t) && t != null) return t;
+        t = AssetDatabase.LoadAssetAtPath<Texture2D>(Gen + "/Tex_" + name + ".asset");   // baked earlier
+        if (t == null) { Debug.LogWarning("Fir Warning: missing texture " + name); missingAssets.Add("texture " + name); }
         return t;
+    }
+
+    /// <summary>
+    /// Builds every texture from Data/textures_baked.txt (PNG data written by tools/bake_textures.py):
+    /// decodes it, makes mipmaps, compresses it for the current platform (ASTC on Android/Quest, DXT1 on
+    /// PC) and saves it as Generated/Tex_name.asset. No PNG import is involved at all. Re-running updates
+    /// the assets in place, so materials keep pointing at them. Also runs when you switch platform.
+    /// </summary>
+    public static int BakeTextures()
+    {
+        baked.Clear();
+        Directory.CreateDirectory(Gen);
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/textures_baked.txt");
+        if (ta == null) { missingAssets.Add("Data/textures_baked.txt"); return 0; }
+        bool android = EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android;
+        var fmt = android ? TextureFormat.ASTC_6x6 : TextureFormat.DXT1;
+        int n = 0;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 5) continue;
+            string name = f[0];
+            byte[] png;
+            try { png = Convert.FromBase64String(f[4]); }
+            catch (FormatException) { missingAssets.Add("texture " + name + " (bad data)"); continue; }
+            var decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+            if (!decoded.LoadImage(png)) { missingAssets.Add("texture " + name + " (couldn't decode)"); Object.DestroyImmediate(decoded); continue; }
+            var tex = new Texture2D(decoded.width, decoded.height, TextureFormat.RGBA32, true, false) { name = name };
+            tex.SetPixels32(decoded.GetPixels32());
+            tex.Apply(true, false);
+            Object.DestroyImmediate(decoded);
+            tex.wrapMode = f[1] == "clamp" ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+            tex.filterMode = FilterMode.Trilinear;
+            tex.anisoLevel = 2;
+            EditorUtility.CompressTexture(tex, fmt, TextureCompressionQuality.Normal);
+
+            string path = Gen + "/Tex_" + name + ".asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (existing != null)
+            {
+                EditorUtility.CopySerialized(tex, existing);   // keep the asset (and every reference to it)
+                existing.name = name;
+                EditorUtility.SetDirty(existing);
+                Object.DestroyImmediate(tex);
+                tex = existing;
+            }
+            else AssetDatabase.CreateAsset(tex, path);
+            baked[name] = tex;
+            n++;
+        }
+        AssetDatabase.SaveAssets();
+        Debug.Log("Fir Warning: baked " + n + " textures (" + (android ? "ASTC 6x6, Android" : "DXT1, PC") + ")");
+        return n;
     }
 
     static void ConfigureAssets()
     {
-        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { Root + "/Textures" }))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            var imp = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (imp == null) continue;
-            bool poster = Path.GetFileName(path).StartsWith("poster");
-            imp.textureType = TextureImporterType.Default;
-            imp.mipmapEnabled = true;
-            imp.wrapMode = poster ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
-            imp.maxTextureSize = 512;
-            imp.SetPlatformTextureSettings(new TextureImporterPlatformSettings
-            { name = "Android", overridden = true, maxTextureSize = 512, format = TextureImporterFormat.ASTC_6x6 });
-            imp.SaveAndReimport();
-        }
+        BakeTextures();   // textures come from Data/textures_baked.txt, not from imported PNGs
         foreach (var guid in AssetDatabase.FindAssets("t:AudioClip", new[] { Root + "/Audio" }))
         {
             var path = AssetDatabase.GUIDToAssetPath(guid);

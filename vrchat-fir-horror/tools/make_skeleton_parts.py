@@ -9,7 +9,7 @@ The model is a static T-pose (about 12.9 units tall, facing -Z, Blender OBJ). Th
   * swings the arms down from the T-pose to hang at the sides, so the closet animation's
     shoulder and elbow angles work unchanged,
   * writes every part relative to its own pivot to Assets/FirHorror/Models/skeleton_parts.txt
-    and copies the colour texture to Assets/FirHorror/Textures/skeleton.png.
+    and copies the colour texture to tools/textures/skeleton.png (then run bake_textures.py).
 
 FirWorldBuilder.SkeletonRig reads the text file and builds one Mesh per part.
 
@@ -154,7 +154,7 @@ def main():
         f.write("\n".join(out_lines) + "\n")
     tex = os.path.join(os.path.dirname(src), "skeleton.png")
     if os.path.exists(tex):
-        shutil.copyfile(tex, os.path.join(PROJECT, "Assets", "FirHorror", "Textures", "skeleton.png"))
+        shutil.copyfile(tex, os.path.join(HERE, "textures", "skeleton.png"))
     print(f"{total} triangles written")
 
 

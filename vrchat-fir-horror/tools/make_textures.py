@@ -1,4 +1,4 @@
-"""Paints every texture in Fir Warning procedurally into Assets/FirHorror/Textures.
+"""Paints every texture in Fir Warning procedurally into tools/textures (then run bake_textures.py).
 
   python make_textures.py      (needs numpy and Pillow)
 
@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(os.path.dirname(HERE), "Assets", "FirHorror", "Textures")
+OUT = os.path.join(HERE, "textures")   # source PNGs; bake_textures.py packs them into the Unity package
 rng = np.random.default_rng(1225)
 
 FONT_DIRS = ["/usr/share/fonts/truetype/freefont", "/usr/share/fonts/truetype/dejavu",

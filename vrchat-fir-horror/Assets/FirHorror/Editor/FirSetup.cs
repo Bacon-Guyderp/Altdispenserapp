@@ -123,4 +123,15 @@ public static class FirSetup
         .SelectMany(a => { try { return a.GetTypes(); } catch { return new Type[0]; } })
         .FirstOrDefault(t => t.Name == name);
 }
+/// <summary>Re-bakes the textures in the right compression when you switch between PC and Android (Quest).</summary>
+public class FirPlatformWatcher : UnityEditor.Build.IActiveBuildTargetChanged
+{
+    public int callbackOrder => 0;
+
+    public void OnActiveBuildTargetChanged(BuildTarget previousTarget, BuildTarget newTarget)
+    {
+        if (AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/FirHorror/Data/textures_baked.txt") == null) return;
+        FirWorldBuilder.BakeTextures();
+    }
+}
 #endif
