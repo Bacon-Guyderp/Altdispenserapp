@@ -26,29 +26,45 @@ Shader "FirHorror/Lantern"
     SubShader
     {
         Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        LOD 100
         Pass
         {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
 
-            sampler2D _MainTex; float4 _MainTex_ST;
-            fixed4 _Color, _Glow;
-            half _Fullbright, _VertexColor;
-            float _UdonFirLight, _UdonFirDark, _UdonFirAmbient;
-            float _UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB, _UdonFirLanR, _UdonFirLanG, _UdonFirLanB;
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            float4 _Color;
+            float4 _Glow;
+            float _Fullbright;
+            float _VertexColor;
+            // globals set from Udon
+            float _UdonFirLight;
+            float _UdonFirDark;
+            float _UdonFirAmbient;
+            float _UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB;
+            float _UdonFirLanR, _UdonFirLanG, _UdonFirLanB;
 
             struct appdata
             {
-                float4 vertex : POSITION; float3 normal : NORMAL; float2 uv : TEXCOORD0; fixed4 color : COLOR;
+                float4 vertex : POSITION;
+                float3 normal : NORMAL;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
+
             struct v2f
             {
-                float4 pos : SV_POSITION; float2 uv : TEXCOORD0; float3 wpos : TEXCOORD1; float3 wn : TEXCOORD2;
-                fixed4 color : COLOR;
+                float4 pos : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 wpos : TEXCOORD1;
+                float3 wn : TEXCOORD2;
+                float4 color : TEXCOORD3;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -66,26 +82,35 @@ Shader "FirHorror/Lantern"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            float4 frag (v2f i) : SV_Target
             {
-                fixed4 albedo = tex2D(_MainTex, i.uv) * _Color * lerp(fixed4(1,1,1,1), i.color, _VertexColor);
-                float3 toSurf = i.wpos - _WorldSpaceCameraPos;
-                float d = length(toSurf);
-                float3 dir = toSurf / max(d, 1e-4);
-                float reach = _UdonFirLight > 0 ? _UdonFirLight : 6.0;
+                // needed in VR (single-pass stereo) so the camera position/direction below are this eye's
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+
+                float4 albedo = tex2D(_MainTex, i.uv) * _Color * lerp(float4(1.0, 1.0, 1.0, 1.0), i.color, _VertexColor);
+                float3 toSurf = i.wpos - _WorldSpaceCameraPos.xyz;
+                float d = max(length(toSurf), 0.0001);
+                float3 dir = toSurf / d;
+                float reach = lerp(6.0, _UdonFirLight, step(0.0001, _UdonFirLight));
                 float fall = saturate(1.0 - d / reach);
-                fall *= fall;
-                float3 camFwd = -UNITY_MATRIX_V[2].xyz;
+                fall = fall * fall;
+                float3 camFwd = -normalize(UNITY_MATRIX_V[2].xyz);
                 float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
                 float facing = saturate(dot(normalize(i.wn), -dir)) * 0.6 + 0.4;
+
                 float3 lanCol = float3(_UdonFirLanR, _UdonFirLanG, _UdonFirLanB);
-                if (dot(lanCol, 1) <= 0) lanCol = 1;
-                float3 light = (0.006 + _UdonFirAmbient) + float3(_UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB) * (0.6 + 0.4 * facing)
+                float hasLan = step(0.0001, lanCol.r + lanCol.g + lanCol.b);
+                lanCol = lerp(float3(1.0, 1.0, 1.0), lanCol, hasLan);
+                float3 ambCol = float3(_UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB);
+
+                float3 light = float3(1.0, 1.0, 1.0) * (0.006 + _UdonFirAmbient)
+                             + ambCol * (0.6 + 0.4 * facing)
                              + lanCol * (fall * facing * (0.3 + 0.9 * cone));
-                light *= 1.0 - saturate(_UdonFirDark);
-                fixed3 lit = albedo.rgb * light;
-                fixed3 col = lerp(lit, albedo.rgb, _Fullbright) + _Glow.rgb;
-                return fixed4(col, 1);
+                light = light * (1.0 - saturate(_UdonFirDark));
+
+                float3 lit = albedo.rgb * light;
+                float3 col = lerp(lit, albedo.rgb, _Fullbright) + _Glow.rgb;
+                return float4(col, 1.0);
             }
             ENDCG
         }

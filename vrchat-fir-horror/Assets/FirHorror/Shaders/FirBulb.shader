@@ -10,17 +10,33 @@ Shader "FirHorror/Bulb"
     SubShader
     {
         Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        LOD 100
         Pass
         {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
             #pragma multi_compile_instancing
             #include "UnityCG.cginc"
-            fixed4 _Color;
-            float _Speed, _UdonFirDark;
-            struct appdata { float4 vertex : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct v2f { float4 pos : SV_POSITION; float phase : TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
+
+            float4 _Color;
+            float _Speed;
+            float _UdonFirDark;   // global, set from Udon
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct v2f
+            {
+                float4 pos : SV_POSITION;
+                float phase : TEXCOORD0;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -34,13 +50,16 @@ Shader "FirHorror/Bulb"
                 o.phase = dot(floor(wv.xz * 2.0), float2(1.7, 2.3)) * 2.1;
                 return o;
             }
-            fixed4 frag (v2f i) : SV_Target
+
+            float4 frag (v2f i) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float tw = 0.55 + 0.45 * sin(_Time.y * _Speed + i.phase);
-                float dark = lerp(1.0, 0.3, saturate(_UdonFirDark));
-                return fixed4(_Color.rgb * (0.35 + 0.65 * tw) * dark, 1);
+                float dim = lerp(1.0, 0.3, saturate(_UdonFirDark));
+                return float4(_Color.rgb * (0.35 + 0.65 * tw) * dim, 1.0);
             }
             ENDCG
         }
     }
+    Fallback "Unlit/Color"
 }

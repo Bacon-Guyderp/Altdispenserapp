@@ -61,6 +61,7 @@ public static class FirWorldBuilder
             return false;
         }
         if (!EnsureProgramAssets()) return false;
+        if (!CheckShaders(quiet)) return false;
         meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
         Directory.CreateDirectory(Gen);
         ConfigureAssets();
@@ -2074,6 +2075,29 @@ public static class FirWorldBuilder
         A("Btn", null, new Color(0.22f, 0.28f, 0.38f), 1f);
         A("BtnGo", null, new Color(0.15f, 0.55f, 0.22f), 1f);
         A("BtnWarn", null, new Color(0.6f, 0.22f, 0.12f), 1f);
+    }
+
+    /// <summary>
+    /// Asks Unity whether the world's own shaders compiled, for every platform it has tried, and shows
+    /// the exact errors. Returns false if the user chooses to stop.
+    /// </summary>
+    static bool CheckShaders(bool quiet)
+    {
+        var problems = new List<string>();
+        foreach (var name in new[] { "FirHorror/Lantern", "FirHorror/Bulb" })
+        {
+            var sh = Shader.Find(name);
+            if (sh == null) { problems.Add(name + ": not found. Is Assets/FirHorror/Shaders imported?"); continue; }
+            foreach (var m in ShaderUtil.GetShaderMessages(sh))
+                if (m.severity == UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error)
+                    problems.Add(name + " (" + m.platform + ", line " + m.line + "): " + m.message);
+            if (ShaderUtil.ShaderHasError(sh) && problems.Count == 0) problems.Add(name + ": has a compile error (see the Console)");
+        }
+        if (problems.Count == 0) return true;
+        foreach (var p in problems) Debug.LogError("Fir Warning shader problem: " + p);
+        return EditorUtility.DisplayDialog("Fir Warning: shader problem",
+            "These shaders didn't compile, so their materials would show up pink:\n\n" + string.Join("\n", problems.Take(8)) +
+            "\n\nPlease send this message (it's also in the Console). Build anyway?", "Build anyway", "Stop");
     }
 
     /// <summary>Twinkling Christmas lights swagged along both side walls of a room, near the ceiling.</summary>
