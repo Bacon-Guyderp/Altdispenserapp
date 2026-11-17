@@ -19,7 +19,11 @@ public static class FirSetup
     const string TmpTriedKey = "FirWarning.tmpImportTried";
     static string AskedKey => "FirWarning.askedOnce." + Application.dataPath.GetHashCode();
 
-    static FirSetup() { EditorApplication.delayCall += OnEditorLoaded; }
+    static FirSetup()
+    {
+        EditorApplication.delayCall += OnEditorLoaded;
+        EditorApplication.delayCall += FirWorldBuilder.SetEditorPreviewLighting;   // real colours in the Scene view
+    }
 
     static void OnEditorLoaded()
     {

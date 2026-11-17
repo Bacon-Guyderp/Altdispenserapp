@@ -64,6 +64,8 @@ public static class FirWorldBuilder
         if (!CheckShaders(quiet)) return false;
         meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
         Directory.CreateDirectory(Gen);
+        missingAssets.Clear();
+        EnsureAssetsImported();
         ConfigureAssets();
 
         var old = GameObject.Find("FirWarning");
@@ -139,6 +141,13 @@ public static class FirWorldBuilder
         UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root.gameObject;
+        SetEditorPreviewLighting();
+        if (missingAssets.Count > 0)
+            EditorUtility.DisplayDialog("Fir Warning: missing files",
+                missingAssets.Count + " texture/sound file(s) couldn't be loaded, so those materials will show up white or silent:\n\n" +
+                string.Join("\n", missingAssets.Take(15)) + (missingAssets.Count > 15 ? "\n..." : "") +
+                "\n\nRight-click the Assets/FirHorror folder > Reimport, then run Fir Warning > Build World again. " +
+                "If it keeps happening, please send this message.", "OK");
         var blocked = CheckInteractables(root);
         if (blocked.Count > 0)
             EditorUtility.DisplayDialog("Fir Warning: check these",
@@ -1937,14 +1946,67 @@ public static class FirWorldBuilder
 
     // =================================================================== assets
 
+    static readonly SortedSet<string> missingAssets = new SortedSet<string>();
+
     static AudioClip Clip(string name)
     {
         var c = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/" + name + ".ogg");
-        if (c == null) Debug.LogWarning("Fir Warning: missing sound " + name);
+        if (c == null) { Debug.LogWarning("Fir Warning: missing sound " + name); missingAssets.Add("Audio/" + name + ".ogg"); }
         return c;
     }
 
-    static Texture2D Tex(string name) => AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/" + name + ".png");
+    /// <summary>
+    /// Makes sure every texture and sound in the package was imported as a texture/sound. If Unity
+    /// imported any of them wrongly (they'd load as nothing and every material would show up white),
+    /// force a fresh import of those folders before building.
+    /// </summary>
+    static void EnsureAssetsImported()
+    {
+        bool Bad(string folder, string ext, System.Type type)
+        {
+            if (!Directory.Exists(folder)) return false;
+            foreach (var f in Directory.GetFiles(folder, "*" + ext, SearchOption.AllDirectories))
+            {
+                string path = f.Replace('\\', '/');
+                if (AssetDatabase.LoadAssetAtPath(path, type) == null) return true;
+            }
+            return false;
+        }
+        var opts = ImportAssetOptions.ForceUpdate | ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceSynchronousImport;
+        if (Bad(Root + "/Textures", ".png", typeof(Texture2D)))
+        {
+            Debug.LogWarning("Fir Warning: some textures weren't imported as textures; re-importing Textures/");
+            AssetDatabase.ImportAsset(Root + "/Textures", opts);
+        }
+        if (Bad(Root + "/Audio", ".ogg", typeof(AudioClip)))
+        {
+            Debug.LogWarning("Fir Warning: some sounds weren't imported as sounds; re-importing Audio/");
+            AssetDatabase.ImportAsset(Root + "/Audio", opts);
+        }
+        foreach (var sh in new[] { "FirLantern", "FirBulb" })
+            if (AssetDatabase.LoadAssetAtPath<Shader>(Root + "/Shaders/" + sh + ".shader") == null)
+                AssetDatabase.ImportAsset(Root + "/Shaders/" + sh + ".shader", ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
+    }
+
+    /// <summary>
+    /// The world's lighting values are set by Udon at runtime, so in the editor they're all zero. Give the
+    /// Scene view sensible values so the world shows its real colours while you edit (editor only).
+    /// </summary>
+    public static void SetEditorPreviewLighting()
+    {
+        Shader.SetGlobalFloat("_UdonFirLight", 14f);
+        Shader.SetGlobalFloat("_UdonFirDark", 0f);
+        Shader.SetGlobalFloat("_UdonFirAmbient", 0.12f);
+        Shader.SetGlobalFloat("_UdonFirAmbR", 0.05f); Shader.SetGlobalFloat("_UdonFirAmbG", 0.04f); Shader.SetGlobalFloat("_UdonFirAmbB", 0.04f);
+        Shader.SetGlobalFloat("_UdonFirLanR", 1f); Shader.SetGlobalFloat("_UdonFirLanG", 0.9f); Shader.SetGlobalFloat("_UdonFirLanB", 0.75f);
+    }
+
+    static Texture2D Tex(string name)
+    {
+        var t = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/" + name + ".png");
+        if (t == null) { Debug.LogWarning("Fir Warning: missing texture " + name); missingAssets.Add("Textures/" + name + ".png"); }
+        return t;
+    }
 
     static void ConfigureAssets()
     {
