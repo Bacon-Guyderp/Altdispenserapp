@@ -21,7 +21,8 @@ using VRC.Udon.Common.Interfaces;
 /// `restore` is re-enabled on a new game (mimic items that vanish when they bite).
 /// `global` makes it happen to everyone in the game, not just the player who walked in.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirJumpscare : UdonSharpBehaviour
 {
     public FirGameManager game;

@@ -15,7 +15,8 @@ using VRC.Udon.Common.Interfaces;
 /// 4 lazy shrug, 5 sing into a mic, 6 point then laugh, 7 on the phone, 8 forearm falls off,
 /// 9 hands on hips, 10 tremble, 11 bow.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirSkeletonGag : UdonSharpBehaviour
 {
     public FirGameManager game;

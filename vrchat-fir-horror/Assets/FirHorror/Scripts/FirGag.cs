@@ -9,7 +9,8 @@ using VRC.Udon.Common.Interfaces;
 /// combining a few knobs: slide (moveBy), turn (rotateBy), spin, inflate (scaleBy), wobble,
 /// a walking bob, and props that are hidden until the gag starts.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirGag : UdonSharpBehaviour
 {
     public FirGameManager game;

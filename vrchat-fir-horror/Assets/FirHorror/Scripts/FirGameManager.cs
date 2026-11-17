@@ -161,6 +161,7 @@ public class FirGameManager : UdonSharpBehaviour
     public void StartGame()
     {
         if (phase != 0 && phase != 7) { JoinGame(); return; }
+        MarkSynced();
         TakeOwnership();
         phase = 1; itemMask = 0; hatMask = 0;
         seed = Random.Range(1, 1 << 30);
@@ -169,6 +170,23 @@ public class FirGameManager : UdonSharpBehaviour
         round++;
         Commit();
         RespawnCarryItems();
+        // belt and braces: whoever pressed START goes in now, whatever the sync is doing
+        if (!inGame)
+        {
+            inGame = true;
+            TeleportToCheckpoint();
+            EnterPhase(phase);
+        }
+    }
+
+    /// <summary>
+    /// If we act before the first sync has reached us, adopt the current state as "seen" so our own
+    /// change (a new round) is treated as new and teleports us, instead of being swallowed.
+    /// </summary>
+    void MarkSynced()
+    {
+        if (synced) return;
+        synced = true; lastRound = round; lastPhase = phase;
     }
 
     public void ResetGame()
@@ -180,6 +198,7 @@ public class FirGameManager : UdonSharpBehaviour
             return;
         }
         resetArmedUntil = 0;
+        MarkSynced();
         TakeOwnership();
         phase = 0; itemMask = 0; hatMask = 0; finishMs = 0;
         round++;

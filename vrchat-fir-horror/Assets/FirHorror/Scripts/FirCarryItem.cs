@@ -6,7 +6,8 @@ using VRC.SDKBase;
 /// Something you carry: a Santa hat (kind 0, sizeId = which tree it fits) or an imitation tree
 /// for the furnace (kind 1, index = global item index). Imitations whimper when picked up.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: it shares its GameObject with a VRCObjectSync.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirCarryItem : UdonSharpBehaviour
 {
     public int kind;

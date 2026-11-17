@@ -8,7 +8,8 @@ using VRC.Udon.Common.Interfaces;
 /// it lands, and a hit on the hunting tree stuns it for a few seconds.
 /// The thrower (the owner) does the hit check and tells everyone.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: it shares its GameObject with a VRCObjectSync.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirToilet : UdonSharpBehaviour
 {
     public VRC_Pickup pickup;

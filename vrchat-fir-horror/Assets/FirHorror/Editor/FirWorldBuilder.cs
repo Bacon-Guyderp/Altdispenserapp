@@ -188,7 +188,10 @@ public static class FirWorldBuilder
         title.color = new Color(0.85f, 0.1f, 0.1f);
         Text("Subtitle", lobby, new Vector3(0, 2.35f, 5.98f), Face(n), new Vector2(9, 0.4f), 0.22f,
              "<i>Don't get fooled by imitations.</i>  A co-op horror world for 1-8 players, about 45 minutes.").color = new Color(0.2f, 0.55f, 0.25f);
-        game.lobbyStatus = Text("Status", lobby, new Vector3(0, 1.85f, 5.98f), Face(n), new Vector2(6, 0.5f), 0.18f, "");
+        // If the game's scripts are running they replace this text within half a second, so if anyone can
+        // read it, UdonSharp didn't compile or the game manager stopped (see the Unity Console).
+        game.lobbyStatus = Text("Status", lobby, new Vector3(0, 1.85f, 5.98f), Face(n), new Vector2(6, 0.5f), 0.18f,
+            "<color=#ff6060><b>The game's scripts aren't running.</b></color>\nIn Unity, open the Console and look for red UdonSharp errors.");
         game.lobbyStatus.color = Color.white;
         Button("START", lobby, new Vector3(-2.2f, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("BtnGo"), game, "StartGame");
         Button("Join game", lobby, new Vector3(0, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("Btn"), game, "JoinGame");
@@ -1734,6 +1737,7 @@ public static class FirWorldBuilder
         t.color = Color.white;
         var b = Add<FirButton>(go);
         b.target = target; b.eventName = evt;
+        b.clickSource = Src(go.transform, Vector3.zero, Clip("switch"), false, 0.6f, 0.7f, 8f, false);   // you hear the press register
         SetInteract(b, label, 4f);
         return go;
     }

@@ -13,7 +13,8 @@ using VRC.Udon.Common.Interfaces;
 /// Each skeleton is a rig of 10 transforms: root, torso, skull, shoulderL, shoulderR, elbowL,
 /// elbowR, legL, legR, jaw. Each says its line out loud (3D voice on its skull) and its jaw flaps. Roots slide along the closet's +X (out) and -Z (off to the side).
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
 public class FirCloset : UdonSharpBehaviour
 {
     public FirGameManager game;
