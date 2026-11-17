@@ -86,6 +86,7 @@ public class FirGameManager : UdonSharpBehaviour
     Vector3[] roomAmb, roomLan;            // each room's mood light and lantern colour
     Vector3 ambNow, lanNow;
     int carolStep = -1; float carolNext;
+    int pendingItems, pendingHats;          // what we collected/placed until we see it come back synced
     VRCPlayerApi[] countBuf;
     float nextCount; int cachedInGame = 1;
 
@@ -134,7 +135,22 @@ public class FirGameManager : UdonSharpBehaviour
         UpdateOptionsText();
     }
 
-    public override void OnDeserialization() { ApplyState(); }
+    public override void OnDeserialization()
+    {
+        ApplyState();
+        // Two players collecting at the same moment both write the whole mask, and the last write wins.
+        // If something we collected went missing, put it back (and check whether that finished a step).
+        int lostItems = pendingItems & ~itemMask, lostHats = pendingHats & ~hatMask;
+        pendingItems = lostItems; pendingHats = lostHats;
+        if ((lostItems | lostHats) == 0) return;
+        if (phase < 1 || phase > 6) { pendingItems = 0; pendingHats = 0; return; }
+        TakeOwnership();
+        itemMask |= lostItems;
+        hatMask |= lostHats;
+        if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();
+        if (phase == 5 && hatMask == 7) Advance();
+        Commit();
+    }
 
     // ============================================================ buttons (lobby + ending)
 
@@ -207,6 +223,7 @@ public class FirGameManager : UdonSharpBehaviour
         if (!allowed) { Say("<i>It won't come loose. Not yet.</i>", 3f); return; }
         TakeOwnership();
         itemMask |= bit;
+        pendingItems |= bit;
         PlaySfx(clipPickup);
         bool done = ChapterItemsDone(ch);
         if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();  // last imitation burned
@@ -220,6 +237,7 @@ public class FirGameManager : UdonSharpBehaviour
         if ((hatMask & bit) != 0 || phase != 5) return;
         TakeOwnership();
         hatMask |= bit;
+        pendingHats |= bit;
         PlaySfx(clipPickup);
         if (hatMask == 7) Advance();
         Commit();
@@ -279,7 +297,12 @@ public class FirGameManager : UdonSharpBehaviour
     /// </summary>
     public int CodeAt(int ch, int i)
     {
-        if (ch == 1) return Hash(1, i) % 4;
+        if (ch == 1)
+        {
+            int v = Hash(1, 0) % 4;   // each note moves to a different tree than the last one
+            for (int k = 1; k <= i; k++) v = (v + 1 + Hash(1, k) % 3) % 4;
+            return v;
+        }
         if (ch == 2) return Hash(2, i) % 10;
         if (ch == 3) return Perm(3, 4, i);
         if (ch == 30) return Perm(30, 4, i);
@@ -398,6 +421,7 @@ public class FirGameManager : UdonSharpBehaviour
         {
             lastRound = round; lastPhase = phase;
             carolStep = -1;
+            pendingItems = 0; pendingHats = 0;
             for (int j = 0; j < jumpscares.Length; j++) if (jumpscares[j] != null) jumpscares[j].Rearm();
             if (phase == 0) { if (inGame) ReturnToLobby(); }
             else

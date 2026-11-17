@@ -79,9 +79,10 @@ public class FirSkeletonGag : UdonSharpBehaviour
         }
         for (int r = 0; r < rigCount; r++)
         {
-            Pose(r, t);
+            // jaw first: Pose may lay the jaw's mesh in the pile, which needs the jaw where it'll stay this frame
             float flap = (t >= talkFrom && t < talkUntil) ? Mathf.Abs(Mathf.Sin(t * 17f + r)) * (0.6f + 0.4f * Mathf.Sin(t * 5f)) : 0f;
             pivots[r * 10 + 9].localRotation = restRot[r * 10 + 9] * Quaternion.Euler(28f * flap, 0, 0);
+            Pose(r, t);
         }
         if (t >= length)
         {

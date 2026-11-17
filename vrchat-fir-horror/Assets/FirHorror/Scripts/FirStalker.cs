@@ -71,7 +71,9 @@ public class FirStalker : UdonSharpBehaviour
         if (owner) OwnerThink();
         else
         {
-            transform.position = Vector3.Lerp(transform.position, syncPos, Mathf.Min(1f, Time.deltaTime * 6f));
+            // a big jump (new chapter, warp) snaps instead of gliding through the floor
+            if ((syncPos - transform.position).sqrMagnitude > 25f) transform.position = syncPos;
+            else transform.position = Vector3.Lerp(transform.position, syncPos, Mathf.Min(1f, Time.deltaTime * 6f));
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, syncYaw, 0), Mathf.Min(1f, Time.deltaTime * 6f));
         }
         if (visual != null && visual.activeSelf != syncActive) visual.SetActive(syncActive);
@@ -98,7 +100,7 @@ public class FirStalker : UdonSharpBehaviour
             anim.SetMode(2, 2f);   // it talks to you when it's close
         }
         float reach = game.SmallGroup() ? catchDistance * 0.85f : catchDistance;
-        if (d < reach && Mathf.Abs(transform.position.y - me.y) < 1.5f && Time.time > nextCatch)
+        if (Time.time > stunUntil && d < reach && Mathf.Abs(transform.position.y - me.y) < 1.5f && Time.time > nextCatch)
         {
             nextCatch = Time.time + 6f;
             game.Caught();

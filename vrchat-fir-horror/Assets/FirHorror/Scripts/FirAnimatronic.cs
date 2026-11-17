@@ -26,7 +26,7 @@ public class FirAnimatronic : UdonSharpBehaviour
 
     int mode; float modeUntil;
     Quaternion headRest; Vector3 mouthRest, pupilRestL, pupilRestR;
-    float seedT, nextTwitch, twitchYaw, nextGreet;
+    float seedT, nextTwitch, twitchYaw, nextGreet, sleepUntil;
     bool near, eyesRed;
     VRCPlayerApi local;
 
@@ -60,11 +60,16 @@ public class FirAnimatronic : UdonSharpBehaviour
 
     void Update()
     {
+        if (mode == 0 && Time.time < sleepUntil) return;
         if (!Utilities.IsValid(local) || head == null) return;
         float t = Time.time;
         Vector3 eye = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
         float dist = Vector3.Distance(eye, head.position);
-        if (dist > 30f && mode == 0) return;
+        if (dist > 30f && mode == 0)
+        {
+            sleepUntil = t + 0.5f + Random.value * 0.5f;   // far away and idle: check again in a moment, not every frame
+            return;
+        }
 
         if (mode != 0 && t > modeUntil) { mode = 0; if (voice != null && voice.isPlaying && !voice.loop) voice.Stop(); }
         bool nowNear = watchRange > 0 && dist < watchRange;

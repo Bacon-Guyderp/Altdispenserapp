@@ -60,6 +60,13 @@ public static class FirWorldBuilder
             EditorUtility.DisplayDialog("Fir Warning", "Import TextMeshPro first:\nWindow > TextMeshPro > Import TMP Essential Resources", "OK");
             return false;
         }
+        if (string.IsNullOrEmpty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path))
+        {
+            EditorUtility.DisplayDialog("Fir Warning", "Save the scene first (File > Save As), then run Build World again.\n\n" +
+                "The walkable-area (NavMesh) bake for the hunting tree needs a saved scene. " +
+                "Or use Fir Warning > One-Click Setup, which makes and saves the scene for you.", "OK");
+            return false;
+        }
         if (!EnsureProgramAssets()) return false;
         if (!CheckShaders(quiet)) return false;
         meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
