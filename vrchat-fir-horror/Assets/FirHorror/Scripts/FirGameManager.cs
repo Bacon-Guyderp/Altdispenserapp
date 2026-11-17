@@ -24,7 +24,7 @@ using VRC.Udon.Common.Interfaces;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirGameManager : UdonSharpBehaviour
 {
-    public const int ValveChapter = 9;   // pseudo-chapter for the furnace valves (collected in phase 6)
+    public int ValveChapter = 9;   // pseudo-chapter for the furnace valves (collected in phase 6). Keep in sync with FirWorldBuilder.
 
     // ------------------------------------------------------------ synced
     [UdonSynced] public int phase;
@@ -98,9 +98,20 @@ public class FirGameManager : UdonSharpBehaviour
 
     string[] colourNames, sessionNames, hatColourNames, familyNames, ordinals;
 
-    void Start()
+    bool inited;
+
+    /// <summary>
+    /// One-time setup. Called from Start and from every entry point, because VRChat doesn't guarantee
+    /// Start runs before the first OnDeserialization (a late joiner can get the synced state first).
+    /// </summary>
+    void EnsureInit()
     {
+        if (inited) return;
+        inited = true;
         local = Networking.LocalPlayer;
+        pow2 = new int[31];
+        pow2[0] = 1;
+        for (int k = 1; k < 31; k++) pow2[k] = pow2[k - 1] * 2;
         chapterMask = new int[10];
         colourNames = new string[] { "<color=#ff4040>RED</color>", "<color=#40c0ff>BLUE</color>", "<color=#50ff60>GREEN</color>", "<color=#ffd030>GOLD</color>" };
         sessionNames = new string[] { "\"JINGLE\"", "\"GREETING\"", "\"LAUGHTER\"", "\"GOODNIGHT\"" };
@@ -121,12 +132,21 @@ public class FirGameManager : UdonSharpBehaviour
                                   new Vector3(1f, 0.8f, 0.75f), new Vector3(0.85f, 0.92f, 1.05f), new Vector3(1.05f, 0.8f, 0.55f),
                                   new Vector3(1.05f, 0.7f, 0.45f), new Vector3(1f, 0.9f, 0.75f) };
         ambNow = roomAmb[0]; lanNow = roomLan[0];
-        for (int i = 0; i < itemChapter.Length && i < 31; i++) chapterMask[itemChapter[i]] |= 1 << i;
+        for (int i = 0; i < itemChapter.Length && i < 30; i++)
+        {
+            int ch = itemChapter[i];
+            chapterMask[ch] = With(chapterMask[ch], i);
+        }
+    }
+
+    void Start()
+    {
+        EnsureInit();
         if (scareRig != null) scareRig.gameObject.SetActive(false);
         for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(false);
         if (Networking.IsOwner(gameObject))
         {
-            if (seed == 0) seed = Random.Range(1, 1 << 30);
+            if (seed == 0) seed = Random.Range(1, 1073741823);
             RequestSerialization();
             ApplyState();
         }
@@ -137,18 +157,21 @@ public class FirGameManager : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        EnsureInit();
         ApplyState();
         // Two players collecting at the same moment both write the whole mask, and the last write wins.
         // If something we collected went missing, put it back (and check whether that finished a step).
-        int lostItems = pendingItems & ~itemMask, lostHats = pendingHats & ~hatMask;
-        pendingItems = lostItems; pendingHats = lostHats;
-        if ((lostItems | lostHats) == 0) return;
+        int lostItems = Minus(pendingItems, itemMask);
+        int lostHats = Minus(pendingHats, hatMask);
+        pendingItems = lostItems;
+        pendingHats = lostHats;
+        if (lostItems == 0 && lostHats == 0) return;
         if (phase < 1 || phase > 6) { pendingItems = 0; pendingHats = 0; return; }
         TakeOwnership();
-        itemMask |= lostItems;
-        hatMask |= lostHats;
-        bool lit = (lostItems & chapterMask[ValveChapter]) != 0 && ChapterItemsDone(ValveChapter);
-        bool done = phase >= 1 && phase <= 3 && (lostItems & chapterMask[phase]) != 0 && ChapterItemsDone(phase);
+        itemMask = Union(itemMask, lostItems);
+        hatMask = Union(hatMask, lostHats);
+        bool lit = Overlaps(lostItems, chapterMask[ValveChapter]) && ChapterItemsDone(ValveChapter);
+        bool done = phase >= 1 && phase <= 3 && Overlaps(lostItems, chapterMask[phase]) && ChapterItemsDone(phase);
         if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();
         if (phase == 5 && hatMask == 7) Advance();
         Commit();
@@ -160,11 +183,12 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void StartGame()
     {
+        EnsureInit();
         if (phase != 0 && phase != 7) { JoinGame(); return; }
         MarkSynced();
         TakeOwnership();
         phase = 1; itemMask = 0; hatMask = 0;
-        seed = Random.Range(1, 1 << 30);
+        seed = Random.Range(1, 1073741823);
         startMs = Networking.GetServerTimeInMilliseconds();
         finishMs = 0;
         round++;
@@ -191,6 +215,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void ResetGame()
     {
+        EnsureInit();
         if (Time.time > resetArmedUntil)
         {
             resetArmedUntil = Time.time + 4f;
@@ -208,6 +233,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void JoinGame()
     {
+        EnsureInit();
         if (phase < 1) { Say("Nobody is playing yet. Press <b>START</b>.", 4f); return; }
         TeleportToCheckpoint();
         inGame = true;
@@ -239,14 +265,14 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void CollectItem(int index)
     {
-        int bit = 1 << index;
-        if ((itemMask & bit) != 0) return;
+        EnsureInit();
+        if (Has(itemMask, index)) return;
         int ch = itemChapter[index];
         bool allowed = ch == phase || (ch == ValveChapter && phase == 6);
         if (!allowed) { Say("<i>It won't come loose. Not yet.</i>", 3f); return; }
         TakeOwnership();
-        itemMask |= bit;
-        pendingItems |= bit;
+        itemMask = With(itemMask, index);
+        pendingItems = With(pendingItems, index);
         PlaySfx(clipPickup);
         bool done = ChapterItemsDone(ch);
         if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();  // last imitation burned
@@ -256,11 +282,11 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void FillSocket(int socket)
     {
-        int bit = 1 << socket;
-        if ((hatMask & bit) != 0 || phase != 5) return;
+        EnsureInit();
+        if (Has(hatMask, socket) || phase != 5) return;
         TakeOwnership();
-        hatMask |= bit;
-        pendingHats |= bit;
+        hatMask = With(hatMask, socket);
+        pendingHats = With(pendingHats, socket);
         PlaySfx(clipPickup);
         if (hatMask == 7) Advance();
         Commit();
@@ -270,6 +296,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Showroom power panel: once the batteries are in, it makes the trees sing the carol.</summary>
     public void StationPower()
     {
+        EnsureInit();
         if (phase > 1) { Say("It's already running.", 2f); return; }
         if (phase < 1) return;
         if (!ChapterItemsDone(1))
@@ -284,6 +311,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Stockroom light switch: lights out for everyone for 8 seconds.</summary>
     public void StationLights()
     {
+        EnsureInit();
         if (phase != 2) { PlaySfx(clipSwitch); Say("<i>Click. Nothing.</i>", 2f); return; }
         if (Time.time < lightsCooldown) { Say("<i>The switch is still warm. Wait a moment.</i>", 2f); return; }
         lightsCooldown = Time.time + 20f;
@@ -293,6 +321,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Every sequence lock (carol, fuse box, tape deck, door keypad) calls this when solved.</summary>
     public void SolveLock(int ch)
     {
+        EnsureInit();
         if (phase != ch) return;
         TakeOwnership();
         Advance();
@@ -308,9 +337,9 @@ public class FirGameManager : UdonSharpBehaviour
         else FaceScare(1, 1.0f);
     }
 
-    public bool ChapterItemsDone(int ch) { return (itemMask & chapterMask[ch]) == chapterMask[ch]; }
-    public int ChapterItemsHave(int ch) { return CountBits(itemMask & chapterMask[ch]); }
-    public int ChapterItemsNeed(int ch) { return CountBits(chapterMask[ch]); }
+    public bool ChapterItemsDone(int ch) { EnsureInit(); return Minus(chapterMask[ch], itemMask) == 0; }
+    public int ChapterItemsHave(int ch) { EnsureInit(); return CountBits(chapterMask[ch]) - CountBits(Minus(chapterMask[ch], itemMask)); }
+    public int ChapterItemsNeed(int ch) { EnsureInit(); return CountBits(chapterMask[ch]); }
     public bool ValvesOpen() { return ChapterItemsDone(ValveChapter); }
 
     /// <summary>
@@ -320,6 +349,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// </summary>
     public int CodeAt(int ch, int i)
     {
+        EnsureInit();
         if (ch == 1)
         {
             int v = Hash(1, 0) % 4;   // each note moves to a different tree than the last one
@@ -337,18 +367,14 @@ public class FirGameManager : UdonSharpBehaviour
     int Hash(int salt, int i) { return Mix(seed, salt, i); }
 
     /// <summary>
-    /// A small integer hash with real mixing (xor-shift + multiply), so every puzzle answer is independent.
-    /// Stays inside 32-bit ints: h &lt; 46337, so h * 46327 + small &lt;= 2,146,608,832 &lt; 2,147,483,647.
+    /// A small integer hash with real (quadratic) mixing, so every puzzle answer is independent. Plain
+    /// arithmetic only. Stays inside 32-bit ints: h &lt;= 46308, so h*h + 37h + small &lt;= 2,146,145,274.
     /// (Checked over 300,000 seeds: all 324 carols occur, digits are uniform, every order occurs.)
     /// </summary>
     int Mix(int x, int salt, int i)
     {
-        int h = x ^ (salt * 7919 + i * 104729);
-        for (int k = 0; k < 3; k++)
-        {
-            h = (h ^ (h >> 13)) % 46337;
-            h = (h * 46327 + salt * 31 + i * 7 + k) % 2147483647;
-        }
+        int h = (x % 46309 + (x / 46309) % 46309 + salt * 7919 + i * 104729 + 1) % 46309;
+        for (int k = 0; k < 4; k++) h = (h * h + h * 37 + salt * 31 + i * 7 + k * 13 + 17) % 46309;
         return h;
     }
 
@@ -422,15 +448,15 @@ public class FirGameManager : UdonSharpBehaviour
         for (int i = 0; i < items.Length; i++)
         {
             if (items[i] == null) continue;
-            bool got = (itemMask & (1 << i)) != 0;
+            bool got = Has(itemMask, i);
             if (items[i].activeSelf == got) items[i].SetActive(!got);
         }
         int usedColours = 0;
         for (int s = 0; s < 3; s++)
         {
-            bool on = (hatMask & (1 << s)) != 0;
+            bool on = Has(hatMask, s);
             int c = CodeAt(5, s);
-            if (on) usedColours |= 1 << c;
+            if (on) usedColours = With(usedColours, c);
             for (int k = 0; k < 3; k++)
             {
                 GameObject h = hatsOnTrees[s * 3 + k];
@@ -439,7 +465,7 @@ public class FirGameManager : UdonSharpBehaviour
         }
         for (int k = 0; k < hatPickups.Length; k++)
         {
-            bool used = (usedColours & (1 << k)) != 0;
+            bool used = Has(usedColours, k);
             if (hatPickups[k] != null && hatPickups[k].activeSelf == used) hatPickups[k].SetActive(!used);
         }
         if (furnaceFire != null) furnaceFire.SetActive(ValvesOpen() && phase >= 6);
@@ -548,6 +574,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     void Update()
     {
+        EnsureInit();
         if (!Utilities.IsValid(local)) return;
         float t = Time.time;
 
@@ -727,7 +754,9 @@ public class FirGameManager : UdonSharpBehaviour
         if (scareState != 0 || behindActive || scareRig == null) return;
         if (reducedScares) { PlaySfx(clipWhisper); return; }
         VRCPlayerApi.TrackingData head = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-        Vector3 back = head.rotation * Vector3.back; back.y = 0; back.Normalize();
+        Vector3 back = head.rotation * Vector3.back;
+        back.y = 0;
+        back = back.normalized;
         scareRig.position = head.position + back * 0.9f;
         scareRig.rotation = Quaternion.LookRotation(-back, Vector3.up);
         scareRig.gameObject.SetActive(true);
@@ -847,7 +876,24 @@ public class FirGameManager : UdonSharpBehaviour
 
     void Commit() { RequestSerialization(); ApplyState(); }
 
-    int CountBits(int v) { int c = 0; while (v != 0) { c += v & 1; v = v >> 1; } return c; }
+    // ---- bit sets with plain arithmetic (no bitwise operators, so nothing depends on Udon exposing them)
+
+    int[] pow2;   // pow2[i] = 2^i, filled once in Start
+    int P2(int i) { return pow2[i]; }
+    bool Has(int set, int i) { return (set / P2(i)) % 2 == 1; }
+    int With(int set, int i) { return Has(set, i) ? set : set + P2(i); }
+    int CountBits(int set) { int c = 0; for (int i = 0; i < 30; i++) if (Has(set, i)) c++; return c; }
+
+    /// <summary>The members of a that aren't in b.</summary>
+    int Minus(int a, int b)
+    {
+        int r = 0;
+        for (int i = 0; i < 30; i++) if (Has(a, i) && !Has(b, i)) r = r + P2(i);
+        return r;
+    }
+
+    int Union(int a, int b) { return a + Minus(b, a); }
+    bool Overlaps(int a, int b) { return CountBits(a) > CountBits(Minus(a, b)); }
 
     int Pow10(int i) { int r = 1; for (int k = 0; k < i; k++) r *= 10; return r; }
 

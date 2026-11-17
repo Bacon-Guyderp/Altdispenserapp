@@ -26,6 +26,7 @@ using Object = UnityEngine.Object;
 public static class FirWorldBuilder
 {
     const string Root = "Assets/FirHorror";
+    const int ValveChapter = 9;   // must match FirGameManager.ValveChapter
     const string Gen = Root + "/Generated";
     static readonly Dictionary<string, Mesh> meshCache = new Dictionary<string, Mesh>();
     static readonly Dictionary<string, Material> mats = new Dictionary<string, Material>();
@@ -1610,7 +1611,7 @@ public static class FirWorldBuilder
     {
         Box(g, "ValvePipe", pos - normal * 0.08f, new Vector3(0.08f, 0.08f, 0.08f) + new Vector3(Mathf.Abs(normal.x), Mathf.Abs(normal.y), Mathf.Abs(normal.z)) * 0.1f, M("Metal"), false);
         Box(g, "WallPipe", pos - normal * 0.03f + Vector3.up * 1.4f, new Vector3(0.1f, 2.8f, 0.1f), M("Metal"), false);
-        var v = Item(g, "Valve", FirGameManager.ValveChapter, pos, M("Valve"), new Vector3(0.32f, 0.03f, 0.32f), PrimitiveType.Cylinder, "Open gas valve", scare);
+        var v = Item(g, "Valve", ValveChapter, pos, M("Valve"), new Vector3(0.32f, 0.03f, 0.32f), PrimitiveType.Cylinder, "Open gas valve", scare);
         v.transform.Find("Visual").localRotation = Quaternion.FromToRotation(Vector3.up, normal);
         v.GetComponent<BoxCollider>().size = Vector3.one * 0.4f;
     }

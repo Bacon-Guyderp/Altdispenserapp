@@ -41,7 +41,8 @@ public class FirSequenceLock : UdonSharpBehaviour
             if (valueClips != null && v < valueClips.Length && valueClips[v] != null) beep.PlayOneShot(valueClips[v]);
             else beep.Play();
         }
-        entry[count++] = v;
+        entry[count] = v;
+        count = count + 1;
         Show();
         if (count < length)
         {

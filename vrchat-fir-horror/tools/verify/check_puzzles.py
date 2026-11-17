@@ -12,10 +12,8 @@ def chk(v):
     peak = max(peak, abs(v)); assert abs(v) <= I32, v
     return v
 def Mix(x, salt, i):
-    h = x ^ (salt * 7919 + i * 104729)
-    for k in range(3):
-        h = cmod(h ^ (h >> 13), 46337)
-        h = cmod(chk(h * 46327 + salt * 31 + i * 7 + k), 2147483647)
+    h = cmod(cmod(x, 46309) + cmod(x // 46309, 46309) + salt * 7919 + i * 104729 + 1, 46309)
+    for k in range(4): h = cmod(chk(h * h + h * 37 + salt * 31 + i * 7 + k * 13 + 17), 46309)
     return h
 def Hash(seed, salt, i): return Mix(seed, salt, i)
 def Perm(seed, salt, n, i):
