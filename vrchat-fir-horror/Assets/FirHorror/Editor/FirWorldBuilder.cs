@@ -138,8 +138,13 @@ public static class FirWorldBuilder
         UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root.gameObject;
-        if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the world: " + game.animatronics.Length + " talking trees, " +
-                                                                game.jumpscares.Length + " scripted scares, " + itemList.Count + " items.", "OK");
+        var blocked = CheckInteractables(root);
+        if (blocked.Count > 0)
+            EditorUtility.DisplayDialog("Fir Warning: check these",
+                blocked.Count + " interactable(s) look blocked by something in front of them, so players may not be able to use them:\n\n" +
+                string.Join("\n", blocked.Take(15)) + (blocked.Count > 15 ? "\n..." : "") + "\n\nThe full list is in the Console.", "OK");
+        else if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the world: " + game.animatronics.Length + " talking trees, " +
+                                                                game.jumpscares.Length + " scripted scares, " + itemList.Count + " items. Every interactable is reachable.", "OK");
         return true;
     }
 
@@ -155,6 +160,7 @@ public static class FirWorldBuilder
         Box(lobby, "WallS", new Vector3(0, 1.75f, -6.1f), new Vector3(14.4f, 3.5f, 0.2f), M("LobbyWall"), true);
         Box(lobby, "WallW", new Vector3(-7.1f, 1.75f, 0), new Vector3(0.2f, 3.5f, 12.4f), M("LobbyWall"), true);
         Box(lobby, "WallE", new Vector3(7.1f, 1.75f, 0), new Vector3(0.2f, 3.5f, 12.4f), M("LobbyWall"), true);
+        StringLights(lobby, "Lobby", -6f, 6f, 14f, 3.5f);
 
         var spawn = new GameObject("Spawn").transform;
         spawn.SetParent(lobby, false);
@@ -252,6 +258,7 @@ public static class FirWorldBuilder
             cp.SetParent(f, false);
             cp.localPosition = new Vector3(0, 0.05f, r.z0 + 2.2f);
             checkpoints.Add(cp);
+            StringLights(shell, r.name, r.z0, r.z1, r.w, r.h);
             // a few dim ceiling fixtures so rooms have shape in the dark
             for (float z = r.z0 + 4; z < r.z1 - 2; z += 8)
                 Box(shell, "Lamp", new Vector3(0, r.h - 0.02f, z), new Vector3(1.2f, 0.04f, 0.3f), M("LampDim"), false, false);
@@ -708,6 +715,7 @@ public static class FirWorldBuilder
                 hatsOn[s * 3 + k].SetActive(false);
             }
             var sock = new GameObject("HatSocket");
+            sock.layer = 2;   // Ignore Raycast: still catches the hat, doesn't block the pointer
             sock.transform.SetParent(tr.head, false);
             sock.transform.localPosition = new Vector3(0, tr.topHeight - 0.05f, 0);
             var sc = sock.AddComponent<BoxCollider>();
@@ -928,6 +936,7 @@ public static class FirWorldBuilder
         fire.gameObject.SetActive(false);
         Box(g, "Chimney", new Vector3(-7.5f, 5.0f, 148f), new Vector3(1.2f, 2f, 1.2f), M("Brick"), true);
         var mouth = new GameObject("FurnaceSocket");
+        mouth.layer = 2;   // Ignore Raycast
         mouth.transform.SetParent(g, false);
         mouth.transform.localPosition = new Vector3(-7.5f, 1.1f, 145.4f);
         var mc = mouth.AddComponent<BoxCollider>();
@@ -1155,7 +1164,8 @@ public static class FirWorldBuilder
                 tree = GagTree(go.transform, Vector3.zero, 0.75f, false, "PeekTree");
                 gag.target = tree.root.transform; gag.hideWhenIdle = true; gag.walkIn = true;
                 gag.moveBy = new Vector3(0.7f, 0, 0); gag.inTime = 0.4f; gag.outTime = 0.4f;
-                col.isTrigger = true; col.center = new Vector3(0, 1.5f, 1.5f); col.size = new Vector3(3f, 3f, 3f);
+                Object.DestroyImmediate(col); col = null;
+                gag.zoneCenter = new Vector3(0, 1.5f, 1.5f); gag.zoneSize = new Vector3(3f, 3f, 3f);
                 break;
             case "waddle":
             {
@@ -1164,7 +1174,8 @@ public static class FirWorldBuilder
                 gag.target = tree.root.transform; gag.hideWhenIdle = true; gag.walkIn = true;
                 gag.moveBy = new Vector3(0, 0, dist); gag.bob = 0.06f; gag.wobble = 3f;
                 gag.inTime = dist / 1.3f; gag.outTime = dist / 1.3f; gag.holdTime = 0.8f;
-                col.isTrigger = true; col.center = new Vector3(0, 1.5f, dist / 2f); col.size = new Vector3(3f, 3f, dist + 1f);
+                Object.DestroyImmediate(col); col = null;
+                gag.zoneCenter = new Vector3(0, 1.5f, dist / 2f); gag.zoneSize = new Vector3(3f, 3f, dist + 1f);
                 break;
             }
             default:
@@ -1598,13 +1609,11 @@ public static class FirWorldBuilder
         var go = new GameObject("Scare " + name);
         go.transform.SetParent(g, false);
         go.transform.localPosition = pos;
-        if (size != Vector3.zero)
-        {
-            var c = go.AddComponent<BoxCollider>();
-            c.isTrigger = true; c.size = size;
-        }
         var s = Add<FirJumpscare>(go);
         s.game = game; s.kind = kind; s.minPhase = minPhase; s.maxPhase = maxPhase;
+        // no trigger collider (it would block the interact pointer); the zone is checked in code.
+        // Thin zones are widened so a running player can't skip through between checks.
+        if (size != Vector3.zero) s.zoneSize = Vector3.Max(size, new Vector3(1.2f, 3f, 1.2f));
         return s;
     }
 
@@ -2065,6 +2074,86 @@ public static class FirWorldBuilder
         A("Btn", null, new Color(0.22f, 0.28f, 0.38f), 1f);
         A("BtnGo", null, new Color(0.15f, 0.55f, 0.22f), 1f);
         A("BtnWarn", null, new Color(0.6f, 0.22f, 0.12f), 1f);
+    }
+
+    /// <summary>Twinkling Christmas lights swagged along both side walls of a room, near the ceiling.</summary>
+    static void StringLights(Transform parent, string name, float z0, float z1, float w, float h)
+    {
+        var g = Group(parent, name + " Lights", Vector3.zero);
+        string[] cols = { "BulbRed", "BulbGreen", "BulbBlue", "BulbGold" };
+        int n = 0;
+        foreach (float side in new[] { -1f, 1f })
+        {
+            float x = side * (w / 2f - 0.06f);
+            Box(g, "Wire", new Vector3(x, h - 0.2f, (z0 + z1) / 2f), new Vector3(0.015f, 0.015f, z1 - z0 - 0.2f), M("Black"), false);
+            // bulbs sit in the middle of 0.5 m cells so the Bulb shader can give each its own twinkle
+            for (float z = Mathf.Floor(z0 * 2f) / 2f + 0.25f; z < z1 - 0.1f; z += 0.5f)
+            {
+                if (z < z0 + 0.1f) continue;
+                float swag = Mathf.Sin(Mathf.PI * Mathf.Repeat((z - z0) / 2f, 1f)) * 0.15f;
+                var b = Prim(PrimitiveType.Cube, "Bulb", g, new Vector3(x, h - 0.27f - swag, z), new Vector3(0.075f, 0.11f, 0.075f), Bulb(cols[n % 4]));
+                GameObjectUtility.SetStaticEditorFlags(b, StaticEditorFlags.BatchingStatic);
+                n++;
+            }
+        }
+    }
+
+    static Material Bulb(string name)
+    {
+        if (mats.TryGetValue(name, out var m)) return m;
+        var c = name == "BulbRed" ? new Color(1f, 0.08f, 0.06f) : name == "BulbGreen" ? new Color(0.1f, 1f, 0.2f)
+              : name == "BulbBlue" ? new Color(0.15f, 0.35f, 1f) : new Color(1f, 0.75f, 0.15f);
+        string path = Gen + "/" + name + ".mat";
+        m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        var shader = Shader.Find("FirHorror/Bulb");
+        if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+        m.shader = shader;
+        m.SetColor("_Color", c);
+        m.enableInstancing = true;
+        EditorUtility.SetDirty(m);
+        mats[name] = m;
+        return m;
+    }
+
+    /// <summary>
+    /// For every interactable, looks at it from a ring of standing spots (eye height 1.5 m) and checks
+    /// that the first thing the pointer would hit is the interactable itself. Returns the ones that no
+    /// spot can reach, and logs them.
+    /// </summary>
+    static List<string> CheckInteractables(Transform root)
+    {
+        Physics.SyncTransforms();
+        var targets = new List<Component>();
+        targets.AddRange(root.GetComponentsInChildren<FirItem>(true));
+        targets.AddRange(root.GetComponentsInChildren<FirKey>(true));
+        targets.AddRange(root.GetComponentsInChildren<FirButton>(true));
+        targets.AddRange(root.GetComponentsInChildren<FirCloset>(true));
+        targets.AddRange(root.GetComponentsInChildren<FirSkeletonGag>(true));
+        targets.AddRange(root.GetComponentsInChildren<FirGag>(true).Where(x => !x.walkIn));
+        targets.AddRange(root.GetComponentsInChildren<VRCPickup>(true));
+        int mask = ~(1 << 2);   // ignore the Ignore Raycast layer, like the pointer does
+        var blocked = new List<string>();
+        foreach (var t in targets)
+        {
+            if (!t.gameObject.activeInHierarchy) continue;
+            var col = t.GetComponent<Collider>();
+            string label = t.GetType().Name + " '" + t.name + "' at " + t.transform.position.ToString("F1");
+            if (col == null) { blocked.Add(label + " (no collider)"); continue; }
+            Vector3 c = col.bounds.center;
+            bool ok = false;
+            for (int i = 0; i < 16 && !ok; i++)
+            {
+                float a = i * Mathf.PI / 8f, d = i % 2 == 0 ? 1.3f : 2.1f;
+                var eye = new Vector3(c.x + Mathf.Cos(a) * d, Mathf.Max(1.5f, c.y + 0.4f), c.z + Mathf.Sin(a) * d);
+                if (Physics.CheckSphere(eye, 0.15f, mask, QueryTriggerInteraction.Ignore)) continue;   // standing inside something
+                var dir = c - eye;
+                if (Physics.Raycast(eye, dir.normalized, out var hit, dir.magnitude + 0.1f, mask, QueryTriggerInteraction.Collide)
+                    && (hit.collider == col || hit.collider.transform.IsChildOf(t.transform)))
+                    ok = true;
+            }
+            if (!ok) { blocked.Add(label); Debug.LogWarning("Fir Warning: interactable looks blocked: " + label, t); }
+        }
+        return blocked;
     }
 
     static Material FontMaterial()

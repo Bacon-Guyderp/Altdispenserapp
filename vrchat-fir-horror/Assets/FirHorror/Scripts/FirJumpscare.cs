@@ -4,7 +4,9 @@ using VRC.SDKBase;
 using VRC.Udon.Common.Interfaces;
 
 /// <summary>
-/// A scare, fired by walking into this trigger (or by FirItem/scripts calling Fire()).
+/// A scare, fired by walking into its zone (or by FirItem/scripts calling Fire()). The zone is a box of
+/// `zoneSize` around this object, checked in code ten times a second. There is deliberately no trigger
+/// collider: big invisible triggers block VRChat's interact pointer for everything behind them.
 ///  kind 0  face scare: a screaming tree in your face
 ///  kind 1  reveal: shows `target` for `duration` seconds with a sound
 ///  kind 2  sound: plays `sound` (positional) only
@@ -36,12 +38,13 @@ public class FirJumpscare : UdonSharpBehaviour
     public AudioSource sound;
     public FirAnimatronic anim;
     public int animMode = 1;
+    public Vector3 zoneSize;          // zero = no zone (fired by an item instead)
     public GameObject restore;
 
     bool fired;
     float nextAllowed;
     int state;           // 1 dropping, 2 peeking, 3 creeping
-    float stateT, stepAt;
+    float stateT, stepAt, nextZone;
     Vector3 homePos;
     bool homeSet;
     Vector3 dropFrom;
@@ -57,12 +60,15 @@ public class FirJumpscare : UdonSharpBehaviour
         if (restore != null) restore.SetActive(true);
     }
 
-    public override void OnPlayerTriggerEnter(VRCPlayerApi player)
+    void CheckZone()
     {
-        if (player == null || !player.isLocal) return;
-        if (game.phase < minPhase || game.phase > maxPhase) return;
         if (once && fired) return;
         if (Time.time < nextAllowed) return;
+        if (game.phase < minPhase || game.phase > maxPhase) return;
+        VRCPlayerApi lp = Networking.LocalPlayer;
+        if (!Utilities.IsValid(lp)) return;
+        Vector3 p = transform.InverseTransformPoint(lp.GetPosition() + Vector3.up * 0.9f);
+        if (Mathf.Abs(p.x) > zoneSize.x * 0.5f || Mathf.Abs(p.y) > zoneSize.y * 0.5f || Mathf.Abs(p.z) > zoneSize.z * 0.5f) return;
         fired = true;
         nextAllowed = Time.time + 25f;
         if (global) SendCustomNetworkEvent(NetworkEventTarget.All, "NetFire");
@@ -155,6 +161,7 @@ public class FirJumpscare : UdonSharpBehaviour
 
     void Update()
     {
+        if (zoneSize.x > 0f && Time.time >= nextZone) { nextZone = Time.time + 0.1f; CheckZone(); }
         if (state == 1)
         {
             stateT += Time.deltaTime / 0.35f;

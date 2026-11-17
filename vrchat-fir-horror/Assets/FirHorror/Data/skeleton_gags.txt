@@ -2,7 +2,7 @@
 # id | act | x | y | z | yaw | colours (one skeleton each: white, red, green) | voice | voice delay (s) | spoken line | placard text
 # acts: 0 salute, 1 shimmy, 2 dance then shrug, 3 collapse and reassemble, 4 lazy shrug, 5 sing into a mic,
 #       6 point then laugh, 7 on the phone, 8 forearm falls off, 9 hands on hips, 10 tremble, 11 bow
-SK1|0|-60|0|1.8|180|white,white,white|skel|0.3|Skeleton crew, reporting for duty!|SKELETON CREW
+SK1|0|-60|0|-5.35|0|white,white,white|skel|0.3|Skeleton crew, reporting for duty!|SKELETON CREW
 SK2|1|-62.5|0|-3.0|45|white|skel|0.2|I've got a funny bone. It's all of them.|
 SK3|2|3.3|0|8.0|180|white|skel|2.6|I've got no body to dance with.|
 SK4|3|3.4|0|33|-90|white|skel|0.2|I'm falling apart! ... ... I'm fine.|

@@ -70,12 +70,23 @@ a heartbeat plays when it's within 7 m. If it reaches you, you get a face scare 
 start of that room. There's no game over, so the 45-minute run keeps going. Closed doors carve the
 NavMesh, so it can't follow you into rooms you haven't unlocked.
 
-### Darkness without lights
+### Darkness without lights, but with colour
 There isn't a single Light in the world. Every surface uses the `FirHorror/Lantern` shader, which lights
 things by how close they are to **your** camera and how near the middle of your view they are. Every
-player gets their own torch, at no cost and with correct stereo. Udon drives three global shader values,
-which control blackouts, flicker and brightness. Tree eyes have a faint glow, so in a blackout all
-you can see is pairs of eyes.
+player gets their own warm torch, at no cost and with correct stereo. On top of that, each room has its own
+**mood colour** that fades in as you walk in: red in the Showroom, sickly green in the Stockroom, purple in the
+Voice Lab, cold blue in the Offices (with a fluorescent-white torch), fireplace amber in the Living Room and
+furnace orange on the Recall Floor. **Twinkling Christmas lights** (`FirHorror/Bulb`, no Udon needed) run
+along every wall; they stay dimly lit in blackouts. Tree eyes have a faint glow, so in a blackout all you
+can see is pairs of eyes and the fairy lights.
+
+![Before and after the colour pass](colour_before_after.png)
+
+### Why nothing blocks the pointer
+VRChat's interact pointer stops at the first collider it hits, even an invisible trigger. So the world has
+**no trigger zones at all**: scares and walk-past gags check your position in code, and the hat and furnace
+sockets sit on the Ignore Raycast layer. After every build, **Build World** looks at each interactable from a
+ring of standing spots and lists any that something blocks.
 
 ### Comedy gags (53)
 Between the scares, 53 things around the world want to make you laugh. Press them (or walk past the

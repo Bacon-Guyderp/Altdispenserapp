@@ -15,7 +15,8 @@ public class FirGag : UdonSharpBehaviour
     public FirGameManager game;
     public Transform target;          // the prop that moves
     public bool hideWhenIdle;         // pop-ups, peeks and waddlers only appear during the gag
-    public bool walkIn;               // set off by walking into this trigger instead of pressing
+    public bool walkIn;               // set off by walking into its zone instead of pressing
+    public Vector3 zoneCenter, zoneSize;   // the walk-in zone, local to this object (checked in code, no collider)
     public Vector3 moveBy;
     public Vector3 rotateBy;
     public float scaleBy = 1f;
@@ -30,7 +31,7 @@ public class FirGag : UdonSharpBehaviour
 
     Vector3 p0, s0;
     Quaternion r0;
-    float startT, busyUntil, nextWalkIn;
+    float startT, busyUntil, nextWalkIn, nextZone;
     bool running;
 
     void Start()
@@ -41,9 +42,12 @@ public class FirGag : UdonSharpBehaviour
 
     public override void Interact() { Trigger(); }
 
-    public override void OnPlayerTriggerEnter(VRCPlayerApi player)
+    void CheckZone()
     {
-        if (!walkIn || player == null || !player.isLocal || Time.time < nextWalkIn) return;
+        VRCPlayerApi lp = Networking.LocalPlayer;
+        if (!Utilities.IsValid(lp)) return;
+        Vector3 p = transform.InverseTransformPoint(lp.GetPosition() + Vector3.up * 0.9f) - zoneCenter;
+        if (Mathf.Abs(p.x) > zoneSize.x * 0.5f || Mathf.Abs(p.y) > zoneSize.y * 0.5f || Mathf.Abs(p.z) > zoneSize.z * 0.5f) return;
         nextWalkIn = Time.time + 30f;
         Trigger();
     }
@@ -71,6 +75,7 @@ public class FirGag : UdonSharpBehaviour
 
     void Update()
     {
+        if (walkIn && !running && Time.time >= nextZone && Time.time >= nextWalkIn) { nextZone = Time.time + 0.1f; CheckZone(); }
         if (!running) return;
         float t = Time.time - startT;
         float total = inTime + holdTime + outTime;

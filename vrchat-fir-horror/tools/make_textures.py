@@ -81,15 +81,15 @@ def needles():
 
 def wallpaper():
     s = 512
-    base = tint(noise_img(s, 4), (150, 135, 100), (205, 195, 160))
+    base = tint(noise_img(s, 4), (170, 140, 95), (230, 205, 150))
     d = ImageDraw.Draw(base)
     for x in range(0, s, 64):
-        d.rectangle([x, 0, x + 6, s], fill=(150, 40, 40))
-        d.rectangle([x + 30, 0, x + 32, s], fill=(70, 110, 70))
+        d.rectangle([x, 0, x + 9, s], fill=(190, 25, 35))
+        d.rectangle([x + 30, 0, x + 34, s], fill=(30, 130, 55))
     for y in range(32, s, 128):
         for x in range(16, s, 64):
             yy = y + (64 if (x // 64) % 2 else 0)
-            d.polygon([(x + 16, yy - 14), (x + 4, yy + 12), (x + 28, yy + 12)], fill=(60, 105, 60))
+            d.polygon([(x + 16, yy - 14), (x + 4, yy + 12), (x + 28, yy + 12)], fill=(25, 125, 50))
             d.ellipse([x + 11, yy - 2, x + 14, yy + 1], fill=(30, 20, 20))
             d.ellipse([x + 18, yy - 2, x + 21, yy + 1], fill=(30, 20, 20))
             d.arc([x + 11, yy + 1, x + 21, yy + 9], 0, 180, fill=(150, 30, 30), width=2)
@@ -201,12 +201,12 @@ def paper():
 
 def main():
     needles(); wallpaper(); wood_floor(); cardboard(); paper(); window_snow()
-    simple("concrete", (55, 55, 55), (110, 108, 104), scale=6)
-    simple("carpet_red", (70, 10, 15), (125, 25, 30), scale=16)
+    simple("concrete", (50, 58, 58), (108, 112, 104), scale=6)
+    simple("carpet_red", (95, 8, 16), (170, 22, 34), scale=16)
     simple("ceiling", (120, 118, 110), (160, 158, 150), scale=5, lines=(128, (90, 88, 80), True))
     simple("metal", (45, 50, 55), (95, 100, 105), scale=10, lines=(64, (35, 38, 40), False))
-    simple("office_carpet", (35, 40, 55), (70, 78, 95), scale=24)
-    simple("brick", (80, 35, 25), (140, 70, 50), scale=8, lines=(32, (60, 55, 50), False))
+    simple("office_carpet", (22, 40, 85), (55, 85, 150), scale=24)
+    simple("brick", (105, 35, 22), (175, 75, 45), scale=8, lines=(32, (70, 60, 52), False))
     poster("poster_warning", 512, 720, (238, 236, 225), [
         (0.10, "WARNING:", BOLD_IT, 78, (205, 25, 30)),
         (0.24, "Don't get fooled by\nIMITATION\ntalking trees!", BOLD_IT, 48, (30, 140, 50)),

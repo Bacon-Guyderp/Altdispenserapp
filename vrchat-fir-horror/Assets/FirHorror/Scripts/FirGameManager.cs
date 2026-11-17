@@ -82,6 +82,9 @@ public class FirGameManager : UdonSharpBehaviour
     int brightness = 1;                      // 0 dark, 1 normal, 2 bright
     bool flashing = true, reducedScares;
     int idLight, idDark, idAmbient;
+    int idAmbR, idAmbG, idAmbB, idLanR, idLanG, idLanB;
+    Vector3[] roomAmb, roomLan;            // each room's mood light and lantern colour
+    Vector3 ambNow, lanNow;
     int carolStep = -1; float carolNext;
     VRCPlayerApi[] countBuf;
     float nextCount; int cachedInGame = 1;
@@ -106,6 +109,17 @@ public class FirGameManager : UdonSharpBehaviour
         idLight = VRCShader.PropertyToID("_UdonFirLight");
         idDark = VRCShader.PropertyToID("_UdonFirDark");
         idAmbient = VRCShader.PropertyToID("_UdonFirAmbient");
+        idAmbR = VRCShader.PropertyToID("_UdonFirAmbR"); idAmbG = VRCShader.PropertyToID("_UdonFirAmbG"); idAmbB = VRCShader.PropertyToID("_UdonFirAmbB");
+        idLanR = VRCShader.PropertyToID("_UdonFirLanR"); idLanG = VRCShader.PropertyToID("_UdonFirLanG"); idLanB = VRCShader.PropertyToID("_UdonFirLanB");
+        // 0 lobby, 1 showroom (red), 2 stockroom (sickly green), 3 voice lab (purple), 4 offices (cold blue),
+        // 5 living room (fireplace amber), 6 recall floor (furnace orange), 7 exit
+        roomAmb = new Vector3[] { new Vector3(0.06f, 0.05f, 0.04f), new Vector3(0.07f, 0.012f, 0.012f), new Vector3(0.015f, 0.05f, 0.025f),
+                                  new Vector3(0.04f, 0.014f, 0.07f), new Vector3(0.012f, 0.03f, 0.07f), new Vector3(0.07f, 0.04f, 0.01f),
+                                  new Vector3(0.09f, 0.03f, 0.005f), new Vector3(0.05f, 0.05f, 0.05f) };
+        roomLan = new Vector3[] { new Vector3(1f, 0.85f, 0.65f), new Vector3(1f, 0.82f, 0.62f), new Vector3(0.95f, 0.88f, 0.65f),
+                                  new Vector3(1f, 0.8f, 0.75f), new Vector3(0.85f, 0.92f, 1.05f), new Vector3(1.05f, 0.8f, 0.55f),
+                                  new Vector3(1.05f, 0.7f, 0.45f), new Vector3(1f, 0.9f, 0.75f) };
+        ambNow = roomAmb[0]; lanNow = roomLan[0];
         for (int i = 0; i < itemChapter.Length && i < 31; i++) chapterMask[itemChapter[i]] |= 1 << i;
         if (scareRig != null) scareRig.gameObject.SetActive(false);
         for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(false);
@@ -492,6 +506,16 @@ public class FirGameManager : UdonSharpBehaviour
         VRCShader.SetGlobalFloat(idLight, reach);
         VRCShader.SetGlobalFloat(idAmbient, amb);
 
+        // room mood colours, blended as you walk from room to room
+        Vector3 me = local.GetPosition();
+        int room = RoomAt(me);
+        float moodScale = brightness == 0 ? 0.6f : brightness == 1 ? 1f : 1.6f;
+        float blend = Mathf.Min(1f, Time.deltaTime * 2f);
+        ambNow = Vector3.Lerp(ambNow, roomAmb[room] * moodScale, blend);
+        lanNow = Vector3.Lerp(lanNow, roomLan[room], blend);
+        VRCShader.SetGlobalFloat(idAmbR, ambNow.x); VRCShader.SetGlobalFloat(idAmbG, ambNow.y); VRCShader.SetGlobalFloat(idAmbB, ambNow.z);
+        VRCShader.SetGlobalFloat(idLanR, lanNow.x); VRCShader.SetGlobalFloat(idLanG, lanNow.y); VRCShader.SetGlobalFloat(idLanB, lanNow.z);
+
         // glow paint only shows in the dark
         bool glow = dark > 0.5f && inGame;
         if (glow != glowShown)
@@ -675,6 +699,19 @@ public class FirGameManager : UdonSharpBehaviour
         FaceScare(phase == 6 ? 2 : 0, 1.1f);
         Say("<color=#ff5555>It got you.</color> Back to the start of the room.", 4f);
         teleportAfterScareAt = Time.time + 1.4f;
+    }
+
+    /// <summary>Which room a position is in (0 lobby ... 7 exit), for the mood lighting.</summary>
+    int RoomAt(Vector3 p)
+    {
+        if (p.x < -30f || p.z < 0f) return 0;
+        if (p.z < 20f) return 1;
+        if (p.z < 56f) return 2;
+        if (p.z < 80f) return 3;
+        if (p.z < 104f) return 4;
+        if (p.z < 120f) return 5;
+        if (p.z < 150f) return 6;
+        return 7;
     }
 
     // ============================================================ group size

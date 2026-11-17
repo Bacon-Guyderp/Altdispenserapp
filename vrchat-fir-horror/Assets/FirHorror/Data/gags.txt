@@ -5,8 +5,8 @@
 # ---------------------------------------------------------------- lobby
 L1|sign|-65.5|0|2.5|90|narrator|Now look what you did.|DON'T FLIP\nTHIS SIGN|...you flipped it.
 L2|pop_gift|-54.5|0|2.0|-90|tiny|Surprise! I'm the present!||
-L3|spin|-62.5|0|4.6|180|tree|Wheee! I'm a festive tornado!||
-L4|inflate_orn|-57|0|4.6|180|tiny|Please don't pop me. Please.||
+L3|spin|-63.6|0|0.6|90|tree|Wheee! I'm a festive tornado!||
+L4|inflate_orn|-56.4|0|0.4|-90|tiny|Please don't pop me. Please.||
 L5|talk|-54.4|0|-1.8|-90|big|I'd tell you a tree joke, but it's a bit sappy.||
 L6|shiver|-65.6|0|-1.5|90|old|Brr! Who left the front door open?||
 # ---------------------------------------------------------------- 1 showroom

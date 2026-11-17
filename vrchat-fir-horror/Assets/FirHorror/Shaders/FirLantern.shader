@@ -7,6 +7,8 @@
 //   _UdonFirLight    lantern reach in metres (0 = default 7)
 //   _UdonFirDark     0 = normal, 1 = pitch black (blackouts and flicker)
 //   _UdonFirAmbient  extra ambient light added on top of the base 0.006 (beyond your lantern it is nearly black)
+//   _UdonFirAmbR/G/B the room's coloured ambient light (each room has its own mood)
+//   _UdonFirLanR/G/B the lantern's colour (0,0,0 = white)
 // Per material:
 //   _Fullbright      1 = ignore the lantern (lobby, signs), 0 = lantern lit
 //   _Glow            colour added after lighting (eyes, furnace, exit signs); ignores blackouts
@@ -36,6 +38,7 @@ Shader "FirHorror/Lantern"
             fixed4 _Color, _Glow;
             half _Fullbright, _VertexColor;
             float _UdonFirLight, _UdonFirDark, _UdonFirAmbient;
+            float _UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB, _UdonFirLanR, _UdonFirLanG, _UdonFirLanB;
 
             struct appdata
             {
@@ -75,7 +78,10 @@ Shader "FirHorror/Lantern"
                 float3 camFwd = -UNITY_MATRIX_V[2].xyz;
                 float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
                 float facing = saturate(dot(normalize(i.wn), -dir)) * 0.6 + 0.4;
-                float light = (0.006 + _UdonFirAmbient) + fall * facing * (0.3 + 0.9 * cone);
+                float3 lanCol = float3(_UdonFirLanR, _UdonFirLanG, _UdonFirLanB);
+                if (dot(lanCol, 1) <= 0) lanCol = 1;
+                float3 light = (0.006 + _UdonFirAmbient) + float3(_UdonFirAmbR, _UdonFirAmbG, _UdonFirAmbB) * (0.6 + 0.4 * facing)
+                             + lanCol * (fall * facing * (0.3 + 0.9 * cone));
                 light *= 1.0 - saturate(_UdonFirDark);
                 fixed3 lit = albedo.rgb * light;
                 fixed3 col = lerp(lit, albedo.rgb, _Fullbright) + _Glow.rgb;
