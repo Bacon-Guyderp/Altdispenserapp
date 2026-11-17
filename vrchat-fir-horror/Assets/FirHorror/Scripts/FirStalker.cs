@@ -51,6 +51,8 @@ public class FirStalker : UdonSharpBehaviour
         if (agent == null) return;
         agent.enabled = Networking.IsOwner(gameObject);
         if (agent.enabled) agent.Warp(transform.position);
+        // carry on from where it is: don't warp back to the room's start as if the chapter had just begun
+        lastPhase = game.phase; lastRound = game.round;
     }
 
     public bool IsActive() { return syncActive; }
