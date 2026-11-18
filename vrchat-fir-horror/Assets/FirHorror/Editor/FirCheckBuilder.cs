@@ -59,7 +59,7 @@ public static class FirCheckBuilder
         Box(lobby, "WallS", new Vector3(0, 1.8f, -6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
-        var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -4), 0);
+        var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
         // dark notice boards behind the text, so it reads clearly against the wallpaper
         Box(lobby, "TestBoard", new Vector3(0, 1.85f, 5.995f), new Vector3(13.2f, 3.3f, 0.01f), M("Board"));
         Box(lobby, "InfoBoard", new Vector3(-6.995f, 1.65f, 0.45f), new Vector3(0.01f, 3.0f, 9.4f), M("Board"));
@@ -153,29 +153,28 @@ public static class FirCheckBuilder
         SetInteract(tree, "Press the tree", 3f);
         t8.other = UB(tree);
 
-        // ---- the rainbow of skeletons along the east wall, each with its own voiced gag
+        // ---- the rainbow of skeletons along the east wall, each with its own voiced gag (acts 0-6)
         string[] colours = { "Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet" };
         string[] hex = { "#ff3030", "#ff9020", "#ffe030", "#40ff50", "#4080ff", "#7a5cff", "#c060ff" };
         string[] clips = { "skeleton_red", "Rainbow/rb_orange", "Rainbow/rb_yellow", "Rainbow/rb_green", "Rainbow/rb_blue", "Rainbow/rb_indigo", "Rainbow/rb_violet" };
         Box(lobby, "RainbowBoard", new Vector3(6.995f, 2.42f, -1.7f), new Vector3(0.01f, 0.6f, 8.6f), M("Board"));
         for (int i = 0; i < 7; i++)
+            GagSkeleton(lobby, colours[i], new Vector3(6.15f, 0, -5.3f + i * 1.2f), -90f, 1f, i, hex[i], clips[i],
+                        new[] { M("Bone" + colours[i]) }, new Vector3(6.98f, 2.42f, -5.3f + i * 1.2f), Vector3.left);
+
+        // ---- the second line-up along the south wall (acts 8-17)
+        string[] names2 = { "Pink", "Teal", "Gold", "Silver", "Black", "Brown", "Glow", "Rainbow", "Tiny", "Giant" };
+        string[] hex2 = { "#ff70c0", "#30e0e0", "#ffc840", "#d0d8e8", "#9a9aa8", "#c08048", "#a0ff90", "#ffffff", "#ffffff", "#ffffff" };
+        float[] scale2 = { 1, 1, 1, 1, 1, 1, 1, 1, 0.55f, 1.35f };
+        var rainbowBones = colours.Select(c => M("Bone" + c)).ToArray();
+        Box(lobby, "SouthBoard", new Vector3(-0.72f, 2.72f, -5.995f), new Vector3(11.8f, 0.6f, 0.01f), M("Board"));
+        for (int i = 0; i < 10; i++)
         {
-            float z = -5.3f + i * 1.2f;
-            var go = new GameObject(colours[i] + " Skeleton");
-            go.transform.SetParent(lobby, false);
-            go.transform.localPosition = new Vector3(6.15f, 0, z);
-            go.transform.localRotation = Quaternion.Euler(0, -90, 0);
-            var ps = SkeletonRig(go.transform, "Rig", M("Bone" + colours[i]));
-            var ms = lastRigMeshes;
-            var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.7f, 1.9f, 0.5f);
-            var rs = Add<FirRainbowSkeleton>(go);
-            rs.act = i; rs.colourName = "<color=" + hex[i] + ">" + colours[i].ToUpper() + "</color>";
-            rs.pivots = ps; rs.meshes = ms;
-            rs.voice = Src(ps[2], Vector3.zero, Clip(clips[i]), false, 1f, 1f, 15f, false);
-            rs.label = Text(colours[i] + "Label", lobby, new Vector3(6.98f, 2.42f, z), Face(Vector3.left), new Vector2(1.1f, 0.5f), 0.16f,
-                            "<b><color=" + hex[i] + ">" + colours[i].ToUpper() + "</color></b>\n<size=70%>press me</size>");
-            rs.label.color = Color.white;
-            SetInteract(rs, "Press the " + colours[i].ToLower() + " skeleton", 3f);
+            float x = -5.9f + i * 1.15f;
+            var bones = names2[i] == "Rainbow" ? rainbowBones : new[] { M(names2[i] == "Tiny" || names2[i] == "Giant" ? "BoneWhite" : "Bone" + names2[i]) };
+            string title = names2[i] == "Rainbow" ? "<color=#ff3030>R</color><color=#ff9020>A</color><color=#ffe030>I</color><color=#40ff50>N</color><color=#4080ff>B</color><color=#7a5cff>O</color><color=#c060ff>W</color>" : null;
+            GagSkeleton(lobby, names2[i], new Vector3(x, 0, -5.3f), 0f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
+                        bones, new Vector3(x, 2.72f, -5.98f), Vector3.forward, title);
         }
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -194,6 +193,28 @@ public static class FirCheckBuilder
         if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the systems check.\n\n" + string.Join("\n", report.Take(14)) +
                                                 "\n\nNow press Build & Test (or upload) and press every button in the lobby.", "OK");
         return true;
+    }
+
+    /// <summary>One of the gag skeletons: your skeleton model in its colour(s), its routine (act) and its voice line.</summary>
+    static void GagSkeleton(Transform parent, string name, Vector3 pos, float yaw, float scale, int act, string hex, string clip,
+                            Material[] bones, Vector3 labelPos, Vector3 labelNormal, string title = null)
+    {
+        var go = new GameObject(name + " Skeleton");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        go.transform.localScale = Vector3.one * scale;
+        var ps = SkeletonRig(go.transform, "Rig", bones[0], bones);
+        var ms = lastRigMeshes;
+        var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.7f, 1.9f, 0.5f);
+        var rs = Add<FirRainbowSkeleton>(go);
+        string shown = title ?? "<color=" + hex + ">" + name.ToUpper() + "</color>";
+        rs.act = act; rs.colourName = shown;
+        rs.pivots = ps; rs.meshes = ms;
+        rs.voice = Src(ps[2], Vector3.zero, Clip(clip), false, 1f, 1f, 15f, false);
+        rs.label = Text(name + "Label", parent, labelPos, Face(labelNormal), new Vector2(1.1f, 0.5f), 0.16f, "<b>" + shown + "</b>\n<size=70%>press me</size>");
+        rs.label.color = Color.white;
+        SetInteract(rs, "Press the " + name.ToLower() + " skeleton", 3f);
     }
 
     // =================================================================== what the builder can see
@@ -426,7 +447,7 @@ public static class FirCheckBuilder
     /// <summary>Your skeleton, facing the parent's +Z. Returns 10 pivots: root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR, jaw.</summary>
     static Transform[] lastRigMeshes;
 
-    static Transform[] SkeletonRig(Transform parent, string name, Material bone)
+    static Transform[] SkeletonRig(Transform parent, string name, Material bone, Material[] perPart = null)
     {
         var parts = LoadSkeletonParts();
         if (parts == null)
@@ -446,13 +467,15 @@ public static class FirCheckBuilder
         var root = Group(parent, name, Vector3.zero);
         var by = new Dictionary<string, Transform>();
         var mesh = new Dictionary<string, Transform>();
+        int partIndex = 0;
         foreach (var sp in parts)
         {
             Transform t = sp.parent == "-" ? root : Group(by[sp.parent], sp.name, sp.pivot);
             var go = new GameObject(sp.name + " Mesh");
             go.transform.SetParent(t, false);
             go.AddComponent<MeshFilter>().sharedMesh = sp.mesh;
-            NoShadows(go.AddComponent<MeshRenderer>(), bone);
+            NoShadows(go.AddComponent<MeshRenderer>(), perPart != null && perPart.Length > 1 ? perPart[partIndex % perPart.Length] : bone);
+            partIndex++;
             by[sp.name] = t;
             mesh[sp.name] = go.transform;
         }
@@ -632,6 +655,14 @@ public static class FirCheckBuilder
         A("BoneBlue", "skeleton", new Color(0.25f, 0.5f, 1.1f), 1, new Color(0.02f, 0.06f, 0.2f));
         A("BoneIndigo", "skeleton", new Color(0.4f, 0.3f, 1f), 1, new Color(0.06f, 0.03f, 0.18f));
         A("BoneViolet", "skeleton", new Color(0.8f, 0.35f, 1.1f), 1, new Color(0.14f, 0.04f, 0.2f));
+        // the second line-up
+        A("BonePink", "skeleton", new Color(1f, 0.45f, 0.75f), 1, new Color(0.18f, 0.05f, 0.1f));
+        A("BoneTeal", "skeleton", new Color(0.15f, 0.9f, 0.9f), 1, new Color(0.02f, 0.14f, 0.14f));
+        A("BoneGold", "skeleton", new Color(1f, 0.78f, 0.25f), 1, new Color(0.3f, 0.2f, 0.02f));
+        A("BoneSilver", "skeleton", new Color(0.82f, 0.85f, 0.92f), 1, new Color(0.12f, 0.12f, 0.14f));
+        A("BoneBlack", "skeleton", new Color(0.13f, 0.13f, 0.15f), 1, new Color(0.03f, 0f, 0f));
+        A("BoneBrown", "skeleton", new Color(0.55f, 0.33f, 0.15f), 1, new Color(0.05f, 0.02f, 0f));
+        A("BoneGlow", "skeleton", new Color(0.6f, 1f, 0.6f), 1, new Color(0.35f, 0.85f, 0.35f));
         // the original tree materials
         A("Needles", "needles", white, 1, Color.black);
         A("Pot", null, new Color(0.55f, 0.12f, 0.1f), 1, Color.black);

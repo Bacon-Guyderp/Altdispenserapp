@@ -15,7 +15,8 @@
 >
 > The lobby also has the original talking tree, the old wallpaper, and a **rainbow of skeletons**
 > along the east wall: red, orange, yellow, green, blue, indigo and violet, each with its own voiced
-> gag (press them). The test skeleton is the white one, so the cartoon gag ("A skeleton." / "Red
+> gag (press them), plus ten more along the south wall (pink, teal, gold, silver, black, brown, glow,
+> rainbow, tiny and giant). The test skeleton is the white one, so the cartoon gag ("A skeleton." / "Red
 > skeleton. Ha!") is there too. Voice lines: `python tools/make_voices.py --rainbow`.
 >
 > Each button writes <span>PASS</span> or <span>FAIL</span> on itself. A button stuck on

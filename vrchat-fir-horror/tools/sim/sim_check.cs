@@ -28,7 +28,7 @@ public static class SimCheck {
       foreach (var b in All<FirCheckButton>(who).OrderBy(x => x.test)) {
         Sim.Press(who, b); Sim.Run(1f);
         Check(Plain(b.label.text).Contains("PASS"), Plain(b.label.text));
-        if (b.test == 1) { var back = All<FirCheckButton>(who).First(x => x.test == 11); Sim.Press(who, back); Sim.Run(1f); Check(Plain(back.label.text).Contains("PASS") && Vector3.Distance(who.player.pos, new Vector3(0, 0.05f, -4)) < 1f, Plain(back.label.text)); }
+        if (b.test == 1) { var back = All<FirCheckButton>(who).First(x => x.test == 11); Sim.Press(who, back); Sim.Run(1f); Check(Plain(back.label.text).Contains("PASS") && Vector3.Distance(who.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, Plain(back.label.text)); }
       }
       var typed = All<FirCheckTyped>(who)[0]; Sim.Press(who, typed); Sim.Run(0.5f);
       Check(Plain(typed.label.text).Contains("PASS"), Plain(typed.label.text));

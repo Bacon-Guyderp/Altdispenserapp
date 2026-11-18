@@ -8,7 +8,9 @@ using UnityEngine;
 /// pivots / meshes: 0 root, 1 torso, 2 skull, 3 shoulderL, 4 shoulderR, 5 elbowL, 6 elbowR, 7 legL, 8 legR, 9 jaw.
 /// Acts: 0 red (leans out, hands on hips), 1 orange (knocks on thin air, shrugs), 2 yellow (trembles, points at
 /// its ribcage), 3 green (woozy wobble), 4 blue (sad slow dance), 5 indigo (huge shrug, scratches its skull),
-/// 6 violet (goes to pieces and back), 7 white (shrugs: "A skeleton.").
+/// 6 violet (goes to pieces and back), 7 white (shrugs: "A skeleton."), 8 pink (giggles), 9 teal (ghostly), 10 gold (flexes),
+/// 11 silver (sad wave), 12 black (sneaks, BOO), 13 brown (rubs its belly), 14 glow (floats), 15 rainbow (disco),
+/// 16 tiny (bounces), 17 giant (stretches).
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirRainbowSkeleton : UdonSharpBehaviour
@@ -128,6 +130,68 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
             Apply(0, 0, 0, 0, 0, 0, 10f * Mathf.Sin(t * 40f) * shake, 0, 0, -10f * shake, 0, 10f * shake, 0, 0, 0, 0, 0, 0);
             float pile = t < 0.5f ? 0f : t < L - 1.4f ? S((t - 0.5f) / 0.45f) : 1f - S((t - (L - 1.4f)) / 0.8f);
             for (int j = 0; j < 10; j++) Pile(j, pile);
+        }
+        else if (act == 8)     // pink: doubled over with giggles, slapping its knees
+        {
+            float k = Ramp(t, 0.2f, 0.5f, L - 0.6f, L - 0.3f), g = Mathf.Sin(t * 18f), slap = Mathf.Abs(Mathf.Sin(t * 7f));
+            Apply(0, 0, 0, 0.02f * Mathf.Abs(g) * k, (32f + 6f * g) * k, -15f * k, 12f * Mathf.Sin(t * 9f) * k, 8f * g * k,
+                  -(15f + 25f * slap) * k, -8f * k, -(15f + 25f * (1f - slap)) * k, 8f * k, -20f * k, 0, -20f * k, 0, 0, 0);
+        }
+        else if (act == 9)     // teal: ghostly arms out, swaying ("ooooh")
+        {
+            float k = Ramp(t, 0.3f, 1.0f, L - 0.8f, L - 0.3f), w = Mathf.Sin(t * 1.6f);
+            Apply(0, 0, 15f * w * k, 0.04f * (1f + Mathf.Sin(t * 2.2f)) * k, 6f * k, -10f * k, 10f * w * k, 0,
+                  -90f * k, -10f * w * k, -90f * k, -10f * w * k, 35f * k, 0, 35f * k, 0, 0, 0);
+        }
+        else if (act == 10)    // gold: bodybuilder flex, double biceps
+        {
+            float k = Ramp(t, 0.2f, 0.5f, L - 0.6f, L - 0.3f), pump = Mathf.Abs(Mathf.Sin(t * 5f));
+            Apply(0, 0, 0, 0.015f * pump * k, -8f * k, -10f * k, 0, 0, 0, -85f * k, 0, 85f * k,
+                  0, -(100f + 25f * pump) * k, 0, (100f + 25f * pump) * k, -10f * k, 10f * k);
+        }
+        else if (act == 11)    // silver: hangs its head, then a sad little wave
+        {
+            float k = Ramp(t, 0.2f, 0.8f, L - 0.6f, L - 0.3f), wv = Ramp(t, 2.2f, 2.5f, 3.6f, 3.9f);
+            Apply(0, 0, 0, -0.03f * k, 12f * k, 30f * k - 15f * wv, 0, 0, 5f * k, -5f * k, -110f * wv, 5f * k,
+                  0, 0, -40f * wv, 25f * Mathf.Sin(t * 7f) * wv, 0, 0);
+        }
+        else if (act == 12)    // black: sneaks side to side, then BOO
+        {
+            float sn = Ramp(t, 0.1f, 0.4f, 2.8f, 3.0f), boo = Ramp(t, 3.0f, 3.15f, L - 0.6f, L - 0.3f);
+            float side = Mathf.Sin(t * 3f) * 0.25f * sn;
+            float step = Mathf.Max(0f, Mathf.Sin(t * 6f));
+            Apply(side, 0.1f * boo, 0, -0.06f * sn + 0.04f * boo, 25f * sn - 10f * boo, 0, -30f * sn, 0,
+                  -60f * sn - 140f * boo, -20f * boo, -60f * sn - 140f * boo, 20f * boo, -70f * sn, 0, -70f * sn, 0, -25f * step * sn, -25f * (1f - step) * sn);
+        }
+        else if (act == 13)    // brown: rubs where its belly would be, then shrugs
+        {
+            float rub = Ramp(t, 0.2f, 0.5f, 2.6f, 2.9f), s = Ramp(t, 2.9f, 3.2f, L - 0.6f, L - 0.3f), c = Mathf.Sin(t * 6f);
+            Apply(0, 0, 0, 0.02f * s, -6f * s, 10f * rub, 0, 15f * s, -40f * rub, -12f * s, -40f * rub + 8f * c * rub, 12f * s + 8f * Mathf.Cos(t * 6f) * rub,
+                  -90f * rub - 100f * s, -38f * s, -90f * rub - 100f * s, 38f * s, 0, 0);
+        }
+        else if (act == 14)    // glow: floats, arms out like a ghost light
+        {
+            float k = Ramp(t, 0.3f, 1.0f, L - 0.8f, L - 0.3f), w = Mathf.Sin(t * 1.4f);
+            Apply(0, 0, 10f * w * k, (0.12f + 0.06f * Mathf.Sin(t * 2f)) * k, 0, -8f * k, 8f * w * k, 6f * w * k,
+                  -20f * k, -80f * k, -20f * k, 80f * k, 0, 0, 0, 0, 15f * k, -15f * k);
+        }
+        else if (act == 15)    // rainbow: disco, pointing up then down across
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.6f, L - 0.3f), beat = Mathf.Sin(t * 5f), up = beat > 0f ? 1f : 0f;
+            Apply(0.08f * beat * k, 0, 15f * beat * k, 0.02f * Mathf.Abs(beat) * k, 0, 0, 0, 10f * beat * k,
+                  0, -40f * k, (-160f * up - 30f * (1f - up)) * k, (20f * up - 40f * (1f - up)) * k, -30f * k, 0, 0, 0, -15f * Mathf.Max(0f, beat) * k, -15f * Mathf.Max(0f, -beat) * k);
+        }
+        else if (act == 16)    // tiny: bounces with excitement, arms up
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.5f, L - 0.2f), j = Mathf.Abs(Mathf.Sin(t * 7f));
+            Apply(0, 0, 0, 0.18f * j * k, -5f * k, -10f * k, 0, 10f * Mathf.Sin(t * 7f) * k,
+                  -160f * k, -20f * k + 15f * Mathf.Sin(t * 14f) * k, -160f * k, 20f * k - 15f * Mathf.Sin(t * 14f) * k, 0, 0, 0, 0, -20f * j * k, -20f * j * k);
+        }
+        else if (act == 17)    // giant: a big, slow stretch, then pats its non-existent belly
+        {
+            float st = Ramp(t, 0.3f, 1.3f, 2.4f, 3.0f), pat = Ramp(t, 3.0f, 3.3f, L - 0.6f, L - 0.3f), p = Mathf.Abs(Mathf.Sin(t * 8f));
+            Apply(0, 0, 0, 0.03f * st, -12f * st + 5f * pat, -20f * st, 0, 0, -170f * st - 30f * pat, -15f * st, -170f * st - 40f * pat, 15f * st,
+                  -20f * st - 90f * pat, 0, -20f * st - 90f * pat + 15f * p * pat, 0, 0, 0);
         }
         else                   // white: a lazy shrug ("A skeleton.")
         {

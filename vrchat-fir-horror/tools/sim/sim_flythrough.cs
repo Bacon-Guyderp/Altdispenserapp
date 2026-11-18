@@ -157,7 +157,7 @@ public static class SimFly {
     Press(A, tree, "Press the tree directly", 3f);
 
     // the rainbow of skeletons along the east wall
-    var rainbow = All<FirRainbowSkeleton>(A).OrderBy(x => x.act).ToList();
+    var rainbow = All<FirRainbowSkeleton>(A).Where(x => x.act < 7).OrderBy(x => x.act).ToList();
     string[] says = { "\"Red skeleton. Ha!\"", "\"Knock knock. Orange you glad I'm just bones?\"", "\"I'm not yellow. I just haven't got the guts.\"",
                       "\"Feeling a little green. Too many pine needles.\"", "\"I've got the blues. Nobody to dance with.\"",
                       "\"Indigo? Nobody even knows what colour that is.\"", "\"Sorry. I'm a shrinking violet. I go to pieces.\"" };
@@ -177,6 +177,28 @@ public static class SimFly {
       Sim.Run(Mathf.Max(4.2f, clip + 1.6f));
     }
     Cam(new Vector3(0.5f, 2.2f, -1.8f), new Vector3(6.2f, 1.1f, -1.7f), 2.5f);
+
+    // the second line-up along the south wall
+    var row2 = All<FirRainbowSkeleton>(A).Where(x => x.act >= 8).OrderBy(x => x.act).ToList();
+    string[] says2 = { "\"Stop it, I'm ticklish! Tickled pink, and I haven't even got skin.\"", "\"Ooooh. I'm the teal skeleton. Teal death do us part.\"",
+                       "\"Gold skeleton. Worth my weight in gold. I weigh nothing!\"", "\"Silver skeleton. I came second in the skeleton contest.\"",
+                       "\"Black skeleton. I'm the one hiding in your closet. Boo.\"", "\"Brown skeleton. I'm not hungry. I've got no stomach for it.\"",
+                       "\"I glow in the dark. Someone turn off the lights. Please?\"", "\"I'm every colour! I just couldn't decide.\"",
+                       "\"Hi! I'm just a little skele-tiny!\"", "\"I'm not fat. I'm big-boned.\"" };
+    Cam(new Vector3(-1.0f, 2.4f, -0.2f), new Vector3(-0.7f, 1.0f, -5.3f));
+    Caption("And ten more along the south wall");
+    Walk(A, new Vector3(-5.9f, 0.05f, -3.6f));
+    Sim.Run(1.5f);
+    for (int i = 0; i < row2.Count; i++) {
+      var rs = row2[i];
+      var at = rs.transform.position;
+      Cam(new Vector3(Mathf.Clamp(at.x + 0.45f, -5.6f, 5.6f), 1.6f, -2.3f), at + new Vector3(0, 0.95f * rs.transform.localScale.y, 0));
+      Walk(A, new Vector3(at.x - 0.85f, 0.05f, -4.3f)); Face(A, at);
+      Caption(says2[i]);
+      Sim.Press(A, rs);
+      float clip = rs.voice != null && rs.voice.clip != null ? rs.voice.clip.length : 3f;
+      Sim.Run(Mathf.Max(4.2f, clip + 1.4f));
+    }
 
     Walk(A, new Vector3(0, 0.05f, -3.5f));
     Cam(new Vector3(0, 2.1f, -1.0f), new Vector3(0, 1.75f, 6));
