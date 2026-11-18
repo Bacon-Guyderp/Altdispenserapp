@@ -55,7 +55,7 @@ namespace UnityEngine {
   public class RectTransform : Transform { public Vector2 sizeDelta; }
   public class LayerMask { }
   public class Resources { public static Object Load(string p) { return null; } }
-  public static class Application { public static string dataPath; }
+  public static class Application { public static string dataPath; public static string unityVersion; }
   public class GUILayout { }
 }
 namespace UnityEngine.Rendering { public enum ShadowCastingMode { Off, On } public enum LightProbeUsage { Off } public enum ReflectionProbeUsage { Off } public enum AmbientMode { Flat } }

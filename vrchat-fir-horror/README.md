@@ -1,5 +1,25 @@
 # Fir Warning: a Quest-friendly VRChat horror world about animatronic talking trees
 
+> **Rebuild in progress.** The old map has moved to `legacy/` and isn't in the package any more.
+> **Stage 1 (this package)** is a *systems check*: a small world that proves each basic piece works
+> in your own VRChat setup before the new map is built on top of it. **Stage 2** will be the new
+> map: new rooms, new gags, all the original gags, the 12 skeleton routines, the RED SKELETON
+> closet, your skeleton model, and better tree models.
+>
+> **To run the systems check:**
+> 1. Delete `Assets/FirHorror` from your project.
+> 2. Unzip `FirWarning-folder.zip` into the project folder.
+> 3. Use **Fir Warning > One-Click Setup** (or **Fir Warning > Build Systems Check** in an open scene).
+> 4. Use **Build & Test**.
+> 5. Press every button in the lobby, then press the skeleton and the tree.
+>
+> Each button writes <span>PASS</span> or <span>FAIL</span> on itself. A button stuck on
+> *testing...* means its script stopped. The boards on the left wall show whether the hub script is
+> running, plus the UdonSharp and SDK versions. Send a photo of the walls.
+>
+> Without Unity, `bash tools/sim/run_check.sh` builds the same world in the simulator and presses
+> every button.
+
 *"Don't get fooled by imitations. Unauthorized copies will not be tolerated."*
 
 ![A face scare, rendered from the world's own tree, face and lighting code](jumpscare_preview.png)

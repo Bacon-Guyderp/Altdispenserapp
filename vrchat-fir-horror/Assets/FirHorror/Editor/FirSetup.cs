@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// Fir Warning > One-Click Setup. Imports TextMeshPro's essentials if they're missing, creates
-/// "Assets/FirHorror/Fir Warning.unity", builds the world into it, saves
+/// "Assets/FirHorror/Fir Warning.unity", builds the systems check into it, saves
 /// it and adds it to Build Settings. Offered automatically the first time the package is imported.
 /// </summary>
 [InitializeOnLoad]
@@ -88,7 +88,7 @@ public static class FirSetup
         EditorSceneManager.SaveScene(scene, ScenePath);
         EditorUtility.DisplayProgressBar("Fir Warning", "Building the world...", 0.5f);
         bool ok;
-        try { ok = FirWorldBuilder.Build(true); }
+        try { ok = FirCheckBuilder.Build(true); }
         finally { EditorUtility.ClearProgressBar(); }
         if (!ok) return;
 
@@ -100,8 +100,8 @@ public static class FirSetup
             EditorBuildSettings.scenes = list.ToArray();
         }
         EditorUtility.DisplayDialog("Fir Warning is ready",
-            "Built the scene 'Fir Warning'.\n\nNext: VRChat SDK > Show Control Panel > Builder, then Build & Test (PC). " +
-            "For Quest, switch the platform to Android and upload the same world again.",
+            "Built the systems check into the scene 'Fir Warning'.\n\nNext: VRChat SDK > Show Control Panel > Builder, then Build & Test, " +
+            "and press every button in the lobby. Each says PASS or FAIL on itself.",
             "OK");
     }
 
@@ -121,16 +121,5 @@ public static class FirSetup
     static Type FindType(string name) => AppDomain.CurrentDomain.GetAssemblies()
         .SelectMany(a => { try { return a.GetTypes(); } catch { return new Type[0]; } })
         .FirstOrDefault(t => t.Name == name);
-}
-/// <summary>Re-bakes the textures in the right compression when you switch between PC and Android (Quest).</summary>
-public class FirPlatformWatcher : UnityEditor.Build.IActiveBuildTargetChanged
-{
-    public int callbackOrder => 0;
-
-    public void OnActiveBuildTargetChanged(BuildTarget previousTarget, BuildTarget newTarget)
-    {
-        if (AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/FirHorror/Data/textures_baked.txt") == null) return;
-        FirWorldBuilder.BakeTextures();
-    }
 }
 #endif

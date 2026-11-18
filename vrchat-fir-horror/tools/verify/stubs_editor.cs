@@ -37,3 +37,5 @@ namespace UnityEditor.SceneManagement {
   public static class EditorSceneManager { public static UnityEngine.SceneManagement.Scene GetActiveScene() { return default(UnityEngine.SceneManagement.Scene); } public static bool SaveCurrentModifiedScenesIfUserWantsTo() { return true; } public static UnityEngine.SceneManagement.Scene OpenScene(string p, OpenSceneMode m) { return default(UnityEngine.SceneManagement.Scene); } public static UnityEngine.SceneManagement.Scene NewScene(NewSceneSetup s, NewSceneMode m) { return default(UnityEngine.SceneManagement.Scene); } public static bool SaveScene(UnityEngine.SceneManagement.Scene s, string p) { return true; } }
 }
 namespace UnityEngine.SceneManagement { public struct Scene { public bool isDirty { get { return false; } } public string path { get { return ""; } } } }
+
+namespace UnityEditor.PackageManager { public class PackageInfo { public string version; public static PackageInfo FindForAssembly(System.Reflection.Assembly a) { return null; } } }

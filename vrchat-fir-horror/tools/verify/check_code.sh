@@ -9,7 +9,10 @@ cp "$ASSETS"/Editor/*.cs "$TMP/"
 # mcs doesn't support C# local functions (Unity's compiler does), so lift them out for the check only
 python3 - "$TMP/FirWorldBuilder.cs" <<'PY'
 import re, sys
-p = sys.argv[1]; s = open(p).read(); hoisted = []
+import os
+p = sys.argv[1]
+if not os.path.exists(p): sys.exit(0)
+s = open(p).read(); hoisted = []
 a = s.index('        TreeParts GagTree('); b = s.index('        switch (kind)', a)
 hoisted.append('    static ' + s[a:b].strip() + '\n'); s = s[:a] + s[b:]
 m = re.search(r'        void A\(string n, string tex, Color c, float full = 0, Color\? glow = null\) => [^\n]*\n', s)

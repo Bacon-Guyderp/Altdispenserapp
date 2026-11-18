@@ -65,7 +65,7 @@ namespace UnityEngine {
   public static class RenderSettings { public static Material skybox; public static UnityEngine.Rendering.AmbientMode ambientMode; public static Color ambientLight; public static bool fog; }
   public class RectTransform : Component { public Vector2 sizeDelta; }
   public class ScriptableObject : Object { public static T CreateInstance<T>() where T : ScriptableObject, new() { return new T(); } }
-  public static class Application { public static string dataPath = "/sim/Assets"; }
+  public static class Application { public static string dataPath = "/sim/Assets"; public static string unityVersion = "sim"; }
 }
 namespace TMPro {
   public enum TextAlignmentOptions { Center, Left, TopLeft, Top, Midline }
@@ -84,3 +84,5 @@ namespace UdonSharpEditor {
     public static void CopyProxyToUdon(UdonSharp.UdonSharpBehaviour b) { }
   }
 }
+
+namespace UnityEditor.PackageManager { public class PackageInfo { public string version; public static PackageInfo FindForAssembly(System.Reflection.Assembly a) { return null; } } }
