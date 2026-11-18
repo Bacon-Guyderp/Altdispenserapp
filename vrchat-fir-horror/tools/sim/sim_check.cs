@@ -37,6 +37,20 @@ public static class SimCheck {
       var tr = All<FirCheckTree>(who)[0]; Sim.Press(who, tr); Sim.Run(0.5f);
       Check(Plain(tr.label.text).Contains("PASS"), Plain(tr.label.text));
     }
+    Console.WriteLine("\n== The rainbow of skeletons (Alice presses each one)");
+    var rf = typeof(FirRainbowSkeleton).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+    foreach (var rs in All<FirRainbowSkeleton>(A).OrderBy(x => x.act)) {
+      Sim.Events.Clear();
+      var jawRest = rs.pivots[9].localRotation;
+      Sim.Press(A, rs);
+      float maxJaw = 0f, maxDrop = 0f; var skullHome = rs.meshes[2].position;
+      for (int f = 0; f < 60; f++) { Sim.Step(); maxJaw = Mathf.Max(maxJaw, Quaternion.Angle(jawRest, rs.pivots[9].localRotation)); maxDrop = Mathf.Max(maxDrop, skullHome.y - rs.meshes[2].position.y); }
+      bool spoke = Sim.Events.Any(e => e.Contains("sound:") && e.Contains(rs.voice.clip.name));
+      Check((bool)rf.GetValue(rs) && spoke && maxJaw > 10f, Plain(rs.colourName) + " skeleton: routine running, said its line (" + rs.voice.clip.name + "), jaw moved " + maxJaw.ToString("F0") + " degrees");
+      if (rs.act == 6) Check(maxDrop > 1.0f, "  violet went to pieces (its skull fell " + maxDrop.ToString("F2") + " m)");
+      Sim.Run(8f);
+      Check(!(bool)rf.GetValue(rs) && Quaternion.Angle(jawRest, rs.pivots[9].localRotation) < 0.5f && Vector3.Distance(rs.meshes[2].position, skullHome) < 0.01f, "  ...and back to standing");
+    }
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
       var hub = All<FirCheckHub>(c)[0];

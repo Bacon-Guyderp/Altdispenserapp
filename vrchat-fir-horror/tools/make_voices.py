@@ -4,11 +4,11 @@
                             Debian/Ubuntu: apt install espeak-ng mbrola mbrola-us2 mbrola-us3
 
 Writes Assets/FirHorror/Audio/skeleton_white.ogg and skeleton_red.ogg, plus one line per comedy
-gag in Assets/FirHorror/Data/gags.txt to Assets/FirHorror/Audio/Gags/gag_<id>.ogg and each skeleton routine
+gag in Assets/FirHorror/Data/gags.txt, the rainbow skeletons' lines to Audio/Rainbow/rb_<colour>.ogg (--rainbow: only those), to Assets/FirHorror/Audio/Gags/gag_<id>.ogg and each skeleton routine
 in Data/skeleton_gags.txt to Audio/Gags/skel_<id>.ogg (mono Vorbis).
 Gag voices need mbrola-us1 too.
 """
-import os, subprocess, tempfile
+import os, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "Assets", "FirHorror", "Audio")
@@ -34,6 +34,23 @@ PRESETS = {
     "skelred": ("mb-us3", 150, 62, 1.06),
     "skelgreen": ("mb-us3", 140, 72, 1.12),
 }
+
+
+# the rainbow of skeletons (red reuses skeleton_red): name, MBROLA voice, words/min, pitch, rate shift, text
+RAINBOW = [
+    ("orange", "mb-us3", 150, 58, 1.08, "Knock knock. Orange you glad I'm just bones?"),
+    ("yellow", "mb-us2", 135, 60, 1.12, "I'm not yellow. I just haven't got the guts."),
+    ("green", "mb-us3", 120, 40, 0.92, "Feeling a little green. Too many pine needles."),
+    ("blue", "mb-us2", 105, 20, 0.86, "I've got the blues. Nobody to dance with."),
+    ("indigo", "mb-us1", 145, 50, 1.0, "Indigo? Nobody even knows what colour that is."),
+    ("violet", "mb-us1", 160, 78, 1.18, "Sorry. I'm a shrinking violet. I go to pieces."),
+]
+
+
+def rainbow_lines():
+    for colour, v, speed, pitch, rate, text in RAINBOW:
+        yield ("Rainbow/rb_" + colour, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
 
 
 def gag_lines():
@@ -62,8 +79,11 @@ def skeleton_lines():
 def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(os.path.join(OUT, "Gags"), exist_ok=True)
+    os.makedirs(os.path.join(OUT, "Rainbow"), exist_ok=True)
+    only_rainbow = "--rainbow" in sys.argv
     with tempfile.TemporaryDirectory() as tmp:
-        for name, voice, speed, pitch, text, filt in list(LINES) + list(gag_lines()) + list(skeleton_lines()):
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines())
+        for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
             out = os.path.join(OUT, name + ".ogg")

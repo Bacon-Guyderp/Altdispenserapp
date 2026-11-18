@@ -11,6 +11,8 @@ args = ['ffmpeg', '-y', '-loglevel', 'error', '-framerate', '30', '-i', os.path.
 filt, labels = ['[1:a]volume=0.25,atrim=0:%.2f[bg]' % dur], ['[bg]']
 for k, (t, clip) in enumerate(sounds):
     path = os.path.join(audio, clip + '.ogg')
+    for sub in ('Rainbow', 'Gags'):
+        if not os.path.exists(path): path = os.path.join(audio, sub, clip + '.ogg')
     if not os.path.exists(path): continue
     args += ['-i', path]
     idx = len(labels) + 1

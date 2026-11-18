@@ -13,6 +13,11 @@
 > 4. Use **Build & Test**.
 > 5. Press every button in the lobby, then press the skeleton and the tree.
 >
+> The lobby also has the original talking tree, the old wallpaper, and a **rainbow of skeletons**
+> along the east wall: red, orange, yellow, green, blue, indigo and violet, each with its own voiced
+> gag (press them). The test skeleton is the white one, so the cartoon gag ("A skeleton." / "Red
+> skeleton. Ha!") is there too. Voice lines: `python tools/make_voices.py --rainbow`.
+>
 > Each button writes <span>PASS</span> or <span>FAIL</span> on itself. A button stuck on
 > *testing...* means its script stopped. The boards on the left wall show whether the hub script is
 > running, plus the UdonSharp and SDK versions. Send a photo of the walls.

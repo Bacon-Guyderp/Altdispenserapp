@@ -22,7 +22,7 @@ public class FirCheckSkeleton : UdonSharpBehaviour
         rest = new Quaternion[pivots.Length];
         for (int i = 0; i < pivots.Length; i++) rest[i] = pivots[i].localRotation;
         ready = true;
-        if (label != null) label.text = "<b>Skeleton</b> (your model)\n<color=#70ff90>its script is running</color>. Press it!";
+        if (label != null) label.text = "<b>White skeleton</b> (your model)\n<color=#70ff90>its script is running</color>. Press it!";
     }
 
     public override void Interact() { Act(); }
@@ -32,7 +32,7 @@ public class FirCheckSkeleton : UdonSharpBehaviour
         if (!ready) return;
         startT = Time.time;
         if (voice != null) voice.Play();
-        if (label != null) label.text = "<b>Skeleton</b> (your model)\n<color=#70ff90><b>PASS</b></color> it is waving";
+        if (label != null) label.text = "<b>White skeleton</b> (your model)\n<color=#70ff90><b>PASS</b></color> it is waving";
     }
 
     void Update()
