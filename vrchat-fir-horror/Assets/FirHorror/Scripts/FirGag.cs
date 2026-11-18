@@ -12,6 +12,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirGag : UdonSharpBehaviour
 {
+    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
     public FirGameManager game;
     public int gagIndex;              // this gag's place in game.gags (set by the builder)
     public Transform target;          // the prop that moves
@@ -49,7 +50,8 @@ public class FirGag : UdonSharpBehaviour
         p0 = target.localPosition; r0 = target.localRotation; s0 = target.localScale;
     }
 
-    public override void Interact() { Trigger(); }
+    public override void Interact() {
+        if (watch != null) watch.Pressed(gameObject.name); Trigger(); }
 
     void CheckZone()
     {

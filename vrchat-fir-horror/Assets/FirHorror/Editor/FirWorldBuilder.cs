@@ -151,6 +151,19 @@ public static class FirWorldBuilder
         for (int i = 0; i < skelArr.Length; i++) skelArr[i].gagIndex = i;
         game.skeletonGags = skelArr;
         game.closet = root.GetComponentInChildren<FirCloset>(true);
+        // diagnostics: every interactable reports presses to the lobby board
+        var dog = Add<FirWatchdog>(new GameObject("Diagnostics"));
+        dog.transform.SetParent(root, false);
+        dog.game = game;
+        dog.board = Text("DiagnosticsBoard", root, new Vector3(-54.7f, 1.95f, 5.98f), Face(Vector3.back), new Vector2(2.8f, 0.6f), 0.11f, "<color=#ff6060>Diagnostics: not running</color>");
+        dog.board.color = Color.white;
+        foreach (var x in root.GetComponentsInChildren<FirButton>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirKey>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirItem>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirSkeletonGag>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirGag>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirCloset>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirTeleporter>(true)) x.watch = dog;
         game.glowOnly = glowList.ToArray();
         game.carrySyncs = carrySyncList.ToArray();
         game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).ToArray();
@@ -369,7 +382,7 @@ public static class FirWorldBuilder
         under.screamIndex = 0; under.duration = 1.1f;
         var curtain = Scare(g, "CurtainBehind", Vector3.zero, Vector3.zero, 4, 1, 1);
         curtain.delay = 1.2f;
-        Item(g, "Battery", 1, new Vector3(-5.6f, 0.06f, 10.4f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", under);
+        Item(g, "Battery", 1, new Vector3(-4.95f, 0.06f, 10.4f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", under);
         Item(g, "Battery", 1, new Vector3(7.62f, 0.95f, 15.0f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", curtain);
         Item(g, "Battery", 1, new Vector3(6.4f, 0.72f, 2.2f), M("Battery"), new Vector3(0.07f, 0.06f, 0.07f), PrimitiveType.Cylinder, "Take battery", ItemScare(g, "GiftBattery", 0, 1, 2));
 
@@ -2430,7 +2443,7 @@ public static class FirWorldBuilder
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "FirGameManager", "FirAnimatronic", "FirStalker", "FirJumpscare", "FirItem", "FirCarryItem",
-                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag", "FirSkeletonGag", "FirTeleporter" };
+                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag", "FirSkeletonGag", "FirTeleporter", "FirWatchdog" };
 
     static bool EnsureProgramAssets()
     {

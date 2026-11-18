@@ -11,6 +11,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirTeleporter : UdonSharpBehaviour
 {
+    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
     public Transform destination;
     public UdonSharpBehaviour notify;
     public string notifyEvent = "";
@@ -22,6 +23,7 @@ public class FirTeleporter : UdonSharpBehaviour
 
     public override void Interact()
     {
+        if (watch != null) watch.Pressed(gameObject.name);
         Go();
     }
 

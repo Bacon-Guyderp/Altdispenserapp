@@ -231,6 +231,16 @@ The world was rebuilt so that nothing depends on a feature that can fail silentl
 * **Room Select** in the lobby (north wall, left) takes you straight into any room. Use it to test every
   room. Puzzles only unlock in the real game.
 
+**Diagnostics board** (lobby, front wall, top right): it shows in green whether the game manager is
+running, plus the last thing anyone pressed. VRChat stops a script for good if it hits an error. If
+that happens to the game manager, the board turns red and names what it was doing at the time, for
+example *"It stopped during: Start: applying the game state"*. If a button seems dead but the board
+never shows it as *Last pressed*, the press isn't reaching the button at all, so something is in front of it.
+
+**Simulators** (no Unity needed): `bash tools/sim/run_sim.sh` plays the whole game with three
+simulated players. `bash tools/sim/run_world.sh` builds the real world with `FirWorldBuilder` and plays
+it. `bash tools/sim/run_video.sh` renders a top-down video of a playthrough.
+
 If the lobby's status board still reads *"The game's scripts aren't running"* after you press Play,
 UdonSharp didn't compile. Open the Console and look for the first red error.
 

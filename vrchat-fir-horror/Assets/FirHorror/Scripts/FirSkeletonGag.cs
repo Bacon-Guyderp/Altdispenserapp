@@ -18,6 +18,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirSkeletonGag : UdonSharpBehaviour
 {
+    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
     public FirGameManager game;
     public int gagIndex;      // this routine's place in game.skeletonGags (set by the builder)
     public int act;
@@ -55,6 +56,7 @@ public class FirSkeletonGag : UdonSharpBehaviour
 
     public override void Interact()
     {
+        if (watch != null) watch.Pressed(gameObject.name);
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + Length() + 0.5f;
         Play();

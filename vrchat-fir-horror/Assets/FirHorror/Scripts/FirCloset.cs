@@ -16,6 +16,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirCloset : UdonSharpBehaviour
 {
+    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
     public FirGameManager game;
     public Transform hinge;          // yaw 0 shut, -100 open
     public Transform[] white;
@@ -39,6 +40,7 @@ public class FirCloset : UdonSharpBehaviour
 
     public override void Interact()
     {
+        if (watch != null) watch.Pressed(gameObject.name);
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + sceneLength + 1f;
         Play();

@@ -5,6 +5,7 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirItem : UdonSharpBehaviour
 {
+    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
     public FirGameManager game;
     public int index;
     public FirJumpscare scareOnTake;   // optional: something happens when you grab it
@@ -12,6 +13,7 @@ public class FirItem : UdonSharpBehaviour
 
     public override void Interact()
     {
+        if (watch != null) watch.Pressed(gameObject.name);
         if (fake)
         {
             if (scareOnTake != null) scareOnTake.Fire();

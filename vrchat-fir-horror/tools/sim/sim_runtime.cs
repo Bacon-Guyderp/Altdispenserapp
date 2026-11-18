@@ -7,13 +7,31 @@ using System.Collections.Generic;
 using System.Reflection;
 
 namespace UnityEngine {
-  public class Object { public string name = ""; public static implicit operator bool(Object o) { return o != null; } public override string ToString() { return name; } }
+  public class Object {
+    string nm = "";
+    public virtual string name { get { return nm; } set { nm = value; } }
+    public static implicit operator bool(Object o) { return o != null; }
+    public override string ToString() { return name; }
+    public static void Destroy(Object o) { DestroyImmediate(o); }
+    public static void DestroyImmediate(Object o) {
+      var g = o as GameObject; if (g != null) { g.destroyed = true; g.activeSelf = false; g.transform.SetParent(null, false); return; }
+      var c = o as Component; if (c != null && c.go != null) c.go.comps.Remove(c);
+    }
+    static Sim.Client Here { get { return Sim.Building ?? Sim.Current; } }
+    public static T[] FindObjectsOfType<T>() where T : Object { var r = new List<T>(); if (Here != null) foreach (var g in Here.objects) if (!g.destroyed && g.activeInHierarchy) foreach (var c in g.comps) if (c is T) r.Add(c as T); return r.ToArray(); }
+    public static T FindObjectOfType<T>() where T : Object { var a = FindObjectsOfType<T>(); return a.Length > 0 ? a[0] : null; }
+  }
 
   public class Component : Object {
     internal GameObject go;
+    public override string name { get { return go != null ? go.name : base.name; } set { if (go != null) go.name = value; else base.name = value; } }
     public GameObject gameObject { get { return go; } }
     public Transform transform { get { return go.transform; } }
     public T GetComponent<T>() where T : class { return go.GetComponent<T>(); }
+    public Component GetComponent(Type t) { foreach (var c in go.comps) if (t.IsInstanceOfType(c)) return c; return null; }
+    public T[] GetComponentsInChildren<T>() where T : class { return go.GetComponentsInChildren<T>(false); }
+    public T[] GetComponentsInChildren<T>(bool inactive) where T : class { return go.GetComponentsInChildren<T>(inactive); }
+    public T GetComponentInChildren<T>(bool inactive) where T : class { var a = go.GetComponentsInChildren<T>(inactive); return a.Length > 0 ? a[0] : null; }
   }
   public class Behaviour : Component { public bool enabled = true; }
   public class MonoBehaviour : Behaviour { }
@@ -25,14 +43,32 @@ namespace UnityEngine {
     internal readonly List<Component> comps = new List<Component>();
     internal int netId;
     internal Sim.Client client;
+    internal bool destroyed;
+    public GameObject() : this("New Game Object") { }
     public GameObject(string n) {
       name = n; client = Sim.Building; netId = client.nextNetId++; client.objects.Add(this);
       transform = new Transform(); transform.go = this; comps.Add(transform);
     }
     public bool activeInHierarchy { get { return activeSelf && (transform.parent == null || transform.parent.gameObject.activeInHierarchy); } }
     public void SetActive(bool b) { activeSelf = b; }
-    public T AddComponent<T>() where T : Component, new() { var c = new T(); c.go = this; comps.Add(c); return c; }
+    public T AddComponent<T>() where T : Component { var c = (T)Activator.CreateInstance(typeof(T)); c.go = this; comps.Add(c); return c; }
     public T GetComponent<T>() where T : class { foreach (var c in comps) if (c is T) return c as T; return null; }
+    public Component AddComponent(Type t) { var c = (Component)Activator.CreateInstance(t); c.go = this; comps.Add(c); return c; }
+    public T[] GetComponentsInChildren<T>(bool inactive) where T : class {
+      var r = new List<T>(); Collect(transform, r, inactive); return r.ToArray();
+    }
+    static void Collect<T>(Transform t, List<T> r, bool inactive) where T : class {
+      if (!inactive && !t.gameObject.activeSelf) return;
+      foreach (var c in t.gameObject.comps) if (c is T) r.Add(c as T);
+      foreach (var k in t.kids) Collect(k, r, inactive);
+    }
+    public static GameObject Find(string n) { var h = Sim.Building ?? Sim.Current; if (h != null) foreach (var g in h.objects) if (!g.destroyed && g.name == n && g.transform.parent == null) return g; return null; }
+    public static GameObject CreatePrimitive(PrimitiveType p) {
+      var g = new GameObject(p.ToString()); g.AddComponent<MeshFilter>(); g.AddComponent<MeshRenderer>();
+      if (p == PrimitiveType.Cube) g.AddComponent<BoxCollider>(); else if (p == PrimitiveType.Sphere) g.AddComponent<SphereCollider>();
+      else if (p == PrimitiveType.Capsule || p == PrimitiveType.Cylinder) g.AddComponent<CapsuleCollider>(); else g.AddComponent<MeshCollider>();
+      return g;
+    }
   }
 
   public class Transform : Component {
@@ -45,10 +81,15 @@ namespace UnityEngine {
     void Reparent(Transform p) { if (par != null) par.kids.Remove(this); par = p; if (p != null) p.kids.Add(this); }
     public void SetParent(Transform p) { var wp = position; var wr = rotation; Reparent(p); position = wp; rotation = wr; }
     public void SetParent(Transform p, bool keepWorld) { if (keepWorld) SetParent(p); else Reparent(p); }
+    public Vector3 lossyScale { get { return par == null ? localScale : Vector3.Scale(par.lossyScale, localScale); } }
     public Vector3 position {
-      get { return par == null ? localPosition : par.position + par.rotation * localPosition; }
-      set { localPosition = par == null ? value : Quaternion.Inverse(par.rotation) * (value - par.position); }
+      get { return par == null ? localPosition : par.position + par.rotation * Vector3.Scale(par.lossyScale, localPosition); }
+      set { localPosition = par == null ? value : Vector3.Unscale(Quaternion.Inverse(par.rotation) * (value - par.position), par.lossyScale); }
     }
+    public bool IsChildOf(Transform p) { var t = this; while (t != null) { if (t == p) return true; t = t.par; } return false; }
+    public Transform root { get { var t = this; while (t.par != null) t = t.par; return t; } }
+    public Transform Find(string n) { foreach (var k in kids) if (k.gameObject.name == n) return k; return null; }
+    public void SetPositionAndRotation(Vector3 p, Quaternion r) { position = p; rotation = r; }
     public Quaternion rotation {
       get { return par == null ? localRotation : par.rotation * localRotation; }
       set { localRotation = par == null ? value : Quaternion.Inverse(par.rotation) * value; }
@@ -56,8 +97,8 @@ namespace UnityEngine {
     public Vector3 eulerAngles { get { return rotation.eulerAngles; } set { rotation = Quaternion.Euler(value); } }
     public Vector3 localEulerAngles { get { return localRotation.eulerAngles; } set { localRotation = Quaternion.Euler(value); } }
     public Vector3 forward { get { return rotation * Vector3.forward; } }
-    public Vector3 InverseTransformPoint(Vector3 p) { return Quaternion.Inverse(rotation) * (p - position); }
-    public Vector3 TransformPoint(Vector3 p) { return position + rotation * p; }
+    public Vector3 InverseTransformPoint(Vector3 p) { return Vector3.Unscale(Quaternion.Inverse(rotation) * (p - position), lossyScale); }
+    public Vector3 TransformPoint(Vector3 p) { return position + rotation * Vector3.Scale(lossyScale, p); }
   }
 
   public struct Vector2 { public float x, y; public Vector2(float a, float b) { x = a; y = b; } public float magnitude { get { return (float)Math.Sqrt(x * x + y * y); } } }
@@ -87,6 +128,11 @@ namespace UnityEngine {
     public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { t = Mathf.Clamp01(t); return a + (b - a) * t; }
     public static Vector3 MoveTowards(Vector3 a, Vector3 b, float d) { var v = b - a; float m = v.magnitude; return m <= d || m < 1e-6f ? b : a + v / m * d; }
     public override string ToString() { return string.Format("({0:F1}, {1:F1}, {2:F1})", x, y, z); }
+    public string ToString(string f) { return ToString(); }
+    public static Vector3 Scale(Vector3 a, Vector3 b) { return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z); }
+    internal static Vector3 Unscale(Vector3 a, Vector3 s) { return new Vector3(s.x != 0 ? a.x / s.x : 0, s.y != 0 ? a.y / s.y : 0, s.z != 0 ? a.z / s.z : 0); }
+    public static Vector3 Max(Vector3 a, Vector3 b) { return new Vector3(Math.Max(a.x, b.x), Math.Max(a.y, b.y), Math.Max(a.z, b.z)); }
+    public static Vector3 Min(Vector3 a, Vector3 b) { return new Vector3(Math.Min(a.x, b.x), Math.Min(a.y, b.y), Math.Min(a.z, b.z)); }
   }
 
   public struct Quaternion {
@@ -123,7 +169,7 @@ namespace UnityEngine {
     public Vector3 eulerAngles { get { var f = this * Vector3.forward; float yaw = (float)Math.Atan2(f.x, f.z) * Mathf.Rad2Deg; if (yaw < 0) yaw += 360; float pitch = -(float)Math.Asin(Mathf.Clamp(f.y, -1, 1)) * Mathf.Rad2Deg; return new Vector3(pitch, yaw, 0); } }
   }
 
-  public struct Color { public float r, g, b, a; public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; a = 1; } public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; } public static Color white { get { return new Color(1, 1, 1); } } public static Color black { get { return new Color(0, 0, 0); } } }
+  public struct Color { public float r, g, b, a; public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; a = 1; } public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; } public static Color white { get { return new Color(1, 1, 1); } } public static Color black { get { return new Color(0, 0, 0); } } public static Color red { get { return new Color(1, 0, 0); } } public static Color clear { get { return new Color(0, 0, 0, 0); } } public static Color operator *(Color c, float f) { return new Color(c.r * f, c.g * f, c.b * f, c.a * f); } public static Color operator *(Color a, Color b) { return new Color(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a); } public static Color Lerp(Color a, Color b, float t) { return new Color(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t); } }
 
   public static class Mathf {
     public const float PI = 3.14159265f, Rad2Deg = 57.2957795f, Deg2Rad = 0.0174532925f;
@@ -151,25 +197,71 @@ namespace UnityEngine {
   }
   public class AudioClip : Object { public float length = 1.5f; }
   public class AudioSource : Behaviour {
-    public AudioClip clip; public bool loop, playOnAwake; public float volume = 1, pitch = 1, spatialBlend;
+    public AudioClip clip; public bool loop, playOnAwake; public float volume = 1, pitch = 1, spatialBlend, minDistance, maxDistance, dopplerLevel; public AudioRolloffMode rolloffMode;
     float until;
     public bool isPlaying { get { return Time.time < until; } }
     public void Play() { until = Time.time + (clip != null ? clip.length : 1f); Sim.Log("sound", go.name + (clip != null ? " " + clip.name : "")); }
     public void Stop() { until = 0; } public void Pause() { } public void UnPause() { }
     public void PlayOneShot(AudioClip c) { if (c != null) Sim.Log("sound", c.name); } public void PlayOneShot(AudioClip c, float v) { PlayOneShot(c); }
   }
-  public class Collider : Component { public bool isTrigger; }
-  public class Rigidbody : Component { public Vector3 velocity; }
+  public enum AudioRolloffMode { Logarithmic, Linear, Custom }
+  public struct Bounds { public Vector3 center, size; public Vector3 extents { get { return size * 0.5f; } } public Vector3 min { get { return center - extents; } } public Vector3 max { get { return center + extents; } } }
+  public class Collider : Component {
+    public bool isTrigger; public bool enabled = true;
+    internal virtual Vector3 LocalCenter { get { return Vector3.zero; } }
+    internal virtual Vector3 LocalSize { get { return Vector3.one; } }
+    /// world-space axis-aligned bounds (rotated boxes are enclosed)
+    public Bounds bounds { get {
+      var t = transform; var c = t.TransformPoint(LocalCenter); var h = Vector3.Scale(t.lossyScale, LocalSize) * 0.5f;
+      var r = t.rotation; var ex = Vector3.zero;
+      foreach (var ax in new[] { new Vector3(h.x, 0, 0), new Vector3(0, h.y, 0), new Vector3(0, 0, h.z) }) { var w = r * ax; ex = ex + new Vector3(Math.Abs(w.x), Math.Abs(w.y), Math.Abs(w.z)); }
+      return new Bounds { center = c, size = ex * 2 };
+    } }
+  }
+  public class BoxCollider : Collider { public Vector3 center; public Vector3 size = Vector3.one; internal override Vector3 LocalCenter { get { return center; } } internal override Vector3 LocalSize { get { return size; } } }
+  public class SphereCollider : Collider { public Vector3 center; public float radius = 0.5f; internal override Vector3 LocalCenter { get { return center; } } internal override Vector3 LocalSize { get { return Vector3.one * radius * 2; } } }
+  public class CapsuleCollider : Collider { public Vector3 center; public float radius = 0.5f, height = 2; internal override Vector3 LocalSize { get { return new Vector3(radius * 2, height, radius * 2); } } }
+  public class MeshCollider : Collider { internal override Vector3 LocalSize { get { return new Vector3(1, 0.01f, 1); } } }
+  public enum RigidbodyInterpolation { None, Interpolate, Extrapolate }
+  public enum CollisionDetectionMode { Discrete, Continuous, ContinuousDynamic, ContinuousSpeculative }
+  public class Rigidbody : Component { public Vector3 velocity; public float mass = 1; public bool useGravity = true, isKinematic; public RigidbodyInterpolation interpolation; public CollisionDetectionMode collisionDetectionMode; }
   public enum QueryTriggerInteraction { UseGlobal, Ignore, Collide }
-  public struct RaycastHit { public Vector3 point; public float distance; }
+  public struct RaycastHit { public Vector3 point; public float distance; public Collider collider; }
   public static class Physics {
     // walls/shelves as axis-aligned boxes (centre, half size)
     public static readonly List<KeyValuePair<Vector3, Vector3>> Boxes = new List<KeyValuePair<Vector3, Vector3>>();
+    static readonly Dictionary<Sim.Client, List<Collider>> cache = new Dictionary<Sim.Client, List<Collider>>();
+    static readonly Dictionary<Collider, Bounds> boundsCache = new Dictionary<Collider, Bounds>();
+    public static void SyncTransforms() { cache.Clear(); boundsCache.Clear(); }
+    static List<Collider> All() {
+      var here = Sim.Building ?? Sim.Current; if (here == null) return new List<Collider>();
+      List<Collider> l; if (cache.TryGetValue(here, out l)) return l;
+      l = new List<Collider>(); foreach (var g in here.objects) if (!g.destroyed) foreach (var c in g.comps) if (c is Collider) l.Add((Collider)c);
+      cache[here] = l; return l;
+    }
+    static bool Usable(Collider c, int mask, QueryTriggerInteraction q) {
+      if (!c.enabled || c.go == null || c.go.destroyed || !c.go.activeInHierarchy) return false;
+      if (!c.go.comps.Contains(c)) return false;
+      if (c.isTrigger && q == QueryTriggerInteraction.Ignore) return false;
+      return ((mask >> c.go.layer) & 1) == 1;
+    }
+    static Bounds B(Collider c) { Bounds b; if (c.GetComponent<Rigidbody>() == null && boundsCache.TryGetValue(c, out b)) return b; b = c.bounds; boundsCache[c] = b; return b; }
     public static bool Raycast(Vector3 o, Vector3 d, out RaycastHit h, float max, int mask, QueryTriggerInteraction q) {
       h = default(RaycastHit); float best = max; bool hit = false;
       foreach (var b in Boxes) { float t; if (Slab(o, d, b.Key - b.Value, b.Key + b.Value, out t) && t <= best) { best = t; hit = true; } }
+      foreach (var c in All()) {
+        if (!Usable(c, mask, q)) continue; var bb = B(c); float t;
+        if (Slab(o, d, bb.min, bb.max, out t) && t <= best) { best = t; hit = true; h.collider = c; }
+      }
       if (hit) { h.distance = best; h.point = o + d * best; }
       return hit;
+    }
+    public static bool CheckSphere(Vector3 p, float r, int mask, QueryTriggerInteraction q) {
+      foreach (var c in All()) {
+        if (!Usable(c, mask, q)) continue; var bb = B(c);
+        var cl = Vector3.Max(bb.min, Vector3.Min(bb.max, p)); if ((cl - p).sqrMagnitude <= r * r) return true;
+      }
+      return false;
     }
     public static bool Raycast(Vector3 o, Vector3 d, float max, int mask, QueryTriggerInteraction q) { RaycastHit h; return Raycast(o, d, out h, max, mask, q); }
     public static bool Linecast(Vector3 a, Vector3 b, int mask, QueryTriggerInteraction q) { var d = b - a; return Raycast(a, d.normalized, d.magnitude, mask, q); }
@@ -184,17 +276,26 @@ namespace UnityEngine {
       t = t0; return true;
     }
   }
-  public static class Debug { public static void Log(object o) { } public static void LogWarning(object o) { } public static void LogError(object o) { Sim.Fail("Debug.LogError: " + o); } }
+  public static class Debug { public static readonly List<string> Warnings = new List<string>(); public static void Log(object o) { Sim.BuildLog.Add(o.ToString()); } public static void LogWarning(object o) { Warnings.Add(o.ToString()); } public static void LogWarning(object o, Object c) { Warnings.Add(o.ToString()); } public static void LogError(object o, Object c) { LogError(o); } public static void LogError(object o) { Sim.Fail("Debug.LogError: " + o); } }
   public class Material : Object {
+    public Material() { } public Material(Shader s) { shader = s; } public Material(Material m) { shader = m.shader; }
+    public Shader shader; public Texture mainTexture; public bool enableInstancing;
+    public bool HasProperty(string n) { return true; } public void CopyPropertiesFromMaterial(Material m) { }
     public readonly Dictionary<string, float> floats = new Dictionary<string, float>();
     public readonly Dictionary<string, Color> colors = new Dictionary<string, Color>();
     public void SetFloat(string n, float f) { floats[n] = f; } public void SetColor(string n, Color c) { colors[n] = c; }
     public float GetFloat(string n) { float f; return floats.TryGetValue(n, out f) ? f : 0; }
   }
-  public class Renderer : Component { }
+  public class Renderer : Component { public Material sharedMaterial; public UnityEngine.Rendering.ShadowCastingMode shadowCastingMode; public bool receiveShadows; public UnityEngine.Rendering.LightProbeUsage lightProbeUsage; public UnityEngine.Rendering.ReflectionProbeUsage reflectionProbeUsage; }
 }
 
-namespace TMPro { public class TextMeshPro : UnityEngine.Renderer { public string text = ""; public UnityEngine.Color color; } }
+namespace TMPro {
+  public class TextMeshPro : UnityEngine.Renderer {
+    public string text = ""; public UnityEngine.Color color; public UnityEngine.Material fontSharedMaterial; public TextAlignmentOptions alignment;
+    public bool enableWordWrapping, enableAutoSizing, richText; public float fontSize, fontSizeMin, fontSizeMax; public FontStyles fontStyle;
+    UnityEngine.RectTransform rt; public UnityEngine.RectTransform rectTransform { get { if (rt == null) rt = new UnityEngine.RectTransform(); return rt; } }
+  }
+}
 
 namespace VRC.SDKBase {
   using UnityEngine;
@@ -224,11 +325,13 @@ namespace VRC.SDKBase {
     public static void SetOwner(VRCPlayerApi p, GameObject g) { Sim.SetOwner(p, g); }
     public static int GetServerTimeInMilliseconds() { return 50000000 + (int)(Time.time * 1000); }
   }
+  public class VRC_SceneDescriptor : UnityEngine.MonoBehaviour { public UnityEngine.Transform[] spawns; public float RespawnHeightY; public UnityEngine.GameObject ReferenceCamera; }
   public static class Utilities { public static bool IsValid(object o) { return o != null; } }
-  public class VRC_Pickup : MonoBehaviour { public bool IsHeld; public void Drop() { IsHeld = false; Sim.Log("pickup", go.name + " dropped"); } }
+  public class VRC_Pickup : MonoBehaviour { public string InteractionText, UseText; public float proximity, ThrowVelocityBoostScale; public AutoHoldMode AutoHold; public enum AutoHoldMode { AutoDetect, Yes, No } public bool IsHeld; public void Drop() { IsHeld = false; Sim.Log("pickup", go.name + " dropped"); } }
 }
 namespace VRC.SDK3.Components {
   public class VRCPickup : VRC.SDKBase.VRC_Pickup { }
+  public class VRCSceneDescriptor : VRC.SDKBase.VRC_SceneDescriptor { }
   public class VRCObjectSync : UnityEngine.MonoBehaviour {
     internal UnityEngine.Vector3 home; internal bool homeSet;
     public void Respawn() { if (!VRC.SDKBase.Networking.IsOwner(gameObject)) Sim.Fail("ObjectSync.Respawn by a non-owner"); transform.position = home; }
@@ -253,6 +356,7 @@ namespace UdonSharp {
 
 // ======================================================================= the simulator
 public static class Sim {
+  public static readonly List<string> BuildLog = new List<string>();
   public class Client {
     public VRC.SDKBase.VRCPlayerApi player;
     public readonly List<UnityEngine.GameObject> objects = new List<UnityEngine.GameObject>();

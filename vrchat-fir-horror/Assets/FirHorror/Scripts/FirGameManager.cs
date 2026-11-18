@@ -80,6 +80,8 @@ public class FirGameManager : UdonSharpBehaviour
     public Material[] worldMaterials;        // every lantern-lit material: darkness and brightness are set on these
 
     public float lightsOutUntil;             // read by the stalker: nobody can see it while the lights are out
+    public int heartbeat;                    // goes up every frame; FirWatchdog shows a stopped manager
+    public string step = "not started";      // what it is doing right now (shown by FirWatchdog if it stops)
 
     // ------------------------------------------------------------ local
     bool inited, synced, inGame, glowShown;
@@ -161,19 +163,25 @@ public class FirGameManager : UdonSharpBehaviour
 
     void Start()
     {
+        step = "Start: setup";
         EnsureInit();
+        step = "Start: hiding the scare rig";
         if (scareRig != null) scareRig.gameObject.SetActive(false);
         for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(false);
+        step = "Start: first sync";
         if (Networking.IsOwner(gameObject))
         {
             if (seed == 0) seed = Random.Range(1, 1073741823);
             MarkSynced();
             RequestSerialization();
         }
+        step = "Start: applying the game state";
         ApplyState();
+        step = "Start: music and texts";
         PlayMusic(0);
         UpdateOptionsText();
         if (lobbyStatus != null) lobbyStatus.text = LobbyText();
+        step = "running";
     }
 
     /// <summary>Adopt the current synced state as already seen, so nothing old replays.</summary>
@@ -194,10 +202,12 @@ public class FirGameManager : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        step = "receiving the game state";
         EnsureInit();
         bool first = !synced;
         MarkSynced();
         ApplyState();
+        step = "running";
         if (first) return;
         // Two players collecting at the same moment both write the whole set; the last write wins.
         // Put back anything of ours that was overwritten.
@@ -219,6 +229,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>START. The START teleporter has already moved the presser into the Showroom.</summary>
     public void StartGame()
     {
+        step = "StartGame";
         EnsureInit();
         MarkSynced();
         if (phase != 0 && phase != 7) { JoinGame(); return; }
@@ -239,6 +250,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Join game. The teleporter already took you to the Showroom; this moves you on to the current room.</summary>
     public void JoinGame()
     {
+        step = "JoinGame";
         EnsureInit();
         MarkSynced();
         if (phase < 1) { Say("Nobody is playing yet. Press <b>START</b>.", 4f); return; }
@@ -251,6 +263,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Called by the "Back to the lobby" teleporters after they've moved you.</summary>
     public void LeftGame()
     {
+        step = "LeftGame";
         EnsureInit();
         inGame = false;
         PlayMusic(0);
@@ -259,12 +272,14 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>Called by the Room Select teleporters after they've moved you (practice / testing).</summary>
     public void EnteredRoom()
     {
+        step = "EnteredRoom";
         EnsureInit();
         inGame = true;
     }
 
     public void ResetGame()
     {
+        step = "ResetGame";
         EnsureInit();
         if (Time.time > resetArmedUntil)
         {
@@ -303,6 +318,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void CollectItem(int index)
     {
+        step = "CollectItem";
         EnsureInit();
         if (Has(itemMask, index)) return;
         int ch = itemChapter[index];
@@ -319,6 +335,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void FillSocket(int socket)
     {
+        step = "FillSocket";
         EnsureInit();
         if (Has(hatMask, socket) || phase != 5) return;
         MarkSynced();
@@ -338,6 +355,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void StationPower()
     {
+        step = "StationPower";
         EnsureInit();
         if (phase > 1) { Say("It's already running.", 2f); return; }
         if (phase < 1) return;
@@ -355,6 +373,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void StationLights()
     {
+        step = "StationLights";
         EnsureInit();
         if (phase != 2) { PlaySfx(clipSwitch); Say("<i>Click. Nothing.</i>", 2f); return; }
         if (Time.time < lightsCooldown) { Say("<i>The switch is still warm. Wait a moment.</i>", 2f); return; }
@@ -368,6 +387,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>A thrown toilet hit the hunting tree.</summary>
     public void StunStalker()
     {
+        step = "StunStalker";
         EnsureInit();
         MarkSynced();
         TakeOwnership();
@@ -378,6 +398,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>A shared scare went off for the player who walked into it: everyone else in the game gets it too.</summary>
     public void ShareScare(int index)
     {
+        step = "ShareScare";
         EnsureInit();
         MarkSynced();
         TakeOwnership();
@@ -390,6 +411,7 @@ public class FirGameManager : UdonSharpBehaviour
     /// <summary>A gag (kind 0), skeleton routine (1) or the closet (2) was pressed: everyone else sees it too.</summary>
     public void ShareGag(int kind, int index)
     {
+        step = "ShareGag";
         EnsureInit();
         MarkSynced();
         TakeOwnership();
@@ -402,6 +424,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void SolveLock(int ch)
     {
+        step = "SolveLock";
         EnsureInit();
         if (phase != ch) return;
         MarkSynced();
@@ -412,6 +435,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void WrongCode(int ch)
     {
+        step = "WrongCode";
         EnsureInit();
         PlaySfx(clipWrong);
         if (ch == 1) { FaceScare(0, 1.0f); Say("<color=#ff5555>\"WRONG NOTE.\"</color>", 3f); }
@@ -482,6 +506,8 @@ public class FirGameManager : UdonSharpBehaviour
 
     void ApplyState()
     {
+        string caller = step;
+        step = caller + " > items";
         for (int i = 0; i < items.Length; i++)
         {
             if (items[i] == null) continue;
@@ -505,10 +531,13 @@ public class FirGameManager : UdonSharpBehaviour
             bool used = Has(usedColours, k);
             if (hatPickups[k] != null && hatPickups[k].activeSelf == used) hatPickups[k].SetActive(!used);
         }
+        step = caller + " > furnace and doors";
         if (furnaceFire != null) furnaceFire.SetActive(phase >= 6 && ValvesOpen());
         for (int d = 0; d < doors.Length; d++) if (doors[d] != null) doors[d].SetActive(phase < d + 2);
+        step = caller + " > texts";
         RefreshTexts();
-        if (!synced) return;
+        step = caller + " > round and chapter";
+        if (!synced) { step = caller; return; }
 
         if (round != lastRound)
         {
@@ -536,6 +565,7 @@ public class FirGameManager : UdonSharpBehaviour
         }
 
         // moments that follow from what changed
+        step = caller + " > shared moments";
         if (itemMask != seenItems)
         {
             int added = Minus(itemMask, seenItems);
@@ -582,8 +612,10 @@ public class FirGameManager : UdonSharpBehaviour
         if (gagCount != seenGag)
         {
             seenGag = gagCount;
+            step = caller + " > playing a gag";
             PlayGagLocally(gagKind, gagIndex);
         }
+        step = caller;
     }
 
     void PlayGagLocally(int kind, int index)
@@ -681,9 +713,12 @@ public class FirGameManager : UdonSharpBehaviour
 
     void Update()
     {
+        heartbeat = heartbeat + 1;
+        step = "Update: start";
         EnsureInit();
         if (!Utilities.IsValid(local)) return;
         float t = Time.time;
+        step = "Update: lighting";
 
         // darkness and brightness, set on the world's materials only when they change
         float dark = 0f;
@@ -699,6 +734,7 @@ public class FirGameManager : UdonSharpBehaviour
         ApplyLook(dark, reach, amb);
         ApplyMood(RoomAt(local.GetPosition()));
 
+        step = "Update: glow paint";
         bool glow = dark > 0.5f && inGame;
         if (glow != glowShown)
         {
@@ -706,6 +742,7 @@ public class FirGameManager : UdonSharpBehaviour
             for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(glow);
         }
 
+        step = "Update: HUD";
         VRCPlayerApi.TrackingData head = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
         if (hud != null)
         {
@@ -727,9 +764,13 @@ public class FirGameManager : UdonSharpBehaviour
             }
         }
 
+        step = "Update: carol";
         UpdateCarol();
+        step = "Update: face scare";
         UpdateFaceScare(head);
+        step = "Update: behind-you scare";
         UpdateBehindScare(head);
+        step = "running";
         if (teleportAfterScareAt > 0f && t > teleportAfterScareAt) { teleportAfterScareAt = -1f; TeleportToCheckpoint(); }
     }
 
