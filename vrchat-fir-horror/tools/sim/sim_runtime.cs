@@ -268,6 +268,7 @@ public static class Sim {
   public static readonly List<string> Failures = new List<string>();
   public static readonly List<string> Events = new List<string>();
   public static bool Verbose;
+  public static Action OnStep;
 
   public static void Fail(string m) { string s = "[" + (Current != null ? Current.player.displayName : "-") + " t=" + UnityEngine.Time.time.ToString("F2") + "] " + m; Failures.Add(s); Console.WriteLine("    !! " + s); }
   public static void Log(string kind, string m) { string s = (Current != null ? Current.player.displayName : "-") + " " + kind + ": " + m; Events.Add(s); if (Verbose) Console.WriteLine("      " + s); }
@@ -388,6 +389,7 @@ public static class Sim {
       var src = oc.objects[go.netId];
       foreach (var c in Clients) if (c != oc) { c.objects[go.netId].transform.position = src.transform.position; }
     }
+    if (OnStep != null) OnStep();
     UnityEngine.Time.time += UnityEngine.Time.deltaTime; UnityEngine.Time.frameCount++;
   }
   static void CallPrivate(UdonSharp.UdonSharpBehaviour b, string name) {
