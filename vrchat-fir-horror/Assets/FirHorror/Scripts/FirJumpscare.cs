@@ -1,7 +1,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// A scare, fired by walking into its zone (or by FirItem/scripts calling Fire()). The zone is a box of
@@ -21,8 +20,8 @@ using VRC.Udon.Common.Interfaces;
 /// `restore` is re-enabled on a new game (mimic items that vanish when they bite).
 /// `global` makes it happen to everyone in the game, not just the player who walked in.
 /// </summary>
-// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+// No network events: a global scare goes through the game manager's synced scare counter.
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirJumpscare : UdonSharpBehaviour
 {
     public FirGameManager game;
@@ -32,6 +31,7 @@ public class FirJumpscare : UdonSharpBehaviour
     public float duration = 1.2f;
     public bool once = true;
     public bool global;
+    public int scareIndex;            // this scare's place in game.jumpscares (set by the builder)
     public int screamIndex;
     public int groupChapter;
     public GameObject target;
@@ -72,14 +72,17 @@ public class FirJumpscare : UdonSharpBehaviour
         if (Mathf.Abs(p.x) > zoneSize.x * 0.5f || Mathf.Abs(p.y) > zoneSize.y * 0.5f || Mathf.Abs(p.z) > zoneSize.z * 0.5f) return;
         fired = true;
         nextAllowed = Time.time + 25f;
-        if (global) SendCustomNetworkEvent(NetworkEventTarget.All, "NetFire");
-        else Fire();
+        Fire();
+        if (global) game.ShareScare(scareIndex);
     }
 
-    public void NetFire()
+    /// <summary>Another player set off this shared scare (the manager only calls this for players in the game).</summary>
+    public void FireShared()
     {
+        if (once && fired) return;
         fired = true;
-        if (game.IsInGame()) Fire();   // shared scares skip people waiting in the lobby
+        nextAllowed = Time.time + 25f;
+        Fire();
     }
 
     public void Fire()

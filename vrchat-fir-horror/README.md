@@ -65,10 +65,9 @@ The game counts the players inside the factory and adjusts for small groups:
 ### The stalker
 The owner of the stalker (normally the instance master) checks every player's head direction each frame,
 with a line-of-sight test against the walls. **If anyone is looking at it, it freezes.** If nobody is,
-it walks toward the nearest player on a baked NavMesh. You hear it rustle and creak when it moves, and
+it walks toward the nearest player (no NavMesh: straight at you, or round shelves via a grid of waypoints). You hear it rustle and creak when it moves, and
 a heartbeat plays when it's within 7 m. If it reaches you, you get a face scare and you're sent back to the
-start of that room. There's no game over, so the 45-minute run keeps going. Closed doors carve the
-NavMesh, so it can't follow you into rooms you haven't unlocked.
+start of that room. There's no game over, so the 45-minute run keeps going. It never leaves its room.
 
 ### Darkness without lights, but with colour
 There isn't a single Light in the world. Every surface uses the `FirHorror/Lantern` shader, which lights
@@ -213,6 +212,28 @@ places when a new game starts. Code: `Scripts/FirToilet.cs`.
 * **Flashing lights:** on or off. Off removes the strobing flicker, but blackouts still happen.
 * **Jumpscares:** full, or sound only (no faces).
 
+## Remade networking: why the teleporters always work
+
+The world was rebuilt so that nothing depends on a feature that can fail silently:
+
+* **Every teleporter teleports first.** START, Join game, the seven Room Select buttons, and the
+  *Back to the lobby* button in every room are `FirTeleporter`s. Each one calls `TeleportTo` on the
+  person who pressed it, straight away, before anything else runs. Only then does it tell the
+  game manager what happened. When you build, the builder checks that every teleporter has a
+  destination with floor under it, and the Console lists them all.
+* **No network events anywhere.** Everything other players need to see goes through the game manager's
+  synced counters (manual sync): gags, skeleton routines, the closet, shared scares, the carol,
+  lights-out and toilet stuns. When a counter changes, every client plays that thing locally.
+* **No global shader values.** Darkness, brightness and each room's colours are set on the world's
+  materials.
+* **No NavMesh, no trigger colliders and no collision callbacks.** The stalker, sockets, scare
+  zones and toilets all check distances in code.
+* **Room Select** in the lobby (north wall, left) takes you straight into any room. Use it to test every
+  room. Puzzles only unlock in the real game.
+
+If the lobby's status board still reads *"The game's scripts aren't running"* after you press Play,
+UdonSharp didn't compile. Open the Console and look for the first red error.
+
 ## Setup
 
 1. Create a world project in the **VRChat Creator Companion** (Worlds SDK 3.5 or newer, with UdonSharp).
@@ -221,12 +242,12 @@ places when a new game starts. Code: `Scripts/FirToilet.cs`.
    into the project folder instead, so you get `Assets/FirHorror`.
 3. Unity asks **"Set up Fir Warning now?"**. Click **Set it up**, or use **Fir Warning > One-Click Setup**
    later. It imports TextMeshPro's essentials, creates and saves `Assets/FirHorror/Fir Warning.unity`, builds
-   the world, bakes the NavMesh and adds the scene to Build Settings.
+   the world and adds the scene to Build Settings.
 4. **VRChat SDK > Show Control Panel > Builder > Build & Test**. For Quest, switch the platform to
    **Android** and upload the same world again.
 
 **Fir Warning > Build World** rebuilds everything in the open scene, replacing the old `FirWarning` object.
-Re-run it after changing the builder, and save the scene first so the NavMesh bake has a home.
+Re-run it after changing the builder. It works in any open scene, saved or not.
 
 ### Regenerating the assets
 ```
@@ -244,14 +265,15 @@ python make_unitypackage.py
 |---|---|
 | Story state, doors, items, HUD and subtitles, lighting, face and behind-you scares | `Assets/FirHorror/Scripts/FirGameManager.cs` |
 | Talking-tree animatronic (sway, stare, talk, sing, scream, eye tracking) | `Scripts/FirAnimatronic.cs` |
-| The tree that moves when unwatched (NavMeshAgent, view checks, synced) | `Scripts/FirStalker.cs` |
+| The tree that moves when unwatched (waypoints, view checks, manual sync) | `Scripts/FirStalker.cs` |
 | Scripted scares (face, reveal, sound, drop, behind you, group scream, peek, flicker) | `Scripts/FirJumpscare.cs` |
 | Random between-scare ambience | `Scripts/FirAmbience.cs` |
 | Collectibles, carried items, hat and furnace sockets | `Scripts/FirItem.cs`, `FirCarryItem.cs`, `FirSocket.cs` |
 | Tape deck and keypad | `Scripts/FirSequenceLock.cs`, `FirKey.cs` |
 | Buttons and the conveyor belt | `Scripts/FirButton.cs`, `FirConveyor.cs` |
+| Teleporters (START, Join, Room Select, Back to the lobby) | `Scripts/FirTeleporter.cs` |
 | Throwable toilets | `Scripts/FirToilet.cs` |
-| The whole world, built from code (rooms, procedural tree meshes, props, NavMesh, descriptor) | `Editor/FirWorldBuilder.cs` |
+| The whole world, built from code (rooms, procedural tree meshes, props, teleporters, descriptor) | `Editor/FirWorldBuilder.cs` |
 | One-click setup | `Editor/FirSetup.cs` |
 | The lantern shader | `Shaders/FirLantern.shader` |
 | Jumpscare preview without Unity (three.js port of the tree, face and lighting) | `tools/preview/` |
@@ -269,5 +291,5 @@ python make_unitypackage.py
 ### Not tested in Unity yet
 This was written without access to Unity or the VRChat SDK, so it hasn't been compiled or played. Expect
 some first-run fixes in UdonSharp, and test with at least two people (one PC, one Quest) before publishing.
-The likely trouble spots are the stalker's NavMesh, the reach of the tripwire triggers, and hat-socket sizes
+The likely trouble spots are the stalker's pathing round shelves, the reach of the tripwire triggers, and hat-socket sizes
 in VR.

@@ -3,29 +3,24 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 /// <summary>
-/// Runs Fir Warning: the synced story state (which chapter, what's been found), the puzzles'
-/// answers (all derived from one synced seed, so every game is different), doors, the
-/// head-locked HUD and subtitles, the global "lantern" lighting, and the shared jumpscare rig.
+/// Fir Warning's game manager (remade).
+///
+/// Design rules, so it works in any VRChat project that runs GeoQuest:
+///  * Only manually-synced variables + RequestSerialization/OnDeserialization. No network events.
+///    Everything everyone must see (gags, skeletons, the closet, shared scares, the carol, lights-out,
+///    toilet stuns) is a synced counter here; each player plays it when the counter changes.
+///  * No bitwise operators: sets of items are plain sums of powers of two (see Has/With/Minus).
+///  * No global shader values: darkness and brightness are set on the world's materials.
+///  * Teleporting never depends on this script: FirTeleporter moves the player first.
 ///
 /// Chapters (phase): 0 lobby, 1 Showroom, 2 Stockroom, 3 Voice Lab, 4 Offices, 5 Living Room,
 /// 6 Recall Floor, 7 escaped. Door i opens once phase >= i + 2.
-///
-/// Puzzles:
-///  1 Carol      find 3 batteries, power the panel, repeat the 5-note carol on the table trees
-///  2 Glow paint find 4 fuses, kill the lights to read 3 glow-paint digits, enter them at the fuse box
-///  3 Tapes      find 4 tapes; booth card maps colour to session name, whiteboard gives name order
-///  4 Memos      each memo is a counting riddle for one digit of the door code
-///  5 Hats       a Christmas card of logic clues says which tree wears which colour of hat
-///  6 Furnace    open 3 gas valves to light it, then burn 5 imitations while the Original hunts you
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirGameManager : UdonSharpBehaviour
 {
-    public int ValveChapter = 9;   // pseudo-chapter for the furnace valves (collected in phase 6). Keep in sync with FirWorldBuilder.
-
     // ------------------------------------------------------------ synced
     [UdonSynced] public int phase;
     [UdonSynced] public int itemMask;
@@ -34,27 +29,40 @@ public class FirGameManager : UdonSharpBehaviour
     [UdonSynced] public int startMs;
     [UdonSynced] public int finishMs;
     [UdonSynced] public int round;
+    [UdonSynced] public int carolCount;
+    [UdonSynced] public int lightsCount;
+    [UdonSynced] public int stunCount;
+    [UdonSynced] public int scareCount;   // shared scares: how many so far, and the latest one
+    [UdonSynced] public int scareIndex;
+    [UdonSynced] public int gagCount;     // gags / skeleton routines / the closet
+    [UdonSynced] public int gagKind;      // 0 gag, 1 skeleton routine, 2 closet
+    [UdonSynced] public int gagIndex;
 
     // ------------------------------------------------------------ scene (wired by the builder)
+    public int ValveChapter = 9;
     public Transform lobbySpawn;
-    public Transform[] checkpoints;          // [0..5] chapters 1..6, [6] ending room
+    public Transform[] checkpoints;          // [0..5] chapters 1..6, [6] exit room
     public GameObject[] doors;
-    public GameObject[] items;               // by global item index
+    public GameObject[] items;
     public int[] itemChapter;
-    public VRCObjectSync[] carrySyncs;       // every pickup, respawned on reset
+    public VRCObjectSync[] carrySyncs;
     public GameObject[] hatsOnTrees;         // [socket * 3 + colour]
     public GameObject[] hatPickups;          // by colour
     public FirAnimatronic[] animatronics;
-    public FirAnimatronic[] carolTrees;      // the four Showroom table trees
+    public FirAnimatronic[] carolTrees;
     public FirJumpscare[] jumpscares;
-    public TextMeshPro[] memoTexts;          // office memos, one code digit each
-    public string[] countNames;              // what each memo asks you to count
-    public int[] countValues;                // how many of them the builder placed
-    public TextMeshPro tapeBoard;            // whiteboard: session-name order
-    public TextMeshPro tapeCard;             // booth card: colour -> session name
-    public TextMeshPro hatClue;              // Christmas card on the mantle
-    public TextMeshPro[] glowDigits;         // Stockroom glow paint, one digit each
-    public GameObject[] glowOnly;            // everything only visible in the dark
+    public FirGag[] gags;
+    public FirSkeletonGag[] skeletonGags;
+    public FirCloset closet;
+    public FirStalker stalker;
+    public TextMeshPro[] memoTexts;
+    public string[] countNames;
+    public int[] countValues;
+    public TextMeshPro tapeBoard;
+    public TextMeshPro tapeCard;
+    public TextMeshPro hatClue;
+    public TextMeshPro[] glowDigits;
+    public GameObject[] glowOnly;
     public GameObject furnaceFire;
     public TextMeshPro lobbyStatus;
     public TextMeshPro endingBoard;
@@ -62,48 +70,51 @@ public class FirGameManager : UdonSharpBehaviour
     public Transform hud;
     public TextMeshPro hudObjective;
     public TextMeshPro hudSubtitle;
-    public AudioSource sfx;                  // 2D, one-shots
-    public AudioSource music;                // 2D, chapter loops
-    public AudioClip[] chapterMusic;         // by phase 0..7
+    public AudioSource sfx;
+    public AudioSource music;
+    public AudioClip[] chapterMusic;
     public AudioClip[] screams;
     public AudioClip clipPickup, clipUnlock, clipWrong, clipTalk, clipLaugh, clipStatic, clipHit, clipWhoosh, clipHeartbeat, clipWhisper, clipSwitch;
-    public Transform scareRig;               // a tree whose face sits at the rig's origin
+    public Transform scareRig;
     public FirAnimatronic scareAnim;
+    public Material[] worldMaterials;        // every lantern-lit material: darkness and brightness are set on these
 
-    /// <summary>While this is in the future, the lights are out for everyone and nobody can see the stalker.</summary>
-    public float lightsOutUntil;
+    public float lightsOutUntil;             // read by the stalker: nobody can see it while the lights are out
 
     // ------------------------------------------------------------ local
+    bool inited, synced, inGame, glowShown;
     VRCPlayerApi local;
-    bool synced, inGame, glowShown;
-    int lastRound, lastPhase;
+    int lastRound, lastPhase, seenItems, seenHats, seenCarol, seenLights, seenStun, seenScare, seenGag;
+    int pendingItems, pendingHats;
     int[] chapterMask;
+    int[] pow2;
     float blackoutUntil, flickerUntil, subtitleUntil, hintAt, nextHud, resetArmedUntil, lightsCooldown;
-    int brightness = 1;                      // 0 dark, 1 normal, 2 bright
-    bool flashing = true, reducedScares;
-    int idLight, idDark, idAmbient;
-    int idAmbR, idAmbG, idAmbB, idLanR, idLanG, idLanB;
-    Vector3[] roomAmb, roomLan;            // each room's mood light and lantern colour
-    Vector3 ambNow, lanNow;
-    int carolStep = -1; float carolNext;
-    int pendingItems, pendingHats;          // what we collected/placed until we see it come back synced
+    int brightness = 1;
+    bool flashing = true;
+    bool reducedScares;
+    float appliedDark = -1f;
+    float appliedReach = -1f;
+    float appliedAmb = -1f;
+    int appliedRoom = -1;
+    int appliedBrightness = -1;
+    Color[] roomAmb;
+    Color[] roomLan;
+    int carolStep = -1;
+    float carolNext;
+    int scareState;
+    float scareNext, scareLen;
+    int scareClip;
+    bool behindActive;
+    float behindTimeout;
+    float teleportAfterScareAt = -1f;
     VRCPlayerApi[] countBuf;
-    float nextCount; int cachedInGame = 1;
+    float nextCount;
+    int cachedInGame = 1;
+    string[] colourNames, sessionNames, hatColourNames, familyNames, ordinals, roomNames;
 
-    // face scare: 0 idle, 1 pre-blink, 2 showing, 3 post-dark
-    int scareState; float scareNext; float scareLen; int scareClip;
-    // behind scare: tree placed behind you, screams when you turn round
-    bool behindActive; float behindTimeout;
-    float teleportAfterScareAt = -1;
+    // ============================================================ setup
 
-    string[] colourNames, sessionNames, hatColourNames, familyNames, ordinals;
-
-    bool inited;
-
-    /// <summary>
-    /// One-time setup. Called from Start and from every entry point, because VRChat doesn't guarantee
-    /// Start runs before the first OnDeserialization (a late joiner can get the synced state first).
-    /// </summary>
+    /// <summary>One-time setup, from whichever comes first (VRChat can deliver OnDeserialization before Start).</summary>
     void EnsureInit()
     {
         if (inited) return;
@@ -113,30 +124,39 @@ public class FirGameManager : UdonSharpBehaviour
         pow2[0] = 1;
         for (int k = 1; k < 31; k++) pow2[k] = pow2[k - 1] * 2;
         chapterMask = new int[10];
+        for (int i = 0; i < itemChapter.Length; i++)
+        {
+            if (i >= 30) break;
+            int ch = itemChapter[i];
+            chapterMask[ch] = With(chapterMask[ch], i);
+        }
         colourNames = new string[] { "<color=#ff4040>RED</color>", "<color=#40c0ff>BLUE</color>", "<color=#50ff60>GREEN</color>", "<color=#ffd030>GOLD</color>" };
         sessionNames = new string[] { "\"JINGLE\"", "\"GREETING\"", "\"LAUGHTER\"", "\"GOODNIGHT\"" };
         hatColourNames = new string[] { "<color=#c00000>red</color>", "<color=#007a10>green</color>", "<color=#1040c0>blue</color>" };
         familyNames = new string[] { "Junior", "Mama", "Grandpa" };
         ordinals = new string[] { "1st", "2nd", "3rd", "4th" };
-        idLight = VRCShader.PropertyToID("_UdonFirLight");
-        idDark = VRCShader.PropertyToID("_UdonFirDark");
-        idAmbient = VRCShader.PropertyToID("_UdonFirAmbient");
-        idAmbR = VRCShader.PropertyToID("_UdonFirAmbR"); idAmbG = VRCShader.PropertyToID("_UdonFirAmbG"); idAmbB = VRCShader.PropertyToID("_UdonFirAmbB");
-        idLanR = VRCShader.PropertyToID("_UdonFirLanR"); idLanG = VRCShader.PropertyToID("_UdonFirLanG"); idLanB = VRCShader.PropertyToID("_UdonFirLanB");
-        // 0 lobby, 1 showroom (red), 2 stockroom (sickly green), 3 voice lab (purple), 4 offices (cold blue),
-        // 5 living room (fireplace amber), 6 recall floor (furnace orange), 7 exit
-        roomAmb = new Vector3[] { new Vector3(0.06f, 0.05f, 0.04f), new Vector3(0.07f, 0.012f, 0.012f), new Vector3(0.015f, 0.05f, 0.025f),
-                                  new Vector3(0.04f, 0.014f, 0.07f), new Vector3(0.012f, 0.03f, 0.07f), new Vector3(0.07f, 0.04f, 0.01f),
-                                  new Vector3(0.09f, 0.03f, 0.005f), new Vector3(0.05f, 0.05f, 0.05f) };
-        roomLan = new Vector3[] { new Vector3(1f, 0.85f, 0.65f), new Vector3(1f, 0.82f, 0.62f), new Vector3(0.95f, 0.88f, 0.65f),
-                                  new Vector3(1f, 0.8f, 0.75f), new Vector3(0.85f, 0.92f, 1.05f), new Vector3(1.05f, 0.8f, 0.55f),
-                                  new Vector3(1.05f, 0.7f, 0.45f), new Vector3(1f, 0.9f, 0.75f) };
-        ambNow = roomAmb[0]; lanNow = roomLan[0];
-        for (int i = 0; i < itemChapter.Length && i < 30; i++)
-        {
-            int ch = itemChapter[i];
-            chapterMask[ch] = With(chapterMask[ch], i);
-        }
+        roomNames = new string[] { "", "The Showroom", "The Stockroom", "The Voice Lab", "The Offices", "The Living Room", "The Recall Floor" };
+        countBuf = new VRCPlayerApi[100];
+        // each room's mood: 0 lobby, 1 showroom (red), 2 stockroom (sickly green), 3 voice lab (purple),
+        // 4 offices (cold blue), 5 living room (fireplace amber), 6 recall floor (furnace orange), 7 exit
+        roomAmb = new Color[8];
+        roomAmb[0] = new Color(0.06f, 0.05f, 0.04f, 1f);
+        roomAmb[1] = new Color(0.07f, 0.012f, 0.012f, 1f);
+        roomAmb[2] = new Color(0.015f, 0.05f, 0.025f, 1f);
+        roomAmb[3] = new Color(0.04f, 0.014f, 0.07f, 1f);
+        roomAmb[4] = new Color(0.012f, 0.03f, 0.07f, 1f);
+        roomAmb[5] = new Color(0.07f, 0.04f, 0.01f, 1f);
+        roomAmb[6] = new Color(0.09f, 0.03f, 0.005f, 1f);
+        roomAmb[7] = new Color(0.05f, 0.05f, 0.05f, 1f);
+        roomLan = new Color[8];
+        roomLan[0] = new Color(1f, 0.85f, 0.65f, 1f);
+        roomLan[1] = new Color(1f, 0.82f, 0.62f, 1f);
+        roomLan[2] = new Color(0.95f, 0.88f, 0.65f, 1f);
+        roomLan[3] = new Color(1f, 0.8f, 0.75f, 1f);
+        roomLan[4] = new Color(0.85f, 0.92f, 1f, 1f);
+        roomLan[5] = new Color(1f, 0.8f, 0.55f, 1f);
+        roomLan[6] = new Color(1f, 0.7f, 0.45f, 1f);
+        roomLan[7] = new Color(1f, 0.9f, 0.75f, 1f);
     }
 
     void Start()
@@ -147,20 +167,40 @@ public class FirGameManager : UdonSharpBehaviour
         if (Networking.IsOwner(gameObject))
         {
             if (seed == 0) seed = Random.Range(1, 1073741823);
+            MarkSynced();
             RequestSerialization();
-            ApplyState();
         }
-        else RefreshTexts();
+        ApplyState();
         PlayMusic(0);
         UpdateOptionsText();
+        if (lobbyStatus != null) lobbyStatus.text = LobbyText();
+    }
+
+    /// <summary>Adopt the current synced state as already seen, so nothing old replays.</summary>
+    void MarkSynced()
+    {
+        if (synced) return;
+        synced = true;
+        lastRound = round;
+        lastPhase = phase;
+        seenItems = itemMask;
+        seenHats = hatMask;
+        seenCarol = carolCount;
+        seenLights = lightsCount;
+        seenStun = stunCount;
+        seenScare = scareCount;
+        seenGag = gagCount;
     }
 
     public override void OnDeserialization()
     {
         EnsureInit();
+        bool first = !synced;
+        MarkSynced();
         ApplyState();
-        // Two players collecting at the same moment both write the whole mask, and the last write wins.
-        // If something we collected went missing, put it back (and check whether that finished a step).
+        if (first) return;
+        // Two players collecting at the same moment both write the whole set; the last write wins.
+        // Put back anything of ours that was overwritten.
         int lostItems = Minus(pendingItems, itemMask);
         int lostHats = Minus(pendingHats, hatMask);
         pendingItems = lostItems;
@@ -170,47 +210,57 @@ public class FirGameManager : UdonSharpBehaviour
         TakeOwnership();
         itemMask = Union(itemMask, lostItems);
         hatMask = Union(hatMask, lostHats);
-        bool lit = Overlaps(lostItems, chapterMask[ValveChapter]) && ChapterItemsDone(ValveChapter);
-        bool done = phase >= 1 && phase <= 3 && Overlaps(lostItems, chapterMask[phase]) && ChapterItemsDone(phase);
-        if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();
-        if (phase == 5 && hatMask == 7) Advance();
+        CheckAdvance();
         Commit();
-        if (lit) SendCustomNetworkEvent(NetworkEventTarget.All, "NetFurnaceLit");
-        if (done) SendCustomNetworkEvent(NetworkEventTarget.All, "NetChapterItemsDone");
     }
 
-    // ============================================================ buttons (lobby + ending)
+    // ============================================================ lobby / room buttons (teleporters call these after moving you)
 
+    /// <summary>START. The START teleporter has already moved the presser into the Showroom.</summary>
     public void StartGame()
     {
         EnsureInit();
-        if (phase != 0 && phase != 7) { JoinGame(); return; }
         MarkSynced();
+        if (phase != 0 && phase != 7) { JoinGame(); return; }
         TakeOwnership();
-        phase = 1; itemMask = 0; hatMask = 0;
+        phase = 1;
+        itemMask = 0;
+        hatMask = 0;
+        pendingItems = 0;
+        pendingHats = 0;
         seed = Random.Range(1, 1073741823);
         startMs = Networking.GetServerTimeInMilliseconds();
         finishMs = 0;
-        round++;
+        round = round + 1;
         Commit();
         RespawnCarryItems();
-        // belt and braces: whoever pressed START goes in now, whatever the sync is doing
-        if (!inGame)
-        {
-            inGame = true;
-            TeleportToCheckpoint();
-            EnterPhase(phase);
-        }
     }
 
-    /// <summary>
-    /// If we act before the first sync has reached us, adopt the current state as "seen" so our own
-    /// change (a new round) is treated as new and teleports us, instead of being swallowed.
-    /// </summary>
-    void MarkSynced()
+    /// <summary>Join game. The teleporter already took you to the Showroom; this moves you on to the current room.</summary>
+    public void JoinGame()
     {
-        if (synced) return;
-        synced = true; lastRound = round; lastPhase = phase;
+        EnsureInit();
+        MarkSynced();
+        if (phase < 1) { Say("Nobody is playing yet. Press <b>START</b>.", 4f); return; }
+        inGame = true;
+        TeleportToCheckpoint();
+        PlayMusic(phase);
+        Say(ChapterIntro(phase), 9f);
+    }
+
+    /// <summary>Called by the "Back to the lobby" teleporters after they've moved you.</summary>
+    public void LeftGame()
+    {
+        EnsureInit();
+        inGame = false;
+        PlayMusic(0);
+    }
+
+    /// <summary>Called by the Room Select teleporters after they've moved you (practice / testing).</summary>
+    public void EnteredRoom()
+    {
+        EnsureInit();
+        inGame = true;
     }
 
     public void ResetGame()
@@ -222,41 +272,29 @@ public class FirGameManager : UdonSharpBehaviour
             Say("Press <b>Reset</b> again to send everyone back to the lobby.", 4f);
             return;
         }
-        resetArmedUntil = 0;
+        resetArmedUntil = 0f;
         MarkSynced();
         TakeOwnership();
-        phase = 0; itemMask = 0; hatMask = 0; finishMs = 0;
-        round++;
+        phase = 0;
+        itemMask = 0;
+        hatMask = 0;
+        finishMs = 0;
+        pendingItems = 0;
+        pendingHats = 0;
+        round = round + 1;
         Commit();
         RespawnCarryItems();
     }
 
-    public void JoinGame()
-    {
-        EnsureInit();
-        if (phase < 1) { Say("Nobody is playing yet. Press <b>START</b>.", 4f); return; }
-        TeleportToCheckpoint();
-        inGame = true;
-        PlayMusic(phase);
-        Say(ChapterIntro(phase), 9f);
-    }
-
-    public void ReturnToLobby()
-    {
-        inGame = false;
-        local.TeleportTo(lobbySpawn.position, lobbySpawn.rotation);
-        PlayMusic(0);
-    }
-
-    public void ToggleBrightness() { brightness = (brightness + 1) % 3; UpdateOptionsText(); }
-    public void ToggleFlashing() { flashing = !flashing; UpdateOptionsText(); }
-    public void ToggleReducedScares() { reducedScares = !reducedScares; UpdateOptionsText(); }
+    public void ToggleBrightness() { EnsureInit(); brightness = (brightness + 1) % 3; UpdateOptionsText(); }
+    public void ToggleFlashing() { EnsureInit(); flashing = !flashing; UpdateOptionsText(); }
+    public void ToggleReducedScares() { EnsureInit(); reducedScares = !reducedScares; UpdateOptionsText(); }
 
     void UpdateOptionsText()
     {
         if (optionsText == null) return;
-        string[] b = { "Dark (hard)", "Normal", "Bright (easier)" };
-        optionsText.text = "<b>Your options</b> (only for you)\nBrightness: " + b[brightness] +
+        string b = brightness == 0 ? "Dark (hard)" : (brightness == 1 ? "Normal" : "Bright (easier)");
+        optionsText.text = "<b>Your options</b> (only for you)\nBrightness: " + b +
                            "\nFlashing lights: " + (flashing ? "on" : "off") +
                            "\nJumpscares: " + (reducedScares ? "sound only" : "full");
     }
@@ -270,30 +308,34 @@ public class FirGameManager : UdonSharpBehaviour
         int ch = itemChapter[index];
         bool allowed = ch == phase || (ch == ValveChapter && phase == 6);
         if (!allowed) { Say("<i>It won't come loose. Not yet.</i>", 3f); return; }
+        MarkSynced();
         TakeOwnership();
         itemMask = With(itemMask, index);
         pendingItems = With(pendingItems, index);
         PlaySfx(clipPickup);
-        bool done = ChapterItemsDone(ch);
-        if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();  // last imitation burned
+        CheckAdvance();
         Commit();
-        if (done) SendCustomNetworkEvent(NetworkEventTarget.All, ch == ValveChapter ? "NetFurnaceLit" : "NetChapterItemsDone");
     }
 
     public void FillSocket(int socket)
     {
         EnsureInit();
         if (Has(hatMask, socket) || phase != 5) return;
+        MarkSynced();
         TakeOwnership();
         hatMask = With(hatMask, socket);
         pendingHats = With(pendingHats, socket);
         PlaySfx(clipPickup);
-        if (hatMask == 7) Advance();
+        CheckAdvance();
         Commit();
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetHatPlaced");
     }
 
-    /// <summary>Showroom power panel: once the batteries are in, it makes the trees sing the carol.</summary>
+    void CheckAdvance()
+    {
+        if (phase == 5 && hatMask == 7) Advance();
+        if (phase == 6 && ChapterItemsDone(6) && ChapterItemsDone(ValveChapter)) Advance();
+    }
+
     public void StationPower()
     {
         EnsureInit();
@@ -302,27 +344,67 @@ public class FirGameManager : UdonSharpBehaviour
         if (!ChapterItemsDone(1))
         {
             PlaySfx(clipWrong);
-            Say("It needs " + (CountBits(chapterMask[1]) - ChapterItemsHave(1)) + " more batteries.", 3f);
+            Say("It needs " + (ChapterItemsNeed(1) - ChapterItemsHave(1)) + " more batteries.", 3f);
             return;
         }
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetPlayCarol");
+        MarkSynced();
+        TakeOwnership();
+        carolCount = carolCount + 1;
+        Commit();
     }
 
-    /// <summary>Stockroom light switch: lights out for everyone for 8 seconds.</summary>
     public void StationLights()
     {
         EnsureInit();
         if (phase != 2) { PlaySfx(clipSwitch); Say("<i>Click. Nothing.</i>", 2f); return; }
         if (Time.time < lightsCooldown) { Say("<i>The switch is still warm. Wait a moment.</i>", 2f); return; }
         lightsCooldown = Time.time + 20f;
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetLightsOut");
+        MarkSynced();
+        TakeOwnership();
+        lightsCount = lightsCount + 1;
+        Commit();
     }
 
-    /// <summary>Every sequence lock (carol, fuse box, tape deck, door keypad) calls this when solved.</summary>
+    /// <summary>A thrown toilet hit the hunting tree.</summary>
+    public void StunStalker()
+    {
+        EnsureInit();
+        MarkSynced();
+        TakeOwnership();
+        stunCount = stunCount + 1;
+        Commit();
+    }
+
+    /// <summary>A shared scare went off for the player who walked into it: everyone else in the game gets it too.</summary>
+    public void ShareScare(int index)
+    {
+        EnsureInit();
+        MarkSynced();
+        TakeOwnership();
+        scareIndex = index;
+        scareCount = scareCount + 1;
+        seenScare = scareCount;   // the player who set it off has already played it
+        Commit();
+    }
+
+    /// <summary>A gag (kind 0), skeleton routine (1) or the closet (2) was pressed: everyone else sees it too.</summary>
+    public void ShareGag(int kind, int index)
+    {
+        EnsureInit();
+        MarkSynced();
+        TakeOwnership();
+        gagKind = kind;
+        gagIndex = index;
+        gagCount = gagCount + 1;
+        seenGag = gagCount;       // the presser has already started it
+        Commit();
+    }
+
     public void SolveLock(int ch)
     {
         EnsureInit();
         if (phase != ch) return;
+        MarkSynced();
         TakeOwnership();
         Advance();
         Commit();
@@ -330,6 +412,7 @@ public class FirGameManager : UdonSharpBehaviour
 
     public void WrongCode(int ch)
     {
+        EnsureInit();
         PlaySfx(clipWrong);
         if (ch == 1) { FaceScare(0, 1.0f); Say("<color=#ff5555>\"WRONG NOTE.\"</color>", 3f); }
         else if (ch == 3) { GroupMode(3, 4, 2f); Blackout(1.2f); Say("<color=#ff5555>\"THAT'S NOT HOW I SOUND.\"</color>", 3f); }
@@ -342,21 +425,29 @@ public class FirGameManager : UdonSharpBehaviour
     public int ChapterItemsNeed(int ch) { EnsureInit(); return CountBits(chapterMask[ch]); }
     public bool ValvesOpen() { return ChapterItemsDone(ValveChapter); }
 
+    void Advance()
+    {
+        phase = phase + 1;
+        if (phase == 7) finishMs = Networking.GetServerTimeInMilliseconds();
+    }
+
+    // ============================================================ puzzle answers (from the synced seed)
+
     /// <summary>
-    /// The answer for each puzzle step, from the synced seed.
-    /// ch1: carol note i (0-3, a tree), ch2: digit i, ch3: tape colour at log position i,
-    /// ch4: door digit i, ch5: hat colour for socket i (0-2), ch30: session name of tape colour i.
+    /// ch1: carol note i (0-3, a tree, never the same twice running), ch2: glow digit i, ch3: tape colour at
+    /// log position i, ch4: door digit i, ch5: hat colour for socket i, ch30: session name of tape colour i.
+    /// Verified by tools/verify/check_puzzles.py over 300,000 seeds.
     /// </summary>
     public int CodeAt(int ch, int i)
     {
         EnsureInit();
         if (ch == 1)
         {
-            int v = Hash(1, 0) % 4;   // each note moves to a different tree than the last one
-            for (int k = 1; k <= i; k++) v = (v + 1 + Hash(1, k) % 3) % 4;
+            int v = Mix(seed, 1, 0) % 4;
+            for (int k = 1; k <= i; k++) v = (v + 1 + Mix(seed, 1, k) % 3) % 4;
             return v;
         }
-        if (ch == 2) return Hash(2, i) % 10;
+        if (ch == 2) return Mix(seed, 2, i) % 10;
         if (ch == 3) return Perm(3, 4, i);
         if (ch == 30) return Perm(30, 4, i);
         if (ch == 4) return (seed / Pow10(i)) % 10;
@@ -364,13 +455,7 @@ public class FirGameManager : UdonSharpBehaviour
         return 0;
     }
 
-    int Hash(int salt, int i) { return Mix(seed, salt, i); }
-
-    /// <summary>
-    /// A small integer hash with real (quadratic) mixing, so every puzzle answer is independent. Plain
-    /// arithmetic only. Stays inside 32-bit ints: h &lt;= 46308, so h*h + 37h + small &lt;= 2,146,145,274.
-    /// (Checked over 300,000 seeds: all 324 carols occur, digits are uniform, every order occurs.)
-    /// </summary>
+    /// <summary>Integer hash with quadratic mixing, plain arithmetic; max intermediate 2,146,145,274 (fits an int).</summary>
     int Mix(int x, int salt, int i)
     {
         int h = (x % 46309 + (x / 46309) % 46309 + salt * 7919 + i * 104729 + 1) % 46309;
@@ -380,68 +465,20 @@ public class FirGameManager : UdonSharpBehaviour
 
     int Perm(int salt, int n, int i)
     {
-        int[] order = { 0, 1, 2, 3 };
+        int[] order = new int[] { 0, 1, 2, 3 };
         int s = Mix(seed, salt, 0);
         for (int k = n - 1; k > 0; k--)
         {
             s = Mix(s, salt, k);
             int j = s % (k + 1);
-            int tmp = order[k]; order[k] = order[j]; order[j] = tmp;
+            int tmp = order[k];
+            order[k] = order[j];
+            order[j] = tmp;
         }
         return order[i];
     }
 
-    void Advance()
-    {
-        phase++;
-        if (phase == 7) finishMs = Networking.GetServerTimeInMilliseconds();
-    }
-
-    // ============================================================ network events
-
-    public void NetChapterItemsDone()
-    {
-        if (!inGame) return;
-        if (lastPhase == 1) { Blackout(2.5f); GroupMode(1, 4, 2.5f); PlaySfx(screams[0]); Say("\"<b>Thank you!</b> Now turn on the panel. We want to <b>sing</b> for you.\"", 5f); }
-        else if (lastPhase == 2) { PlaySfx(clipLaugh); Say("\"Four little fuses. The fuse box wants a <b>code</b>. It's written where only the <b>dark</b> can read it.\"", 6f); }
-        else if (lastPhase == 3) { GroupMode(3, 2, 3f); Say("\"Play them for me. In the <b>right</b> order.\"", 4f); }
-        else if (lastPhase == 6) { PlaySfx(clipLaugh); }
-    }
-
-    public void NetFurnaceLit()
-    {
-        if (!inGame) return;
-        Blackout(1.5f);
-        PlaySfx(clipHit);
-        Say("<color=#ffaa55>The furnace roars into life.</color> \"You'd burn your own <b>family</b>?\"", 5f);
-    }
-
-    public void NetHatPlaced()
-    {
-        if (!inGame) return;
-        GroupMode(5, 1, 6f);
-        PlaySfx(clipWhoosh);
-        if (hatMask != 0 && hatMask != 7) Say("<i>Every tree in the room turns to look at you.</i>", 3f);
-    }
-
-    public void NetPlayCarol()
-    {
-        if (!inGame || phase != 1) return;
-        carolStep = 0;
-        carolNext = Time.time + 1.2f;
-        Say("\"Listen carefully. Then <b>touch us</b> in the same order.\"", 4f);
-    }
-
-    public void NetLightsOut()
-    {
-        float len = SmallGroup() ? 6f : 8f;
-        lightsOutUntil = Time.time + len;
-        if (!inGame) return;
-        PlaySfx(clipSwitch);
-        Blackout(len);
-    }
-
-    // ============================================================ state
+    // ============================================================ applying the synced state
 
     void ApplyState()
     {
@@ -468,22 +505,23 @@ public class FirGameManager : UdonSharpBehaviour
             bool used = Has(usedColours, k);
             if (hatPickups[k] != null && hatPickups[k].activeSelf == used) hatPickups[k].SetActive(!used);
         }
-        if (furnaceFire != null) furnaceFire.SetActive(ValvesOpen() && phase >= 6);
+        if (furnaceFire != null) furnaceFire.SetActive(phase >= 6 && ValvesOpen());
         for (int d = 0; d < doors.Length; d++) if (doors[d] != null) doors[d].SetActive(phase < d + 2);
         RefreshTexts();
+        if (!synced) return;
 
-        if (!synced)
-        {
-            synced = true; lastRound = round; lastPhase = phase;
-            return;  // late joiners stay in the lobby and use "Join game"
-        }
         if (round != lastRound)
         {
-            lastRound = round; lastPhase = phase;
+            lastRound = round;
+            lastPhase = phase;
+            seenItems = itemMask;
+            seenHats = hatMask;
             carolStep = -1;
-            pendingItems = 0; pendingHats = 0;
             for (int j = 0; j < jumpscares.Length; j++) if (jumpscares[j] != null) jumpscares[j].Rearm();
-            if (phase == 0) { if (inGame) ReturnToLobby(); }
+            if (phase == 0)
+            {
+                if (inGame) { inGame = false; local.TeleportTo(lobbySpawn.position, lobbySpawn.rotation); PlayMusic(0); }
+            }
             else
             {
                 inGame = true;
@@ -496,11 +534,80 @@ public class FirGameManager : UdonSharpBehaviour
             lastPhase = phase;
             if (inGame) { PlaySfx(clipUnlock); EnterPhase(phase); }
         }
+
+        // moments that follow from what changed
+        if (itemMask != seenItems)
+        {
+            int added = Minus(itemMask, seenItems);
+            seenItems = itemMask;
+            if (inGame && added != 0) ItemMoments(added);
+        }
+        if (hatMask != seenHats)
+        {
+            seenHats = hatMask;
+            if (inGame && phase == 5)
+            {
+                GroupMode(5, 1, 6f);
+                PlaySfx(clipWhoosh);
+                if (hatMask != 0 && hatMask != 7) Say("<i>Every tree in the room turns to look at you.</i>", 3f);
+            }
+        }
+        if (carolCount != seenCarol)
+        {
+            seenCarol = carolCount;
+            if (inGame && phase == 1)
+            {
+                carolStep = 0;
+                carolNext = Time.time + 1.2f;
+                Say("\"Listen carefully. Then <b>touch us</b> in the same order.\"", 4f);
+            }
+        }
+        if (lightsCount != seenLights)
+        {
+            seenLights = lightsCount;
+            float len = SmallGroup() ? 6f : 8f;
+            lightsOutUntil = Time.time + len;
+            if (inGame) { PlaySfx(clipSwitch); Blackout(len); }
+        }
+        if (stunCount != seenStun)
+        {
+            seenStun = stunCount;
+            if (stalker != null) stalker.Stun();
+        }
+        if (scareCount != seenScare)
+        {
+            seenScare = scareCount;
+            if (inGame && scareIndex >= 0 && scareIndex < jumpscares.Length && jumpscares[scareIndex] != null) jumpscares[scareIndex].FireShared();
+        }
+        if (gagCount != seenGag)
+        {
+            seenGag = gagCount;
+            PlayGagLocally(gagKind, gagIndex);
+        }
+    }
+
+    void PlayGagLocally(int kind, int index)
+    {
+        if (kind == 0 && index >= 0 && index < gags.Length && gags[index] != null) gags[index].Play();
+        else if (kind == 1 && index >= 0 && index < skeletonGags.Length && skeletonGags[index] != null) skeletonGags[index].Play();
+        else if (kind == 2 && closet != null) closet.Play();
+    }
+
+    void ItemMoments(int added)
+    {
+        if (phase == 1 && Overlaps(added, chapterMask[1]) && ChapterItemsDone(1))
+        { Blackout(2.5f); GroupMode(1, 4, 2.5f); PlaySfx(screams[0]); Say("\"<b>Thank you!</b> Now turn on the panel. We want to <b>sing</b> for you.\"", 5f); }
+        else if (phase == 2 && Overlaps(added, chapterMask[2]) && ChapterItemsDone(2))
+        { PlaySfx(clipLaugh); Say("\"Four little fuses. The fuse box wants a <b>code</b>. It's written where only the <b>dark</b> can read it.\"", 6f); }
+        else if (phase == 3 && Overlaps(added, chapterMask[3]) && ChapterItemsDone(3))
+        { GroupMode(3, 2, 3f); Say("\"Play them for me. In the <b>right</b> order.\"", 4f); }
+        if (Overlaps(added, chapterMask[ValveChapter]) && ValvesOpen())
+        { Blackout(1.5f); PlaySfx(clipHit); Say("<color=#ffaa55>The furnace roars into life.</color> \"You'd burn your own <b>family</b>?\"", 5f); }
     }
 
     void EnterPhase(int p)
     {
-        hintAt = Time.time + (SmallGroup() ? 210f : 300f);   // a hint after 3.5 min (1-2 players) or 5 min stuck
+        hintAt = Time.time + (SmallGroup() ? 210f : 300f);
         PlayMusic(p);
         Say(ChapterIntro(p), 10f);
         if (p == 2) { Blackout(1.5f); PlaySfx(screams[1]); }
@@ -523,23 +630,23 @@ public class FirGameManager : UdonSharpBehaviour
 
     string Hint(int p)
     {
-        if (p == 1) return ChapterItemsDone(1) ? "Hint: press the power panel to hear the carol again. Touch the table trees in the order they sang. The display shows how far you've got."
+        if (p == 1) return ChapterItemsDone(1) ? "Hint: press the power panel to hear the carol again. Touch the table trees in the order they sang."
                                               : "Hint: look inside the presents, behind the window curtain and under the long red table.";
-        if (p == 2) return ChapterItemsDone(2) ? "Hint: the light switch is by the entrance. In the dark, look for green writing on the walls. Someone should keep watching the tree."
-                                              : "Hint: the fuses are at the ends of the shelf aisles and on crates. Have someone watch the tree while others search.";
-        if (p == 3) return "Hint: the card in the booth tells you each tape colour's session name. The whiteboard gives the order of the names.";
-        if (p == 4) return "Hint: walk every aisle and count carefully. Calendars hang inside the cubicles. Add the memo's number and keep only the last digit.";
-        if (p == 5) return "Hint: the card is on the mantle. One clue says who wears what. The other rules a colour out. Plaques under the trees give their names.";
-        if (p == 6) return ValvesOpen() ? "Hint: drop the little trees into the furnace's glowing mouth." : "Hint: three gas valves glint along the walls. Open all three to light the furnace.";
+        if (p == 2) return ChapterItemsDone(2) ? "Hint: the light switch is by the entrance. In the dark, look for green writing on the walls."
+                                              : "Hint: the fuses are at the ends of the shelf aisles and on crates. Have someone watch the tree.";
+        if (p == 3) return "Hint: the card in the booth gives each tape colour's session name. The whiteboard gives the order of the names.";
+        if (p == 4) return "Hint: walk every aisle and count carefully. Add the memo's number and keep only the last digit.";
+        if (p == 5) return "Hint: the card is on the mantle. One clue says who wears what; the other rules a colour out. Plaques give names.";
+        if (p == 6) return ValvesOpen() ? "Hint: drop the little trees into the furnace's glowing mouth." : "Hint: three gas valves glint along the walls. Open all three.";
         return "";
     }
 
     void RefreshTexts()
     {
+        string[] who = new string[] { "R. Pine, Quality Control", "D. Spruce, Voice Department", "H. Holly, Shipping", "M. Balsam, Plant Manager" };
         for (int i = 0; i < memoTexts.Length; i++)
         {
-            if (memoTexts[i] == null || i >= countNames.Length) continue;
-            string[] who = { "R. Pine, Quality Control", "D. Spruce, Voice Department", "H. Holly, Shipping", "M. Balsam, Plant Manager" };
+            if (memoTexts[i] == null || i >= countNames.Length || i >= 4) continue;
             int d = CodeAt(4, i);
             int add = ((d - countValues[i] % 10) % 10 + 10) % 10;
             memoTexts[i].text = "<b>MEMO</b>\nFrom: " + who[i] + "\n\nThe <b>" + ordinals[i] + "</b> digit of the door code:\ncount the <b>" + countNames[i] +
@@ -553,20 +660,20 @@ public class FirGameManager : UdonSharpBehaviour
             tapeCard.text = "<b>TAPE LABELS</b>\n" + colourNames[0] + " = " + sessionNames[CodeAt(30, 0)] + "\n" + colourNames[1] + " = " + sessionNames[CodeAt(30, 1)] +
                             "\n" + colourNames[2] + " = " + sessionNames[CodeAt(30, 2)] + "\n" + colourNames[3] + " = " + sessionNames[CodeAt(30, 3)];
         for (int i = 0; i < glowDigits.Length; i++)
-            if (glowDigits[i] != null) glowDigits[i].text = ordinals[i] + " digit\n<size=200%>" + CodeAt(2, i) + "</size>";
+            if (glowDigits[i] != null && i < 4) glowDigits[i].text = ordinals[i] + " digit\n<size=200%>" + CodeAt(2, i) + "</size>";
         if (hatClue != null)
         {
             int r = (seed / 7) % 3;
-            int b = (r + 1) % 3, c = (r + 2) % 3;
+            int b = (r + 1) % 3;
+            int c = (r + 2) % 3;
             hatClue.text = "<i>Merry Christmas from the Fir family!</i>\n\n" + familyNames[r] + " always wears " + hatColourNames[CodeAt(5, r)] + ".\n" +
                            familyNames[b] + " would <b>never</b> wear " + hatColourNames[CodeAt(5, c)] + ".\n\n<i>We'll be watching you open your presents.</i>";
         }
         if (endingBoard != null)
         {
-            int ms = finishMs - startMs;
-            endingBoard.text = phase == 7
-                ? "<b>YOU ESCAPED</b>\n\nTime: " + Clock(ms) + "\n\nThe Original is still in the showroom.\nIt is still smiling.\n\n<size=60%>Fir Warning - a fan-made horror world. Not affiliated with any toy company.</size>"
-                : "";
+            if (phase == 7)
+                endingBoard.text = "<b>YOU ESCAPED</b>\n\nTime: " + Clock(finishMs - startMs) + "\n\nThe Original is still in the showroom.\nIt is still smiling.\n\n<size=60%>Fir Warning - a fan-made horror world. Not affiliated with any toy company.</size>";
+            else endingBoard.text = "";
         }
     }
 
@@ -578,30 +685,20 @@ public class FirGameManager : UdonSharpBehaviour
         if (!Utilities.IsValid(local)) return;
         float t = Time.time;
 
-        // lantern lighting
+        // darkness and brightness, set on the world's materials only when they change
         float dark = 0f;
         if (t < blackoutUntil) dark = 1f;
         else if (t < flickerUntil && flashing) dark = Random.value < 0.35f ? 0.9f : 0f;
         if (scareState == 2) dark = 0f;
-        float reach = brightness == 0 ? 4.5f : brightness == 1 ? 6f : 8.5f;
-        float amb = brightness == 0 ? 0f : brightness == 1 ? 0.004f : 0.04f;
-        if (phase == 7 || !inGame) { reach = 14f; amb += 0.12f; }
-        if (scareState == 2 && flashing) amb += 0.1f;
-        VRCShader.SetGlobalFloat(idDark, dark);
-        VRCShader.SetGlobalFloat(idLight, reach);
-        VRCShader.SetGlobalFloat(idAmbient, amb);
+        float reach = 6f;
+        float amb = 0.004f;
+        if (brightness == 0) { reach = 4.5f; amb = 0f; }
+        if (brightness == 2) { reach = 8.5f; amb = 0.04f; }
+        if (phase == 7 || !inGame) { reach = 14f; amb = amb + 0.12f; }
+        if (scareState == 2 && flashing) amb = amb + 0.1f;
+        ApplyLook(dark, reach, amb);
+        ApplyMood(RoomAt(local.GetPosition()));
 
-        // room mood colours, blended as you walk from room to room
-        Vector3 me = local.GetPosition();
-        int room = RoomAt(me);
-        float moodScale = brightness == 0 ? 0.6f : brightness == 1 ? 1f : 1.6f;
-        float blend = Mathf.Min(1f, Time.deltaTime * 2f);
-        ambNow = Vector3.Lerp(ambNow, roomAmb[room] * moodScale, blend);
-        lanNow = Vector3.Lerp(lanNow, roomLan[room], blend);
-        VRCShader.SetGlobalFloat(idAmbR, ambNow.x); VRCShader.SetGlobalFloat(idAmbG, ambNow.y); VRCShader.SetGlobalFloat(idAmbB, ambNow.z);
-        VRCShader.SetGlobalFloat(idLanR, lanNow.x); VRCShader.SetGlobalFloat(idLanG, lanNow.y); VRCShader.SetGlobalFloat(idLanB, lanNow.z);
-
-        // glow paint only shows in the dark
         bool glow = dark > 0.5f && inGame;
         if (glow != glowShown)
         {
@@ -609,13 +706,13 @@ public class FirGameManager : UdonSharpBehaviour
             for (int g = 0; g < glowOnly.Length; g++) if (glowOnly[g] != null) glowOnly[g].SetActive(glow);
         }
 
-        // HUD follows the head
         VRCPlayerApi.TrackingData head = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
         if (hud != null)
         {
-            Vector3 want = head.position + head.rotation * new Vector3(0, -0.18f, 0.9f);
-            hud.position = Vector3.Lerp(hud.position, want, Mathf.Min(1f, Time.deltaTime * 8f));
-            hud.rotation = Quaternion.Slerp(hud.rotation, head.rotation, Mathf.Min(1f, Time.deltaTime * 8f));
+            Vector3 want = head.position + head.rotation * new Vector3(0f, -0.18f, 0.9f);
+            float f = Mathf.Min(1f, Time.deltaTime * 8f);
+            hud.position = Vector3.Lerp(hud.position, want, f);
+            hud.rotation = Quaternion.Slerp(hud.rotation, head.rotation, f);
         }
         if (t > nextHud)
         {
@@ -623,13 +720,70 @@ public class FirGameManager : UdonSharpBehaviour
             if (hudObjective != null) hudObjective.text = ObjectiveText();
             if (hudSubtitle != null && t > subtitleUntil) hudSubtitle.text = "";
             if (lobbyStatus != null) lobbyStatus.text = LobbyText();
-            if (inGame && phase >= 1 && phase <= 6 && t > hintAt) { hintAt = t + (SmallGroup() ? 180f : 240f); Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 9f); }
+            if (inGame && phase >= 1 && phase <= 6 && t > hintAt)
+            {
+                hintAt = t + (SmallGroup() ? 180f : 240f);
+                Say("<color=#aaaaaa>" + Hint(phase) + "</color>", 9f);
+            }
         }
 
         UpdateCarol();
         UpdateFaceScare(head);
         UpdateBehindScare(head);
-        if (teleportAfterScareAt > 0 && t > teleportAfterScareAt) { teleportAfterScareAt = -1; TeleportToCheckpoint(); }
+        if (teleportAfterScareAt > 0f && t > teleportAfterScareAt) { teleportAfterScareAt = -1f; TeleportToCheckpoint(); }
+    }
+
+    void ApplyLook(float dark, float reach, float amb)
+    {
+        bool darkChanged = Mathf.Abs(dark - appliedDark) > 0.01f;
+        bool reachChanged = Mathf.Abs(reach - appliedReach) > 0.01f;
+        bool ambChanged = Mathf.Abs(amb - appliedAmb) > 0.001f;
+        if (!darkChanged && !reachChanged && !ambChanged) return;
+        for (int i = 0; i < worldMaterials.Length; i++)
+        {
+            Material m = worldMaterials[i];
+            if (m == null) continue;
+            if (darkChanged) m.SetFloat("_Dark", dark);
+            if (reachChanged) m.SetFloat("_Reach", reach);
+            if (ambChanged) m.SetFloat("_Ambient", amb);
+        }
+        appliedDark = dark;
+        appliedReach = reach;
+        appliedAmb = amb;
+    }
+
+    /// <summary>Which room a position is in (0 lobby, 1-6 chapters, 7 exit), from the factory layout along +z.</summary>
+    int RoomAt(Vector3 p)
+    {
+        if (p.x < -30f) return 0;
+        if (p.z < 20f) return 1;
+        if (p.z < 56f) return 2;
+        if (p.z < 80f) return 3;
+        if (p.z < 104f) return 4;
+        if (p.z < 120f) return 5;
+        if (p.z < 150f) return 6;
+        return 7;
+    }
+
+    /// <summary>Sets the room's mood colours on the world's materials when you walk into another room.</summary>
+    void ApplyMood(int room)
+    {
+        if (room == appliedRoom && brightness == appliedBrightness) return;
+        appliedRoom = room;
+        appliedBrightness = brightness;
+        float scale = 1f;
+        if (brightness == 0) scale = 0.6f;
+        if (brightness == 2) scale = 1.6f;
+        Color a = roomAmb[room];
+        Color amb = new Color(a.r * scale, a.g * scale, a.b * scale, 1f);
+        Color lan = roomLan[room];
+        for (int i = 0; i < worldMaterials.Length; i++)
+        {
+            Material m = worldMaterials[i];
+            if (m == null) continue;
+            m.SetColor("_AmbColor", amb);
+            m.SetColor("_LanColor", lan);
+        }
     }
 
     void UpdateCarol()
@@ -643,7 +797,7 @@ public class FirGameManager : UdonSharpBehaviour
         }
         int tree = CodeAt(1, carolStep);
         if (tree < carolTrees.Length && carolTrees[tree] != null) carolTrees[tree].Note();
-        carolStep++;
+        carolStep = carolStep + 1;
         carolNext = Time.time + 1.1f;
     }
 
@@ -661,11 +815,10 @@ public class FirGameManager : UdonSharpBehaviour
 
     string LobbyText()
     {
-        if (phase == 0) return "Nobody is playing.\nPress <b>START</b> when everyone is here.\n<size=70%>Plays well with 1-8. With 1 or 2 players the hunting tree is slower and hints come sooner.</size>";
-        int now = Networking.GetServerTimeInMilliseconds();
+        if (phase == 0) return "Nobody is playing.\nPress <b>START</b> when everyone is here.\n<size=70%>Plays well with 1-8. With 1 or 2 players the hunting tree is slower.</size>";
         if (phase == 7) return "The last group escaped in " + Clock(finishMs - startMs) + ".\nPress <b>START</b> to play again.";
-        string[] names = { "", "The Showroom", "The Stockroom", "The Voice Lab", "The Offices", "The Living Room", "The Recall Floor" };
-        return "Game in progress: chapter " + phase + "/6, " + names[phase] + "\n" + Clock(now - startMs) + " elapsed\nPress <b>Join game</b> to catch up.";
+        int now = Networking.GetServerTimeInMilliseconds();
+        return "Game in progress: chapter " + phase + "/6, " + roomNames[phase] + "\n" + Clock(now - startMs) + " elapsed\nPress <b>Join game</b> to catch up.";
     }
 
     // ============================================================ scares (local)
@@ -675,13 +828,13 @@ public class FirGameManager : UdonSharpBehaviour
         if (hudSubtitle == null) return;
         hudSubtitle.text = text;
         subtitleUntil = Time.time + seconds;
-        nextHud = 0;
+        nextHud = 0f;
     }
 
     public void PlaySfx(AudioClip c) { if (c != null && sfx != null) sfx.PlayOneShot(c); }
-
     public void Blackout(float seconds) { blackoutUntil = Mathf.Max(blackoutUntil, Time.time + seconds); }
     public void Flicker(float seconds) { flickerUntil = Mathf.Max(flickerUntil, Time.time + seconds); }
+    public bool IsInGame() { return inGame; }
 
     public void GroupMode(int chapter, int mode, float seconds)
     {
@@ -689,13 +842,14 @@ public class FirGameManager : UdonSharpBehaviour
             if (animatronics[i] != null && animatronics[i].chapter == chapter) animatronics[i].SetMode(mode, seconds);
     }
 
-    /// <summary>A tree's face right in front of yours, with a scream.</summary>
     public void FaceScare(int screamIndex, float seconds)
     {
         if (scareState != 0 || behindActive) return;
         if (reducedScares) { PlaySfx(screams[screamIndex % screams.Length]); Flicker(0.6f); return; }
-        scareClip = screamIndex; scareLen = seconds;
-        scareState = 1; scareNext = Time.time + 0.18f;
+        scareClip = screamIndex;
+        scareLen = seconds;
+        scareState = 1;
+        scareNext = Time.time + 0.18f;
         blackoutUntil = Time.time + 0.18f;
     }
 
@@ -712,7 +866,8 @@ public class FirGameManager : UdonSharpBehaviour
         if (t < scareNext) return;
         if (scareState == 1)
         {
-            scareState = 2; scareNext = t + scareLen;
+            scareState = 2;
+            scareNext = t + scareLen;
             scareRig.gameObject.SetActive(true);
             if (scareClip >= 0)
             {
@@ -723,40 +878,39 @@ public class FirGameManager : UdonSharpBehaviour
         }
         else if (scareState == 2)
         {
-            scareState = 3; scareNext = t + 0.7f;
+            scareState = 3;
+            scareNext = t + 0.7f;
             scareRig.gameObject.SetActive(false);
             Blackout(0.7f);
         }
         else scareState = 0;
     }
 
-    /// <summary>A face for a split second, no sound. Did you see that?</summary>
     public void Subliminal()
     {
         if (scareState != 0 || behindActive || reducedScares) return;
-        scareClip = -1; scareLen = 0.12f;
-        scareState = 1; scareNext = Time.time + 0.05f;
+        scareClip = -1;
+        scareLen = 0.12f;
+        scareState = 1;
+        scareNext = Time.time + 0.05f;
     }
 
-    /// <summary>The HUD corrupts for a moment.</summary>
     public void Glitch()
     {
-        string[] lines = { "Y O U   C A N ' T   L E A V E", "BUY ONLY THE ORIGINAL", "it is behind the next door",
-                           "I SEE YOU", "PLAY IT SAFE PLAY IT SAFE PLAY IT SAFE", "who is standing next to you?" };
+        string[] lines = new string[] { "Y O U   C A N ' T   L E A V E", "BUY ONLY THE ORIGINAL", "it is behind the next door",
+                                        "I SEE YOU", "PLAY IT SAFE PLAY IT SAFE PLAY IT SAFE", "who is standing next to you?" };
         Say("<color=#ff2020><b>" + lines[Random.Range(0, lines.Length)] + "</b></color>", 1.4f);
         PlaySfx(clipStatic);
         Flicker(0.6f);
     }
 
-    /// <summary>Whispers, and a tree is standing behind you. It screams when you turn round.</summary>
     public void BehindScare()
     {
         if (scareState != 0 || behindActive || scareRig == null) return;
         if (reducedScares) { PlaySfx(clipWhisper); return; }
         VRCPlayerApi.TrackingData head = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-        Vector3 back = head.rotation * Vector3.back;
-        back.y = 0;
-        back = back.normalized;
+        Vector3 b = head.rotation * Vector3.back;
+        Vector3 back = new Vector3(b.x, 0f, b.z).normalized;
         scareRig.position = head.position + back * 0.9f;
         scareRig.rotation = Quaternion.LookRotation(-back, Vector3.up);
         scareRig.gameObject.SetActive(true);
@@ -779,7 +933,6 @@ public class FirGameManager : UdonSharpBehaviour
         }
     }
 
-    /// <summary>The stalker reached the local player.</summary>
     public void Caught()
     {
         if (!inGame) return;
@@ -788,49 +941,30 @@ public class FirGameManager : UdonSharpBehaviour
         teleportAfterScareAt = Time.time + 1.4f;
     }
 
-    /// <summary>Which room a position is in (0 lobby ... 7 exit), for the mood lighting.</summary>
-    int RoomAt(Vector3 p)
-    {
-        if (p.x < -30f || p.z < 0f) return 0;
-        if (p.z < 20f) return 1;
-        if (p.z < 56f) return 2;
-        if (p.z < 80f) return 3;
-        if (p.z < 104f) return 4;
-        if (p.z < 120f) return 5;
-        if (p.z < 150f) return 6;
-        return 7;
-    }
+    // ============================================================ players
 
-    // ============================================================ group size
-
-    /// <summary>Players inside the factory (everyone not in the lobby). At least 1. Refreshed once a second.</summary>
     public int PlayersInGame()
     {
+        EnsureInit();
         if (Time.time < nextCount) return cachedInGame;
         nextCount = Time.time + 1f;
-        if (countBuf == null) countBuf = new VRCPlayerApi[96];
         int n = VRCPlayerApi.GetPlayerCount();
         VRCPlayerApi.GetPlayers(countBuf);
         int c = 0;
         for (int i = 0; i < n && i < countBuf.Length; i++)
         {
             VRCPlayerApi p = countBuf[i];
-            if (Utilities.IsValid(p) && Vector3.Distance(p.GetPosition(), lobbySpawn.position) > 25f) c++;
+            if (Utilities.IsValid(p) && Vector3.Distance(p.GetPosition(), lobbySpawn.position) > 25f) c = c + 1;
         }
         cachedInGame = Mathf.Max(1, c);
         return cachedInGame;
     }
 
-    /// <summary>True once this player has been taken into the factory (not waiting in the lobby).</summary>
-    public bool IsInGame() { return inGame; }
-
-    /// <summary>Solo or duo: the stalker eases off and hints come sooner.</summary>
     public bool SmallGroup() { return PlayersInGame() <= 2; }
 
-    /// <summary>Distance from a point to the nearest other player in the factory (999 if there's nobody else).</summary>
     public float NearestOtherPlayer(Vector3 from)
     {
-        if (countBuf == null) countBuf = new VRCPlayerApi[96];
+        EnsureInit();
         int n = VRCPlayerApi.GetPlayerCount();
         VRCPlayerApi.GetPlayers(countBuf);
         float best = 999f;
@@ -849,13 +983,15 @@ public class FirGameManager : UdonSharpBehaviour
 
     void TeleportToCheckpoint()
     {
+        if (checkpoints.Length == 0) return;
         int i = Mathf.Clamp(phase - 1, 0, checkpoints.Length - 1);
+        if (checkpoints[i] == null) return;
         local.TeleportTo(checkpoints[i].position, checkpoints[i].rotation);
     }
 
     void PlayMusic(int p)
     {
-        if (music == null || chapterMusic == null || p >= chapterMusic.Length) return;
+        if (music == null || p < 0 || p >= chapterMusic.Length) return;
         AudioClip c = chapterMusic[p];
         if (music.clip == c && music.isPlaying) return;
         music.clip = c;
@@ -873,35 +1009,37 @@ public class FirGameManager : UdonSharpBehaviour
     }
 
     void TakeOwnership() { if (!Networking.IsOwner(gameObject)) Networking.SetOwner(local, gameObject); }
-
     void Commit() { RequestSerialization(); ApplyState(); }
-
-    // ---- bit sets with plain arithmetic (no bitwise operators, so nothing depends on Udon exposing them)
-
-    int[] pow2;   // pow2[i] = 2^i, filled once in Start
-    int P2(int i) { return pow2[i]; }
-    bool Has(int set, int i) { return (set / P2(i)) % 2 == 1; }
-    int With(int set, int i) { return Has(set, i) ? set : set + P2(i); }
-    int CountBits(int set) { int c = 0; for (int i = 0; i < 30; i++) if (Has(set, i)) c++; return c; }
-
-    /// <summary>The members of a that aren't in b.</summary>
-    int Minus(int a, int b)
-    {
-        int r = 0;
-        for (int i = 0; i < 30; i++) if (Has(a, i) && !Has(b, i)) r = r + P2(i);
-        return r;
-    }
-
-    int Union(int a, int b) { return a + Minus(b, a); }
-    bool Overlaps(int a, int b) { return CountBits(a) > CountBits(Minus(a, b)); }
-
-    int Pow10(int i) { int r = 1; for (int k = 0; k < i; k++) r *= 10; return r; }
+    int Pow10(int i) { int r = 1; for (int k = 0; k < i; k++) r = r * 10; return r; }
 
     string Clock(int ms)
     {
         if (ms < 0) ms = 0;
         int s = ms / 1000;
-        int m = s / 60; s %= 60;
+        int m = s / 60;
+        s = s % 60;
         return m + ":" + (s < 10 ? "0" : "") + s;
     }
+
+    // ---- sets of small numbers (0-29) as sums of powers of two: plain arithmetic, no bitwise operators
+
+    bool Has(int set, int i) { return (set / pow2[i]) % 2 == 1; }
+    int With(int set, int i) { return Has(set, i) ? set : set + pow2[i]; }
+
+    int CountBits(int set)
+    {
+        int c = 0;
+        for (int i = 0; i < 30; i++) if (Has(set, i)) c = c + 1;
+        return c;
+    }
+
+    int Minus(int a, int b)
+    {
+        int r = 0;
+        for (int i = 0; i < 30; i++) if (Has(a, i) && !Has(b, i)) r = r + pow2[i];
+        return r;
+    }
+
+    int Union(int a, int b) { return a + Minus(b, a); }
+    bool Overlaps(int a, int b) { return CountBits(a) > CountBits(Minus(a, b)); }
 }

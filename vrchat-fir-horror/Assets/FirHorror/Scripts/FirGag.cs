@@ -1,7 +1,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// A comedy gag: press it (or walk into it) and, for everyone at once, its prop moves in, holds
@@ -9,11 +8,12 @@ using VRC.Udon.Common.Interfaces;
 /// combining a few knobs: slide (moveBy), turn (rotateBy), spin, inflate (scaleBy), wobble,
 /// a walking bob, and props that are hidden until the gag starts.
 /// </summary>
-// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+// No network events: the game manager's synced gag counter tells everyone else to Play().
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirGag : UdonSharpBehaviour
 {
     public FirGameManager game;
+    public int gagIndex;              // this gag's place in game.gags (set by the builder)
     public Transform target;          // the prop that moves
     public bool hideWhenIdle;         // pop-ups, peeks and waddlers only appear during the gag
     public bool walkIn;               // set off by walking into its zone instead of pressing
@@ -37,8 +37,16 @@ public class FirGag : UdonSharpBehaviour
 
     void Start()
     {
+        Init();
+        if (hideWhenIdle && !running) target.gameObject.SetActive(false);
+    }
+
+    bool inited;
+    void Init()
+    {
+        if (inited) return;
+        inited = true;
         p0 = target.localPosition; r0 = target.localRotation; s0 = target.localScale;
-        if (hideWhenIdle) target.gameObject.SetActive(false);
     }
 
     public override void Interact() { Trigger(); }
@@ -57,11 +65,14 @@ public class FirGag : UdonSharpBehaviour
     {
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + inTime + holdTime + outTime + 0.5f;
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetPlay");
+        Play();                                   // you see it at once
+        if (game != null) game.ShareGag(0, gagIndex);   // everyone else sees it when the counter arrives
     }
 
-    public void NetPlay()
+    /// <summary>Plays the gag on this client only.</summary>
+    public void Play()
     {
+        Init();
         if (running) return;
         running = true;
         startT = Time.time;

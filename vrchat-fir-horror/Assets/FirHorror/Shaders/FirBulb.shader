@@ -6,6 +6,7 @@ Shader "FirHorror/Bulb"
     {
         _Color ("Color", Color) = (1,0,0,1)
         _Speed ("Twinkle speed", Float) = 2.5
+        _Dark ("Darkness", Range(0,1)) = 0
     }
     SubShader
     {
@@ -22,7 +23,7 @@ Shader "FirHorror/Bulb"
 
             float4 _Color;
             float _Speed;
-            float _UdonFirDark;   // global, set from Udon
+            float _Dark;          // set by the game manager during blackouts
 
             struct appdata
             {
@@ -55,7 +56,7 @@ Shader "FirHorror/Bulb"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float tw = 0.55 + 0.45 * sin(_Time.y * _Speed + i.phase);
-                float dim = lerp(1.0, 0.3, saturate(_UdonFirDark));
+                float dim = lerp(1.0, 0.3, saturate(_Dark));
                 return float4(_Color.rgb * (0.35 + 0.65 * tw) * dim, 1.0);
             }
             ENDCG

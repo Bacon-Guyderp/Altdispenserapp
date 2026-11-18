@@ -1,65 +1,71 @@
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.AI;
 using VRC.SDKBase;
 
 /// <summary>
-/// The tree that only moves when nobody is looking at it. The owner (normally the instance
-/// master) runs the NavMeshAgent and checks every player's view; everyone else smoothly follows
-/// the synced position. Each client checks for itself whether the tree reached its player.
+/// The tree that only moves when nobody is looking at it. No NavMesh: the owner (normally the
+/// instance master) walks it straight at the nearest player, and when a shelf or wall is in the
+/// way it heads for whichever of the room's waypoints gets it round. Its position is shared with
+/// manual sync five times a second; everyone else glides after it. Each client checks for itself
+/// whether the tree reached its own player.
 /// Active in the Stockroom, the Offices and (faster, and it creeps even when watched) the Recall Floor.
 /// </summary>
-[UdonBehaviourSyncMode(BehaviourSyncMode.Continuous)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirStalker : UdonSharpBehaviour
 {
     public FirGameManager game;
-    public NavMeshAgent agent;
     public GameObject visual;
     public Transform eyes;
     public Transform[] spawnByPhase;      // index = phase; null = not active in that phase
     public Transform parking;
+    public Transform[] waypoints;         // every room's waypoints
+    public int[] waypointPhase;           // which phase each waypoint belongs to
+    public float[] roomMinX, roomMaxX, roomMinZ, roomMaxZ;   // by phase: it never leaves the room
     public float unseenSpeed = 2.2f;
     public float finaleUnseenSpeed = 3.0f;
     public float finaleSeenSpeed = 0.35f;
     public float catchDistance = 1.1f;
-    public int sightMask = 1;             // layers that block its view (Default)
+    public int sightMask = 1;             // layers that block sight and movement (Default)
     public AudioSource moveAudio;
     public AudioClip[] moveClips;
     public FirAnimatronic anim;
 
-    [UdonSynced] Vector3 syncPos;
-    [UdonSynced] float syncYaw;
-    [UdonSynced] bool syncActive;
+    [UdonSynced] public Vector3 syncPos;
+    [UdonSynced] public float syncYaw;
+    [UdonSynced] public bool syncActive;
 
     VRCPlayerApi[] players;
-    int lastPhase = -1, lastRound = -1;
-    float nextThink, nextCatch, nextCreak, nextBeat, nextWhisper;
-    Vector3 lastPos;
-    bool seen;
+    bool inited;
+    int lastPhase = -1;
+    int lastRound = -1;
+    float nextThink, nextCatch, nextCreak, nextBeat, nextWhisper, nextSend, nextLook, nextPath, nextGrumble;
     float stunUntil;
+    bool seen;
+    Vector3 lastPos;
+    Vector3 goal;
+    VRCPlayerApi chasing;
 
-    void Start()
+    void EnsureInit()
     {
-        players = new VRCPlayerApi[96];
+        if (inited) return;
+        inited = true;
+        players = new VRCPlayerApi[100];
         lastPos = transform.position;
         syncPos = transform.position;
-        if (agent != null) agent.enabled = Networking.IsOwner(gameObject);
+        syncYaw = transform.eulerAngles.y;
+        goal = transform.position;
     }
 
-    public override void OnOwnershipTransferred(VRCPlayerApi player)
-    {
-        if (agent == null) return;
-        agent.enabled = Networking.IsOwner(gameObject);
-        if (agent.enabled) agent.Warp(transform.position);
-        // carry on from where it is: don't warp back to the room's start as if the chapter had just begun
-        lastPhase = game.phase; lastRound = game.round;
-    }
+    void Start() { EnsureInit(); }
+
+    public override void OnDeserialization() { EnsureInit(); }
 
     public bool IsActive() { return syncActive; }
 
-    /// <summary>Hit by a thrown toilet: it screams and stops for a few seconds.</summary>
-    public void NetStun()
+    /// <summary>Hit by a thrown toilet (the game manager calls this on everyone): it screams and stops.</summary>
+    public void Stun()
     {
+        EnsureInit();
         if (!syncActive) return;
         stunUntil = Time.time + 4f;
         if (anim != null) anim.SetMode(4, 1.2f);
@@ -69,20 +75,22 @@ public class FirStalker : UdonSharpBehaviour
 
     void Update()
     {
+        EnsureInit();
+        if (game == null) return;
         bool owner = Networking.IsOwner(gameObject);
         if (owner) OwnerThink();
         else
         {
-            // a big jump (new chapter, warp) snaps instead of gliding through the floor
-            if ((syncPos - transform.position).sqrMagnitude > 25f) transform.position = syncPos;
+            // a big jump (new chapter) snaps instead of gliding through walls
+            if (Vector3.Distance(syncPos, transform.position) > 5f) transform.position = syncPos;
             else transform.position = Vector3.Lerp(transform.position, syncPos, Mathf.Min(1f, Time.deltaTime * 6f));
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, syncYaw, 0), Mathf.Min(1f, Time.deltaTime * 6f));
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, syncYaw, 0f), Mathf.Min(1f, Time.deltaTime * 6f));
         }
         if (visual != null && visual.activeSelf != syncActive) visual.SetActive(syncActive);
         if (!syncActive) return;
 
         // You hear it move. It only moves when you aren't looking.
-        float moved = (transform.position - lastPos).magnitude;
+        float moved = Vector3.Distance(transform.position, lastPos);
         lastPos = transform.position;
         if (moved > 0.01f && Time.time > nextCreak && moveAudio != null && moveClips.Length > 0)
         {
@@ -93,7 +101,8 @@ public class FirStalker : UdonSharpBehaviour
         VRCPlayerApi lp = Networking.LocalPlayer;
         if (!Utilities.IsValid(lp)) return;
         Vector3 me = lp.GetPosition();
-        Vector3 flat = transform.position - me; flat.y = 0;
+        Vector3 flat = transform.position - me;
+        flat.y = 0f;
         float d = flat.magnitude;
         if (d < 7f && Time.time > nextBeat) { nextBeat = Time.time + 3.6f; game.PlaySfx(game.clipHeartbeat); }
         if (d < 4.5f && Time.time > nextWhisper && anim != null)
@@ -114,34 +123,93 @@ public class FirStalker : UdonSharpBehaviour
         int phase = game.phase;
         if (phase != lastPhase || game.round != lastRound)
         {
-            lastPhase = phase; lastRound = game.round;
+            lastPhase = phase;
+            lastRound = game.round;
             Transform at = ActiveIn(phase) ? spawnByPhase[phase] : parking;
-            if (agent != null && agent.enabled && at != null) { agent.Warp(at.position); transform.rotation = at.rotation; }
-            else if (at != null) transform.SetPositionAndRotation(at.position, at.rotation);
+            if (at != null) { transform.position = at.position; transform.rotation = at.rotation; }
+            goal = transform.position;
             nextThink = Time.time + 6f;   // a moment's grace when a chapter starts
+            syncActive = ActiveIn(phase);
+            Send(true);
         }
         syncActive = ActiveIn(phase);
+        if (syncActive && Time.time >= nextThink && Time.time >= stunUntil) Move(phase);
+        Send(false);
+    }
+
+    void Send(bool now)
+    {
+        if (!now && Time.time < nextSend) return;
+        nextSend = Time.time + 0.2f;
         syncPos = transform.position;
         syncYaw = transform.eulerAngles.y;
-        if (!syncActive || agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        RequestSerialization();
+    }
 
-        if (Time.time < nextThink) { agent.isStopped = true; return; }
-        if (Time.time < stunUntil) { agent.isStopped = true; agent.velocity = Vector3.zero; return; }
-        seen = AnyoneLooking();
+    void Move(int phase)
+    {
+        if (Time.time > nextLook) { nextLook = Time.time + 0.15f; seen = AnyoneLooking(); }
         bool finale = phase == 6;
         // ease off for small groups: one player can't watch it and search at the same time
         int group = game.PlayersInGame();
-        float scale = group <= 1 ? 0.55f : group == 2 ? 0.75f : 1f;
-        if (Time.time < game.lightsOutUntil && group <= 2) scale *= 0.6f;
-        float seenFinale = group <= 1 ? 0f : group == 2 ? 0.18f : finaleSeenSpeed;
+        float scale = group <= 1 ? 0.55f : (group == 2 ? 0.75f : 1f);
+        if (Time.time < game.lightsOutUntil && group <= 2) scale = scale * 0.6f;
+        float seenFinale = group <= 1 ? 0f : (group == 2 ? 0.18f : finaleSeenSpeed);
         float speed = seen ? (finale ? seenFinale : 0f) : (finale ? finaleUnseenSpeed : unseenSpeed) * scale;
-        agent.speed = speed;
-        agent.isStopped = speed <= 0f;
-        if (speed <= 0f) agent.velocity = Vector3.zero;
+        if (speed <= 0f) return;
 
-        VRCPlayerApi target = Nearest();
-        if (target != null && Time.frameCount % 15 == 0) agent.SetDestination(target.GetPosition());
-        if (anim != null && !seen && Time.frameCount % 120 == 0) anim.SetMode(1, 3f);
+        if (Time.time > nextPath) { nextPath = Time.time + 0.5f; PickGoal(phase); }
+        Vector3 pos = transform.position;
+        Vector3 to = goal - pos;
+        to.y = 0f;
+        float dist = to.magnitude;
+        if (dist < 0.05f) return;
+        Vector3 dir = to / dist;
+        Vector3 next = pos + dir * Mathf.Min(dist, speed * Time.deltaTime);
+        if (phase < roomMinX.Length)
+        {
+            next.x = Mathf.Clamp(next.x, roomMinX[phase], roomMaxX[phase]);
+            next.z = Mathf.Clamp(next.z, roomMinZ[phase], roomMaxZ[phase]);
+        }
+        transform.position = next;
+        transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+        if (anim != null && !seen && Time.time > nextGrumble) { nextGrumble = Time.time + 4f; anim.SetMode(1, 3f); }
+    }
+
+    /// <summary>Straight at the nearest player if nothing is in the way, else via the best waypoint it can see.</summary>
+    void PickGoal(int phase)
+    {
+        chasing = Nearest();
+        if (chasing == null) { goal = transform.position; return; }
+        Vector3 target = chasing.GetPosition();
+        target.y = transform.position.y;
+        if (Clear(transform.position, target)) { goal = target; return; }
+        float best = 9999f;
+        Vector3 pick = transform.position;
+        for (int i = 0; i < waypoints.Length; i++)
+        {
+            if (waypoints[i] == null || i >= waypointPhase.Length || waypointPhase[i] != phase) continue;
+            Vector3 w = waypoints[i].position;
+            w.y = transform.position.y;
+            float here = Vector3.Distance(transform.position, w);
+            if (here < 0.4f) continue;
+            if (!Clear(transform.position, w)) continue;
+            float score = here + Vector3.Distance(w, target) * 1.3f;
+            if (!Clear(w, target)) score = score + 6f;
+            if (score < best) { best = score; pick = w; }
+        }
+        goal = pick;
+    }
+
+    bool Clear(Vector3 a, Vector3 b)
+    {
+        Vector3 o = a + Vector3.up * 0.6f;
+        Vector3 d = b - a;
+        d.y = 0f;
+        float len = d.magnitude;
+        if (len < 0.01f) return true;
+        RaycastHit hit;
+        return !Physics.Raycast(o, d / len, out hit, len, sightMask, QueryTriggerInteraction.Ignore);
     }
 
     bool AnyoneLooking()
@@ -157,9 +225,11 @@ public class FirStalker : UdonSharpBehaviour
             VRCPlayerApi.TrackingData h = p.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             Vector3 to = e - h.position;
             float dist = to.magnitude;
-            if (dist > 28f) continue;
-            if (Vector3.Dot(h.rotation * Vector3.forward, to / dist) < 0.55f) continue;
-            if (Physics.Linecast(h.position, e, sightMask, QueryTriggerInteraction.Ignore)) continue;
+            if (dist > 28f || dist < 0.01f) continue;
+            Vector3 dir = to / dist;
+            if (Vector3.Dot(h.rotation * Vector3.forward, dir) < 0.55f) continue;
+            RaycastHit hit;
+            if (Physics.Raycast(h.position, dir, out hit, dist - 0.3f, sightMask, QueryTriggerInteraction.Ignore)) continue;
             return true;
         }
         return false;

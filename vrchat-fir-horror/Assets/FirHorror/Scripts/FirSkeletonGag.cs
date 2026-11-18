@@ -1,7 +1,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// A skeleton comedy routine (Data/skeleton_gags.txt). Press it and, for everyone at once, one or
@@ -15,11 +14,12 @@ using VRC.Udon.Common.Interfaces;
 /// 4 lazy shrug, 5 sing into a mic, 6 point then laugh, 7 on the phone, 8 forearm falls off,
 /// 9 hands on hips, 10 tremble, 11 bow.
 /// </summary>
-// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+// No network events: the game manager's synced gag counter tells everyone else to Play().
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirSkeletonGag : UdonSharpBehaviour
 {
     public FirGameManager game;
+    public int gagIndex;      // this routine's place in game.skeletonGags (set by the builder)
     public int act;
     public int rigCount = 1;
     public Transform[] pivots;
@@ -32,10 +32,14 @@ public class FirSkeletonGag : UdonSharpBehaviour
     Vector3[] restPos, meshPos;
     Quaternion[] restRot, meshRot;
     float startT, busyUntil, length, talkFrom, talkUntil;
-    bool running, voiced;
+    bool running, voiced, inited;
 
-    void Start()
+    void Start() { Init(); }
+
+    void Init()
     {
+        if (inited) return;
+        inited = true;
         int n = pivots.Length;
         restPos = new Vector3[n]; restRot = new Quaternion[n];
         meshPos = new Vector3[n]; meshRot = new Quaternion[n];
@@ -53,11 +57,14 @@ public class FirSkeletonGag : UdonSharpBehaviour
     {
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + Length() + 0.5f;
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetPlay");
+        Play();
+        if (game != null) game.ShareGag(1, gagIndex);
     }
 
-    public void NetPlay()
+    /// <summary>Plays the routine on this client only.</summary>
+    public void Play()
     {
+        Init();
         if (running) return;
         running = true; voiced = false;
         startT = Time.time;

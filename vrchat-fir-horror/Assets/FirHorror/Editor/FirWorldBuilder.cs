@@ -8,14 +8,13 @@ using TMPro;
 using UdonSharp;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.AI;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using Object = UnityEngine.Object;
 
 /// <summary>
 /// Fir Warning > Build World. Builds the whole horror world into the open scene from code:
-/// the lobby, six chapters, the escape room, every talking tree, the stalker and its NavMesh,
+/// the lobby, six chapters, the escape room, every talking tree, the stalker, every teleporter,
 /// all the scares, and the VRChat scene descriptor. Re-run any time; it replaces the old
 /// "FirWarning" root object.
 ///
@@ -39,6 +38,17 @@ public static class FirWorldBuilder
     static readonly List<FirToilet> toilets = new List<FirToilet>();
     static readonly List<GameObject> glowList = new List<GameObject>();
     static FirStalker stalkerRef;
+    static readonly List<FirTeleporter> teleporters = new List<FirTeleporter>();
+    static readonly List<FirCarryItem> carryItems = new List<FirCarryItem>();
+    static readonly List<FirSocket> sockets = new List<FirSocket>();
+    static Transform lobbySpawnRef;
+    static Transform[] checkpointRefs;
+
+    // the factory's rooms (x = ±w/2): Showroom, Stockroom, Voice Lab, Offices, Living Room, Recall Floor, Exit
+    static readonly float[] RoomZ0 = { 0, 20, 56, 80, 104, 120, 150 };
+    static readonly float[] RoomZ1 = { 20, 56, 80, 104, 120, 150, 160 };
+    static readonly float[] RoomW = { 16, 24, 16, 20, 14, 22, 10 };
+    static readonly string[] RoomTitles = { "1  The Showroom", "2  The Stockroom", "3  The Voice Lab", "4  The Offices", "5  The Living Room", "6  The Recall Floor", "Exit" };
 
     class TreeParts
     {
@@ -61,16 +71,10 @@ public static class FirWorldBuilder
             EditorUtility.DisplayDialog("Fir Warning", "Import TextMeshPro first:\nWindow > TextMeshPro > Import TMP Essential Resources", "OK");
             return false;
         }
-        if (string.IsNullOrEmpty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path))
-        {
-            EditorUtility.DisplayDialog("Fir Warning", "Save the scene first (File > Save As), then run Build World again.\n\n" +
-                "The walkable-area (NavMesh) bake for the hunting tree needs a saved scene. " +
-                "Or use Fir Warning > One-Click Setup, which makes and saves the scene for you.", "OK");
-            return false;
-        }
         if (!EnsureProgramAssets()) return false;
         if (!CheckShaders(quiet)) return false;
         meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
+        teleporters.Clear(); carryItems.Clear(); sockets.Clear(); lobbySpawnRef = null; checkpointRefs = null;
         Directory.CreateDirectory(Gen);
         missingAssets.Clear();
         EnsureAssetsImported();
@@ -113,9 +117,13 @@ public static class FirWorldBuilder
         game.scareAnim = scareTree.anim;
 
         // ---- places
-        var spawn = BuildLobby(root);
+        var spawn = new GameObject("Spawn").transform;   // made first: every room's Back-to-lobby teleporter points here
+        spawn.SetParent(root, false);
+        spawn.localPosition = new Vector3(-60, 0.05f, -4);
+        lobbySpawnRef = spawn;
         game.lobbySpawn = spawn;
-        BuildFactory(root);
+        BuildFactory(root);   // makes the checkpoints the lobby's teleporters point at
+        BuildLobby(root);
         BuildGags(root);
         BuildSkeletonGags(root);
 
@@ -132,43 +140,56 @@ public static class FirWorldBuilder
         // ---- wire up the collected lists
         game.items = itemList.ToArray();
         game.itemChapter = itemChapterList.ToArray();
-        foreach (var t in toilets) t.stalker = stalkerRef;
+        foreach (var t in toilets) { t.stalker = stalkerRef; t.game = game; }
+        foreach (var s in sockets) s.candidates = carryItems.Where(c => c.kind == s.acceptKind).ToArray();
+        game.stalker = stalkerRef;
+        StalkerWaypoints(root, stalkerRef);
+        var gagArr = root.GetComponentsInChildren<FirGag>(true);
+        for (int i = 0; i < gagArr.Length; i++) gagArr[i].gagIndex = i;
+        game.gags = gagArr;
+        var skelArr = root.GetComponentsInChildren<FirSkeletonGag>(true);
+        for (int i = 0; i < skelArr.Length; i++) skelArr[i].gagIndex = i;
+        game.skeletonGags = skelArr;
+        game.closet = root.GetComponentInChildren<FirCloset>(true);
         game.glowOnly = glowList.ToArray();
         game.carrySyncs = carrySyncList.ToArray();
         game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).ToArray();
         game.jumpscares = root.GetComponentsInChildren<FirJumpscare>(true);
+        for (int i = 0; i < game.jumpscares.Length; i++) game.jumpscares[i].scareIndex = i;
+        game.worldMaterials = mats.Values.Where(m => m != null).Distinct().ToArray();
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
 
-        // ---- scene settings, NavMesh, descriptor
+        // ---- scene settings, descriptor
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = Color.black;
         RenderSettings.fog = false;
         foreach (var l in Object.FindObjectsOfType<Light>()) Undo.DestroyObjectImmediate(l.gameObject);
         SetupDescriptor(spawn);
-        UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root.gameObject;
-        SetEditorPreviewLighting();
         if (missingAssets.Count > 0)
             EditorUtility.DisplayDialog("Fir Warning: missing files",
                 missingAssets.Count + " texture/sound file(s) couldn't be loaded, so those materials will show up white or silent:\n\n" +
                 string.Join("\n", missingAssets.Take(15)) + (missingAssets.Count > 15 ? "\n..." : "") +
                 "\n\nRight-click the Assets/FirHorror folder > Reimport, then run Fir Warning > Build World again. " +
                 "If it keeps happening, please send this message.", "OK");
+        var tpProblems = CheckTeleporters();
+        if (tpProblems.Count > 0)
+            EditorUtility.DisplayDialog("Fir Warning: teleporter problem", string.Join("\n", tpProblems.Take(15)) + "\n\nPlease send this message.", "OK");
         var blocked = CheckInteractables(root);
         if (blocked.Count > 0)
             EditorUtility.DisplayDialog("Fir Warning: check these",
                 blocked.Count + " interactable(s) look blocked by something in front of them, so players may not be able to use them:\n\n" +
                 string.Join("\n", blocked.Take(15)) + (blocked.Count > 15 ? "\n..." : "") + "\n\nThe full list is in the Console.", "OK");
         else if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the world: " + game.animatronics.Length + " talking trees, " +
-                                                                game.jumpscares.Length + " scripted scares, " + itemList.Count + " items. Every interactable is reachable.", "OK");
+                                                                game.jumpscares.Length + " scripted scares, " + itemList.Count + " items, " + teleporters.Count + " teleporters. Every interactable is reachable.", "OK");
         return true;
     }
 
     // =================================================================== lobby
 
-    static Transform BuildLobby(Transform root)
+    static void BuildLobby(Transform root)
     {
         var lobby = Group(root, "Lobby", new Vector3(-60, 0, 0));
         // 14 x 12 room, fullbright
@@ -180,10 +201,6 @@ public static class FirWorldBuilder
         Box(lobby, "WallE", new Vector3(7.1f, 1.75f, 0), new Vector3(0.2f, 3.5f, 12.4f), M("LobbyWall"), true);
         StringLights(lobby, "Lobby", -6f, 6f, 14f, 3.5f);
 
-        var spawn = new GameObject("Spawn").transform;
-        spawn.SetParent(lobby, false);
-        spawn.localPosition = new Vector3(0, 0, -4);
-
         var n = Vector3.back;  // north wall faces the players
         var title = Text("Title", lobby, new Vector3(0, 2.9f, 5.98f), Face(n), new Vector2(8, 1), 0.9f, "<b>FIR WARNING</b>");
         title.color = new Color(0.85f, 0.1f, 0.1f);
@@ -194,14 +211,25 @@ public static class FirWorldBuilder
         game.lobbyStatus = Text("Status", lobby, new Vector3(0, 1.85f, 5.98f), Face(n), new Vector2(6, 0.5f), 0.18f,
             "<color=#ff6060><b>The game's scripts aren't running.</b></color>\nIn Unity, open the Console and look for red UdonSharp errors.");
         game.lobbyStatus.color = Color.white;
-        Button("START", lobby, new Vector3(-2.2f, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("BtnGo"), game, "StartGame");
-        Button("Join game", lobby, new Vector3(0, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("Btn"), game, "JoinGame");
+        // START and Join are teleporters: they move you into the Showroom first, then tell the game.
+        Teleporter("START", lobby, new Vector3(-2.2f, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("BtnGo"), checkpointRefs[0], "StartGame");
+        Teleporter("Join game", lobby, new Vector3(0, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("Btn"), checkpointRefs[0], "JoinGame");
         Button("Reset (press twice)", lobby, new Vector3(2.2f, 1.1f, 5.85f), n, new Vector3(1.4f, 0.5f, 0.2f), M("BtnWarn"), game, "ResetGame");
         Button("Brightness", lobby, new Vector3(-2.2f, 0.5f, 5.85f), n, new Vector3(1.4f, 0.4f, 0.2f), M("Btn"), game, "ToggleBrightness");
         Button("Flashing lights", lobby, new Vector3(0, 0.5f, 5.85f), n, new Vector3(1.4f, 0.4f, 0.2f), M("Btn"), game, "ToggleFlashing");
         Button("Jumpscares", lobby, new Vector3(2.2f, 0.5f, 5.85f), n, new Vector3(1.4f, 0.4f, 0.2f), M("Btn"), game, "ToggleReducedScares");
         game.optionsText = Text("Options", lobby, new Vector3(4.9f, 0.9f, 5.98f), Face(n), new Vector2(2.2f, 1.2f), 0.16f, "");
         game.optionsText.color = Color.white;
+
+        // Room Select: jump straight into any room (practice, or to check every teleporter works)
+        for (int i = 0; i < 7; i++)
+        {
+            float x = i % 2 == 0 ? -5.95f : -4.4f;
+            float y = 2.0f - (i / 2) * 0.42f;
+            Teleporter(RoomTitles[i], lobby, new Vector3(x, y, 5.85f), n, new Vector3(1.45f, 0.34f, 0.2f), M("Btn"), checkpointRefs[i], "EnteredRoom");
+        }
+        Text("RoomSelectLabel", lobby, new Vector3(-5.17f, 0.35f, 5.98f), Face(n), new Vector2(3.1f, 0.4f), 0.13f,
+             "<b>ROOM SELECT</b>  jump straight into a room\n(practice: puzzles only open in the real game)").color = Color.white;
 
         // story on the west wall
         var w = Vector3.right;
@@ -236,7 +264,6 @@ public static class FirWorldBuilder
             var t = BuildTree(lobby, new Vector3(-5.5f + i * 0.9f, 0, -5.2f + (i % 2) * 0.3f), 0f, 0.8f + i * 0.35f, 0, i == 1, "LobbyTree" + i);
             t.anim.greetChance = 0.6f; t.anim.snapChance = 0f;   // the lobby stays safe
         }
-        return spawn;
     }
 
     // =================================================================== factory
@@ -286,8 +313,15 @@ public static class FirWorldBuilder
         }
         game.doors = doors.ToArray();
         game.checkpoints = checkpoints.ToArray();
+        checkpointRefs = checkpoints.ToArray();
+        // a "Back to the lobby" teleporter on the entry wall of every room, beside the door
+        for (int i = 0; i < rooms.Length - 1; i++)
+        {
+            var r = rooms[i];
+            Teleporter("Back to the lobby", shell, new Vector3(2.1f, 1.3f, r.z0 + 0.16f), Vector3.forward, new Vector3(1.1f, 0.4f, 0.1f), M("BtnWarn"), lobbySpawnRef, "LeftGame");
+        }
 
-        // the stalker's parking spot: a closed box far below, with NavMesh so Warp works
+        // the stalker's parking spot: a closed box far below
         var park = Group(f, "StalkerParking", new Vector3(0, -40, -30));
         Box(park, "Floor", new Vector3(0, -0.1f, 0), new Vector3(4, 0.2f, 4), M("Concrete"), true);
 
@@ -736,13 +770,11 @@ public static class FirWorldBuilder
                 hatsOn[s * 3 + k].SetActive(false);
             }
             var sock = new GameObject("HatSocket");
-            sock.layer = 2;   // Ignore Raycast: still catches the hat, doesn't block the pointer
             sock.transform.SetParent(tr.head, false);
             sock.transform.localPosition = new Vector3(0, tr.topHeight - 0.05f, 0);
-            var sc = sock.AddComponent<BoxCollider>();
-            sc.isTrigger = true; sc.size = Vector3.one * (0.4f + 0.2f * s);
-            var fs = Add<FirSocket>(sock);
-            fs.game = game; fs.acceptKind = 0; fs.socketId = s; fs.tree = tr.anim;
+            var fs = Add<FirSocket>(sock);   // no collider: it measures how far the hats are
+            fs.game = game; fs.acceptKind = 0; fs.socketId = s; fs.tree = tr.anim; fs.radius = 0.4f + 0.1f * s;
+            sockets.Add(fs);
             // a brass name plaque at the tree's feet
             var fwd = Quaternion.Euler(0, yaws[s], 0) * Vector3.forward;
             var plaquePos = at[s] + fwd * (0.25f + 0.1f * s) + Vector3.up * 0.06f;
@@ -957,13 +989,11 @@ public static class FirWorldBuilder
         fire.gameObject.SetActive(false);
         Box(g, "Chimney", new Vector3(-7.5f, 5.0f, 148f), new Vector3(1.2f, 2f, 1.2f), M("Brick"), true);
         var mouth = new GameObject("FurnaceSocket");
-        mouth.layer = 2;   // Ignore Raycast
         mouth.transform.SetParent(g, false);
         mouth.transform.localPosition = new Vector3(-7.5f, 1.1f, 145.4f);
-        var mc = mouth.AddComponent<BoxCollider>();
-        mc.isTrigger = true; mc.size = new Vector3(2.2f, 1.5f, 1.0f);
         var fs = Add<FirSocket>(mouth);
-        fs.game = game; fs.acceptKind = 1;
+        fs.game = game; fs.acceptKind = 1; fs.radius = 1.3f;
+        sockets.Add(fs);
         Text("FurnaceLabel", g, new Vector3(-7.5f, 2.3f, 145.7f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.25f, "<color=#ffaa55>DISPOSAL</color>");
 
         BoxStack(g, new Vector3(-4f, 0, 126f), 3, 2);
@@ -1032,7 +1062,7 @@ public static class FirWorldBuilder
         Sign(g, "EXIT", new Vector3(0, 3.0f, 150.25f), Vector3.forward, "GlowGreen");
         game.endingBoard = Text("EndingBoard", g, new Vector3(0, 1.9f, 159.85f), Face(Vector3.back), new Vector2(5f, 2.2f), 0.3f, "");
         game.endingBoard.color = Color.white;
-        var back = Button("Back to the lobby", g, new Vector3(-3f, 1.0f, 159.8f), Vector3.back, new Vector3(1.6f, 0.5f, 0.2f), M("BtnGo"), game, "ReturnToLobby");
+        Teleporter("Back to the lobby", g, new Vector3(-3f, 1.0f, 159.8f), Vector3.back, new Vector3(1.6f, 0.5f, 0.2f), M("BtnGo"), lobbySpawnRef, "LeftGame");
         var orig = BuildTree(g, new Vector3(3.6f, 0, 158.4f), -150, 2.4f, 7, false, "TheOriginalWaits");
         orig.anim.watchRange = 6f;
         var last = Scare(g, "OneLastScare", new Vector3(0, 1.5f, 154f), new Vector3(10, 3, 0.4f), 0, 7, 7);
@@ -1281,15 +1311,12 @@ public static class FirWorldBuilder
         var go = new GameObject("Stalker");
         go.transform.SetParent(f, false);
         go.transform.position = park.position;
-        var agent = go.AddComponent<NavMeshAgent>();
-        agent.radius = 0.4f; agent.height = 2.2f; agent.speed = 2.2f; agent.acceleration = 30f; agent.angularSpeed = 240f;
-        agent.stoppingDistance = 0.3f; agent.autoBraking = false;
         var visualRoot = new GameObject("Visual").transform;
         visualRoot.SetParent(go.transform, false);
         var t = BuildTree(visualRoot, Vector3.zero, 0, 2.3f, 0, false, "Stalker Tree");
         t.anim.watchRange = 8f; t.anim.greetChance = 0f; t.anim.snapChance = 0f;
         var st = Add<FirStalker>(go);
-        st.game = game; st.agent = agent; st.visual = visualRoot.gameObject; st.anim = t.anim;
+        st.game = game; st.visual = visualRoot.gameObject; st.anim = t.anim;
         var eyes = new GameObject("Eyes").transform;
         eyes.SetParent(go.transform, false);
         eyes.localPosition = new Vector3(0, t.faceHeight, t.faceZ * 0.5f);
@@ -1441,6 +1468,7 @@ public static class FirWorldBuilder
         var c = Add<FirCarryItem>(go);
         c.game = game;
         c.pickup = p;
+        carryItems.Add(c);
         return c;
     }
 
@@ -1641,8 +1669,6 @@ public static class FirWorldBuilder
     static GameObject Door(Transform g, float z, string nextName)
     {
         var d = Box(g, "Door to " + nextName, new Vector3(0, 1.3f, z), new Vector3(2.4f, 2.6f, 0.15f), M("Door"), true, false, false);
-        var obs = d.AddComponent<NavMeshObstacle>();
-        obs.shape = NavMeshObstacleShape.Box; obs.size = new Vector3(2.4f, 2.6f, 0.5f); obs.carving = true;
         Prim(PrimitiveType.Cube, "Lock", d.transform, new Vector3(0.95f, 0, -0.09f), new Vector3(0.08f, 0.08f, 0.03f), M("GlowRed"));
         Prim(PrimitiveType.Cube, "LockBack", d.transform, new Vector3(0.95f, 0, 0.09f), new Vector3(0.08f, 0.08f, 0.03f), M("GlowRed"));
         return d;
@@ -1741,6 +1767,86 @@ public static class FirWorldBuilder
         b.clickSource = Src(go.transform, Vector3.zero, Clip("switch"), false, 0.6f, 0.7f, 8f, false);   // you hear the press register
         SetInteract(b, label, 4f);
         return go;
+    }
+
+    /// <summary>
+    /// A teleport button: it moves whoever presses it to `dest` by itself (FirTeleporter), then tells the
+    /// game manager `evt` so the game can catch up. The teleport never depends on the game manager.
+    /// </summary>
+    static FirTeleporter Teleporter(string label, Transform parent, Vector3 pos, Vector3 normal, Vector3 size, Material mat, Transform dest, string evt)
+    {
+        var go = new GameObject("Teleporter " + label);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Face(normal);
+        go.AddComponent<BoxCollider>().size = size;
+        Prim(PrimitiveType.Cube, "Visual", go.transform, Vector3.zero, size, mat);
+        var t = Text("Label", go.transform, new Vector3(0, 0, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(size.x * 0.92f, size.y * 0.85f), 0.2f, label);
+        t.color = Color.white;
+        var tp = Add<FirTeleporter>(go);
+        tp.destination = dest;
+        tp.notify = game;
+        tp.notifyEvent = evt;
+        tp.sound = Src(go.transform, Vector3.zero, Clip("whoosh"), false, 0f, 0.8f, 8f, false);
+        SetInteract(tp, label, 4f);
+        teleporters.Add(tp);
+        return tp;
+    }
+
+    /// <summary>Every teleporter must have somewhere to go, and that place must have floor under it.</summary>
+    static List<string> CheckTeleporters()
+    {
+        Physics.SyncTransforms();
+        var problems = new List<string>();
+        foreach (var tp in teleporters)
+        {
+            if (tp == null) continue;
+            if (tp.destination == null) { problems.Add("'" + tp.name + "' has no destination"); continue; }
+            var from = tp.destination.position + Vector3.up * 0.5f;
+            if (!Physics.Raycast(from, Vector3.down, 2f, ~0, QueryTriggerInteraction.Ignore))
+                problems.Add("'" + tp.name + "' sends you to " + tp.destination.position.ToString("F1") + ", which has no floor");
+            if (Backing(tp) == null) problems.Add("'" + tp.name + "' has no Udon behaviour (UdonSharp didn't set it up)");
+        }
+        foreach (var p in problems) Debug.LogError("Fir Warning teleporter: " + p);
+        if (problems.Count == 0) Debug.Log("Fir Warning: all " + teleporters.Count + " teleporters checked: each has a destination with floor under it.");
+        return problems;
+    }
+
+    /// <summary>
+    /// The hunting tree has no NavMesh. Give it a grid of waypoints in each room it hunts in (only where
+    /// nothing is standing), and the room's bounds so it never walks out.
+    /// </summary>
+    static void StalkerWaypoints(Transform root, FirStalker st)
+    {
+        if (st == null) return;
+        Physics.SyncTransforms();
+        var wps = new List<Transform>();
+        var phases = new List<int>();
+        var g = Group(root, "StalkerWaypoints", Vector3.zero);
+        int[] hunted = { 2, 4, 6 };
+        foreach (int p in hunted)
+        {
+            int r = p - 1;
+            float hw = RoomW[r] / 2f - 1f;
+            for (float z = RoomZ0[r] + 2f; z <= RoomZ1[r] - 1.5f; z += 3f)
+                for (float x = -hw; x <= hw + 0.01f; x += 3f)
+                {
+                    var at = new Vector3(x, 0.05f, z);
+                    if (Physics.CheckSphere(at + Vector3.up * 0.9f, 0.55f, 1, QueryTriggerInteraction.Ignore)) continue;
+                    wps.Add(Marker(g, "WP" + p + "_" + wps.Count, at, 0));
+                    phases.Add(p);
+                }
+        }
+        st.waypoints = wps.ToArray();
+        st.waypointPhase = phases.ToArray();
+        st.roomMinX = new float[8]; st.roomMaxX = new float[8]; st.roomMinZ = new float[8]; st.roomMaxZ = new float[8];
+        for (int p = 1; p <= 7; p++)
+        {
+            int r = p - 1;
+            st.roomMinX[p] = -RoomW[r] / 2f + 0.6f; st.roomMaxX[p] = RoomW[r] / 2f - 0.6f;
+            st.roomMinZ[p] = RoomZ0[r] + 0.6f; st.roomMaxZ[p] = RoomZ1[r] - 0.6f;
+        }
+        Debug.Log("Fir Warning: the hunting tree has " + wps.Count + " waypoints");
     }
 
     static void Key(FirSequenceLock lk, string label, int value, Vector3 pos, Vector3 size, Material mat, bool flatOnTop)
@@ -1997,19 +2103,6 @@ public static class FirWorldBuilder
                 AssetDatabase.ImportAsset(Root + "/Shaders/" + sh + ".shader", ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
     }
 
-    /// <summary>
-    /// The world's lighting values are set by Udon at runtime, so in the editor they're all zero. Give the
-    /// Scene view sensible values so the world shows its real colours while you edit (editor only).
-    /// </summary>
-    public static void SetEditorPreviewLighting()
-    {
-        Shader.SetGlobalFloat("_UdonFirLight", 14f);
-        Shader.SetGlobalFloat("_UdonFirDark", 0f);
-        Shader.SetGlobalFloat("_UdonFirAmbient", 0.12f);
-        Shader.SetGlobalFloat("_UdonFirAmbR", 0.05f); Shader.SetGlobalFloat("_UdonFirAmbG", 0.04f); Shader.SetGlobalFloat("_UdonFirAmbB", 0.04f);
-        Shader.SetGlobalFloat("_UdonFirLanR", 1f); Shader.SetGlobalFloat("_UdonFirLanG", 0.9f); Shader.SetGlobalFloat("_UdonFirLanB", 0.75f);
-    }
-
     static readonly Dictionary<string, Texture2D> baked = new Dictionary<string, Texture2D>();
 
     static Texture2D Tex(string name)
@@ -2107,6 +2200,12 @@ public static class FirWorldBuilder
         m.mainTexture = tex;
         m.SetFloat("_Fullbright", fullbright);
         m.SetColor("_Glow", glow);
+        // editor-friendly starting values; the game manager sets these at runtime
+        m.SetFloat("_Reach", 14f);
+        m.SetFloat("_Dark", 0f);
+        m.SetFloat("_Ambient", 0.12f);
+        m.SetColor("_AmbColor", new Color(0.05f, 0.04f, 0.04f, 1f));
+        m.SetColor("_LanColor", new Color(1f, 0.9f, 0.75f, 1f));
         m.enableInstancing = true;
         if (isNew) AssetDatabase.CreateAsset(m, path);
         EditorUtility.SetDirty(m);
@@ -2249,6 +2348,7 @@ public static class FirWorldBuilder
         if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
         m.shader = shader;
         m.SetColor("_Color", c);
+        m.SetFloat("_Dark", 0f);
         m.enableInstancing = true;
         EditorUtility.SetDirty(m);
         mats[name] = m;
@@ -2330,7 +2430,7 @@ public static class FirWorldBuilder
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "FirGameManager", "FirAnimatronic", "FirStalker", "FirJumpscare", "FirItem", "FirCarryItem",
-                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag", "FirSkeletonGag" };
+                                         "FirSocket", "FirSequenceLock", "FirKey", "FirButton", "FirConveyor", "FirAmbience", "FirToilet", "FirCloset", "FirGag", "FirSkeletonGag", "FirTeleporter" };
 
     static bool EnsureProgramAssets()
     {

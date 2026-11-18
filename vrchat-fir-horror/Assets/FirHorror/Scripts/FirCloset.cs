@@ -1,7 +1,6 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
-using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// Easter egg: a tribute to the classic cartoon "RED SKELETON" gag. Open the Living Room closet
@@ -13,8 +12,8 @@ using VRC.Udon.Common.Interfaces;
 /// Each skeleton is a rig of 10 transforms: root, torso, skull, shoulderL, shoulderR, elbowL,
 /// elbowR, legL, legR, jaw. Each says its line out loud (3D voice on its skull) and its jaw flaps. Roots slide along the closet's +X (out) and -Z (off to the side).
 /// </summary>
-// NoVariableSync, not None: a None behaviour can't send or receive network events at all.
-[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+// No network events: the game manager's synced gag counter (kind 2) tells everyone else to Play().
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirCloset : UdonSharpBehaviour
 {
     public FirGameManager game;
@@ -32,6 +31,7 @@ public class FirCloset : UdonSharpBehaviour
 
     void Start()
     {
+        if (running) return;
         white[0].gameObject.SetActive(false);
         red[0].gameObject.SetActive(false);
         if (mist != null) mist.SetActive(false);
@@ -41,10 +41,12 @@ public class FirCloset : UdonSharpBehaviour
     {
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + sceneLength + 1f;
-        SendCustomNetworkEvent(NetworkEventTarget.All, "NetOpen");
+        Play();
+        if (game != null) game.ShareGag(2, 0);
     }
 
-    public void NetOpen()
+    /// <summary>Plays the scene on this client only.</summary>
+    public void Play()
     {
         if (running) return;
         running = true; saidA = false; saidB = false;

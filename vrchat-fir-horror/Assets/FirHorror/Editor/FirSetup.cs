@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// Fir Warning > One-Click Setup. Imports TextMeshPro's essentials if they're missing, creates
-/// "Assets/FirHorror/Fir Warning.unity", builds the world into it (including the NavMesh), saves
+/// "Assets/FirHorror/Fir Warning.unity", builds the world into it, saves
 /// it and adds it to Build Settings. Offered automatically the first time the package is imported.
 /// </summary>
 [InitializeOnLoad]
@@ -22,7 +22,6 @@ public static class FirSetup
     static FirSetup()
     {
         EditorApplication.delayCall += OnEditorLoaded;
-        EditorApplication.delayCall += FirWorldBuilder.SetEditorPreviewLighting;   // real colours in the Scene view
     }
 
     static void OnEditorLoaded()
@@ -86,8 +85,8 @@ public static class FirSetup
         var scene = File.Exists(ScenePath)
             ? EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single)
             : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-        EditorSceneManager.SaveScene(scene, ScenePath);  // the NavMesh bake needs a saved scene
-        EditorUtility.DisplayProgressBar("Fir Warning", "Building the world and baking the NavMesh...", 0.5f);
+        EditorSceneManager.SaveScene(scene, ScenePath);
+        EditorUtility.DisplayProgressBar("Fir Warning", "Building the world...", 0.5f);
         bool ok;
         try { ok = FirWorldBuilder.Build(true); }
         finally { EditorUtility.ClearProgressBar(); }
