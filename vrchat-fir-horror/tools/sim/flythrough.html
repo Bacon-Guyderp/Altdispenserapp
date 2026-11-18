@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fir Warning fly-through</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #cap { position: absolute; left: 0; right: 0; bottom: 34px; text-align: center; font: 600 26px "DejaVu Sans", sans-serif;
+         color: #fff; text-shadow: 0 2px 6px #000, 0 0 2px #000; padding: 0 60px; transition: none; }
+  #tag { position: absolute; left: 18px; top: 14px; font: 600 16px "DejaVu Sans", sans-serif; color: #ff5050; text-shadow: 0 1px 3px #000; }
+  #tag span { color: #ccc; font-weight: 400; }
+</style>
+</head>
+<body>
+<script type="module">
+// Renders a trace from sim_flythrough.cs. The world is built in Unity's left-handed coordinates under a
+// root mirrored in Z, so every position, rotation and mesh is used exactly as Unity has it.
+import * as THREE from './three.module.js';
+
+const data = await (await fetch('scene.json')).json();
+const W = 1280, H = 720;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050508);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x404050, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(3, 6, -4); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(62, W / H, 0.05, 200);
+const root = new THREE.Group(); root.scale.set(1, 1, -1); scene.add(root);
+
+const geo = {
+  Cube: new THREE.BoxGeometry(1, 1, 1),
+  Sphere: new THREE.SphereGeometry(0.5, 28, 18),
+  Cylinder: new THREE.CylinderGeometry(0.5, 0.5, 2, 28),
+  Capsule: new THREE.CapsuleGeometry(0.5, 1, 8, 16),
+};
+const meshGeo = data.meshes.map(m => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(m.v, 3));
+  g.setIndex(m.t); g.computeVertexNormals(); return g;
+});
+
+// ---- TextMeshPro-ish rich text on a canvas
+function parseRich(s) {
+  const runs = []; let col = null, bold = false, size = 1; const stack = [];
+  const re = /<[^>]+>|[^<]+/g; let m;
+  while ((m = re.exec(s))) {
+    const tok = m[0];
+    if (tok[0] !== '<') { runs.push({ text: tok, col, bold, size }); continue; }
+    const t = tok.toLowerCase();
+    if (t.startsWith('<color=')) { stack.push(col); col = tok.slice(7, -1).replace(/"/g, ''); }
+    else if (t === '</color>') col = stack.pop() ?? null;
+    else if (t === '<b>') bold = true; else if (t === '</b>') bold = false;
+    else if (t.startsWith('<size=')) size = parseFloat(t.slice(6)) / 100 || 1;
+    else if (t === '</size>') size = 1;
+  }
+  return runs;
+}
+function layout(ctx, runs, em, maxW) {
+  // split runs into words keeping style, honour \n, wrap to maxW
+  const lines = [[]]; let lineW = 0;
+  for (const r of runs) {
+    const parts = r.text.split(/(\n| )/);
+    for (const p of parts) {
+      if (p === '\n') { lines.push([]); lineW = 0; continue; }
+      if (p === '') continue;
+      ctx.font = `${r.bold ? 700 : 400} ${em * r.size}px "DejaVu Sans", sans-serif`;
+      const w = ctx.measureText(p).width;
+      if (p !== ' ' && lineW + w > maxW && lineW > 0) { lines.push([]); lineW = 0; }
+      if (p === ' ' && lineW === 0) continue;
+      lines[lines.length - 1].push({ ...r, text: p, w }); lineW += w;
+    }
+  }
+  return lines;
+}
+function drawText(entry, s) {
+  const { ctx, canvas, w, h, fs, col } = entry;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const pxPerM = canvas.width / w;
+  const runs = parseRich(s);
+  let em = fs * 0.1 * pxPerM, lines;
+  for (let k = 0; k < 40; k++) {
+    lines = layout(ctx, runs, em, canvas.width * 0.98);
+    const total = lines.reduce((a, l) => a + em * 1.2 * Math.max(1, ...l.map(x => x.size)), 0);
+    if (total <= canvas.height * 0.98 && lines.every(l => l.reduce((a, x) => a + x.w, 0) <= canvas.width * 0.99)) break;
+    em *= 0.92;
+  }
+  const heights = lines.map(l => em * 1.2 * Math.max(1, ...l.map(x => x.size)));
+  let y = (canvas.height - heights.reduce((a, b) => a + b, 0)) / 2;
+  const base = `rgb(${col.map(c => Math.round(Math.min(1, c) * 255)).join(',')})`;
+  lines.forEach((l, i) => {
+    const lw = l.reduce((a, x) => a + x.w, 0);
+    let x = (canvas.width - lw) / 2;
+    y += heights[i];
+    for (const r of l) {
+      ctx.font = `${r.bold ? 700 : 400} ${em * r.size}px "DejaVu Sans", sans-serif`;
+      ctx.fillStyle = r.col || base;
+      ctx.fillText(r.text, x, y - heights[i] * 0.22);
+      x += r.w;
+    }
+  });
+  entry.tex.needsUpdate = true;
+}
+
+// ---- build every object
+const items = data.objs.map(o => {
+  const holder = new THREE.Object3D(); holder.matrixAutoUpdate = false; root.add(holder);
+  const e = { o, holder };
+  if (o.kind === 'text') {
+    const pxPerM = Math.min(420, 2048 / Math.max(o.w, o.h));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(8, Math.round(o.w * pxPerM)); canvas.height = Math.max(8, Math.round(o.h * pxPerM));
+    const ctx = canvas.getContext('2d');
+    const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(o.w, o.h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+    mesh.position.z = -0.002;   // just in front, towards the reader (Unity -Z)
+    holder.add(mesh);
+    Object.assign(e, { canvas, ctx, tex, w: o.w, h: o.h, fs: o.fs, col: o.col });
+  } else if (o.kind !== 'none') {
+    const g = o.kind === 'mesh' ? meshGeo[o.mesh] : geo[o.kind];
+    const color = new THREE.Color().setRGB(o.col[0], o.col[1], o.col[2], THREE.SRGBColorSpace);
+    const mat = o.full >= 0.5 ? new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide, emissive: color.clone().multiplyScalar(0.35) })
+                              : new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(g, mat); holder.add(mesh);
+    e.mesh = mesh; e.baseColor = color;
+  }
+  return e;
+});
+
+// players: simple capsule avatars with a visor showing where they face
+const pcol = { Alice: 0x4aa8ff, Bob: 0xffa040 };
+const players = {};
+function playerObj(name) {
+  const g = new THREE.Group(); root.add(g);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 1.05, 6, 14), new THREE.MeshLambertMaterial({ color: pcol[name] || 0xffffff }));
+  body.position.y = 0.75; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), new THREE.MeshLambertMaterial({ color: pcol[name] || 0xffffff }));
+  head.position.y = 1.55; g.add(head);
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.07, 0.06), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+  visor.position.set(0, 1.57, 0.15); g.add(visor);
+  return g;
+}
+
+const m4 = new THREE.Matrix4(), pv = new THREE.Vector3(), qv = new THREE.Quaternion(), sv = new THREE.Vector3();
+let applied = -1;
+function applyFrame(i) {
+  const f = data.frames[i];
+  for (const k in f.tr) {
+    const v = f.tr[k], e = items[k];
+    pv.set(v[0], v[1], v[2]); qv.set(v[3], v[4], v[5], v[6]); sv.set(v[7], v[8], v[9]);
+    if (e.o.kind === 'text') sv.set(1, 1, 1);   // a text's size is its rect, in metres
+    e.holder.matrix.compose(pv, qv, sv); e.holder.matrixWorldNeedsUpdate = true;
+    e.holder.visible = v[10] === 1;
+  }
+  for (const k in f.tx) drawText(items[k], f.tx[k]);
+  for (const e of items) if (e.o.name === 'TestPanel' && e.mesh) e.mesh.material.color.copy(e.baseColor).multiplyScalar(1 - f.dark);
+  for (const p of f.pl) {
+    const g = players[p[0]] || (players[p[0]] = playerObj(p[0]));
+    g.position.set(p[1], p[2], p[3]);
+    const a = p[4] * Math.PI / 180; g.quaternion.set(0, Math.sin(a / 2), 0, Math.cos(a / 2));
+  }
+}
+
+function smooth(x) { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); }
+const MOVE = 1.6;
+function cameraAt(t) {
+  const c = data.cams; let k = 0;
+  while (k + 1 < c.length && c[k + 1][0] <= t) k++;
+  const cur = c[k], prev = c[Math.max(0, k - 1)];
+  const b = k === 0 ? 1 : smooth((t - cur[0]) / MOVE);
+  const L = (i) => prev[i] + (cur[i] - prev[i]) * b;
+  // a slow drift keeps held shots alive
+  const drift = Math.sin(t * 0.35) * 0.12;
+  camera.position.set(L(1) + drift, L(2), -L(3));
+  camera.lookAt(L(4), L(5), -L(6));
+}
+
+// the finished frame: the 3D render plus the title and caption, drawn on one 2D canvas and read back
+// directly (a page screenshot can catch the canvas mid-update)
+const out = document.createElement('canvas'); out.width = W; out.height = H;
+const octx = out.getContext('2d');
+function wrapLines(text, maxW) {
+  const words = text.split(' '), lines = []; let cur = '';
+  for (const w of words) { const t = cur ? cur + ' ' + w : w; if (octx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur); return lines;
+}
+function overlay(t) {
+  octx.drawImage(renderer.domElement, 0, 0);
+  octx.font = '600 16px "DejaVu Sans", sans-serif'; octx.textBaseline = 'top';
+  octx.shadowColor = '#000'; octx.shadowBlur = 4;
+  octx.font = '700 16px "DejaVu Sans", sans-serif';
+  octx.fillStyle = '#ff5050'; octx.fillText('FIR WARNING', 18, 14);
+  const tw = octx.measureText('FIR WARNING').width;
+  octx.fillStyle = '#cccccc'; octx.font = '400 16px "DejaVu Sans", sans-serif';
+  octx.fillText('systems check: simulated fly-through (the real builder and scripts; not VRChat footage)', 18 + tw + 10, 14);
+  let text = '', since = 0;
+  for (const c of data.captions) if (c[0] <= t) { text = c[1]; since = t - c[0]; }
+  const a = since < 0.3 ? since / 0.3 : (since > 5 ? Math.max(0, 1 - (since - 5) / 0.6) : 1);
+  if (text && a > 0) {
+    octx.globalAlpha = a; octx.font = '600 26px "DejaVu Sans", sans-serif'; octx.textAlign = 'center'; octx.textBaseline = 'alphabetic';
+    const lines = wrapLines(text, W - 140);
+    lines.forEach((l, i) => { octx.fillStyle = '#ffffff'; octx.shadowBlur = 8; octx.fillText(l, W / 2, H - 40 - (lines.length - 1 - i) * 34); });
+    octx.globalAlpha = 1; octx.textAlign = 'left';
+  }
+  octx.shadowBlur = 0;
+}
+
+window.frameCount = data.frames.length;
+window.renderFrame = (i) => {
+  for (let k = applied + 1; k <= i; k++) applyFrame(k);
+  applied = i;
+  const t = data.frames[i].t;
+  cameraAt(t);
+  renderer.render(scene, camera);
+  overlay(t);
+  return out.toDataURL('image/png');
+};
+window.sounds = data.sounds;
+window.ready = true;
+</script>
+</body>
+</html>

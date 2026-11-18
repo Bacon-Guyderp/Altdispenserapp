@@ -52,7 +52,16 @@ namespace UnityEngine {
   public enum FilterMode { Point, Bilinear, Trilinear }
   public enum TextureCompressionQuality { Fast, Normal, Best }
   public class TextAsset : Object { public string text = ""; }
-  public class Mesh : Object { public void SetVertices(System.Collections.Generic.List<Vector3> v) { } public void SetNormals(System.Collections.Generic.List<Vector3> v) { } public void SetUVs(int c, System.Collections.Generic.List<Vector2> v) { } public void SetColors(System.Collections.Generic.List<Color> v) { } public void SetTriangles(System.Collections.Generic.List<int> t, int s) { } public void RecalculateNormals() { } public void RecalculateBounds() { } public void Clear() { } }
+  public class Mesh : Object {
+    public System.Collections.Generic.List<Vector3> verts = new System.Collections.Generic.List<Vector3>();
+    public System.Collections.Generic.List<int> tris = new System.Collections.Generic.List<int>();
+    public System.Collections.Generic.List<Color> cols = new System.Collections.Generic.List<Color>();
+    public void SetVertices(System.Collections.Generic.List<Vector3> v) { verts = new System.Collections.Generic.List<Vector3>(v); }
+    public void SetNormals(System.Collections.Generic.List<Vector3> v) { } public void SetUVs(int c, System.Collections.Generic.List<Vector2> v) { }
+    public void SetColors(System.Collections.Generic.List<Color> v) { cols = new System.Collections.Generic.List<Color>(v); }
+    public void SetTriangles(System.Collections.Generic.List<int> t, int s) { tris = new System.Collections.Generic.List<int>(t); }
+    public void RecalculateNormals() { } public void RecalculateBounds() { } public void Clear() { verts.Clear(); tris.Clear(); cols.Clear(); }
+  }
   public class MeshFilter : Component { public Mesh sharedMesh; }
   public class MeshRenderer : Renderer { }
 }
@@ -85,4 +94,4 @@ namespace UdonSharpEditor {
   }
 }
 
-namespace UnityEditor.PackageManager { public class PackageInfo { public string version; public static PackageInfo FindForAssembly(System.Reflection.Assembly a) { return null; } } }
+namespace UnityEditor.PackageManager { public class PackageInfo { public string version; public static PackageInfo FindForAssembly(System.Reflection.Assembly a) { return new PackageInfo { version = "(simulator)" }; } } }

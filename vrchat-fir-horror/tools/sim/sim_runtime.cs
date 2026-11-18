@@ -50,6 +50,7 @@ namespace UnityEngine {
     internal int netId;
     internal Sim.Client client;
     internal bool destroyed;
+    public string primitive;   // set by CreatePrimitive (for the fly-through renderer)
     public GameObject() : this("New Game Object") { }
     public GameObject(string n) {
       name = n; client = Sim.Building; netId = client.nextNetId++; client.objects.Add(this);
@@ -70,7 +71,7 @@ namespace UnityEngine {
     }
     public static GameObject Find(string n) { var h = Sim.Building ?? Sim.Current; if (h != null) foreach (var g in h.objects) if (!g.destroyed && g.name == n && g.transform.parent == null) return g; return null; }
     public static GameObject CreatePrimitive(PrimitiveType p) {
-      var g = new GameObject(p.ToString()); g.AddComponent<MeshFilter>(); g.AddComponent<MeshRenderer>();
+      var g = new GameObject(p.ToString()); g.primitive = p.ToString(); g.AddComponent<MeshFilter>(); g.AddComponent<MeshRenderer>();
       if (p == PrimitiveType.Cube) g.AddComponent<BoxCollider>(); else if (p == PrimitiveType.Sphere) g.AddComponent<SphereCollider>();
       else if (p == PrimitiveType.Capsule || p == PrimitiveType.Cylinder) g.AddComponent<CapsuleCollider>(); else g.AddComponent<MeshCollider>();
       return g;
@@ -350,6 +351,17 @@ namespace VRC.Udon {
   public class UdonBehaviour : UnityEngine.MonoBehaviour {
     public string interactText; public float proximity;
     internal UdonSharp.UdonSharpBehaviour program;
+    // what the builder's checks look at: the program, and the stored public variables (read from the proxy)
+    public object programSource { get { return program != null ? program.GetType().Name : null; } }
+    public VarTable publicVariables { get { return new VarTable { u = this }; } }
+    public class VarTable {
+      internal UdonBehaviour u;
+      public bool TryGetVariableValue(string n, out object v) {
+        v = null; if (u.program == null) return false;
+        var f = Field(u.program, n); if (f == null) return false;
+        v = f.GetValue(u.program); return true;
+      }
+    }
     UdonSharp.UdonSharpBehaviour P { get { if (program == null) Sim.Fail("UdonBehaviour on '" + go.name + "' has no program"); return program; } }
     static System.Reflection.FieldInfo Field(object p, string n) { return p.GetType().GetField(n, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance); }
     public void SendCustomEvent(string e) {
