@@ -2041,9 +2041,11 @@ public static class FirWorldBuilder
         t.text = text;
         t.alignment = TextAlignmentOptions.Center;
         t.enableWordWrapping = true;
+        // fontMax is the largest line height we want, in metres. A 3D TextMeshPro's font size is in points, and one
+        // point is about 0.1 m, so multiply by 10. Auto-sizing still shrinks long text to fit its box (not below 1 cm).
         t.enableAutoSizing = true;
-        t.fontSizeMin = 0.01f;
-        t.fontSizeMax = fontMax;
+        t.fontSizeMin = 0.1f;
+        t.fontSizeMax = fontMax * 10f;
         t.richText = true;
         return t;
     }
