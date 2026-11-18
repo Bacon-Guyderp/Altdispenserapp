@@ -39,7 +39,7 @@ public static class FirCheckBuilder
         }
         if (!EnsureProgramAssets()) return false;
         Directory.CreateDirectory(Gen);
-        mats.Clear(); report.Clear(); meshCache.Clear(); skelParts = null;
+        mats.Clear(); report.Clear(); meshCache.Clear(); rigs.Clear(); skelParts = null;
         BakeTextures();   // the wallpaper, carpet, ceiling, needles and skeleton textures (Data/textures_baked.txt)
         foreach (var name in new[] { "FirWarning", "FirWarningCheck" })
         {
@@ -134,6 +134,7 @@ public static class FirCheckBuilder
                           "<b>White skeleton</b>\n<color=#ff6060>its script isn't running</color>");
         skel.label.color = Color.white;
         SetInteract(skel, "Press the skeleton", 3f);
+        rigs["White"] = pivots;
         t7.other = UB(skel);
 
         // ---- a talking tree: the original Fir Warning model
@@ -177,6 +178,29 @@ public static class FirCheckBuilder
                         bones, new Vector3(x, 2.72f, -5.98f), Vector3.forward, title);
         }
 
+        // ---- the Combo Acts console: skeletons performing together
+        var normal = new Vector3(-0.6f, 0, 0.8f).normalized;   // faces the room; players look past it at the corner
+        var console = Group(lobby, "ComboConsole", new Vector3(3.0f, 1.25f, -1.6f));
+        console.localRotation = Face(normal);
+        Box(console, "ConsoleBoard", new Vector3(0, 0, 0.12f), new Vector3(2.7f, 1.5f, 0.06f), M("Board"));
+        Box(console, "LegL", new Vector3(-1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
+        Box(console, "LegR", new Vector3(1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
+        Text("ComboTitle", console, new Vector3(0, 0.6f, 0.085f), Quaternion.identity, new Vector2(2.5f, 0.24f), 0.2f, "<b>COMBO ACTS</b>  <size=70%>skeletons, together</size>").color = new Color(1f, 0.85f, 0.4f);
+        string[] south = { "Pink", "Teal", "Gold", "Silver", "Black", "Brown", "Glow", "Rainbow", "Tiny", "Giant" };
+        var everyone = south.Concat(colours).Concat(new[] { "White" }).ToArray();
+        ComboAct(console, 0, 0, "Traffic Lights", new[] { "Green", "Yellow", "Red" },
+                 new[] { "traffic_green", "traffic_yellow", "traffic_red" }, new[] { 0, 1, 2 }, 1.3f);
+        ComboAct(console, 1, 1, "Knock Knock", new[] { "Orange", "Yellow" },
+                 new[] { "knock_1", "knock_2", "knock_3", "knock_4", "knock_5", "knock_6" }, new[] { 0, 1, 0, 1, 0, 1 }, 1.4f);
+        ComboAct(console, 2, 2, "The Bone-Tones", new[] { "Blue", "Indigo", "Violet" },
+                 new[] { "bonetones_1", "bonetones_2", "bonetones_3" }, new[] { -1, 1, -1 }, 2.0f);
+        ComboAct(console, 3, 3, "Medal Ceremony", new[] { "Gold", "Silver", "Brown" },
+                 new[] { "medal_gold", "medal_silver", "medal_brown" }, new[] { 0, 1, 2 }, 1.3f);
+        ComboAct(console, 4, 4, "Upsy-Daisy", new[] { "Tiny", "Giant" },
+                 new[] { "upsy_1", "upsy_2", "upsy_3", "upsy_4", "upsy_5" }, new[] { 0, 1, 0, 1, 0 }, 1.3f);
+        ComboAct(console, 5, 5, "GRAND FINALE", everyone,
+                 new[] { "finale_1", "finale_2" }, new[] { -1, -1 }, 3.6f);
+
         // ---- copy everything into Udon, then check what UdonSharp stored
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
         var info = Text("BuildInfo", lobby, new Vector3(-6.98f, 1.0f, -1.6f), Face(w), new Vector2(5f, 1.5f), 0.15f, "");
@@ -206,6 +230,7 @@ public static class FirCheckBuilder
         go.transform.localScale = Vector3.one * scale;
         var ps = SkeletonRig(go.transform, "Rig", bones[0], bones);
         var ms = lastRigMeshes;
+        rigs[name] = ps;
         var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.7f, 1.9f, 0.5f);
         var rs = Add<FirRainbowSkeleton>(go);
         string shown = title ?? "<color=" + hex + ">" + name.ToUpper() + "</color>";
@@ -215,6 +240,48 @@ public static class FirCheckBuilder
         rs.label = Text(name + "Label", parent, labelPos, Face(labelNormal), new Vector2(1.1f, 0.5f), 0.16f, "<b>" + shown + "</b>\n<size=70%>press me</size>");
         rs.label.color = Color.white;
         SetInteract(rs, "Press the " + name.ToLower() + " skeleton", 3f);
+    }
+
+    /// <summary>
+    /// A combination act on the console (slot 0-5): its button, the skeletons taking part (by name), and its
+    /// lines (Audio/Combo/name.ogg) with who says each (-1 = everyone). Lines follow each other with a short gap,
+    /// timed from the real clip lengths.
+    /// </summary>
+    static void ComboAct(Transform console, int slot, int combo, string title, string[] who, string[] clips, int[] speakers, float tail)
+    {
+        var go = new GameObject("Combo " + title);
+        go.transform.SetParent(console, false);
+        go.transform.localPosition = new Vector3(-0.85f + (slot % 3) * 0.85f, 0.2f - (slot / 3) * 0.62f, 0);
+        var size = new Vector3(0.62f, 0.2f, 0.1f);
+        go.AddComponent<BoxCollider>().size = size;
+        Prim(PrimitiveType.Cube, "Visual", go.transform, Vector3.zero, size, M(combo == 5 ? "ButtonGold" : "Button"));
+        Text("Press", go.transform, new Vector3(0, 0, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(0.58f, 0.17f), 0.1f, "PLAY").color = Color.white;
+        var label = Text("Label", go.transform, new Vector3(0, 0.24f, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(0.8f, 0.26f), 0.075f,
+                         "<b>" + title + "</b>\n<color=#ff6060>script not running</color>");
+        label.color = Color.white;
+        var c = Add<FirSkeletonCombo>(go);
+        c.combo = combo; c.title = title; c.label = label;
+        var piv = new List<Transform>();
+        foreach (var n in who)
+        {
+            if (!rigs.TryGetValue(n, out var r)) { report.Add("problem: combo " + title + " has no skeleton " + n); return; }
+            piv.AddRange(r);
+        }
+        c.pivots = piv.ToArray();
+        var src = new AudioSource[clips.Length];
+        var start = new float[clips.Length];
+        float t = 0.6f;
+        for (int i = 0; i < clips.Length; i++)
+        {
+            int sp = speakers[i] >= 0 ? speakers[i] : who.Length / 2;
+            var clip = Clip("Combo/" + clips[i]);
+            src[i] = Src(c.pivots[sp * 10 + 2], Vector3.zero, clip, false, 1f, 1f, combo == 5 ? 30f : 18f, false);
+            start[i] = t;
+            t += (clip != null ? clip.length : 2f) + 0.35f;
+        }
+        c.lines = src; c.lineStart = start; c.lineSpeaker = speakers;
+        c.length = t + tail;
+        SetInteract(c, "Play: " + title, 3f);
     }
 
     // =================================================================== what the builder can see
@@ -446,6 +513,7 @@ public static class FirCheckBuilder
 
     /// <summary>Your skeleton, facing the parent's +Z. Returns 10 pivots: root, torso, skull, shoulderL, shoulderR, elbowL, elbowR, legL, legR, jaw.</summary>
     static Transform[] lastRigMeshes;
+    static readonly Dictionary<string, Transform[]> rigs = new Dictionary<string, Transform[]>();
 
     static Transform[] SkeletonRig(Transform parent, string name, Material bone, Material[] perPart = null)
     {
@@ -645,6 +713,7 @@ public static class FirCheckBuilder
         A("Wall2", "wallpaper", new Color(0.7f, 0.75f, 0.95f), 1, Color.black);
         A("Button", null, new Color(0.15f, 0.45f, 0.75f), 1, Color.black);
         A("Board", null, new Color(0.07f, 0.06f, 0.06f), 1, Color.black);
+        A("ButtonGold", null, new Color(0.85f, 0.6f, 0.1f), 1, Color.black);
         A("TestPanel", null, new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
         A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 1, new Color(0.1f, 0.1f, 0.09f));
         // the rainbow
@@ -758,7 +827,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo" };
 
     static bool EnsureProgramAssets()
     {

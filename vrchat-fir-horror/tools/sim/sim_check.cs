@@ -51,6 +51,36 @@ public static class SimCheck {
       Sim.Run(8f);
       Check(!(bool)rf.GetValue(rs) && Quaternion.Angle(jawRest, rs.pivots[9].localRotation) < 0.5f && Vector3.Distance(rs.meshes[2].position, skullHome) < 0.01f, "  ...and back to standing");
     }
+    Console.WriteLine("\n== Combination acts (Bob presses each one)");
+    var cf = typeof(FirSkeletonCombo).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+    foreach (var co in All<FirSkeletonCombo>(B).OrderBy(x => x.combo)) {
+      Sim.Events.Clear();
+      int riders = co.pivots.Length / 10;
+      var rest = co.pivots.Select(p => p.localRotation).ToArray();
+      var restPos = co.pivots.Select(p => p.localPosition).ToArray();
+      var moved = new float[riders]; var jaw = new float[riders];
+      Sim.Press(B, co);
+      int steps = (int)(co.length / Time.deltaTime) - 5;
+      for (int f = 0; f < steps; f++) {
+        Sim.Step();
+        for (int r = 0; r < riders; r++) {
+          for (int j = 0; j < 9; j++) moved[r] = Mathf.Max(moved[r], Quaternion.Angle(rest[r * 10 + j], co.pivots[r * 10 + j].localRotation) + 100f * Vector3.Distance(restPos[r * 10 + j], co.pivots[r * 10 + j].localPosition));
+          jaw[r] = Mathf.Max(jaw[r], Quaternion.Angle(rest[r * 10 + 9], co.pivots[r * 10 + 9].localRotation));
+        }
+      }
+      int linesHeard = co.lines.Count(l => Sim.Events.Any(e => e.Contains("sound:") && e.Contains(l.clip.name)));
+      Check(linesHeard == co.lines.Length && moved.All(m => m > 8f) && jaw.All(m => m > 10f),
+            co.title + ": " + riders + " skeletons all moved and talked, " + linesHeard + "/" + co.lines.Length + " lines, " + co.length.ToString("F1") + " s");
+      Sim.Run(1.5f);
+      bool back = !(bool)cf.GetValue(co) && Enumerable.Range(0, co.pivots.Length).All(i => Quaternion.Angle(rest[i], co.pivots[i].localRotation) < 0.5f && Vector3.Distance(restPos[i], co.pivots[i].localPosition) < 0.001f);
+      Check(back, "  ...everyone back in place; button says: " + Plain(co.label.text));
+    }
+    var tinyRoot = All<FirSkeletonCombo>(A).First(x => x.combo == 4).pivots[0];
+    var upsy = All<FirSkeletonCombo>(A).First(x => x.combo == 4);
+    var tinyHome = tinyRoot.position; float tinyMax = 0f;
+    Sim.Press(A, upsy);
+    for (int f = 0; f < (int)(upsy.length / Time.deltaTime); f++) { Sim.Step(); tinyMax = Mathf.Max(tinyMax, tinyRoot.position.y - tinyHome.y); }
+    Check(tinyMax > 2f, "Upsy-daisy: the giant lifted tiny " + tinyMax.ToString("F2") + " m up");
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
       var hub = All<FirCheckHub>(c)[0];

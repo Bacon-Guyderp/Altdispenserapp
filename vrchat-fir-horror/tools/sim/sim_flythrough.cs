@@ -86,6 +86,84 @@ public static class SimFly {
     Sim.Run(wait);
   }
 
+  static readonly Dictionary<string, string> lineText = new Dictionary<string, string> {
+    {"traffic_green", "Green: \"Green means go!\""}, {"traffic_yellow", "Yellow: \"Yellow means slow down.\""}, {"traffic_red", "Red: \"And red means... red skeleton. Ha!\""},
+    {"knock_1", "Orange: \"Knock knock.\""}, {"knock_2", "Yellow: \"Who's there?\""}, {"knock_3", "Orange: \"Orange.\""}, {"knock_4", "Yellow: \"Orange who?\""},
+    {"knock_5", "Orange: \"Orange you glad I didn't say banana?\""}, {"knock_6", "Yellow: \"That's not even a skeleton joke.\""},
+    {"bonetones_1", "All three: \"Doo wop, doo wop, doo wop.\""}, {"bonetones_2", "Indigo: \"We're the Bone-Tones!\""}, {"bonetones_3", "All three: \"Shoo be doo wah. Oooooh!\""},
+    {"medal_gold", "Gold: \"First place!\""}, {"medal_silver", "Silver: \"Second. Again.\""}, {"medal_brown", "Brown: \"Third! That's bronze, right? Close enough.\""},
+    {"upsy_1", "Tiny: \"Pick me up! Pick me up!\""}, {"upsy_2", "Giant: \"Upsy-daisy!\""}, {"upsy_3", "Tiny: \"Wheeeeee!\""}, {"upsy_4", "Giant: \"Oof. You're heavier than you look.\""},
+    {"upsy_5", "Tiny: \"I'm big-boned too!\""}, {"finale_1", "Everyone: \"We are the skeleton crew!\""}, {"finale_2", "Everyone: \"Thank you, good night!\""} };
+
+  /// Just the Combo Acts: Alice plays each one from the console while the camera watches the skeletons.
+  static void CombosOnly() {
+    var combos = All<FirSkeletonCombo>(A).OrderBy(x => x.combo).ToList();
+    var console = combos[0].transform.parent;
+    var front = console.position + console.rotation * new Vector3(0, 0, -1.0f); front.y = 0.05f;
+    Cam(new Vector3(-0.8f, 2.5f, 1.6f), new Vector3(4.0f, 1.0f, -3.5f));
+    Caption("Combo Acts: the skeletons perform together");
+    Walk(A, front); Face(A, console.position);
+    Sim.Run(3f);
+    Cam(front + new Vector3(-0.9f, 1.55f, 0.9f), console.position, 2.5f);
+    foreach (var co in combos) {
+      int riders = co.pivots.Length / 10;
+      var c = Vector3.zero; for (int r = 0; r < riders; r++) c = c + co.pivots[r * 10].position; c = c / riders;
+      Vector3 camPos, look = c + new Vector3(0, 1.0f, 0);
+      if (co.combo == 5) { camPos = new Vector3(-1.4f, 2.6f, -0.4f); look = new Vector3(3.0f, 0.9f, -3.6f); }
+      else if (c.x > 5f) camPos = c + new Vector3(-3.4f, 1.45f, 0);
+      else camPos = c + new Vector3(0, 1.45f, 3.3f);
+      if (co.combo == 4) { camPos = new Vector3(c.x + 0.2f, 2.3f, -2.45f); look = c + new Vector3(0.3f, 2.05f, 0); }
+      Cam(camPos, look);
+      Caption("Combo: " + co.title);
+      Sim.Press(A, co);
+      float t0 = Time.time;
+      for (int i = 0; i < co.lines.Length; i++) {
+        float at = t0 + co.lineStart[i];
+        while (Time.time < at) Sim.Step();
+        string txt; if (lineText.TryGetValue(co.lines[i].clip.name, out txt)) Caption(txt);
+      }
+      while (Time.time < t0 + co.length + 0.6f) Sim.Step();
+    }
+    Cam(new Vector3(-0.8f, 2.5f, 1.6f), new Vector3(4.0f, 1.0f, -3.5f), 2.5f);
+  }
+
+  static void Finish() {
+    Console.Write("{\"objs\":[");
+    var meshes = new Dictionary<Mesh, int>();
+    var meshJson = new StringBuilder();
+    for (int i = 0; i < objs.Count; i++) {
+      var c = objs[i];
+      string kind; string extra = "";
+      var tm = c as TextMeshPro;
+      if (tm != null) {
+        var sz = tm.rectTransform.sizeDelta;
+        kind = "text"; extra = ",\"w\":" + F(sz.x) + ",\"h\":" + F(sz.y) + ",\"fs\":" + F(tm.fontSizeMax) + ",\"col\":[" + F(tm.color.r) + "," + F(tm.color.g) + "," + F(tm.color.b) + "]";
+      } else {
+        var mr = (MeshRenderer)c; var mf = c.GetComponent<MeshFilter>();
+        if (c.gameObject.primitive != null) kind = c.gameObject.primitive;
+        else if (mf != null && mf.sharedMesh != null) {
+          int id; if (!meshes.TryGetValue(mf.sharedMesh, out id)) {
+            id = meshes.Count; meshes[mf.sharedMesh] = id;
+            var m = mf.sharedMesh;
+            meshJson.Append((id > 0 ? "," : "") + "{\"v\":[" + string.Join(",", m.verts.Select(v => F(v.x) + "," + F(v.y) + "," + F(v.z))) + "],\"t\":[" + string.Join(",", m.tris) + "]"
+              + ",\"uv\":[" + string.Join(",", m.uvs.Select(u => F(u.x) + "," + F(u.y))) + "],\"c\":[" + string.Join(",", m.cols.Select(cc => F(cc.r))) + "]}");
+          }
+          kind = "mesh"; extra = ",\"mesh\":" + id;
+        } else kind = "none";
+        var mat = mr.sharedMaterial; Color col = Color.white; float full = 1;
+        if (mat != null) { mat.colors.TryGetValue("_Color", out col); full = mat.GetFloat("_Fullbright"); }
+        string texName = mat != null && mat.mainTexture != null ? mat.mainTexture.name : "";
+        float vc = mat != null ? mat.GetFloat("_VertexColor") : 0;
+        Color glow = Color.black; if (mat != null) mat.colors.TryGetValue("_Glow", out glow);
+        extra += ",\"col\":[" + F(col.r) + "," + F(col.g) + "," + F(col.b) + "],\"glow\":[" + F(glow.r) + "," + F(glow.g) + "," + F(glow.b) + "],\"full\":" + F(full) + ",\"tex\":" + J(texName) + ",\"vc\":" + F(vc) + ",\"mat\":" + J(mat != null ? mat.name : "");
+      }
+      Console.Write((i > 0 ? "," : "") + "{\"kind\":" + J(kind) + ",\"name\":" + J(c.name) + extra + "}");
+    }
+    Console.Write("],\"meshes\":[" + meshJson + "],\"cams\":[" + cams + "],\"captions\":[" + string.Join(",", captions) + "],\"sounds\":[" + string.Join(",", sounds) + "],\"frames\":[" + frames + "]}");
+    Console.Error.WriteLine("frames " + frameCount + ", objects " + objs.Count + ", meshes " + meshes.Count + ", problems " + Sim.Failures.Count);
+    foreach (var f in Sim.Failures) Console.Error.WriteLine("problem: " + f);
+  }
+
   public static int Main(string[] args) {
     Time.deltaTime = 1f / 30f;
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("build failed"); return null; };
@@ -107,6 +185,8 @@ public static class SimFly {
     // button shots: back, up and off to the side, so the player pressing it doesn't block the view
     Func<Component, Vector3> CamAt = b => { var p = b.transform.position; float side = p.x > 0.5f ? -1.7f : 1.7f; if (p.x > 30f) side = 1.7f; return Front(b, 3.3f) + new Vector3(side, 0.85f, 0); };
     Func<Component, Vector3> LookAt = b => b.transform.position + new Vector3(0, 0.2f, 0);
+
+    if (args.Length > 0 && args[0] == "combos") { CombosOnly(); Sim.Run(1f); Finish(); return 0; }
 
     // opening: high in the south-east corner, looking over the lobby at the test wall
     Cam(new Vector3(5.5f, 3.2f, -5.6f), new Vector3(-1, 1.4f, 3));
@@ -206,40 +286,7 @@ public static class SimFly {
     Sim.Run(4.5f);
     Cam(new Vector3(-5.6f, 3.2f, -5.6f), new Vector3(1, 1.3f, 3), 3f);
 
-    Console.Write("{\"objs\":[");
-    var meshes = new Dictionary<Mesh, int>();
-    var meshJson = new StringBuilder();
-    for (int i = 0; i < objs.Count; i++) {
-      var c = objs[i];
-      string kind; string extra = "";
-      var tm = c as TextMeshPro;
-      if (tm != null) {
-        var sz = tm.rectTransform.sizeDelta;
-        kind = "text"; extra = ",\"w\":" + F(sz.x) + ",\"h\":" + F(sz.y) + ",\"fs\":" + F(tm.fontSizeMax) + ",\"col\":[" + F(tm.color.r) + "," + F(tm.color.g) + "," + F(tm.color.b) + "]";
-      } else {
-        var mr = (MeshRenderer)c; var mf = c.GetComponent<MeshFilter>();
-        if (c.gameObject.primitive != null) kind = c.gameObject.primitive;
-        else if (mf != null && mf.sharedMesh != null) {
-          int id; if (!meshes.TryGetValue(mf.sharedMesh, out id)) {
-            id = meshes.Count; meshes[mf.sharedMesh] = id;
-            var m = mf.sharedMesh;
-            meshJson.Append((id > 0 ? "," : "") + "{\"v\":[" + string.Join(",", m.verts.Select(v => F(v.x) + "," + F(v.y) + "," + F(v.z))) + "],\"t\":[" + string.Join(",", m.tris) + "]"
-              + ",\"uv\":[" + string.Join(",", m.uvs.Select(u => F(u.x) + "," + F(u.y))) + "],\"c\":[" + string.Join(",", m.cols.Select(cc => F(cc.r))) + "]}");
-          }
-          kind = "mesh"; extra = ",\"mesh\":" + id;
-        } else kind = "none";
-        var mat = mr.sharedMaterial; Color col = Color.white; float full = 1;
-        if (mat != null) { mat.colors.TryGetValue("_Color", out col); full = mat.GetFloat("_Fullbright"); }
-        string texName = mat != null && mat.mainTexture != null ? mat.mainTexture.name : "";
-        float vc = mat != null ? mat.GetFloat("_VertexColor") : 0;
-        Color glow = Color.black; if (mat != null) mat.colors.TryGetValue("_Glow", out glow);
-        extra += ",\"col\":[" + F(col.r) + "," + F(col.g) + "," + F(col.b) + "],\"glow\":[" + F(glow.r) + "," + F(glow.g) + "," + F(glow.b) + "],\"full\":" + F(full) + ",\"tex\":" + J(texName) + ",\"vc\":" + F(vc) + ",\"mat\":" + J(mat != null ? mat.name : "");
-      }
-      Console.Write((i > 0 ? "," : "") + "{\"kind\":" + J(kind) + ",\"name\":" + J(c.name) + extra + "}");
-    }
-    Console.Write("],\"meshes\":[" + meshJson + "],\"cams\":[" + cams + "],\"captions\":[" + string.Join(",", captions) + "],\"sounds\":[" + string.Join(",", sounds) + "],\"frames\":[" + frames + "]}");
-    Console.Error.WriteLine("frames " + frameCount + ", objects " + objs.Count + ", meshes " + meshes.Count + ", problems " + Sim.Failures.Count);
-    foreach (var f in Sim.Failures) Console.Error.WriteLine("problem: " + f);
+    Finish();
     return 0;
   }
 }

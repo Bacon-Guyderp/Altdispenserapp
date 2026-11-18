@@ -4,7 +4,7 @@
                             Debian/Ubuntu: apt install espeak-ng mbrola mbrola-us2 mbrola-us3
 
 Writes Assets/FirHorror/Audio/skeleton_white.ogg and skeleton_red.ogg, plus one line per comedy
-gag in Assets/FirHorror/Data/gags.txt, the rainbow skeletons' lines to Audio/Rainbow/rb_<colour>.ogg (--rainbow: only those), to Assets/FirHorror/Audio/Gags/gag_<id>.ogg and each skeleton routine
+gag in Assets/FirHorror/Data/gags.txt, the rainbow skeletons' lines to Audio/Rainbow/rb_<colour>.ogg (--rainbow: only those), and the combination acts' lines to Audio/Combo/<name>.ogg (--combo: only those), to Assets/FirHorror/Audio/Gags/gag_<id>.ogg and each skeleton routine
 in Data/skeleton_gags.txt to Audio/Gags/skel_<id>.ogg (mono Vorbis).
 Gag voices need mbrola-us1 too.
 """
@@ -58,6 +58,58 @@ RAINBOW = [
 ]
 
 
+# combination acts: clip name, voices (several = a chorus, mixed), text. Voice presets match the skeletons.
+SKV = {"red": ("mb-us3", 150, 62, 1.06), "orange": ("mb-us3", 150, 58, 1.08), "yellow": ("mb-us2", 135, 60, 1.12),
+       "green": ("mb-us3", 120, 40, 0.92), "blue": ("mb-us2", 105, 20, 0.86), "indigo": ("mb-us1", 145, 50, 1.0),
+       "violet": ("mb-us1", 160, 78, 1.18), "gold": ("mb-us2", 130, 22, 0.88), "silver": ("mb-us3", 110, 35, 0.95),
+       "brown": ("mb-us1", 140, 45, 0.98), "tiny": ("mb-us3", 160, 95, 1.42), "giant": ("mb-us2", 100, 5, 0.74),
+       "pink": ("mb-us1", 165, 80, 1.15), "teal": ("mb-us2", 100, 30, 0.9), "black": ("mb-us2", 115, 15, 0.84)}
+COMBO = [
+    ("traffic_green", ["green"], "Green means go!"),
+    ("traffic_yellow", ["yellow"], "Yellow means slow down."),
+    ("traffic_red", ["red"], "And red means... red skeleton. Ha!"),
+    ("knock_1", ["orange"], "Knock knock."),
+    ("knock_2", ["yellow"], "Who's there?"),
+    ("knock_3", ["orange"], "Orange."),
+    ("knock_4", ["yellow"], "Orange who?"),
+    ("knock_5", ["orange"], "Orange you glad I didn't say banana?"),
+    ("knock_6", ["yellow"], "That's not even a skeleton joke."),
+    ("bonetones_1", ["blue", "indigo", "violet"], "Doo wop, doo wop, doo wop."),
+    ("bonetones_2", ["indigo"], "We're the Bone Tones!"),
+    ("bonetones_3", ["blue", "indigo", "violet"], "Shoo be doo wah. Oooooh!"),
+    ("medal_gold", ["gold"], "First place!"),
+    ("medal_silver", ["silver"], "Second. Again."),
+    ("medal_brown", ["brown"], "Third! That's bronze, right? Close enough."),
+    ("upsy_1", ["tiny"], "Pick me up! Pick me up!"),
+    ("upsy_2", ["giant"], "Upsy daisy!"),
+    ("upsy_3", ["tiny"], "Wheeeeee!"),
+    ("upsy_4", ["giant"], "Oof. You're heavier than you look."),
+    ("upsy_5", ["tiny"], "I'm big boned too!"),
+    ("finale_1", ["red", "gold", "blue", "violet", "giant", "tiny", "pink", "black"], "We are the skeleton crew!"),
+    ("finale_2", ["red", "gold", "blue", "violet", "giant", "tiny", "pink", "black"], "Thank you, good night!"),
+]
+
+
+def make_combo(tmp):
+    """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
+    os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
+    for name, voices, text in COMBO:
+        parts = []
+        for k, who in enumerate(voices):
+            v, speed, pitch, rate = SKV[who]
+            wav = os.path.join(tmp, f"{name}_{k}.wav")
+            subprocess.run(["espeak-ng", "-v", v, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+            parts.append((wav, rate, k * 35))
+        out = os.path.join(OUT, "Combo", name + ".ogg")
+        args = ["ffmpeg", "-y", "-loglevel", "error"]
+        for wav, _, _ in parts: args += ["-i", wav]
+        filt = [f"[{i}:a]asetrate=16000*{rate},aresample=22050,adelay={d}|{d}[p{i}]" for i, (_, rate, d) in enumerate(parts)]
+        mix = "".join(f"[p{i}]" for i in range(len(parts))) + f"amix=inputs={len(parts)}:normalize=0,volume={1.8 if len(parts) == 1 else 0.9},aecho=0.8:0.5:35:0.15,apad=pad_dur=0.25[a]"
+        args += ["-filter_complex", ";".join(filt + [mix]), "-map", "[a]", "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out]
+        subprocess.run(args, check=True)
+        print("Combo/" + name, os.path.getsize(out) // 1024, "KB")
+
+
 def rainbow_lines():
     for colour, v, speed, pitch, rate, text in RAINBOW:
         yield ("Rainbow/rb_" + colour, v, speed, pitch, text,
@@ -93,6 +145,9 @@ def main():
     os.makedirs(os.path.join(OUT, "Rainbow"), exist_ok=True)
     only_rainbow = "--rainbow" in sys.argv
     with tempfile.TemporaryDirectory() as tmp:
+        if "--combo" in sys.argv:
+            make_combo(tmp)
+            return
         todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
@@ -101,6 +156,8 @@ def main():
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
                             "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
             print(name, os.path.getsize(out) // 1024, "KB")
+        if not only_rainbow:
+            make_combo(tmp)
 
 
 if __name__ == "__main__":

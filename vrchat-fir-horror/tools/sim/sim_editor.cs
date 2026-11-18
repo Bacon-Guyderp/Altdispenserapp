@@ -4,9 +4,23 @@ namespace UnityEditor {
   public class MenuItem : Attribute { public MenuItem(string p) {} public int priority; }
   public class InitializeOnLoadAttribute : Attribute { }
   public static class AssetDatabase {
+    static readonly System.Collections.Generic.Dictionary<string, float> lengths = new System.Collections.Generic.Dictionary<string, float>();
+    /// the real length of a sound file (ffprobe), so the simulator's timings match the real clips
+    static float ClipLength(string p) {
+      float len; if (lengths.TryGetValue(p, out len)) return len;
+      len = 1.5f;
+      try {
+        var f = System.IO.Path.Combine(Environment.GetEnvironmentVariable("FIR_PROJECT") ?? ".", p);
+        if (System.IO.File.Exists(f)) {
+          var psi = new System.Diagnostics.ProcessStartInfo("ffprobe", "-v error -show_entries format=duration -of csv=p=0 \"" + f + "\"") { RedirectStandardOutput = true, UseShellExecute = false };
+          using (var pr = System.Diagnostics.Process.Start(psi)) { var o = pr.StandardOutput.ReadToEnd(); pr.WaitForExit(); float.TryParse(o.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out len); }
+        }
+      } catch (Exception) { }
+      lengths[p] = len; return len;
+    }
     public static T LoadAssetAtPath<T>(string p) where T : UnityEngine.Object {
       if (typeof(T) == typeof(TextAsset) || typeof(T) == typeof(MonoScript)) { var f = System.IO.Path.Combine(Environment.GetEnvironmentVariable("FIR_PROJECT") ?? ".", p); if (!System.IO.File.Exists(f)) return null; var ta = typeof(T) == typeof(MonoScript) ? new MonoScript() : new TextAsset(); ta.text = System.IO.File.ReadAllText(f); ta.name = System.IO.Path.GetFileNameWithoutExtension(p); return (T)(UnityEngine.Object)ta; }
-      if (typeof(T) == typeof(AudioClip)) return (T)(UnityEngine.Object)new AudioClip { name = System.IO.Path.GetFileNameWithoutExtension(p) }; if (typeof(T) == typeof(Shader)) return (T)(UnityEngine.Object)new Shader(); if (typeof(T) == typeof(UdonSharp.UdonSharpProgramAsset)) return (T)(UnityEngine.Object)new UdonSharp.UdonSharpProgramAsset(); return null; } public static UnityEngine.Object LoadAssetAtPath(string p, Type t) { return null; }
+      if (typeof(T) == typeof(AudioClip)) return (T)(UnityEngine.Object)new AudioClip { name = System.IO.Path.GetFileNameWithoutExtension(p), length = ClipLength(p) }; if (typeof(T) == typeof(Shader)) return (T)(UnityEngine.Object)new Shader(); if (typeof(T) == typeof(UdonSharp.UdonSharpProgramAsset)) return (T)(UnityEngine.Object)new UdonSharp.UdonSharpProgramAsset(); return null; } public static UnityEngine.Object LoadAssetAtPath(string p, Type t) { return null; }
     public static void CreateAsset(UnityEngine.Object o, string p) {} public static void SaveAssets() {} public static void ImportAsset(string p) {} public static void ImportAsset(string p, ImportAssetOptions o) {}
     public static string[] FindAssets(string f, string[] dirs) { return new string[0]; } public static string GUIDToAssetPath(string g) { return null; } public static void ImportPackage(string p, bool i) {}
     public delegate void ImportPackageCallback(string packageName); public static event ImportPackageCallback importPackageCompleted; public static string GetAssetPath(UnityEngine.Object o) { return null; } }
