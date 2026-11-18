@@ -39,8 +39,21 @@ const geo = {
 const meshGeo = data.meshes.map(m => {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(m.v, 3));
+  if (m.uv && m.uv.length) g.setAttribute('uv', new THREE.Float32BufferAttribute(m.uv, 2));
+  if (m.c && m.c.length) { const c = []; for (const x of m.c) c.push(x, x, x); g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); }
   g.setIndex(m.t); g.computeVertexNormals(); return g;
 });
+
+// textures: the same PNGs the package bakes (tools/textures), repeating like Unity's
+const texLoader = new THREE.TextureLoader(), texCache = {};
+const pending = [];
+function texture(name) {
+  if (!name) return null;
+  if (texCache[name]) return texCache[name];
+  const t = texLoader.load('textures/' + name + '.png'); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  pending.push(new Promise(r => { const iv = setInterval(() => { if (t.image && t.image.complete) { clearInterval(iv); r(); } }, 20); }));
+  return texCache[name] = t;
+}
 
 // ---- TextMeshPro-ish rich text on a canvas
 function parseRich(s) {
@@ -121,8 +134,11 @@ const items = data.objs.map(o => {
   } else if (o.kind !== 'none') {
     const g = o.kind === 'mesh' ? meshGeo[o.mesh] : geo[o.kind];
     const color = new THREE.Color().setRGB(o.col[0], o.col[1], o.col[2], THREE.SRGBColorSpace);
-    const mat = o.full >= 0.5 ? new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide, emissive: color.clone().multiplyScalar(0.35) })
-                              : new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide });
+    const map = texture(o.tex);
+    const glow = o.glow ? new THREE.Color().setRGB(o.glow[0], o.glow[1], o.glow[2], THREE.SRGBColorSpace) : new THREE.Color(0, 0, 0);
+    const opts = { color, map, side: THREE.DoubleSide, vertexColors: o.vc >= 0.5 };
+    if (o.full >= 0.5) { opts.emissive = color.clone().multiplyScalar(0.35).add(glow); if (map) opts.emissiveMap = map; }
+    const mat = new THREE.MeshLambertMaterial(opts);
     const mesh = new THREE.Mesh(g, mat); holder.add(mesh);
     e.mesh = mesh; e.baseColor = color;
   }
@@ -207,6 +223,7 @@ function overlay(t) {
   octx.shadowBlur = 0;
 }
 
+await Promise.all(pending);
 window.frameCount = data.frames.length;
 window.renderFrame = (i) => {
   for (let k = applied + 1; k <= i; k++) applyFrame(k);

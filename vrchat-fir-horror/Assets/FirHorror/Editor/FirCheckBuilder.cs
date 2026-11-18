@@ -22,6 +22,8 @@ public static class FirCheckBuilder
     const string Root = "Assets/FirHorror";
     const string Gen = Root + "/Generated";
     static readonly Dictionary<string, Material> mats = new Dictionary<string, Material>();
+    static readonly Dictionary<string, Mesh> meshCache = new Dictionary<string, Mesh>();
+    static readonly Dictionary<string, Texture2D> baked = new Dictionary<string, Texture2D>();
     static Material fontMat;
     static readonly List<string> report = new List<string>();
 
@@ -37,7 +39,8 @@ public static class FirCheckBuilder
         }
         if (!EnsureProgramAssets()) return false;
         Directory.CreateDirectory(Gen);
-        mats.Clear(); report.Clear(); skelParts = null;
+        mats.Clear(); report.Clear(); meshCache.Clear(); skelParts = null;
+        BakeTextures();   // the wallpaper, carpet, ceiling, needles and skeleton textures (Data/textures_baked.txt)
         foreach (var name in new[] { "FirWarning", "FirWarningCheck" })
         {
             var old = GameObject.Find(name);
@@ -57,6 +60,10 @@ public static class FirCheckBuilder
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -4), 0);
+        // dark notice boards behind the text, so it reads clearly against the wallpaper
+        Box(lobby, "TestBoard", new Vector3(0, 1.85f, 5.995f), new Vector3(13.2f, 3.3f, 0.01f), M("Board"));
+        Box(lobby, "InfoBoard", new Vector3(-6.995f, 1.65f, 0.45f), new Vector3(0.01f, 3.0f, 9.4f), M("Board"));
+        Box(lobby, "PanelBoard", new Vector3(6.995f, 1.75f, 3.5f), new Vector3(0.01f, 1.8f, 2.2f), M("Board"));
 
         var n = Vector3.back;   // the north wall faces the players
         Text("Title", lobby, new Vector3(0, 3.15f, 5.98f), Face(n), new Vector2(10, 0.6f), 0.5f, "<b>FIR WARNING</b>  systems check").color = new Color(0.9f, 0.15f, 0.15f);
@@ -129,17 +136,18 @@ public static class FirCheckBuilder
         SetInteract(skel, "Press the skeleton", 3f);
         t7.other = UB(skel);
 
-        // ---- a talking tree (placeholder: the new tree models come in stage 2)
+        // ---- a talking tree: the original Fir Warning model
         var treeGo = new GameObject("Tree");
         treeGo.transform.SetParent(lobby, false);
         treeGo.transform.localPosition = new Vector3(2.5f, 0, 1.5f);
         treeGo.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        var head = SimpleTree(treeGo.transform, out var mouth);
-        var tc = treeGo.AddComponent<BoxCollider>(); tc.center = new Vector3(0, 1.0f, 0); tc.size = new Vector3(1.2f, 2f, 1.2f);
+        Transform mouth;
+        var head = TreeModel(treeGo.transform, 1.9f, true, out mouth);
+        var tc = treeGo.AddComponent<BoxCollider>(); tc.center = new Vector3(0, 0.95f, 0); tc.size = new Vector3(1.3f, 1.9f, 1.3f);
         var tree = Add<FirCheckTree>(treeGo);
         tree.head = head; tree.mouth = mouth;
-        tree.voice = Src(head, new Vector3(0, 0.6f, 0.3f), Clip("tree_talk"), false, 1f, 1f, 15f, false);
-        tree.label = Text("TreeLabel", lobby, new Vector3(2.5f, 2.55f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
+        tree.voice = Src(head, new Vector3(0, 0.75f, 0.35f), Clip("tree_talk"), false, 1f, 1f, 15f, false);
+        tree.label = Text("TreeLabel", lobby, new Vector3(2.5f, 2.35f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
                           "<b>Tree</b>\n<color=#ff6060>its script isn't running</color>");
         tree.label.color = Color.white;
         SetInteract(tree, "Press the tree", 3f);
@@ -247,26 +255,108 @@ public static class FirCheckBuilder
         return b;
     }
 
-    /// <summary>A placeholder fir with a face. Returns the head pivot (canopy + face); mouth is scaled to talk.</summary>
-    static Transform SimpleTree(Transform parent, out Transform mouth)
+    /// <summary>
+    /// The original Fir Warning talking tree: a jagged, tiered fir canopy with big eyes, red lips, teeth and
+    /// red scream eyes, on a pot (or a stand when tall). Returns the head pivot (canopy and face) and the mouth.
+    /// </summary>
+    static Transform TreeModel(Transform root, float height, bool hat, out Transform mouth)
     {
-        Prim(PrimitiveType.Cylinder, "Pot", parent, new Vector3(0, 0.15f, 0), new Vector3(0.5f, 0.15f, 0.5f), M("Pot"));
-        Prim(PrimitiveType.Cylinder, "Trunk", parent, new Vector3(0, 0.45f, 0), new Vector3(0.12f, 0.2f, 0.12f), M("Trunk"));
-        var head = Group(parent, "Head", new Vector3(0, 0.6f, 0));
-        for (int i = 0; i < 4; i++)
-        {
-            float r = 0.62f - i * 0.13f, y = 0.25f + i * 0.33f;
-            var c = Prim(PrimitiveType.Sphere, "Tier" + i, head, new Vector3(0, y, 0), new Vector3(r * 2, 0.42f, r * 2), M("Needles"));
-            c.transform.localRotation = Quaternion.Euler(0, i * 37f, 0);
-        }
-        Prim(PrimitiveType.Sphere, "EyeL", head, new Vector3(-0.15f, 0.9f, 0.4f), new Vector3(0.16f, 0.16f, 0.08f), M("Eye"));
-        Prim(PrimitiveType.Sphere, "EyeR", head, new Vector3(0.15f, 0.9f, 0.4f), new Vector3(0.16f, 0.16f, 0.08f), M("Eye"));
-        Prim(PrimitiveType.Sphere, "PupilL", head, new Vector3(-0.15f, 0.9f, 0.44f), new Vector3(0.07f, 0.07f, 0.03f), M("Pupil"));
-        Prim(PrimitiveType.Sphere, "PupilR", head, new Vector3(0.15f, 0.9f, 0.44f), new Vector3(0.07f, 0.07f, 0.03f), M("Pupil"));
-        var m = Group(head, "Mouth", new Vector3(0, 0.62f, 0.44f));
-        Prim(PrimitiveType.Cube, "MouthShape", m, Vector3.zero, new Vector3(0.24f, 0.08f, 0.04f), M("Mouth"));
-        mouth = m;
+        float potH = Mathf.Max(0.08f, height * 0.09f);
+        float trunkH = height * 0.08f;
+        float canopyH = height - potH - trunkH;
+        float radius = height * 0.36f;
+        Prim(PrimitiveType.Cylinder, "Pot", root, new Vector3(0, potH / 2, 0), new Vector3(radius * 0.55f, potH / 2, radius * 0.55f), M(height > 1.8f ? "Stand" : "Pot"));
+        Prim(PrimitiveType.Cylinder, "Trunk", root, new Vector3(0, potH + trunkH / 2, 0), new Vector3(radius * 0.18f, trunkH / 2 + 0.02f, radius * 0.18f), M("Trunk"));
+        var head = Group(root, "Head", new Vector3(0, potH + trunkH, 0));
+        var canopy = new GameObject("Canopy");
+        canopy.transform.SetParent(head, false);
+        canopy.AddComponent<MeshFilter>().sharedMesh = FirMesh(Mathf.Clamp(Mathf.RoundToInt(height * 2.2f), 3, 6), canopyH, radius, 14, 0.7f);
+        NoShadows(canopy.AddComponent<MeshRenderer>(), M("Needles"));
+        float faceY = canopyH * 0.5f;
+        float rAt = radius * (1f - faceY / canopyH) * 1.05f;
+        float eye = Mathf.Max(0.035f, canopyH * 0.055f);
+        float faceZ = rAt * 0.92f;
+        var eyeL = Prim(PrimitiveType.Sphere, "EyeL", head, new Vector3(-eye * 1.25f, faceY + eye * 1.1f, faceZ), Vector3.one * eye * 2f, M("Eye"));
+        var eyeR = Prim(PrimitiveType.Sphere, "EyeR", head, new Vector3(eye * 1.25f, faceY + eye * 1.1f, faceZ), Vector3.one * eye * 2f, M("Eye"));
+        Prim(PrimitiveType.Sphere, "PupilL", head, eyeL.transform.localPosition + new Vector3(0, 0, eye * 0.85f), Vector3.one * eye * 0.8f, M("Pupil"));
+        Prim(PrimitiveType.Sphere, "PupilR", head, eyeR.transform.localPosition + new Vector3(0, 0, eye * 0.85f), Vector3.one * eye * 0.8f, M("Pupil"));
+        var mouthPivot = Group(head, "Mouth", new Vector3(0, faceY - eye * 1.4f, faceZ - eye * 0.2f));
+        Prim(PrimitiveType.Sphere, "Lips", mouthPivot, Vector3.zero, new Vector3(eye * 3.2f, eye * 1.6f, eye * 1.2f), M("Mouth"));
+        Prim(PrimitiveType.Sphere, "Throat", mouthPivot, new Vector3(0, 0, eye * 0.25f), new Vector3(eye * 2.4f, eye * 1.1f, eye * 0.9f), M("Black"));
+        var toothMesh = FirMesh(1, eye * 0.55f, eye * 0.16f, 5, 1f);
+        for (int row = 0; row < 2; row++)
+            for (int k = 0; k < 6; k++)
+            {
+                var tooth = new GameObject("Tooth");
+                tooth.transform.SetParent(mouthPivot, false);
+                tooth.transform.localPosition = new Vector3((-1.05f + k * 0.42f) * eye, (row == 0 ? 0.42f : -0.42f) * eye, eye * 0.5f);
+                tooth.transform.localRotation = Quaternion.Euler(row == 0 ? 180 : 0, 0, 0);
+                tooth.AddComponent<MeshFilter>().sharedMesh = toothMesh;
+                NoShadows(tooth.AddComponent<MeshRenderer>(), M("Teeth"));
+            }
+        if (hat) Hat(head, new Vector3(0, canopyH - 0.08f * height, 0), height * 0.55f, "Hat");
+        mouth = mouthPivot;
         return head;
+    }
+
+    static Mesh FirMesh(int tiers, float height, float radius, int seg, float jag)
+    {
+        string key = "fir" + tiers + "_" + height.ToString("F3") + "_" + radius.ToString("F3") + "_" + seg + "_" + jag;
+        if (meshCache.TryGetValue(key, out var cached)) return cached;
+        var v = new List<Vector3>(); var uv = new List<Vector2>(); var col = new List<Color>(); var tri = new List<int>();
+        float tierH = height / (tiers * 0.7f + 0.3f);
+        for (int k = 0; k < tiers; k++)
+        {
+            float y0 = k * tierH * 0.7f;
+            float y1 = Mathf.Min(height, y0 + tierH);
+            float r = radius * (1f - (float)k / (tiers + 0.4f));
+            var apex = new Vector3(0, y1, 0);
+            var inner = new Vector3(0, y0 + tierH * 0.25f, 0);
+            int pts = seg * 2;
+            for (int i = 0; i < pts; i++)
+            {
+                float a0 = i * Mathf.PI * 2 / pts, a1 = (i + 1) * Mathf.PI * 2 / pts;
+                float r0 = i % 2 == 0 ? r : r * jag, r1 = (i + 1) % 2 == 0 ? r : r * jag;
+                float d0 = i % 2 == 0 ? -tierH * 0.06f : 0, d1 = (i + 1) % 2 == 0 ? -tierH * 0.06f : 0;
+                var p0 = new Vector3(Mathf.Cos(a0) * r0, y0 + d0, Mathf.Sin(a0) * r0);
+                var p1 = new Vector3(Mathf.Cos(a1) * r1, y0 + d1, Mathf.Sin(a1) * r1);
+                var outward = new Vector3(Mathf.Cos((a0 + a1) / 2), 0.3f, Mathf.Sin((a0 + a1) / 2));
+                AddTri(v, uv, col, tri, apex, p0, p1, outward, height, 1f, 0.55f);
+                AddTri(v, uv, col, tri, inner, p1, p0, Vector3.down, height, 0.3f, 0.45f);
+            }
+        }
+        var m = new Mesh { name = key };
+        m.SetVertices(v); m.SetUVs(0, uv); m.SetColors(col); m.SetTriangles(tri, 0);
+        m.RecalculateNormals(); m.RecalculateBounds();
+        meshCache[key] = m;
+        return m;
+    }
+
+    static void AddTri(List<Vector3> v, List<Vector2> uv, List<Color> col, List<int> tri, Vector3 a, Vector3 b, Vector3 c, Vector3 outward,
+                       float h, float shadeA, float shadeB)
+    {
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), outward) < 0) { var t = b; b = c; c = t; }
+        int s = v.Count;
+        v.Add(a); v.Add(b); v.Add(c);
+        foreach (var p in new[] { a, b, c })
+            uv.Add(new Vector2((Mathf.Atan2(p.z, p.x) / (Mathf.PI * 2) + 0.5f) * 3f, p.y / Mathf.Max(0.1f, h) * 3f));
+        col.Add(Color.white * shadeA); col.Add(Color.white * shadeB); col.Add(Color.white * shadeB);
+        tri.Add(s); tri.Add(s + 1); tri.Add(s + 2);
+    }
+
+    static GameObject Hat(Transform parent, Vector3 pos, float size, string name)
+    {
+        var hat = new GameObject(name);
+        hat.transform.SetParent(parent, false);
+        hat.transform.localPosition = pos;
+        hat.transform.localRotation = Quaternion.Euler(0, 0, 14);
+        var cone = new GameObject("Cone");
+        cone.transform.SetParent(hat.transform, false);
+        cone.AddComponent<MeshFilter>().sharedMesh = FirMesh(1, size * 0.55f, size * 0.17f, 12, 1f);
+        NoShadows(cone.AddComponent<MeshRenderer>(), M("HatRed"));
+        Prim(PrimitiveType.Cylinder, "Brim", hat.transform, new Vector3(0, 0.01f, 0), new Vector3(size * 0.38f, size * 0.03f, size * 0.38f), M("HatWhite"));
+        Prim(PrimitiveType.Sphere, "Pompom", hat.transform, new Vector3(0, size * 0.55f, 0), Vector3.one * size * 0.09f, M("HatWhite"));
+        return hat;
     }
 
     // ---- your skeleton model (Models/skeleton_parts.txt, made from the Skeleton.zip you uploaded)
@@ -354,16 +444,45 @@ public static class FirCheckBuilder
         return t;
     }
 
+    /// <summary>A static box with a collider; its texture tiles every 2 m instead of stretching.</summary>
     static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = name;
+        var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         go.transform.localPosition = pos;
-        go.transform.localScale = size;
-        NoShadows(go.GetComponent<MeshRenderer>(), mat);
+        go.AddComponent<MeshFilter>().sharedMesh = BoxMesh(size);
+        NoShadows(go.AddComponent<MeshRenderer>(), mat);
+        go.AddComponent<BoxCollider>().size = size;
         GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
         return go;
+    }
+
+    static Mesh BoxMesh(Vector3 size)
+    {
+        string key = "box" + size.x.ToString("F3") + "_" + size.y.ToString("F3") + "_" + size.z.ToString("F3");
+        if (meshCache.TryGetValue(key, out var cached)) return cached;
+        var v = new List<Vector3>(); var n = new List<Vector3>(); var uv = new List<Vector2>(); var tri = new List<int>();
+        var h = size * 0.5f;
+        foreach (var N in new[] { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back })
+        {
+            var V = Mathf.Abs(N.y) > 0.5f ? Vector3.forward : Vector3.up;
+            var U = Vector3.Cross(N, V);
+            float hu = Mathf.Abs(Vector3.Dot(h, U)), hv = Mathf.Abs(Vector3.Dot(h, V)), hn = Mathf.Abs(Vector3.Dot(h, N));
+            var c = N * hn;
+            int s = v.Count;
+            var corners = new[] { c - U * hu - V * hv, c - U * hu + V * hv, c + U * hu + V * hv, c + U * hu - V * hv };
+            foreach (var p in corners)
+            {
+                v.Add(p); n.Add(N);
+                uv.Add(new Vector2(Vector3.Dot(p, U) / 2f, Vector3.Dot(p, V) / 2f));
+            }
+            tri.AddRange(new[] { s, s + 1, s + 2, s, s + 2, s + 3 });
+        }
+        var m = new Mesh { name = key };
+        m.SetVertices(v); m.SetNormals(n); m.SetUVs(0, uv); m.SetTriangles(tri, 0);
+        m.RecalculateBounds();
+        meshCache[key] = m;
+        return m;
     }
 
     static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat)
@@ -436,16 +555,19 @@ public static class FirCheckBuilder
     {
         var sh = Shader.Find("FirHorror/Lantern");
         if (sh == null) report.Add("problem: the FirHorror/Lantern shader didn't load");
-        Action<string, Color, float, Color> A = (n, c, full, glow) =>
+        Action<string, string, Color, float, Color> A = (n, texName, c, full, glow) =>
         {
             string path = Gen + "/Check_" + n + ".mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
             bool isNew = m == null;
-            if (isNew) m = new Material(sh != null ? sh : Shader.Find("Unlit/Color"));
+            if (isNew) m = new Material(sh != null ? sh : Shader.Find("Unlit/Texture"));
             if (sh != null) m.shader = sh;
+            m.name = "Check_" + n;
+            m.mainTexture = texName != null ? Tex(texName) : null;
             m.SetColor("_Color", c);
             m.SetFloat("_Fullbright", full);
             m.SetColor("_Glow", glow);
+            m.SetFloat("_VertexColor", n == "Needles" ? 1f : 0f);
             m.SetFloat("_Reach", 14f);
             m.SetFloat("_Dark", 0f);
             m.SetFloat("_Ambient", 0.35f);
@@ -456,20 +578,87 @@ public static class FirCheckBuilder
             EditorUtility.SetDirty(m);
             mats[n] = m;
         };
-        A("Floor", new Color(0.45f, 0.12f, 0.12f), 1, Color.black);
-        A("Ceiling", new Color(0.55f, 0.55f, 0.55f), 1, Color.black);
-        A("Wall", new Color(0.18f, 0.32f, 0.22f), 1, Color.black);
-        A("Floor2", new Color(0.2f, 0.25f, 0.45f), 1, Color.black);
-        A("Wall2", new Color(0.35f, 0.3f, 0.5f), 1, Color.black);
-        A("Button", new Color(0.15f, 0.45f, 0.75f), 1, Color.black);
-        A("TestPanel", new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
-        A("Bone", new Color(1f, 0.16f, 0.12f), 1, Color.black);   // the RED skeleton
-        A("Pot", new Color(0.55f, 0.12f, 0.1f), 1, Color.black);
-        A("Trunk", new Color(0.3f, 0.2f, 0.12f), 1, Color.black);
-        A("Needles", new Color(0.08f, 0.38f, 0.14f), 1, Color.black);
-        A("Eye", new Color(0.95f, 0.95f, 0.9f), 1, Color.black);
-        A("Pupil", new Color(0.02f, 0.02f, 0.02f), 1, Color.black);
-        A("Mouth", new Color(0.6f, 0.05f, 0.08f), 1, Color.black);
+        var white = Color.white;
+        // the original lobby: red carpet, wallpaper, ceiling tiles (fullbright)
+        A("Floor", "carpet_red", white, 1, Color.black);
+        A("Wall", "wallpaper", new Color(0.8f, 0.8f, 0.8f), 1, Color.black);
+        A("Ceiling", "ceiling", new Color(0.7f, 0.7f, 0.7f), 1, Color.black);
+        // the test room: wood floor, wallpaper in another tint
+        A("Floor2", "wood_floor", white, 1, Color.black);
+        A("Wall2", "wallpaper", new Color(0.7f, 0.75f, 0.95f), 1, Color.black);
+        A("Button", null, new Color(0.15f, 0.45f, 0.75f), 1, Color.black);
+        A("Board", null, new Color(0.07f, 0.06f, 0.06f), 1, Color.black);
+        A("TestPanel", null, new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
+        A("Bone", "skeleton", new Color(1f, 0.16f, 0.12f), 1, new Color(0.2f, 0.02f, 0.01f));   // the RED skeleton
+        // the original tree materials
+        A("Needles", "needles", white, 1, Color.black);
+        A("Pot", null, new Color(0.55f, 0.12f, 0.1f), 1, Color.black);
+        A("Stand", null, new Color(0.25f, 0.2f, 0.15f), 1, Color.black);
+        A("Trunk", null, new Color(0.3f, 0.2f, 0.12f), 1, Color.black);
+        A("Eye", null, new Color(0.9f, 0.9f, 0.85f), 1, new Color(0.22f, 0.22f, 0.2f));
+        A("Pupil", null, new Color(0.01f, 0.01f, 0.01f), 1, Color.black);
+        A("Mouth", null, new Color(0.7f, 0.05f, 0.08f), 1, new Color(0.08f, 0f, 0f));
+        A("Teeth", null, new Color(0.85f, 0.82f, 0.7f), 1, new Color(0.08f, 0.07f, 0.05f));
+        A("Black", null, new Color(0.03f, 0.03f, 0.03f), 1, Color.black);
+        A("HatRed", null, new Color(0.75f, 0.05f, 0.08f), 1, Color.black);
+        A("HatWhite", null, new Color(0.95f, 0.95f, 0.95f), 1, Color.black);
+    }
+
+    static Texture2D Tex(string name)
+    {
+        if (baked.TryGetValue(name, out var t) && t != null) return t;
+        t = AssetDatabase.LoadAssetAtPath<Texture2D>(Gen + "/Tex_" + name + ".asset");   // baked earlier
+        if (t == null) { Debug.LogWarning("Fir Warning: missing texture " + name); report.Add("problem: texture " + name + " is missing"); }
+        return t;
+    }
+
+    public static int BakeTextures()
+    {
+        baked.Clear();
+        Directory.CreateDirectory(Gen);
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/textures_baked.txt");
+        if (ta == null) { report.Add("problem: Data/textures_baked.txt is missing"); return 0; }
+        bool android = EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android;
+        var fmt = android ? TextureFormat.ASTC_6x6 : TextureFormat.DXT1;
+        int n = 0;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 5) continue;
+            string name = f[0];
+            byte[] png;
+            try { png = Convert.FromBase64String(f[4]); }
+            catch (FormatException) { report.Add("problem: texture " + name + " has bad data"); continue; }
+            var decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
+            if (!decoded.LoadImage(png)) { report.Add("problem: texture " + name + " couldn't be decoded"); Object.DestroyImmediate(decoded); continue; }
+            var tex = new Texture2D(decoded.width, decoded.height, TextureFormat.RGBA32, true, false) { name = name };
+            tex.SetPixels32(decoded.GetPixels32());
+            tex.Apply(true, false);
+            Object.DestroyImmediate(decoded);
+            tex.wrapMode = f[1] == "clamp" ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+            tex.filterMode = FilterMode.Trilinear;
+            tex.anisoLevel = 2;
+            EditorUtility.CompressTexture(tex, fmt, TextureCompressionQuality.Normal);
+
+            string path = Gen + "/Tex_" + name + ".asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (existing != null)
+            {
+                EditorUtility.CopySerialized(tex, existing);   // keep the asset (and every reference to it)
+                existing.name = name;
+                EditorUtility.SetDirty(existing);
+                Object.DestroyImmediate(tex);
+                tex = existing;
+            }
+            else AssetDatabase.CreateAsset(tex, path);
+            baked[name] = tex;
+            n++;
+        }
+        AssetDatabase.SaveAssets();
+        Debug.Log("Fir Warning: baked " + n + " textures (" + (android ? "ASTC 6x6, Android" : "DXT1, PC") + ")");
+        return n;
     }
 
     static Material FontMaterial()

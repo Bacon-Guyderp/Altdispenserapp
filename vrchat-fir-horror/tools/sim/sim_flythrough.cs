@@ -179,13 +179,17 @@ public static class SimFly {
           int id; if (!meshes.TryGetValue(mf.sharedMesh, out id)) {
             id = meshes.Count; meshes[mf.sharedMesh] = id;
             var m = mf.sharedMesh;
-            meshJson.Append((id > 0 ? "," : "") + "{\"v\":[" + string.Join(",", m.verts.Select(v => F(v.x) + "," + F(v.y) + "," + F(v.z))) + "],\"t\":[" + string.Join(",", m.tris) + "]}");
+            meshJson.Append((id > 0 ? "," : "") + "{\"v\":[" + string.Join(",", m.verts.Select(v => F(v.x) + "," + F(v.y) + "," + F(v.z))) + "],\"t\":[" + string.Join(",", m.tris) + "]"
+              + ",\"uv\":[" + string.Join(",", m.uvs.Select(u => F(u.x) + "," + F(u.y))) + "],\"c\":[" + string.Join(",", m.cols.Select(cc => F(cc.r))) + "]}");
           }
           kind = "mesh"; extra = ",\"mesh\":" + id;
         } else kind = "none";
         var mat = mr.sharedMaterial; Color col = Color.white; float full = 1;
         if (mat != null) { mat.colors.TryGetValue("_Color", out col); full = mat.GetFloat("_Fullbright"); }
-        extra += ",\"col\":[" + F(col.r) + "," + F(col.g) + "," + F(col.b) + "],\"full\":" + F(full) + ",\"mat\":" + J(mat != null ? mat.name : "");
+        string texName = mat != null && mat.mainTexture != null ? mat.mainTexture.name : "";
+        float vc = mat != null ? mat.GetFloat("_VertexColor") : 0;
+        Color glow = Color.black; if (mat != null) mat.colors.TryGetValue("_Glow", out glow);
+        extra += ",\"col\":[" + F(col.r) + "," + F(col.g) + "," + F(col.b) + "],\"glow\":[" + F(glow.r) + "," + F(glow.g) + "," + F(glow.b) + "],\"full\":" + F(full) + ",\"tex\":" + J(texName) + ",\"vc\":" + F(vc) + ",\"mat\":" + J(mat != null ? mat.name : "");
       }
       Console.Write((i > 0 ? "," : "") + "{\"kind\":" + J(kind) + ",\"name\":" + J(c.name) + extra + "}");
     }
