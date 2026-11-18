@@ -1,3 +1,5 @@
 tools/__pycache__/
 FirWarning.unitypackage
 FirWarning-folder.zip
+# rendered videos (tools/sim/run_flythrough.sh)
+*.mp4
