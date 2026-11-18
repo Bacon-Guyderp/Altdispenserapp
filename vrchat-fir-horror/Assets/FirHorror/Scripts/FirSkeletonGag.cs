@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -18,8 +19,8 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirSkeletonGag : UdonSharpBehaviour
 {
-    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
-    public FirGameManager game;
+    public UdonBehaviour watch;          // diagnostics: reports each press to the lobby board
+    public UdonBehaviour game;          // FirGameManager
     public int gagIndex;      // this routine's place in game.skeletonGags (set by the builder)
     public int act;
     public int rigCount = 1;
@@ -56,11 +57,11 @@ public class FirSkeletonGag : UdonSharpBehaviour
 
     public override void Interact()
     {
-        if (watch != null) watch.Pressed(gameObject.name);
+        Report();
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + Length() + 0.5f;
         Play();
-        if (game != null) game.ShareGag(1, gagIndex);
+        GameEvAB("EvShareGag", 1, gagIndex);
     }
 
     /// <summary>Plays the routine on this client only.</summary>
@@ -85,7 +86,7 @@ public class FirSkeletonGag : UdonSharpBehaviour
             talkFrom = t; talkUntil = t + ClipLength() - 0.2f;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (game != null && Utilities.IsValid(lp) && Vector3.Distance(lp.GetPosition(), transform.position) < 12f)
-                game.Say(line, ClipLength() + 0.5f);
+                GameSay(line, ClipLength() + 0.5f);
         }
         for (int r = 0; r < rigCount; r++)
         {
@@ -224,4 +225,14 @@ public class FirSkeletonGag : UdonSharpBehaviour
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // ---- calls to other scripts: plain Udon events (see FirGameManager's "public API")
+    void GameEv(string ev) { if (game != null) game.SendCustomEvent(ev); }
+    void GameEvA(string ev, int a) { if (game == null) return; game.SetProgramVariable("argA", a); game.SendCustomEvent(ev); }
+    void GameEvAB(string ev, int a, int b) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argB", b); game.SendCustomEvent(ev); }
+    void GameEvF(string ev, float f) { if (game == null) return; game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvAF(string ev, int a, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameSay(string text, float seconds) { if (game == null) return; game.SetProgramVariable("argText", text); game.SetProgramVariable("argF", seconds); game.SendCustomEvent("EvSay"); }
+    int GameInt(string name) { return game != null ? (int)game.GetProgramVariable(name) : 0; }
+    void Report() { if (watch == null) return; watch.SetProgramVariable("argWhat", gameObject.name); watch.SendCustomEvent("EvPressed"); }
 }

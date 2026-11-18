@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -14,8 +15,8 @@ public class FirToilet : UdonSharpBehaviour
     public Rigidbody body;
     public AudioSource audioSrc;
     public AudioClip flushClip, clunkClip;
-    public FirStalker stalker;
-    public FirGameManager game;
+    public UdonBehaviour stalker;       // FirStalker
+    public UdonBehaviour game;          // FirGameManager
     public float hitSpeed = 2.5f;
     public float hitRadius = 1.3f;
 
@@ -38,9 +39,9 @@ public class FirToilet : UdonSharpBehaviour
         }
         lastSpeed = speed;
         if (stalker == null || game == null || speed < hitSpeed || Time.time < nextHit) return;
-        if (!Networking.IsOwner(gameObject) || !stalker.IsActive()) return;
+        if (!Networking.IsOwner(gameObject) || !(bool)stalker.GetProgramVariable("syncActive")) return;
         if (Vector3.Distance(transform.position, stalker.transform.position + Vector3.up * 1.1f) > hitRadius) return;
         nextHit = Time.time + 2f;
-        game.StunStalker();
+        game.SendCustomEvent("StunStalker");
     }
 }

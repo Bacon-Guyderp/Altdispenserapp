@@ -31,6 +31,7 @@ public static class SimTest {
   static int passed, failedChecks;
 
   static GameObject Go(string n, Vector3 p, Transform parent = null) { var g = new GameObject(n); if (parent != null) g.transform.SetParent(parent, false); g.transform.localPosition = p; return g; }
+  static VRC.Udon.UdonBehaviour U(UdonSharpBehaviour b) { return Sim.UB(b); }
   static T B<T>(string n, Vector3 p) where T : Component, new() { return Go(n, p).AddComponent<T>(); }
   static TextMeshPro Txt(string n) { return B<TextMeshPro>(n, Vector3.zero); }
   static AudioClip Clip(string n) { return new AudioClip { name = n }; }
@@ -42,11 +43,11 @@ public static class SimTest {
     return a;
   }
   static FirTeleporter Tp(string n, Vector3 p, Transform dest, FirGameManager game, string evt) {
-    var t = B<FirTeleporter>("Teleporter " + n, p); t.destination = dest; t.notify = game; t.notifyEvent = evt; t.sound = Src("whoosh"); return t;
+    var t = B<FirTeleporter>("Teleporter " + n, p); t.destination = dest; t.notify = U(game); t.notifyEvent = evt; t.sound = Src("whoosh"); return t;
   }
   static FirSequenceLock Lock(Scene s, string n, int ch, int len, bool needs, int values, Vector3 at) {
-    var l = B<FirSequenceLock>(n, at); l.game = s.game; l.chapter = ch; l.length = len; l.needsItems = needs; l.display = Txt(n + " display");
-    var k = new FirKey[values]; for (int i = 0; i < values; i++) { k[i] = B<FirKey>(n + " key " + i, at); k[i].lockTarget = l; k[i].value = i; }
+    var l = B<FirSequenceLock>(n, at); l.game = U(s.game); l.chapter = ch; l.length = len; l.needsItems = needs; l.display = Txt(n + " display");
+    var k = new FirKey[values]; for (int i = 0; i < values; i++) { k[i] = B<FirKey>(n + " key " + i, at); k[i].lockTarget = U(l); k[i].value = i; }
     s.keys[l] = k; return l;
   }
   static Transform[] Rig(string n, Transform parent) { var r = new Transform[10]; r[0] = Go(n, Vector3.zero, parent).transform; for (int i = 1; i < 10; i++) r[i] = Go(n + i, new Vector3(0, 0.1f * i, 0), r[0]).transform; return r; }
@@ -72,7 +73,7 @@ public static class SimTest {
     game.screams = new[] { Clip("scream1"), Clip("scream2"), Clip("scream3") };
     game.clipPickup = Clip("pickup"); game.clipUnlock = Clip("unlock"); game.clipWrong = Clip("wrong"); game.clipTalk = Clip("talk"); game.clipLaugh = Clip("laugh");
     game.clipStatic = Clip("static"); game.clipHit = Clip("hit"); game.clipWhoosh = Clip("whoosh"); game.clipHeartbeat = Clip("heartbeat"); game.clipWhisper = Clip("whisper"); game.clipSwitch = Clip("switch");
-    var rig = Go("ScareRig", Vector3.zero); game.scareRig = rig.transform; game.scareAnim = Tree("ScareTree", Vector3.zero); game.scareAnim.transform.SetParent(rig.transform, false);
+    var rig = Go("ScareRig", Vector3.zero); game.scareRig = rig.transform; var scareTree = Tree("ScareTree", Vector3.zero); game.scareAnim = U(scareTree); scareTree.transform.SetParent(rig.transform, false);
     s.mats = new[] { new Material { name = "Wood" }, new Material { name = "Brick" }, new Material { name = "Bulb" } };
     game.worldMaterials = s.mats;
 
@@ -82,51 +83,52 @@ public static class SimTest {
     for (int i = 0; i < 7; i++) s.roomSelect[i] = Tp("Room " + i, new Vector3(-65, 2 - i / 2 * 0.42f, 5.85f), game.checkpoints[i], game, "EnteredRoom");
     for (int i = 0; i < 6; i++) s.back[i] = Tp("Back " + i, new Vector3(2.1f, 1.3f, Z0[i] + 0.16f), game.lobbySpawn, game, "LeftGame");
     s.exitBack = Tp("ExitBack", new Vector3(-3, 1, 159.8f), game.lobbySpawn, game, "LeftGame");
-    s.reset = B<FirButton>("Reset", new Vector3(-57.8f, 1.1f, 5.85f)); s.reset.target = game; s.reset.eventName = "ResetGame";
-    s.power = B<FirButton>("Power", new Vector3(5, 1, 19)); s.power.target = game; s.power.eventName = "StationPower";
-    s.lights = B<FirButton>("Lights", new Vector3(-10, 1, 21)); s.lights.target = game; s.lights.eventName = "StationLights";
+    s.reset = B<FirButton>("Reset", new Vector3(-57.8f, 1.1f, 5.85f)); s.reset.target = U(game); s.reset.eventName = "ResetGame";
+    s.power = B<FirButton>("Power", new Vector3(5, 1, 19)); s.power.target = U(game); s.power.eventName = "StationPower";
+    s.lights = B<FirButton>("Lights", new Vector3(-10, 1, 21)); s.lights.target = U(game); s.lights.eventName = "StationLights";
 
     // items, in the builder's order: batteries, fuses, tapes, valves, imitations
     var itemGos = new List<GameObject>(); var chap = new List<int>();
     int[] chs = { 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 9, 9, 9 };
     float[] ix = { -5.6f, 7.6f, 6.4f, -10.8f, -6.75f, 6.75f, 10.8f, -4.3f, -1.6f, -5f, -4.8f, -10.85f, 10.85f, 4f };
     float[] iz = { 10.4f, 15f, 2.2f, 50.6f, 37.5f, 24.5f, 44f, 62f, 66f, 70.2f, 75.3f, 129f, 137f, 149.5f };
-    foreach (int ch in chs) { int idx = itemGos.Count; var it = B<FirItem>("Item " + idx + " ch" + ch, new Vector3(ix[idx], 0.5f, iz[idx])); it.game = game; it.index = idx; s.items[idx] = it; itemGos.Add(it.gameObject); chap.Add(ch); }
+    foreach (int ch in chs) { int idx = itemGos.Count; var it = B<FirItem>("Item " + idx + " ch" + ch, new Vector3(ix[idx], 0.5f, iz[idx])); it.game = U(game); it.index = idx; s.items[idx] = it; itemGos.Add(it.gameObject); chap.Add(ch); }
     var syncs = new List<VRCObjectSync>(); var carry = new List<FirCarryItem>();
     Func<string, Vector3, int, FirCarryItem> Carry = (n, p, kind) => {
       var g = Go(n, p); g.AddComponent<VRCPickup>(); var os = g.AddComponent<VRCObjectSync>(); os.home = p; syncs.Add(os);
-      var ci = g.AddComponent<FirCarryItem>(); ci.kind = kind; ci.game = game; ci.pickup = g.GetComponent<VRCPickup>(); carry.Add(ci); return ci;
+      var ci = g.AddComponent<FirCarryItem>(); ci.kind = kind; ci.game = U(game); ci.pickup = g.GetComponent<VRCPickup>(); carry.Add(ci); return ci;
     };
     for (int i = 0; i < 5; i++) { var ci = Carry("Imitation " + i, new Vector3(-4 + 2 * i, 0, 130), 1); ci.index = itemGos.Count; s.imitations[i] = ci; itemGos.Add(ci.gameObject); chap.Add(6); }
     game.items = itemGos.ToArray(); game.itemChapter = chap.ToArray();
     for (int k = 0; k < 3; k++) { s.hats[k] = Carry("Hat " + k, new Vector3(-3 + 3 * k, 0.5f, 112), 0); s.hats[k].sizeId = k; }
     game.hatPickups = new[] { s.hats[0].gameObject, s.hats[1].gameObject, s.hats[2].gameObject };
     game.hatsOnTrees = new GameObject[9]; for (int i = 0; i < 9; i++) game.hatsOnTrees[i] = Go("HatOn " + i, Vector3.zero);
-    for (int i = 0; i < 3; i++) { var so = B<FirSocket>("HatSocket " + i, new Vector3(-4 + 4 * i, 1.8f, 116)); so.game = game; so.acceptKind = 0; so.socketId = i; so.radius = 0.4f + 0.1f * i; s.hatSockets[i] = so; }
-    s.furnace = B<FirSocket>("Furnace", new Vector3(-7.5f, 1.1f, 145.4f)); s.furnace.game = game; s.furnace.acceptKind = 1; s.furnace.radius = 1.3f;
-    foreach (var so in new[] { s.hatSockets[0], s.hatSockets[1], s.hatSockets[2], s.furnace }) so.candidates = carry.FindAll(x => x.kind == so.acceptKind).ToArray();
+    for (int i = 0; i < 3; i++) { var so = B<FirSocket>("HatSocket " + i, new Vector3(-4 + 4 * i, 1.8f, 116)); so.game = U(game); so.acceptKind = 0; so.socketId = i; so.radius = 0.4f + 0.1f * i; s.hatSockets[i] = so; }
+    s.furnace = B<FirSocket>("Furnace", new Vector3(-7.5f, 1.1f, 145.4f)); s.furnace.game = U(game); s.furnace.acceptKind = 1; s.furnace.radius = 1.3f;
+    foreach (var so in new[] { s.hatSockets[0], s.hatSockets[1], s.hatSockets[2], s.furnace }) { var cs = carry.FindAll(x => x.kind == so.acceptKind); so.candidates = cs.ConvertAll(x => x.transform).ToArray(); so.candidateSize = cs.ConvertAll(x => x.sizeId).ToArray(); so.candidateIndex = cs.ConvertAll(x => x.index).ToArray(); so.candidatePickup = cs.ConvertAll(x => (VRC_Pickup)x.pickup).ToArray(); }
 
     // trees, locks
-    game.carolTrees = new FirAnimatronic[4]; for (int i = 0; i < 4; i++) game.carolTrees[i] = Tree("CarolTree " + i, new Vector3(-5.6f, 0.8f, 6 + 2 * i));
+    game.carolTrees = new VRC.Udon.UdonBehaviour[4]; for (int i = 0; i < 4; i++) game.carolTrees[i] = U(Tree("CarolTree " + i, new Vector3(-5.6f, 0.8f, 6 + 2 * i)));
     game.animatronics = game.carolTrees;
+    foreach (var a in game.carolTrees) a.program.GetType();
     s.carol = Lock(s, "Carol", 1, 5, true, 4, new Vector3(-4.6f, 0, 9)); s.fuseBox = Lock(s, "FuseBox", 2, 3, true, 10, new Vector3(-6, 0, 55));
     s.tapeDeck = Lock(s, "TapeDeck", 3, 4, true, 4, new Vector3(0, 0, 77)); s.officeDoor = Lock(s, "OfficeDoor", 4, 4, false, 10, new Vector3(2.8f, 0, 103));
 
     // gags (shared through the manager)
-    var gag = s.gag = B<FirGag>("Gag", new Vector3(10, 0, 5)); gag.game = game; gag.target = Go("GagProp", new Vector3(10, 0, 5)).transform; gag.moveBy = new Vector3(0, 1, 0); gag.line = "Wheee!"; gag.voice = Src("gagvoice", Clip("gag_line"));
-    var sk = s.skel = B<FirSkeletonGag>("Skeleton", new Vector3(-60, 0, -5)); sk.game = game; sk.act = 0; var rg = Rig("SkelRig", sk.transform); sk.pivots = rg; sk.meshes = Rig("SkelMesh", sk.transform); sk.line = "A skeleton."; sk.voice = Src("skelvoice", Clip("skel_line"));
-    var cl = s.closet = B<FirCloset>("Closet", new Vector3(6, 0, 110)); cl.game = game; cl.hinge = Go("Hinge", Vector3.zero, cl.transform).transform; cl.white = Rig("White", cl.transform); cl.red = Rig("Red", cl.transform);
+    var gag = s.gag = B<FirGag>("Gag", new Vector3(10, 0, 5)); gag.game = U(game); gag.target = Go("GagProp", new Vector3(10, 0, 5)).transform; gag.moveBy = new Vector3(0, 1, 0); gag.line = "Wheee!"; gag.voice = Src("gagvoice", Clip("gag_line"));
+    var sk = s.skel = B<FirSkeletonGag>("Skeleton", new Vector3(-60, 0, -5)); sk.game = U(game); sk.act = 0; var rg = Rig("SkelRig", sk.transform); sk.pivots = rg; sk.meshes = Rig("SkelMesh", sk.transform); sk.line = "A skeleton."; sk.voice = Src("skelvoice", Clip("skel_line"));
+    var cl = s.closet = B<FirCloset>("Closet", new Vector3(6, 0, 110)); cl.game = U(game); cl.hinge = Go("Hinge", Vector3.zero, cl.transform).transform; cl.white = Rig("White", cl.transform); cl.red = Rig("Red", cl.transform);
     cl.whiteVoice = Src("wv", Clip("a_skeleton")); cl.redVoice = Src("rv", Clip("red_skeleton")); cl.creak = Src("creak");
-    game.gags = new[] { gag }; game.skeletonGags = new[] { sk }; game.closet = cl;
+    game.gags = new[] { U(gag) }; game.skeletonGags = new[] { U(sk) }; game.closet = U(cl);
 
     // scares: one shared (everyone in the game gets it), one local
-    s.sharedScare = B<FirJumpscare>("SharedScare", new Vector3(0, 1.5f, 30)); s.sharedScare.game = game; s.sharedScare.kind = 0; s.sharedScare.global = true; s.sharedScare.zoneSize = new Vector3(6, 3, 1); s.sharedScare.minPhase = 2; s.sharedScare.maxPhase = 2; s.sharedScare.duration = 1f;
-    s.localScare = B<FirJumpscare>("LocalScare", new Vector3(0, 1.5f, 10)); s.localScare.game = game; s.localScare.kind = 0; s.localScare.zoneSize = new Vector3(6, 3, 1); s.localScare.minPhase = 1; s.localScare.maxPhase = 1;
-    game.jumpscares = new[] { s.sharedScare, s.localScare }; s.sharedScare.scareIndex = 0; s.localScare.scareIndex = 1;
+    s.sharedScare = B<FirJumpscare>("SharedScare", new Vector3(0, 1.5f, 30)); s.sharedScare.game = U(game); s.sharedScare.kind = 0; s.sharedScare.global = true; s.sharedScare.zoneSize = new Vector3(6, 3, 1); s.sharedScare.minPhase = 2; s.sharedScare.maxPhase = 2; s.sharedScare.duration = 1f;
+    s.localScare = B<FirJumpscare>("LocalScare", new Vector3(0, 1.5f, 10)); s.localScare.game = U(game); s.localScare.kind = 0; s.localScare.zoneSize = new Vector3(6, 3, 1); s.localScare.minPhase = 1; s.localScare.maxPhase = 1;
+    game.jumpscares = new[] { U(s.sharedScare), U(s.localScare) }; s.sharedScare.scareIndex = 0; s.localScare.scareIndex = 1;
 
     // the hunting tree, with waypoints round one long shelf in the stockroom
-    var st = s.stalker = B<FirStalker>("Stalker", new Vector3(0, -40, -30)); st.game = game; st.visual = Go("StalkerVisual", Vector3.zero, st.transform); st.visual.SetActive(false);
-    st.eyes = Go("Eyes", new Vector3(0, 1.8f, 0.2f), st.transform).transform; st.anim = Tree("StalkerTree", Vector3.zero); st.anim.transform.SetParent(st.visual.transform, false);
+    var st = s.stalker = B<FirStalker>("Stalker", new Vector3(0, -40, -30)); st.game = U(game); st.visual = Go("StalkerVisual", Vector3.zero, st.transform); st.visual.SetActive(false);
+    st.eyes = Go("Eyes", new Vector3(0, 1.8f, 0.2f), st.transform).transform; var stTree = Tree("StalkerTree", Vector3.zero); st.anim = U(stTree); stTree.transform.SetParent(st.visual.transform, false);
     st.parking = Go("Parking", new Vector3(0, -40, -30)).transform;
     st.spawnByPhase = new Transform[8]; st.spawnByPhase[2] = Go("Sp2", new Vector3(8.5f, 0, 52)).transform; st.spawnByPhase[4] = Go("Sp4", new Vector3(-8.5f, 0, 102.5f)).transform; st.spawnByPhase[6] = Go("Sp6", new Vector3(9, 0, 148)).transform;
     var wps = new List<Transform>(); var wph = new List<int>();
@@ -136,13 +138,13 @@ public static class SimTest {
     st.roomMinX = new float[8]; st.roomMaxX = new float[8]; st.roomMinZ = new float[8]; st.roomMaxZ = new float[8];
     for (int p = 1; p <= 7; p++) { st.roomMinX[p] = -W[p - 1] / 2 + 0.6f; st.roomMaxX[p] = W[p - 1] / 2 - 0.6f; st.roomMinZ[p] = Z0[p - 1] + 0.6f; st.roomMaxZ[p] = Z1[p - 1] - 0.6f; }
     st.moveAudio = Src("stalkermove"); st.moveClips = new[] { Clip("rustle") };
-    game.stalker = st;
+    game.stalker = U(st);
 
     var tg = Go("Toilet", new Vector3(-55, 0, -5)); var tp = tg.AddComponent<VRCPickup>(); var tsync = tg.AddComponent<VRCObjectSync>(); tsync.home = tg.transform.position; syncs.Add(tsync);
-    var rb = tg.AddComponent<Rigidbody>(); s.toilet = tg.AddComponent<FirToilet>(); s.toilet.pickup = tp; s.toilet.body = rb; s.toilet.stalker = st; s.toilet.game = game; s.toilet.audioSrc = Src("toiletaudio"); s.toilet.clunkClip = Clip("clunk");
+    var rb = tg.AddComponent<Rigidbody>(); s.toilet = tg.AddComponent<FirToilet>(); s.toilet.pickup = tp; s.toilet.body = rb; s.toilet.stalker = U(st); s.toilet.game = U(game); s.toilet.audioSrc = Src("toiletaudio"); s.toilet.clunkClip = Clip("clunk");
     game.carrySyncs = syncs.ToArray();
 
-    var amb = B<FirAmbience>("Ambience", Vector3.zero); amb.game = game; amb.emitter = Src("amb"); amb.clips = new[] { Clip("whisper") };
+    var amb = B<FirAmbience>("Ambience", Vector3.zero); amb.game = U(game); amb.emitter = Src("amb"); amb.clips = new[] { Clip("whisper") };
     return s;
   }
 

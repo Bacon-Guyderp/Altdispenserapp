@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
+using VRC.Udon;
 
 /// <summary>
 /// Fir Warning's game manager (remade).
@@ -48,13 +49,15 @@ public class FirGameManager : UdonSharpBehaviour
     public VRCObjectSync[] carrySyncs;
     public GameObject[] hatsOnTrees;         // [socket * 3 + colour]
     public GameObject[] hatPickups;          // by colour
-    public FirAnimatronic[] animatronics;
-    public FirAnimatronic[] carolTrees;
-    public FirJumpscare[] jumpscares;
-    public FirGag[] gags;
-    public FirSkeletonGag[] skeletonGags;
-    public FirCloset closet;
-    public FirStalker stalker;
+    // Other scripts are plain UdonBehaviour references, reached only with SendCustomEvent and
+    // Get/SetProgramVariable: the most basic Udon calls, which work however the scene was built.
+    public UdonBehaviour[] animatronics;     // FirAnimatronic
+    public UdonBehaviour[] carolTrees;       // FirAnimatronic
+    public UdonBehaviour[] jumpscares;       // FirJumpscare
+    public UdonBehaviour[] gags;             // FirGag
+    public UdonBehaviour[] skeletonGags;     // FirSkeletonGag
+    public UdonBehaviour closet;             // FirCloset
+    public UdonBehaviour stalker;            // FirStalker
     public TextMeshPro[] memoTexts;
     public string[] countNames;
     public int[] countValues;
@@ -76,15 +79,30 @@ public class FirGameManager : UdonSharpBehaviour
     public AudioClip[] screams;
     public AudioClip clipPickup, clipUnlock, clipWrong, clipTalk, clipLaugh, clipStatic, clipHit, clipWhoosh, clipHeartbeat, clipWhisper, clipSwitch;
     public Transform scareRig;
-    public FirAnimatronic scareAnim;
+    public UdonBehaviour scareAnim;          // FirAnimatronic
     public Material[] worldMaterials;        // every lantern-lit material: darkness and brightness are set on these
 
     public float lightsOutUntil;             // read by the stalker: nobody can see it while the lights are out
+    // ---- the public API for other scripts. Set the arguments, then SendCustomEvent the Ev... event.
+    public int argA;
+    public int argB;
+    public float argF;
+    public string argText = "";
+    // ---- published state other scripts read with GetProgramVariable
+    public bool inGame;
+    public int playersInGame = 1;
+    public bool smallGroup = true;
+    public float nearestOther = 999f;      // metres from you to the nearest other player in the game
+    public bool valvesOpen;
+    public int[] chapterHave;              // items found, by chapter
+    public int[] chapterNeed;              // items needed, by chapter
+    public int[] answers;                  // puzzle answers: answers[chapter * 5 + i] = CodeAt(chapter, i)
     public int heartbeat;                    // goes up every frame; FirWatchdog shows a stopped manager
     public string step = "not started";      // what it is doing right now (shown by FirWatchdog if it stops)
 
     // ------------------------------------------------------------ local
-    bool inited, synced, inGame, glowShown;
+    bool inited, synced, glowShown;
+    int publishedSeed = -1;
     VRCPlayerApi local;
     int lastRound, lastPhase, seenItems, seenHats, seenCarol, seenLights, seenStun, seenScare, seenGag;
     int pendingItems, pendingHats;
@@ -139,6 +157,9 @@ public class FirGameManager : UdonSharpBehaviour
         ordinals = new string[] { "1st", "2nd", "3rd", "4th" };
         roomNames = new string[] { "", "The Showroom", "The Stockroom", "The Voice Lab", "The Offices", "The Living Room", "The Recall Floor" };
         countBuf = new VRCPlayerApi[100];
+        chapterHave = new int[10];
+        chapterNeed = new int[10];
+        answers = new int[40];
         // each room's mood: 0 lobby, 1 showroom (red), 2 stockroom (sickly green), 3 voice lab (purple),
         // 4 offices (cold blue), 5 living room (fireplace amber), 6 recall floor (furnace orange), 7 exit
         roomAmb = new Color[8];
@@ -535,6 +556,7 @@ public class FirGameManager : UdonSharpBehaviour
         if (furnaceFire != null) furnaceFire.SetActive(phase >= 6 && ValvesOpen());
         for (int d = 0; d < doors.Length; d++) if (doors[d] != null) doors[d].SetActive(phase < d + 2);
         step = caller + " > texts";
+        Publish();
         RefreshTexts();
         step = caller + " > round and chapter";
         if (!synced) { step = caller; return; }
@@ -546,7 +568,7 @@ public class FirGameManager : UdonSharpBehaviour
             seenItems = itemMask;
             seenHats = hatMask;
             carolStep = -1;
-            for (int j = 0; j < jumpscares.Length; j++) if (jumpscares[j] != null) jumpscares[j].Rearm();
+            for (int j = 0; j < jumpscares.Length; j++) if (jumpscares[j] != null) jumpscares[j].SendCustomEvent("Rearm");
             if (phase == 0)
             {
                 if (inGame) { inGame = false; local.TeleportTo(lobbySpawn.position, lobbySpawn.rotation); PlayMusic(0); }
@@ -602,12 +624,12 @@ public class FirGameManager : UdonSharpBehaviour
         if (stunCount != seenStun)
         {
             seenStun = stunCount;
-            if (stalker != null) stalker.Stun();
+            if (stalker != null) stalker.SendCustomEvent("Stun");
         }
         if (scareCount != seenScare)
         {
             seenScare = scareCount;
-            if (inGame && scareIndex >= 0 && scareIndex < jumpscares.Length && jumpscares[scareIndex] != null) jumpscares[scareIndex].FireShared();
+            if (inGame && scareIndex >= 0 && scareIndex < jumpscares.Length && jumpscares[scareIndex] != null) jumpscares[scareIndex].SendCustomEvent("FireShared");
         }
         if (gagCount != seenGag)
         {
@@ -620,9 +642,9 @@ public class FirGameManager : UdonSharpBehaviour
 
     void PlayGagLocally(int kind, int index)
     {
-        if (kind == 0 && index >= 0 && index < gags.Length && gags[index] != null) gags[index].Play();
-        else if (kind == 1 && index >= 0 && index < skeletonGags.Length && skeletonGags[index] != null) skeletonGags[index].Play();
-        else if (kind == 2 && closet != null) closet.Play();
+        if (kind == 0 && index >= 0 && index < gags.Length && gags[index] != null) gags[index].SendCustomEvent("Play");
+        else if (kind == 1 && index >= 0 && index < skeletonGags.Length && skeletonGags[index] != null) skeletonGags[index].SendCustomEvent("Play");
+        else if (kind == 2 && closet != null) closet.SendCustomEvent("Play");
     }
 
     void ItemMoments(int added)
@@ -757,6 +779,8 @@ public class FirGameManager : UdonSharpBehaviour
             if (hudObjective != null) hudObjective.text = ObjectiveText();
             if (hudSubtitle != null && t > subtitleUntil) hudSubtitle.text = "";
             if (lobbyStatus != null) lobbyStatus.text = LobbyText();
+            smallGroup = SmallGroup();
+            nearestOther = NearestOtherPlayer(local.GetPosition());
             if (inGame && phase >= 1 && phase <= 6 && t > hintAt)
             {
                 hintAt = t + (SmallGroup() ? 180f : 240f);
@@ -837,7 +861,7 @@ public class FirGameManager : UdonSharpBehaviour
             return;
         }
         int tree = CodeAt(1, carolStep);
-        if (tree < carolTrees.Length && carolTrees[tree] != null) carolTrees[tree].Note();
+        if (tree < carolTrees.Length && carolTrees[tree] != null) carolTrees[tree].SendCustomEvent("Note");
         carolStep = carolStep + 1;
         carolNext = Time.time + 1.1f;
     }
@@ -877,10 +901,51 @@ public class FirGameManager : UdonSharpBehaviour
     public void Flicker(float seconds) { flickerUntil = Mathf.Max(flickerUntil, Time.time + seconds); }
     public bool IsInGame() { return inGame; }
 
+    /// <summary>Tells a FirAnimatronic to act (mode) for a while.</summary>
+    void AnimMode(UdonBehaviour a, int mode, float seconds)
+    {
+        a.SetProgramVariable("argMode", mode);
+        a.SetProgramVariable("argSeconds", seconds);
+        a.SendCustomEvent("EvSetMode");
+    }
+
+    // ---- events for other scripts (arguments in argA / argB / argF / argText)
+    public void EvCollectItem() { CollectItem(argA); }
+    public void EvFillSocket() { FillSocket(argA); }
+    public void EvShareScare() { ShareScare(argA); }
+    public void EvShareGag() { ShareGag(argA, argB); }
+    public void EvSolveLock() { SolveLock(argA); }
+    public void EvWrongCode() { WrongCode(argA); }
+    public void EvSay() { Say(argText, argF); }
+    public void EvBlackout() { Blackout(argF); }
+    public void EvFlicker() { Flicker(argF); }
+    public void EvGroupMode() { GroupMode(argA, argB, argF); }
+    public void EvFaceScare() { FaceScare(argA, argF); }
+    public void EvScream() { if (screams.Length > 0) PlaySfx(screams[argA % screams.Length]); }
+    public void EvSfxWrong() { PlaySfx(clipWrong); }
+    public void EvSfxWhoosh() { PlaySfx(clipWhoosh); }
+    public void EvSfxWhisper() { PlaySfx(clipWhisper); }
+    public void EvSfxHeartbeat() { PlaySfx(clipHeartbeat); }
+
+    /// <summary>Puts what other scripts need to know where they can read it.</summary>
+    void Publish()
+    {
+        for (int ch = 0; ch < 10; ch++) { chapterHave[ch] = ChapterItemsHave(ch); chapterNeed[ch] = ChapterItemsNeed(ch); }
+        valvesOpen = ChapterItemsDone(ValveChapter);
+        if (seed == publishedSeed) return;
+        publishedSeed = seed;
+        // carol: 5 notes, fuse box: 3 digits, tapes: 4, office door: 4 digits, hats: 3
+        for (int i = 0; i < 5; i++) answers[5 + i] = CodeAt(1, i);
+        for (int i = 0; i < 3; i++) answers[10 + i] = CodeAt(2, i);
+        for (int i = 0; i < 4; i++) answers[15 + i] = CodeAt(3, i);
+        for (int i = 0; i < 4; i++) answers[20 + i] = CodeAt(4, i);
+        for (int i = 0; i < 3; i++) answers[25 + i] = CodeAt(5, i);
+    }
+
     public void GroupMode(int chapter, int mode, float seconds)
     {
         for (int i = 0; i < animatronics.Length; i++)
-            if (animatronics[i] != null && animatronics[i].chapter == chapter) animatronics[i].SetMode(mode, seconds);
+            if (animatronics[i] != null && (int)animatronics[i].GetProgramVariable("chapter") == chapter) AnimMode(animatronics[i], mode, seconds);
     }
 
     public void FaceScare(int screamIndex, float seconds)
@@ -912,7 +977,7 @@ public class FirGameManager : UdonSharpBehaviour
             scareRig.gameObject.SetActive(true);
             if (scareClip >= 0)
             {
-                if (scareAnim != null) scareAnim.SetMode(4, scareLen);
+                if (scareAnim != null) AnimMode(scareAnim, 4, scareLen);
                 PlaySfx(screams[scareClip % screams.Length]);
                 PlaySfx(clipHit);
             }
@@ -955,7 +1020,7 @@ public class FirGameManager : UdonSharpBehaviour
         scareRig.position = head.position + back * 0.9f;
         scareRig.rotation = Quaternion.LookRotation(-back, Vector3.up);
         scareRig.gameObject.SetActive(true);
-        if (scareAnim != null) scareAnim.SetMode(1, 10f);
+        if (scareAnim != null) AnimMode(scareAnim, 1, 10f);
         behindActive = true;
         behindTimeout = Time.time + 9f;
         PlaySfx(clipWhisper);
@@ -998,6 +1063,7 @@ public class FirGameManager : UdonSharpBehaviour
             if (Utilities.IsValid(p) && Vector3.Distance(p.GetPosition(), lobbySpawn.position) > 25f) c = c + 1;
         }
         cachedInGame = Mathf.Max(1, c);
+        playersInGame = cachedInGame;
         return cachedInGame;
     }
 

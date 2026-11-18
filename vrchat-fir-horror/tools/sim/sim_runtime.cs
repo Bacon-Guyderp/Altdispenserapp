@@ -10,7 +10,12 @@ namespace UnityEngine {
   public class Object {
     string nm = "";
     public virtual string name { get { return nm; } set { nm = value; } }
-    public static implicit operator bool(Object o) { return o != null; }
+    public static implicit operator bool(Object o) { return !ReferenceEquals(o, null); }
+    // like Unity: compare by identity (without these, the bool conversion above makes any two objects "equal")
+    public static bool operator ==(Object a, Object b) { return ReferenceEquals(a, b); }
+    public static bool operator !=(Object a, Object b) { return !ReferenceEquals(a, b); }
+    public override bool Equals(object o) { return ReferenceEquals(this, o); }
+    public override int GetHashCode() { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this); }
     public override string ToString() { return name; }
     public static void Destroy(Object o) { DestroyImmediate(o); }
     public static void DestroyImmediate(Object o) {
@@ -28,6 +33,7 @@ namespace UnityEngine {
     public GameObject gameObject { get { return go; } }
     public Transform transform { get { return go.transform; } }
     public T GetComponent<T>() where T : class { return go.GetComponent<T>(); }
+    public T[] GetComponents<T>() where T : class { var r = new List<T>(); foreach (var c in go.comps) if (c is T) r.Add(c as T); return r.ToArray(); }
     public Component GetComponent(Type t) { foreach (var c in go.comps) if (t.IsInstanceOfType(c)) return c; return null; }
     public T[] GetComponentsInChildren<T>() where T : class { return go.GetComponentsInChildren<T>(false); }
     public T[] GetComponentsInChildren<T>(bool inactive) where T : class { return go.GetComponentsInChildren<T>(inactive); }
@@ -338,6 +344,33 @@ namespace VRC.SDK3.Components {
   }
 }
 
+namespace VRC.Udon {
+  /// The real Udon component. Calls are checked strictly: a missing variable or event, or a value of the
+  /// wrong type, is reported (in VRChat these fail silently or stop the script).
+  public class UdonBehaviour : UnityEngine.MonoBehaviour {
+    public string interactText; public float proximity;
+    internal UdonSharp.UdonSharpBehaviour program;
+    UdonSharp.UdonSharpBehaviour P { get { if (program == null) Sim.Fail("UdonBehaviour on '" + go.name + "' has no program"); return program; } }
+    static System.Reflection.FieldInfo Field(object p, string n) { return p.GetType().GetField(n, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance); }
+    public void SendCustomEvent(string e) {
+      var p = P; if (p == null) return;
+      if (Sim.Halted(p)) { Sim.Log("udon", "event " + e + " ignored: " + p.GetType().Name + " is halted"); return; }
+      Sim.Invoke(p, e);
+    }
+    public void SetProgramVariable(string n, object v) {
+      var p = P; if (p == null) return; var f = Field(p, n);
+      if (f == null) { Sim.Fail("SetProgramVariable: " + p.GetType().Name + " has no variable '" + n + "'"); return; }
+      if (v != null && !f.FieldType.IsInstanceOfType(v)) { Sim.Fail("SetProgramVariable: " + p.GetType().Name + "." + n + " is " + f.FieldType.Name + ", got " + v.GetType().Name); return; }
+      f.SetValue(p, v);
+    }
+    public object GetProgramVariable(string n) {
+      var p = P; if (p == null) return null; var f = Field(p, n);
+      if (f == null) { Sim.Fail("GetProgramVariable: " + p.GetType().Name + " has no variable '" + n + "'"); return null; }
+      return f.GetValue(p);
+    }
+  }
+}
+
 namespace UdonSharp {
   public enum BehaviourSyncMode { Any, None, Continuous, Manual, NoVariableSync }
   [AttributeUsage(AttributeTargets.Class)] public class UdonBehaviourSyncModeAttribute : Attribute { public BehaviourSyncMode mode; public UdonBehaviourSyncModeAttribute(BehaviourSyncMode m) { mode = m; } }
@@ -425,6 +458,12 @@ public static class Sim {
   public static bool Halted(UdonSharp.UdonSharpBehaviour b) { return halted.Contains(b); }
 
   public static IEnumerable<UdonSharp.UdonSharpBehaviour> Behaviours(UnityEngine.GameObject g) { foreach (var c in g.comps) { var b = c as UdonSharp.UdonSharpBehaviour; if (b != null) yield return b; } }
+  /// The UdonBehaviour behind a U# behaviour (made on demand, like U#'s editor setup does).
+  public static VRC.Udon.UdonBehaviour UB(UdonSharp.UdonSharpBehaviour b) {
+    if (b == null) return null;
+    foreach (var c in b.gameObject.comps) { var u = c as VRC.Udon.UdonBehaviour; if (u != null && u.program == b) return u; }
+    var nu = b.gameObject.AddComponent<VRC.Udon.UdonBehaviour>(); nu.program = b; return nu;
+  }
   public static void With(Client c, Action a) { var old = Current; Current = c; try { a(); } finally { Current = old; } }
 
   // ---- players

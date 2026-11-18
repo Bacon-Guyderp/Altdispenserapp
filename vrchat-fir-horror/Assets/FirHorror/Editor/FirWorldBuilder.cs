@@ -74,7 +74,7 @@ public static class FirWorldBuilder
         if (!EnsureProgramAssets()) return false;
         if (!CheckShaders(quiet)) return false;
         meshCache.Clear(); mats.Clear(); itemList.Clear(); itemChapterList.Clear(); carrySyncList.Clear(); allBehaviours.Clear(); toilets.Clear(); glowList.Clear(); stalkerRef = null; skelParts = null;
-        teleporters.Clear(); carryItems.Clear(); sockets.Clear(); lobbySpawnRef = null; checkpointRefs = null;
+        teleporters.Clear(); linkProblems.Clear(); carryItems.Clear(); sockets.Clear(); lobbySpawnRef = null; checkpointRefs = null;
         Directory.CreateDirectory(Gen);
         missingAssets.Clear();
         EnsureAssetsImported();
@@ -114,7 +114,7 @@ public static class FirWorldBuilder
         scareTree.root.transform.localPosition = new Vector3(0, -scareTree.faceHeight, -scareTree.faceZ);
         scareTree.anim.watchRange = 0; scareTree.anim.greetChance = 0; scareTree.anim.snapChance = 0;
         game.scareRig = rig;
-        game.scareAnim = scareTree.anim;
+        game.scareAnim = UB(scareTree.anim);
 
         // ---- places
         var spawn = new GameObject("Spawn").transform;   // made first: every room's Back-to-lobby teleporter points here
@@ -131,7 +131,8 @@ public static class FirWorldBuilder
         var amb = new GameObject("Ambience");
         amb.transform.SetParent(root, false);
         var fa = Add<FirAmbience>(amb);
-        fa.game = game;
+        fa.game = UB(game);
+        fa.lobbySpawn = spawn;
         fa.emitter = Src(amb.transform, Vector3.zero, null, false, 1f, 0.9f, 12f, false);
         fa.clips = new[] { Clip("whisper"), Clip("rustle"), Clip("creak"), Clip("tree_laugh"), Clip("servo"), Clip("tree_talk"), Clip("tree_note"), Clip("phone") };
         fa.minGap = 14f; fa.maxGap = 36f;
@@ -140,35 +141,43 @@ public static class FirWorldBuilder
         // ---- wire up the collected lists
         game.items = itemList.ToArray();
         game.itemChapter = itemChapterList.ToArray();
-        foreach (var t in toilets) { t.stalker = stalkerRef; t.game = game; }
-        foreach (var s in sockets) s.candidates = carryItems.Where(c => c.kind == s.acceptKind).ToArray();
-        game.stalker = stalkerRef;
+        foreach (var t in toilets) { t.stalker = UB(stalkerRef); t.game = UB(game); }
+        foreach (var s in sockets)
+        {
+            var cands = carryItems.Where(c => c.kind == s.acceptKind).ToArray();
+            s.candidates = cands.Select(c => c.transform).ToArray();
+            s.candidateSize = cands.Select(c => c.sizeId).ToArray();
+            s.candidateIndex = cands.Select(c => c.index).ToArray();
+            s.candidatePickup = cands.Select(c => (VRC_Pickup)c.GetComponent<VRCPickup>()).ToArray();
+        }
+        game.stalker = UB(stalkerRef);
         StalkerWaypoints(root, stalkerRef);
         var gagArr = root.GetComponentsInChildren<FirGag>(true);
         for (int i = 0; i < gagArr.Length; i++) gagArr[i].gagIndex = i;
-        game.gags = gagArr;
+        game.gags = gagArr.Select(UB).ToArray();
         var skelArr = root.GetComponentsInChildren<FirSkeletonGag>(true);
         for (int i = 0; i < skelArr.Length; i++) skelArr[i].gagIndex = i;
-        game.skeletonGags = skelArr;
-        game.closet = root.GetComponentInChildren<FirCloset>(true);
+        game.skeletonGags = skelArr.Select(UB).ToArray();
+        game.closet = UB(root.GetComponentInChildren<FirCloset>(true));
         // diagnostics: every interactable reports presses to the lobby board
         var dog = Add<FirWatchdog>(new GameObject("Diagnostics"));
         dog.transform.SetParent(root, false);
-        dog.game = game;
+        dog.game = UB(game);
         dog.board = Text("DiagnosticsBoard", root, new Vector3(-54.7f, 1.95f, 5.98f), Face(Vector3.back), new Vector2(2.8f, 0.6f), 0.11f, "<color=#ff6060>Diagnostics: not running</color>");
         dog.board.color = Color.white;
-        foreach (var x in root.GetComponentsInChildren<FirButton>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirKey>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirItem>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirSkeletonGag>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirGag>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirCloset>(true)) x.watch = dog;
-        foreach (var x in root.GetComponentsInChildren<FirTeleporter>(true)) x.watch = dog;
+        foreach (var x in root.GetComponentsInChildren<FirButton>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirKey>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirItem>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirSkeletonGag>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirGag>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirCloset>(true)) x.watch = UB(dog);
+        foreach (var x in root.GetComponentsInChildren<FirTeleporter>(true)) x.watch = UB(dog);
         game.glowOnly = glowList.ToArray();
         game.carrySyncs = carrySyncList.ToArray();
-        game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).ToArray();
-        game.jumpscares = root.GetComponentsInChildren<FirJumpscare>(true);
-        for (int i = 0; i < game.jumpscares.Length; i++) game.jumpscares[i].scareIndex = i;
+        game.animatronics = root.GetComponentsInChildren<FirAnimatronic>(true).Where(a => a != scareTree.anim).Select(UB).ToArray();
+        var scareArr = root.GetComponentsInChildren<FirJumpscare>(true);
+        for (int i = 0; i < scareArr.Length; i++) scareArr[i].scareIndex = i;
+        game.jumpscares = scareArr.Select(UB).ToArray();
         game.worldMaterials = mats.Values.Where(m => m != null).Distinct().ToArray();
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
 
@@ -187,6 +196,10 @@ public static class FirWorldBuilder
                 string.Join("\n", missingAssets.Take(15)) + (missingAssets.Count > 15 ? "\n..." : "") +
                 "\n\nRight-click the Assets/FirHorror folder > Reimport, then run Fir Warning > Build World again. " +
                 "If it keeps happening, please send this message.", "OK");
+        CheckLinks(root);
+        if (linkProblems.Count > 0)
+            EditorUtility.DisplayDialog("Fir Warning: link problem", linkProblems.Count + " script link(s) are missing, so those things won't work:\n\n" +
+                string.Join("\n", linkProblems.Take(12)) + "\n\nPlease send this message (it's also in the Console).", "OK");
         var tpProblems = CheckTeleporters();
         if (tpProblems.Count > 0)
             EditorUtility.DisplayDialog("Fir Warning: teleporter problem", string.Join("\n", tpProblems.Take(15)) + "\n\nPlease send this message.", "OK");
@@ -391,23 +404,23 @@ public static class FirWorldBuilder
         Station(panel, "Power on (the trees will sing)", "StationPower");
         Text("PanelLabel", g, new Vector3(3.4f, 2.1f, 19.74f), Face(Vector3.back), new Vector2(1.2f, 0.2f), 0.12f, "POWER PANEL");
         var lk = Add<FirSequenceLock>(Group(g, "CarolLock", new Vector3(3.4f, 1.4f, 19.73f)).gameObject);
-        lk.game = game; lk.chapter = 1; lk.length = 5; lk.needsItems = true; lk.needText = "BATTERIES";
+        lk.game = UB(game); lk.chapter = 1; lk.length = 5; lk.needsItems = true; lk.needText = "BATTERIES";
         lk.valueNames = new[] { "1", "2", "3", "4" };
         lk.display = Text("CarolDisplay", lk.transform, new Vector3(0, -0.15f, -0.01f), Face(Vector3.back), new Vector2(0.8f, 0.2f), 0.1f, "_ _ _ _ _");
         lk.display.color = new Color(1f, 0.85f, 0.3f);
-        game.carolTrees = new FirAnimatronic[4];
+        game.carolTrees = new VRC.Udon.UdonBehaviour[4];
         for (int i = 0; i < 4; i++)
         {
             var tr = carol[i];
             tr.anim.voice.pitch = pitches[i];
             tr.anim.snapChance = 0f;
-            game.carolTrees[i] = tr.anim;
+            game.carolTrees[i] = UB(tr.anim);
             var touch = new GameObject("Touch");
             touch.transform.SetParent(tr.root.transform, false);
             touch.transform.localPosition = new Vector3(0, tr.faceHeight * 0.8f, 0);
             touch.AddComponent<BoxCollider>().size = new Vector3(0.6f, tr.faceHeight * 1.4f, 0.6f);
             var k = Add<FirKey>(touch);
-            k.lockTarget = lk; k.value = i; k.anim = tr.anim;
+            k.lockTarget = UB(lk); k.value = i; k.anim = UB(tr.anim);
             SetInteract(k, "Touch the tree", 2.5f);
             Text("Number", tr.root.transform, new Vector3(0, 0.03f, 0.32f), Quaternion.Euler(90, 180, 0), new Vector2(0.2f, 0.12f), 0.08f,
                  "<color=#ffd27a>" + (i + 1) + "</color>");
@@ -415,15 +428,15 @@ public static class FirWorldBuilder
 
         // scares
         var hello = Scare(g, "Hello", new Vector3(0, 1.5f, 5.5f), new Vector3(16, 3, 0.4f), 7, 1, 1);
-        hello.anim = big.anim; hello.animMode = 2; hello.duration = 1.5f;
+        hello.anim = UB(big.anim); hello.animMode = 2; hello.duration = 1.5f;
         var peek = Scare(g, "CornerPeek", new Vector3(3, 1.5f, 13f), new Vector3(8, 3, 0.4f), 6, 1, 1);
         peek.target = BuildTree(g, new Vector3(-7.2f, 0, 19.2f), 135, 1.5f, 0, false, "PeekTree").root;
         var singAll = Scare(g, "SingAlong", new Vector3(0, 1.5f, 9.5f), new Vector3(6, 3, 0.4f), 2, 1, 1);
         singAll.sound = Src(g, new Vector3(0, 1, 11), Clip("tree_sing"), false, 1f, 0.9f, 20f, false);
-        singAll.anim = t2.anim; singAll.animMode = 3; singAll.duration = 18f;
+        singAll.anim = UB(t2.anim); singAll.animMode = 3; singAll.duration = 18f;
         var glance = Scare(g, "TableGlance", new Vector3(-4, 1.5f, 8.5f), new Vector3(0.4f, 3, 6), 2, 1, 1);
         glance.sound = Src(g, new Vector3(-5.6f, 1.2f, 6f), Clip("servo"), false, 1f, 1f, 8f, false);
-        glance.anim = t1.anim; glance.animMode = 1; glance.duration = 6f;
+        glance.anim = UB(t1.anim); glance.animMode = 1; glance.duration = 6f;
         var behind = Scare(g, "PanelBehind", new Vector3(2.5f, 1.5f, 18.4f), new Vector3(5, 3, 0.4f), 4, 1, 1);
         behind.delay = 1.5f;
         Creeper(g, "StageCreeper", new Vector3(0, 1.5f, 15f), new Vector3(16, 3, 0.4f), new Vector3(1.5f, 0, 2.5f), 0, 1.6f, 1);
@@ -502,7 +515,7 @@ public static class FirWorldBuilder
         peek.target = BuildTree(g, new Vector3(6.75f, 0, 51.5f), 180, 1.7f, 0, false, "AislePeekTree").root;
         var crate = BuildTree(g, new Vector3(10.8f, 0, 31f), -90, 1.4f, 2, false, "CrateTree");
         var pop = Scare(g, "CratePop", new Vector3(10.8f, 1.5f, 33.5f), new Vector3(2.4f, 3, 0.4f), 1, 2, 2);
-        pop.target = crate.root; pop.anim = crate.anim; pop.animMode = 4; pop.duration = 1.6f;
+        pop.target = crate.root; pop.anim = UB(crate.anim); pop.animMode = 4; pop.duration = 1.6f;
         pop.sound = Src(g, new Vector3(10.8f, 1, 31f), Clip("scream2"), false, 1f, 1f, 12f, false);
         var behind = Scare(g, "FuseBehind", new Vector3(-6f, 1.5f, 53.5f), new Vector3(4, 3, 0.4f), 4, 2, 2);
         behind.delay = 2f;
@@ -586,7 +599,7 @@ public static class FirWorldBuilder
         Desk(g, new Vector3(0, 0, 77.6f), 0);
         Box(g, "TapeDeck", new Vector3(0, 0.84f, 77.5f), new Vector3(0.9f, 0.14f, 0.45f), M("Black"), true);
         var lk = Add<FirSequenceLock>(Group(g, "TapeLock", new Vector3(0, 0.84f, 77.5f)).gameObject);
-        lk.game = game; lk.chapter = 3; lk.length = 4; lk.needsItems = true; lk.needText = "TAPES";
+        lk.game = UB(game); lk.chapter = 3; lk.length = 4; lk.needsItems = true; lk.needText = "TAPES";
         lk.valueNames = new[] { "R", "B", "G", "Y" };
         lk.valueClips = new[] { Clip("tree_talk"), Clip("whisper"), Clip("tree_laugh"), Clip("static") };
         lk.beep = Src(lk.transform, Vector3.zero, Clip("servo"), false, 1f, 1f, 8f, false);
@@ -600,10 +613,10 @@ public static class FirWorldBuilder
         var intro = Scare(g, "LabIntro", new Vector3(0, 1.5f, 59.5f), new Vector3(16, 3, 0.4f), 5, 3, 3);
         intro.groupChapter = 3; intro.duration = 2f; intro.screamIndex = 1;
         var boothScare = Scare(g, "BoothScream", new Vector3(5.5f, 1.5f, 69.5f), new Vector3(3.2f, 3, 0.4f), 1, 3, 3);
-        boothScare.anim = singer.anim; boothScare.animMode = 4; boothScare.duration = 2f;
+        boothScare.anim = UB(singer.anim); boothScare.animMode = 4; boothScare.duration = 2f;
         boothScare.sound = Src(booth, new Vector3(0.6f, 1.5f, 1.5f), Clip("scream3"), false, 1f, 1f, 15f, false);
         var jam = Scare(g, "BeltStops", new Vector3(0, 1.5f, 66.5f), new Vector3(16, 3, 0.4f), 7, 3, 3);
-        jam.anim = heads[2].anim; jam.animMode = 2; jam.duration = 2.5f;
+        jam.anim = UB(heads[2].anim); jam.animMode = 2; jam.duration = 2.5f;
         jam.sound = Src(g, new Vector3(0, 1, 64), Clip("tree_talk"), false, 1f, 1f, 15f, false);
         var deckBehind = Scare(g, "DeckBehind", new Vector3(0, 1.5f, 76f), new Vector3(4, 3, 0.4f), 4, 3, 3);
         deckBehind.delay = 3f;
@@ -619,7 +632,7 @@ public static class FirWorldBuilder
         boothBehind.delay = 1.5f;
         var headDrop = Scare(g, "HeadDrop", new Vector3(-2f, 1.5f, 70f), new Vector3(0.4f, 3, 4), 3, 3, 3);
         var falling = BuildTree(g, new Vector3(-2.6f, 3.0f, 70.5f), 90, 0.55f, 3, false, "FallingHead");
-        headDrop.target = falling.root; headDrop.anim = falling.anim; headDrop.animMode = 4; headDrop.duration = 1.5f;
+        headDrop.target = falling.root; headDrop.anim = UB(falling.anim); headDrop.animMode = 4; headDrop.duration = 1.5f;
         headDrop.dropTo = Marker(g, "HeadDropEnd", new Vector3(-2.6f, 0, 70.5f), 90);
         headDrop.sound = Src(g, new Vector3(-2.6f, 1.5f, 70.5f), Clip("scream1"), false, 1f, 1f, 12f, false);
         Charger(g, "LabCharger", new Vector3(3f, 1.5f, 77f), new Vector3(0.4f, 3, 3), new Vector3(7f, 0, 78.6f), -90, 3);
@@ -786,7 +799,7 @@ public static class FirWorldBuilder
             sock.transform.SetParent(tr.head, false);
             sock.transform.localPosition = new Vector3(0, tr.topHeight - 0.05f, 0);
             var fs = Add<FirSocket>(sock);   // no collider: it measures how far the hats are
-            fs.game = game; fs.acceptKind = 0; fs.socketId = s; fs.tree = tr.anim; fs.radius = 0.4f + 0.1f * s;
+            fs.game = UB(game); fs.acceptKind = 0; fs.socketId = s; fs.tree = UB(tr.anim); fs.radius = 0.4f + 0.1f * s;
             sockets.Add(fs);
             // a brass name plaque at the tree's feet
             var fwd = Quaternion.Euler(0, yaws[s], 0) * Vector3.forward;
@@ -803,7 +816,7 @@ public static class FirWorldBuilder
         // scares
         var welcome = Scare(g, "FamilySong", new Vector3(0, 1.5f, 106.5f), new Vector3(14, 3, 0.4f), 2, 5, 5);
         welcome.sound = Src(g, new Vector3(-3f, 1.2f, 115f), Clip("tree_sing_wrong"), false, 1f, 0.8f, 20f, false);
-        welcome.anim = orig.anim; welcome.animMode = 3; welcome.duration = 25f;
+        welcome.anim = UB(orig.anim); welcome.animMode = 3; welcome.duration = 25f;
         var winPeek = Scare(g, "WindowPeek", new Vector3(-3.5f, 1.5f, 112f), new Vector3(4, 3, 0.4f), 6, 5, 5);
         winPeek.target = BuildTree(g, new Vector3(1.0f, 0, 119.2f), 180, 2.0f, 0, false, "CornerWatcher").root;
         Scare(g, "FireplaceBehind", new Vector3(-5f, 1.5f, 108f), new Vector3(0.4f, 3, 2.5f), 4, 5, 5);
@@ -855,7 +868,7 @@ public static class FirWorldBuilder
             Prim(PrimitiveType.Sphere, "Puff", mist.transform, new Vector3(puffs[i, 0], 0.02f, puffs[i, 1]),
                  new Vector3(puffs[i, 2], 0.08f + 0.03f * (i % 2), puffs[i, 3]), M("Mist"));
         var cl = Add<FirCloset>(door);
-        cl.game = game; cl.hinge = hinge; cl.white = white; cl.red = red; cl.mist = mist;
+        cl.game = UB(game); cl.hinge = hinge; cl.white = white; cl.red = red; cl.mist = mist;
         cl.creak = Src(c, new Vector3(0.4f, 1.2f, 0), Clip("creak"), false, 1f, 1f, 14f, false);
         cl.whiteVoice = Src(white[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_white"), false, 1f, 1f, 16f, false);
         cl.redVoice = Src(red[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_red"), false, 1f, 1f, 16f, false);
@@ -1005,7 +1018,7 @@ public static class FirWorldBuilder
         mouth.transform.SetParent(g, false);
         mouth.transform.localPosition = new Vector3(-7.5f, 1.1f, 145.4f);
         var fs = Add<FirSocket>(mouth);
-        fs.game = game; fs.acceptKind = 1; fs.radius = 1.3f;
+        fs.game = UB(game); fs.acceptKind = 1; fs.radius = 1.3f;
         sockets.Add(fs);
         Text("FurnaceLabel", g, new Vector3(-7.5f, 2.3f, 145.7f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.25f, "<color=#ffaa55>DISPOSAL</color>");
 
@@ -1032,7 +1045,7 @@ public static class FirWorldBuilder
         // scares
         var hangDrop = Scare(g, "CeilingDrop", new Vector3(0, 1.5f, 138.5f), new Vector3(8, 3, 0.4f), 3, 6, 6);
         var hanger = BuildTree(g, new Vector3(0.5f, 4.6f, 140.5f), 180, 1.3f, 6, false, "HangingTree");
-        hangDrop.target = hanger.root; hangDrop.anim = hanger.anim; hangDrop.animMode = 4; hangDrop.duration = 2f;
+        hangDrop.target = hanger.root; hangDrop.anim = UB(hanger.anim); hangDrop.animMode = 4; hangDrop.duration = 2f;
         hangDrop.dropTo = Marker(g, "HangDropEnd", new Vector3(0.5f, 0, 140.5f), 180);
         hangDrop.sound = Src(g, new Vector3(0.5f, 2f, 140.5f), Clip("scream3"), false, 1f, 1f, 18f, false);
         var face1 = Scare(g, "PalletFace", new Vector3(-6.5f, 1.5f, 128f), new Vector3(0.4f, 3, 3f), 0, 6, 6);
@@ -1054,7 +1067,7 @@ public static class FirWorldBuilder
         sharedFurnace.global = true;
         var drop2 = Scare(g, "CeilingDrop2", new Vector3(6f, 1.5f, 134f), new Vector3(0.4f, 3, 6), 3, 6, 6);
         var hanger2 = BuildTree(g, new Vector3(8.5f, 4.6f, 133f), -90, 1.3f, 6, false, "HangingTree2");
-        drop2.target = hanger2.root; drop2.anim = hanger2.anim; drop2.animMode = 4; drop2.duration = 2f;
+        drop2.target = hanger2.root; drop2.anim = UB(hanger2.anim); drop2.animMode = 4; drop2.duration = 2f;
         drop2.dropTo = Marker(g, "HangDropEnd2", new Vector3(8.5f, 0, 133f), -90);
         drop2.sound = Src(g, new Vector3(8.5f, 2f, 133f), Clip("scream2"), false, 1f, 1f, 18f, false);
         var valveLeft = Scare(g, "LeftValveFace", new Vector3(-9.8f, 1.5f, 129f), new Vector3(0.4f, 3, 2f), 0, 6, 6);
@@ -1082,7 +1095,7 @@ public static class FirWorldBuilder
         last.delay = 6f; last.screamIndex = 2; last.duration = 1.3f;
         var song = Scare(g, "Credits", new Vector3(0, 1.5f, 152f), new Vector3(10, 3, 0.4f), 2, 7, 7);
         song.sound = Src(g, new Vector3(3.6f, 1.5f, 158f), Clip("tree_sing"), false, 1f, 0.9f, 20f, false);
-        song.anim = orig.anim; song.animMode = 3; song.duration = 19f;
+        song.anim = UB(orig.anim); song.animMode = 3; song.duration = 19f;
         var lastBehind = Scare(g, "ButtonBehind", new Vector3(-3f, 1.5f, 158.4f), new Vector3(2, 3, 0.4f), 4, 7, 7);
         lastBehind.delay = 2f;
     }
@@ -1119,7 +1132,7 @@ public static class FirWorldBuilder
         var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/Gags/gag_" + id + ".ogg");
         if (clip == null) Debug.LogWarning("Fir Warning: no voice line for gag " + id + " (run tools/make_voices.py)");
         var gag = Add<FirGag>(go);
-        gag.game = game;
+        gag.game = UB(game);
         gag.line = say;
         gag.holdTime = Mathf.Max(1.5f, clip != null ? clip.length : 2f);
         gag.voice = Src(go.transform, new Vector3(0, 1.0f, 0), clip, false, 1f, 1f, 14f, false);
@@ -1246,7 +1259,7 @@ public static class FirWorldBuilder
                 Debug.LogWarning("Fir Warning: unknown gag kind " + kind + " (" + id + ")");
                 break;
         }
-        if (tree != null) gag.anim = tree.anim;
+        if (tree != null) gag.anim = UB(tree.anim);
         if (gag.target == null) gag.target = go.transform;
         SetInteract(gag, verb, 3f);
     }
@@ -1286,7 +1299,7 @@ public static class FirWorldBuilder
                 meshes.AddRange(lastRigMeshes);
             }
             var sg = Add<FirSkeletonGag>(go);
-            sg.game = game; sg.act = act; sg.rigCount = colours.Length;
+            sg.game = UB(game); sg.act = act; sg.rigCount = colours.Length;
             sg.pivots = pivots.ToArray(); sg.meshes = meshes.ToArray();
             sg.voiceDelay = float.Parse(f[8], inv);
             sg.line = f[9];
@@ -1329,7 +1342,7 @@ public static class FirWorldBuilder
         var t = BuildTree(visualRoot, Vector3.zero, 0, 2.3f, 0, false, "Stalker Tree");
         t.anim.watchRange = 8f; t.anim.greetChance = 0f; t.anim.snapChance = 0f;
         var st = Add<FirStalker>(go);
-        st.game = game; st.visual = visualRoot.gameObject; st.anim = t.anim;
+        st.game = UB(game); st.visual = visualRoot.gameObject; st.anim = UB(t.anim);
         var eyes = new GameObject("Eyes").transform;
         eyes.SetParent(go.transform, false);
         eyes.localPosition = new Vector3(0, t.faceHeight, t.faceZ * 0.5f);
@@ -1459,7 +1472,7 @@ public static class FirWorldBuilder
         var col = holder.AddComponent<BoxCollider>();
         col.center = new Vector3(0, 0.28f, 0); col.size = new Vector3(0.36f, 0.56f, 0.36f);
         var c = MakePickup(holder, "Imitation tree");
-        c.kind = 1; c.index = itemList.Count; c.anim = t.anim;
+        c.kind = 1; c.index = itemList.Count; c.anim = UB(t.anim);
         c.cry = Src(holder.transform, new Vector3(0, 0.4f, 0), Clip("tree_talk"), false, 1f, 1f, 8f, false);
         c.cry.pitch = 1.6f;
         itemList.Add(holder);
@@ -1479,7 +1492,7 @@ public static class FirWorldBuilder
         var sync = go.AddComponent<VRCObjectSync>();
         carrySyncList.Add(sync);
         var c = Add<FirCarryItem>(go);
-        c.game = game;
+        c.game = UB(game);
         c.pickup = p;
         carryItems.Add(c);
         return c;
@@ -1531,7 +1544,7 @@ public static class FirWorldBuilder
         Prim(PrimitiveType.Sphere, "Glint", go.transform, new Vector3(0, size.y * 0.6f, 0), Vector3.one * 0.02f, M("Glint"));
         go.AddComponent<BoxCollider>().size = Vector3.one * 0.28f;
         var it = Add<FirItem>(go);
-        it.game = game; it.index = itemList.Count; it.scareOnTake = onTake;
+        it.game = UB(game); it.index = itemList.Count; it.scareOnTake = UB(onTake);
         SetInteract(it, label, 2.5f);
         itemList.Add(go);
         itemChapterList.Add(chapter);
@@ -1542,7 +1555,7 @@ public static class FirWorldBuilder
     static FirSequenceLock Keypad(Transform g, Vector3 pos, int chapter, int length, bool needsItems, string needText)
     {
         var kp = Add<FirSequenceLock>(Group(g, "Keypad " + chapter, pos).gameObject);
-        kp.game = game; kp.chapter = chapter; kp.length = length; kp.needsItems = needsItems; kp.needText = needText;
+        kp.game = UB(game); kp.chapter = chapter; kp.length = length; kp.needsItems = needsItems; kp.needText = needText;
         Box(kp.transform, "Plate", new Vector3(0, 0, 0.05f), new Vector3(0.5f, 0.75f, 0.06f), M("Metal"), true, false);
         string blanks = "";
         for (int i = 0; i < length; i++) blanks += "_ ";
@@ -1587,7 +1600,7 @@ public static class FirWorldBuilder
         var s = Scare(g, name, trigPos, trigSize, 9, phase, phase);
         var t = BuildTree(g, treePos, yaw, height, 0, false, name + " Tree");
         t.anim.watchRange = 10f; t.anim.greetChance = 0f;
-        s.target = t.root; s.anim = t.anim; s.duration = 1.4f;
+        s.target = t.root; s.anim = UB(t.anim); s.duration = 1.4f;
         s.sound = Src(t.root.transform, new Vector3(0, 1.2f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 14f, false);
         return s;
     }
@@ -1607,7 +1620,7 @@ public static class FirWorldBuilder
         var s = Scare(g, name, new Vector3(0, 1.5f, doorZ + 1.2f), new Vector3(3, 3, 0.4f), 1, phase, phase);
         var t = BuildTree(g, treePos, yaw, 1.9f, 0, false, name + " Tree");
         t.anim.watchRange = 0f;
-        s.target = t.root; s.anim = t.anim; s.animMode = 4; s.duration = 1.3f; s.global = true; s.once = true;
+        s.target = t.root; s.anim = UB(t.anim); s.animMode = 4; s.duration = 1.3f; s.global = true; s.once = true;
         s.sound = Src(t.root.transform, new Vector3(0, 1.3f, 0), Clip("scream" + (1 + phase % 3)), false, 1f, 1f, 16f, false);
     }
 
@@ -1617,7 +1630,7 @@ public static class FirWorldBuilder
         var s = Scare(g, name, trigPos, trigSize, 10, phase, phase);
         var t = BuildTree(g, home, yaw, 1.8f, 0, false, name + " Tree");
         t.anim.watchRange = 0f; t.anim.snapChance = 0f;
-        s.target = t.root; s.anim = t.anim; s.screamIndex = (phase + 1) % 3;
+        s.target = t.root; s.anim = UB(t.anim); s.screamIndex = (phase + 1) % 3;
         s.sound = Src(t.root.transform, new Vector3(0, 1.3f, 0), Clip("scream" + (1 + (phase + 1) % 3)), false, 1f, 1f, 18f, false);
     }
 
@@ -1631,10 +1644,10 @@ public static class FirWorldBuilder
         Prim(PrimitiveType.Sphere, "Glint", go.transform, new Vector3(0, size.y * 0.6f, 0), Vector3.one * 0.02f, M("Glint"));
         go.AddComponent<BoxCollider>().size = Vector3.one * 0.28f;
         var it = Add<FirItem>(go);
-        it.game = game; it.fake = true;
+        it.game = UB(game); it.fake = true;
         var sc = ItemScare(g, name + "Bite", scareKind, phase, (phase + 2) % 3);
         sc.restore = go;
-        it.scareOnTake = sc;
+        it.scareOnTake = UB(sc);
         SetInteract(it, label, 2.5f);
         return go;
     }
@@ -1660,7 +1673,7 @@ public static class FirWorldBuilder
     static void Station(GameObject go, string label, string evt)
     {
         var b = Add<FirButton>(go);
-        b.target = game; b.eventName = evt;
+        b.target = UB(game); b.eventName = evt;
         SetInteract(b, label, 2.5f);
         Prim(PrimitiveType.Cube, "Light", go.transform, new Vector3(0, 0.35f, -0.12f), new Vector3(0.1f, 0.1f, 0.02f), M("GlowRed"));
     }
@@ -1672,7 +1685,7 @@ public static class FirWorldBuilder
         go.transform.SetParent(g, false);
         go.transform.localPosition = pos;
         var s = Add<FirJumpscare>(go);
-        s.game = game; s.kind = kind; s.minPhase = minPhase; s.maxPhase = maxPhase;
+        s.game = UB(game); s.kind = kind; s.minPhase = minPhase; s.maxPhase = maxPhase;
         // no trigger collider (it would block the interact pointer); the zone is checked in code.
         // Thin zones are widened so a running player can't skip through between checks.
         if (size != Vector3.zero) s.zoneSize = Vector3.Max(size, new Vector3(1.2f, 3f, 1.2f));
@@ -1776,7 +1789,7 @@ public static class FirWorldBuilder
         var t = Text("Label", go.transform, new Vector3(0, 0, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(size.x * 0.92f, size.y * 0.85f), 0.2f, label);
         t.color = Color.white;
         var b = Add<FirButton>(go);
-        b.target = target; b.eventName = evt;
+        b.target = UB(target); b.eventName = evt;
         b.clickSource = Src(go.transform, Vector3.zero, Clip("switch"), false, 0.6f, 0.7f, 8f, false);   // you hear the press register
         SetInteract(b, label, 4f);
         return go;
@@ -1798,7 +1811,7 @@ public static class FirWorldBuilder
         t.color = Color.white;
         var tp = Add<FirTeleporter>(go);
         tp.destination = dest;
-        tp.notify = game;
+        tp.notify = UB(game);
         tp.notifyEvent = evt;
         tp.sound = Src(go.transform, Vector3.zero, Clip("whoosh"), false, 0f, 0.8f, 8f, false);
         SetInteract(tp, label, 4f);
@@ -1874,7 +1887,7 @@ public static class FirWorldBuilder
         var t = Text("Label", go.transform, off, rot, new Vector2(size.x * 0.9f, flatOnTop ? size.z * 0.6f : size.y * 0.8f), 0.06f, label);
         t.color = Color.white;
         var k = Add<FirKey>(go);
-        k.lockTarget = lk; k.value = value;
+        k.lockTarget = UB(lk); k.value = value;
         SetInteract(k, label, 2f);
     }
 
@@ -2486,6 +2499,37 @@ public static class FirWorldBuilder
         m.Invoke(null, args);
     }
 
+    /// <summary>
+    /// The UdonBehaviour behind a U# script. Scripts reference each other through these (plain Udon
+    /// references, reached with SendCustomEvent / Get/SetProgramVariable), never through U# types.
+    /// </summary>
+    static VRC.Udon.UdonBehaviour UB(UdonSharpBehaviour b)
+    {
+        if (b == null) return null;
+        var u = Backing(b);
+        if (u == null)
+        {
+            var all = b.GetComponents<VRC.Udon.UdonBehaviour>();
+            if (all.Length == 1) u = all[0];
+        }
+        if (u == null) { Debug.LogError("Fir Warning: couldn't find the UdonBehaviour behind " + b.GetType().Name + " '" + b.name + "'", b); linkProblems.Add(b.GetType().Name + " '" + b.name + "'"); }
+        return u;
+    }
+    static readonly List<string> linkProblems = new List<string>();
+
+    /// <summary>Every script that talks to the game manager must have its link set.</summary>
+    static void CheckLinks(Transform root)
+    {
+        foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true))
+        {
+            var f = b.GetType().GetField("game");
+            if (f != null && f.FieldType == typeof(VRC.Udon.UdonBehaviour) && f.GetValue(b) == null)
+                linkProblems.Add(b.GetType().Name + " '" + b.name + "' has no link to the game manager");
+        }
+        foreach (var p in linkProblems) Debug.LogError("Fir Warning link problem: " + p);
+        if (linkProblems.Count == 0) Debug.Log("Fir Warning: every script's link to the game manager is set.");
+    }
+
     static VRC.Udon.UdonBehaviour Backing(UdonSharpBehaviour b)
     {
         var m = EditorUtil?.GetMethod("GetBackingUdonBehaviour", BindingFlags.Public | BindingFlags.Static);
@@ -2494,15 +2538,24 @@ public static class FirWorldBuilder
 
     static void Sync(UdonSharpBehaviour b)
     {
-        var m = EditorUtil?.GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .FirstOrDefault(x => x.Name == "CopyProxyToUdon" && x.GetParameters().Length >= 1);
+        // prefer CopyProxyToUdon(behaviour); otherwise pass UdonSharp's own default for the extra argument
+        var ms = EditorUtil?.GetMethods(BindingFlags.Public | BindingFlags.Static).Where(x => x.Name == "CopyProxyToUdon").ToArray() ?? new MethodInfo[0];
+        var m = ms.FirstOrDefault(x => x.GetParameters().Length == 1) ?? ms.FirstOrDefault(x => x.GetParameters().Length >= 1);
         if (m != null)
         {
             var ps = m.GetParameters();
             var args = new object[ps.Length];
             args[0] = b;
-            for (int i = 1; i < ps.Length; i++) args[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue : null;
-            m.Invoke(null, args);
+            for (int i = 1; i < ps.Length; i++)
+            {
+                if (ps[i].HasDefaultValue) { args[i] = ps[i].DefaultValue; continue; }
+                var t = ps[i].ParameterType;
+                var def = t.GetField("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
+                       ?? t.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+                args[i] = def ?? (t.IsValueType ? Activator.CreateInstance(t) : null);
+            }
+            try { m.Invoke(null, args); }
+            catch (Exception e) { Debug.LogError("Fir Warning: UdonSharp couldn't copy the settings of " + b.name + ": " + (e.InnerException ?? e).Message, b); }
         }
         EditorUtility.SetDirty(b);
         var u = Backing(b);

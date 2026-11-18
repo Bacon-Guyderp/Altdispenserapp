@@ -224,6 +224,12 @@ The world was rebuilt so that nothing depends on a feature that can fail silentl
 * **No network events anywhere.** Everything other players need to see goes through the game manager's
   synced counters (manual sync): gags, skeleton routines, the closet, shared scares, the carol,
   lights-out and toilet stuns. When a counter changes, every client plays that thing locally.
+* **No script holds a typed reference to another script.** Each one holds a plain `UdonBehaviour`
+  (the component VRChat runs). Calls work by setting the arguments with `SetProgramVariable`, then
+  calling `SendCustomEvent`. Questions (puzzle answers, items found, players in the game) are
+  published as public values and read with `GetProgramVariable`. These are the most basic Udon
+  calls, so they don't depend on how UdonSharp converted references when the scene was built.
+  When you build, the builder checks that every script's link to the game manager is set.
 * **No global shader values.** Darkness, brightness and each room's colours are set on the world's
   materials.
 * **No NavMesh, no trigger colliders and no collision callbacks.** The stalker, sockets, scare

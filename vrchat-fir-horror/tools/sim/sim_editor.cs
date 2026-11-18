@@ -57,7 +57,6 @@ namespace UnityEngine {
   public class MeshRenderer : Renderer { }
 }
 namespace UnityEngine.Rendering { public enum ShadowCastingMode { Off, On } public enum LightProbeUsage { Off } public enum ReflectionProbeUsage { Off } public enum AmbientMode { Flat } }
-namespace VRC.Udon { public class UdonBehaviour : UnityEngine.MonoBehaviour { public string interactText; public float proximity; } }
 
 namespace UnityEngine {
   public class Camera : Behaviour { public float nearClipPlane, farClipPlane; public CameraClearFlags clearFlags; public Color backgroundColor; }
@@ -80,7 +79,7 @@ namespace UdonSharp { public class UdonSharpProgramAsset : UnityEngine.Scriptabl
 namespace UdonSharpEditor {
   public static class UdonSharpEditorUtility {
     static readonly System.Collections.Generic.Dictionary<UdonSharp.UdonSharpBehaviour, VRC.Udon.UdonBehaviour> backing = new System.Collections.Generic.Dictionary<UdonSharp.UdonSharpBehaviour, VRC.Udon.UdonBehaviour>();
-    public static void RunBehaviourSetup(UdonSharp.UdonSharpBehaviour b) { if (!backing.ContainsKey(b)) backing[b] = b.gameObject.AddComponent<VRC.Udon.UdonBehaviour>(); }
+    public static void RunBehaviourSetup(UdonSharp.UdonSharpBehaviour b) { if (!backing.ContainsKey(b)) backing[b] = Sim.UB(b); }
     public static VRC.Udon.UdonBehaviour GetBackingUdonBehaviour(UdonSharp.UdonSharpBehaviour b) { VRC.Udon.UdonBehaviour u; return backing.TryGetValue(b, out u) ? u : null; }
     public static void CopyProxyToUdon(UdonSharp.UdonSharpBehaviour b) { }
   }

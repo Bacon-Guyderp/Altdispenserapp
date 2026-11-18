@@ -41,6 +41,11 @@ public class FirAnimatronic : UdonSharpBehaviour
         nextTwitch = Time.time + Random.Range(4f, 15f);
     }
 
+    // arguments for EvSetMode (other scripts call it with SetProgramVariable + SendCustomEvent)
+    public int argMode;
+    public float argSeconds;
+    public void EvSetMode() { SetMode(argMode, argSeconds); }
+
     public void SetMode(int m, float seconds)
     {
         mode = m;

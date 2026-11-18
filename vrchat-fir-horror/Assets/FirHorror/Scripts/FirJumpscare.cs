@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -24,7 +25,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirJumpscare : UdonSharpBehaviour
 {
-    public FirGameManager game;
+    public UdonBehaviour game;          // FirGameManager
     public int kind;
     public int minPhase = 1, maxPhase = 6;
     public float delay;
@@ -37,7 +38,7 @@ public class FirJumpscare : UdonSharpBehaviour
     public GameObject target;
     public Transform dropTo;
     public AudioSource sound;
-    public FirAnimatronic anim;
+    public UdonBehaviour anim;
     public int animMode = 1;
     public Vector3 zoneSize;          // zero = no zone (fired by an item instead)
     public GameObject restore;
@@ -65,7 +66,8 @@ public class FirJumpscare : UdonSharpBehaviour
     {
         if (once && fired) return;
         if (Time.time < nextAllowed) return;
-        if (game.phase < minPhase || game.phase > maxPhase) return;
+        int phase = GameInt("phase");
+        if (phase < minPhase || phase > maxPhase) return;
         VRCPlayerApi lp = Networking.LocalPlayer;
         if (!Utilities.IsValid(lp)) return;
         Vector3 p = transform.InverseTransformPoint(lp.GetPosition() + Vector3.up * 0.9f);
@@ -73,7 +75,7 @@ public class FirJumpscare : UdonSharpBehaviour
         fired = true;
         nextAllowed = Time.time + 25f;
         Fire();
-        if (global) game.ShareScare(scareIndex);
+        if (global) GameEvA("EvShareScare", scareIndex);
     }
 
     /// <summary>Another player set off this shared scare (the manager only calls this for players in the game).</summary>
@@ -93,8 +95,8 @@ public class FirJumpscare : UdonSharpBehaviour
 
     public void _Go()
     {
-        if (anim != null) anim.SetMode(animMode, duration + 1f);
-        if (kind == 0) game.FaceScare(screamIndex, duration);
+        AnimMode(anim, animMode, duration + 1f);
+        if (kind == 0) GameEvAF("EvFaceScare", screamIndex, duration);
         else if (kind == 1)
         {
             if (target != null) target.SetActive(true);
@@ -110,12 +112,12 @@ public class FirJumpscare : UdonSharpBehaviour
             state = 1; stateT = 0;
             if (sound != null) sound.Play();
         }
-        else if (kind == 4) game.BehindScare();
+        else if (kind == 4) GameEv("BehindScare");
         else if (kind == 5)
         {
-            game.GroupMode(groupChapter, 4, duration);
-            game.Blackout(duration * 0.6f);
-            game.PlaySfx(game.screams[screamIndex % game.screams.Length]);
+            GameEvABF("EvGroupMode", groupChapter, 4, duration);
+            GameEvF("EvBlackout", duration * 0.6f);
+            GameEvA("EvScream", screamIndex);
         }
         else if (kind == 6)
         {
@@ -125,7 +127,7 @@ public class FirJumpscare : UdonSharpBehaviour
         }
         else if (kind == 7)
         {
-            game.Flicker(duration);
+            GameEvF("EvFlicker", duration);
             if (sound != null) sound.Play();
         }
         else if (kind == 8)
@@ -142,13 +144,13 @@ public class FirJumpscare : UdonSharpBehaviour
             if (!homeSet) { homeSet = true; homePos = target.transform.position; }
             target.transform.position = homePos;
             target.SetActive(true);
-            if (anim != null) anim.SetMode(4, 6f);
+            AnimMode(anim, 4, 6f);
             if (sound != null) sound.Play();
             state = 4; stateT = Time.time + 6f;
         }
         else if (kind == 9)
         {
-            game.Blackout(1.6f);
+            GameEvF("EvBlackout", 1.6f);
             SendCustomEventDelayedSeconds("_DarkReveal", 1.6f);
         }
     }
@@ -157,7 +159,7 @@ public class FirJumpscare : UdonSharpBehaviour
     {
         if (target != null) target.SetActive(true);
         if (sound != null) sound.Play();
-        if (anim != null) anim.SetMode(4, duration);
+        AnimMode(anim, 4, duration);
         SendCustomEventDelayedSeconds("_Hide", duration);
     }
 
@@ -183,7 +185,7 @@ public class FirJumpscare : UdonSharpBehaviour
             {
                 state = 0;
                 target.SetActive(false);
-                game.PlaySfx(game.clipWhoosh);
+                GameEv("EvSfxWhoosh");
             }
         }
         else if (state == 4)
@@ -198,7 +200,7 @@ public class FirJumpscare : UdonSharpBehaviour
             {
                 state = 0;
                 target.SetActive(false);
-                if (dist < 1.3f) game.FaceScare(screamIndex, 0.9f);
+                if (dist < 1.3f) GameEvAF("EvFaceScare", screamIndex, 0.9f);
                 return;
             }
             Vector3 dir = flat / dist;
@@ -218,7 +220,7 @@ public class FirJumpscare : UdonSharpBehaviour
             {
                 state = 0;
                 target.SetActive(false);
-                game.FaceScare(screamIndex, 1.0f);
+                GameEvAF("EvFaceScare", screamIndex, 1.0f);
                 return;
             }
             Vector3 to = (tp + Vector3.up * 1f - h.position).normalized;
@@ -232,5 +234,23 @@ public class FirJumpscare : UdonSharpBehaviour
                 if (sound != null) sound.Play();
             }
         }
+    }
+
+    // ---- calls to other scripts: plain Udon events (see FirGameManager's "public API")
+    void GameEv(string ev) { if (game != null) game.SendCustomEvent(ev); }
+    void GameEvA(string ev, int a) { if (game == null) return; game.SetProgramVariable("argA", a); game.SendCustomEvent(ev); }
+    void GameEvF(string ev, float f) { if (game == null) return; game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvAF(string ev, int a, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvABF(string ev, int a, int b, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argB", b); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameSay(string text, float seconds) { if (game == null) return; game.SetProgramVariable("argText", text); game.SetProgramVariable("argF", seconds); game.SendCustomEvent("EvSay"); }
+    int GameInt(string name) { return game != null ? (int)game.GetProgramVariable(name) : 0; }
+    float GameFloat(string name) { return game != null ? (float)game.GetProgramVariable(name) : 0f; }
+    bool GameBool(string name) { return game != null && (bool)game.GetProgramVariable(name); }
+    void AnimMode(UdonBehaviour a, int mode, float seconds)
+    {
+        if (a == null) return;
+        a.SetProgramVariable("argMode", mode);
+        a.SetProgramVariable("argSeconds", seconds);
+        a.SendCustomEvent("EvSetMode");
     }
 }

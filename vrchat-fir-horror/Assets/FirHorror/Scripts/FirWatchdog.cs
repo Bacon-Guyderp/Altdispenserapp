@@ -1,6 +1,7 @@
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 
 /// <summary>
 /// Diagnostics board in the lobby. Every second it checks that the game manager is still running
@@ -11,7 +12,9 @@ using UnityEngine;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirWatchdog : UdonSharpBehaviour
 {
-    public FirGameManager game;
+    public UdonBehaviour game;          // FirGameManager
+    public string argWhat = "";
+    public void EvPressed() { Pressed(argWhat); }
     public TextMeshPro board;
 
     int lastBeat = -1;
@@ -35,17 +38,18 @@ public class FirWatchdog : UdonSharpBehaviour
         nextCheck = Time.time + 1f;
         if (board == null) return;
         if (game == null) { board.text = "<color=#ff6060><b>DIAGNOSTICS: the game manager is missing.</b></color>\nRun Fir Warning > Build World again."; return; }
-        int beat = game.heartbeat;
+        int beat = (int)game.GetProgramVariable("heartbeat");
+        string step = (string)game.GetProgramVariable("step");
         if (beat != lastBeat) { lastBeat = beat; lastChange = Time.time; }
         string pressed = "Last pressed: " + lastPressed + (pressedAt > 0f ? " (" + Mathf.RoundToInt(Time.time - pressedAt) + " s ago)" : "");
         if (Time.time - lastChange > 2.5f)
         {
             board.text = "<color=#ff6060><b>DIAGNOSTICS: the game manager has STOPPED.</b></color>\n" +
-                         "It stopped during: <b>" + game.step + "</b>\n" + pressed +
+                         "It stopped during: <b>" + step + "</b>\n" + pressed +
                          "\n<size=80%>Please send a photo of this board to the world's creator.</size>";
             reported = true;
         }
         else if (!reported)
-            board.text = "<color=#70ff90>Diagnostics: game manager running</color> (" + game.step + ")\n" + pressed;
+            board.text = "<color=#70ff90>Diagnostics: game manager running</color> (" + step + ")\n" + pressed;
     }
 }

@@ -44,6 +44,81 @@ public static class SimWorld {
     var pressedSomething = One<FirKey>(A);
     Sim.Press(A, pressedSomething); Sim.Run(1.2f);
     Check(dog.board.text.Contains(pressedSomething.name), "the board shows the last press: " + dog.board.text.Split('\n')[1]);
+
+    Console.WriteLine("\n== Bob joins; a full playthrough of the real world, two players");
+    var B = Sim.Join("Bob", new Vector3(-59, 0.05f, -4));
+    Sim.Run(2f);
+    Check(G(B).phase == 1, "Bob received the game state (chapter " + G(B).phase + ")");
+    Sim.Press(B, One<FirTeleporter>(B, t => t.name.Contains("Join"))); Sim.Run(1f);
+    Check(G(B).inGame && B.player.pos.z > 0 && B.player.pos.z < 20, "Join game put Bob in the Showroom " + B.player.pos);
+    var both = new[] { A, B };
+    Func<Sim.Client, int, int[]> Ans = (c, ch) => { var a = G(c).answers; int n = ch == 1 ? 5 : ch == 2 ? 3 : ch == 5 ? 3 : 4; var r = new int[n]; for (int k = 0; k < n; k++) r[k] = a[ch * 5 + k]; return r; };
+    Action<Sim.Client, int> Solve = (c, ch) => {
+      var lk = One<FirSequenceLock>(c, l => l.chapter == ch);
+      var keys = All<FirKey>(c).Where(k => k.lockTarget != null && k.lockTarget.program == lk).ToList();
+      foreach (int v in Ans(c, ch)) { var key = keys.FirstOrDefault(k => k.value == v); if (key == null) { Check(false, "no key " + v + " on lock " + ch); return; } Sim.Press(c, key); Sim.Run(0.15f); }
+      Sim.Run(0.6f);
+    };
+    Action<Sim.Client, int> Collect = (c, ch) => { foreach (var it in All<FirItem>(c).Where(x => !x.fake && G(c).itemChapter[x.index] == ch)) { Sim.Press(c, it); Sim.Run(0.3f); } Sim.Run(0.5f); };
+    // the carol was already powered above by Alice alone; Bob solves it
+    Solve(B, 1);
+    foreach (var c in both) Check(G(c).phase == 2, c.player.displayName + ": carol solved, chapter " + G(c).phase);
+    Collect(B, 2);
+    Sim.Press(A, One<FirButton>(A, b => b.eventName == "StationLights")); Sim.Run(1f);
+    foreach (var c in both) Check(G(c).lightsOutUntil > Time.time, c.player.displayName + ": lights out");
+    Solve(A, 2);
+    foreach (var c in both) Check(G(c).phase == 3, c.player.displayName + ": fuse box, chapter " + G(c).phase);
+    Collect(A, 3); Solve(B, 3);
+    foreach (var c in both) Check(G(c).phase == 4, c.player.displayName + ": tapes, chapter " + G(c).phase);
+    Solve(A, 4);
+    foreach (var c in both) Check(G(c).phase == 5, c.player.displayName + ": office door, chapter " + G(c).phase);
+    var socks = All<FirSocket>(B).Where(x => x.acceptKind == 0).OrderBy(x => x.socketId).ToList();
+    foreach (var so in socks) {
+      int want = G(B).answers[25 + so.socketId];
+      var hat = All<FirCarryItem>(B).First(h => h.kind == 0 && h.sizeId == want);
+      Sim.SetOwner(B.player, hat.gameObject); hat.transform.position = so.transform.position; Sim.Run(0.8f);
+    }
+    foreach (var c in both) Check(G(c).phase == 6, c.player.displayName + ": all three hats, chapter " + G(c).phase);
+    Collect(A, 9);
+    foreach (var c in both) Check(G(c).valvesOpen && G(c).furnaceFire.activeSelf, c.player.displayName + ": furnace lit");
+    var furnace = All<FirSocket>(A).First(x => x.acceptKind == 1);
+    foreach (var im in All<FirCarryItem>(A).Where(x => x.kind == 1).ToList()) { Sim.SetOwner(A.player, im.gameObject); im.transform.position = furnace.transform.position; Sim.Run(0.8f); }
+    foreach (var c in both) Check(G(c).phase == 7 && G(c).endingBoard.text.Contains("ESCAPED"), c.player.displayName + ": escaped");
+
+    Console.WriteLine("\n== Everything else, once each, with the real wiring");
+    int nScares = 0; foreach (var j in All<FirJumpscare>(A)) { Sim.With(A, () => j.Fire()); Sim.Run(0.2f); nScares++; }
+    Sim.Run(8f);
+    Check(true, "fired all " + nScares + " scripted scares");
+    int nGags = 0; foreach (var g in All<FirGag>(A)) { Sim.Press(A, g); nGags++; } Sim.Run(1f);
+    Check(All<FirGag>(B).Count(g => (bool)typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(g)) > 0, "pressed all " + nGags + " gags; Bob sees them");
+    foreach (var g in All<FirSkeletonGag>(B)) Sim.Press(B, g);
+    Sim.Run(1f);
+    Check(All<FirSkeletonGag>(A).All(g => (bool)typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(g)), "every skeleton routine plays for Alice when Bob presses them");
+    Sim.Press(A, One<FirCloset>(A)); Sim.Run(1f);
+    Check((bool)typeof(FirCloset).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(One<FirCloset>(B)), "the closet scene plays for Bob");
+    foreach (var ci in All<FirCarryItem>(A)) Sim.With(A, () => ci.OnPickup());
+    foreach (var b in All<FirButton>(A).Where(b => b.eventName.StartsWith("Toggle"))) Sim.Press(A, b);
+    Sim.Run(12f);
+    Check(G(A).optionsText.text.Contains("Brightness"), "option buttons: " + G(A).optionsText.text.Replace("\n", " | "));
+    Console.WriteLine("\n== Reset and play again, with the hunting tree and a toilet");
+    var reset = One<FirButton>(A, b => b.eventName == "ResetGame");
+    Sim.Press(A, reset); Sim.Run(0.3f); Sim.Press(A, reset); Sim.Run(1f);
+    foreach (var c in both) Check(G(c).phase == 0, c.player.displayName + ": reset to the lobby");
+    Sim.Press(B, One<FirTeleporter>(B, t => t.name.Contains("START"))); Sim.Run(1f);
+    foreach (var c in both) Check(G(c).phase == 1, c.player.displayName + ": new game");
+    // jump straight to chapter 2 to meet the hunting tree
+    Collect(A, 1); Sim.Press(A, One<FirButton>(A, b => b.eventName == "StationPower")); Sim.Run(9f); Solve(A, 1);
+    foreach (var c in both) Check(G(c).phase == 2, c.player.displayName + ": chapter 2 again (a half-entered carol from earlier doesn't spoil it)");
+    foreach (var c in both) c.player.pos = new Vector3(0, 0.05f, 24);
+    Sim.Run(9f);
+    var st = One<FirStalker>(A);
+    Check(st.IsActive(), "the hunting tree is out, at " + st.transform.position);
+    var toilet = One<FirToilet>(A);
+    Sim.SetOwner(A.player, toilet.gameObject);
+    toilet.transform.position = st.transform.position + new Vector3(0, 1.1f, 0); toilet.body.velocity = new Vector3(0, 0, 6);
+    Sim.Run(0.4f); toilet.body.velocity = Vector3.zero;
+    foreach (var c in both) Check((float)typeof(FirStalker).GetField("stunUntil", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(One<FirStalker>(c)) > Time.time, c.player.displayName + ": toilet hit stuns it");
+    Sim.Run(6f);
     Console.WriteLine("\n== Breaking the game manager on purpose, to check the board catches it");
     G(A).checkpoints = null;
     var join = One<FirTeleporter>(A, t => t.name.Contains("Join"));

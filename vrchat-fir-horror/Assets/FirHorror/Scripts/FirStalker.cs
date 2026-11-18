@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -13,7 +14,7 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirStalker : UdonSharpBehaviour
 {
-    public FirGameManager game;
+    public UdonBehaviour game;          // FirGameManager
     public GameObject visual;
     public Transform eyes;
     public Transform[] spawnByPhase;      // index = phase; null = not active in that phase
@@ -28,7 +29,7 @@ public class FirStalker : UdonSharpBehaviour
     public int sightMask = 1;             // layers that block sight and movement (Default)
     public AudioSource moveAudio;
     public AudioClip[] moveClips;
-    public FirAnimatronic anim;
+    public UdonBehaviour anim;
 
     [UdonSynced] public Vector3 syncPos;
     [UdonSynced] public float syncYaw;
@@ -68,7 +69,7 @@ public class FirStalker : UdonSharpBehaviour
         EnsureInit();
         if (!syncActive) return;
         stunUntil = Time.time + 4f;
-        if (anim != null) anim.SetMode(4, 1.2f);
+        AnimMode(anim, 4, 1.2f);
     }
 
     bool ActiveIn(int p) { return p >= 0 && p < spawnByPhase.Length && spawnByPhase[p] != null; }
@@ -104,27 +105,28 @@ public class FirStalker : UdonSharpBehaviour
         Vector3 flat = transform.position - me;
         flat.y = 0f;
         float d = flat.magnitude;
-        if (d < 7f && Time.time > nextBeat) { nextBeat = Time.time + 3.6f; game.PlaySfx(game.clipHeartbeat); }
+        if (d < 7f && Time.time > nextBeat) { nextBeat = Time.time + 3.6f; GameEv("EvSfxHeartbeat"); }
         if (d < 4.5f && Time.time > nextWhisper && anim != null)
         {
             nextWhisper = Time.time + Random.Range(7f, 12f);
-            anim.SetMode(2, 2f);   // it talks to you when it's close
+            AnimMode(anim, 2, 2f);   // it talks to you when it's close
         }
-        float reach = game.SmallGroup() ? catchDistance * 0.85f : catchDistance;
+        float reach = GameBool("smallGroup") ? catchDistance * 0.85f : catchDistance;
         if (Time.time > stunUntil && d < reach && Mathf.Abs(transform.position.y - me.y) < 1.5f && Time.time > nextCatch)
         {
             nextCatch = Time.time + 6f;
-            game.Caught();
+            GameEv("Caught");
         }
     }
 
     void OwnerThink()
     {
-        int phase = game.phase;
-        if (phase != lastPhase || game.round != lastRound)
+        int phase = GameInt("phase");
+        int round = GameInt("round");
+        if (phase != lastPhase || round != lastRound)
         {
             lastPhase = phase;
-            lastRound = game.round;
+            lastRound = round;
             Transform at = ActiveIn(phase) ? spawnByPhase[phase] : parking;
             if (at != null) { transform.position = at.position; transform.rotation = at.rotation; }
             goal = transform.position;
@@ -151,9 +153,9 @@ public class FirStalker : UdonSharpBehaviour
         if (Time.time > nextLook) { nextLook = Time.time + 0.15f; seen = AnyoneLooking(); }
         bool finale = phase == 6;
         // ease off for small groups: one player can't watch it and search at the same time
-        int group = game.PlayersInGame();
+        int group = GameInt("playersInGame");
         float scale = group <= 1 ? 0.55f : (group == 2 ? 0.75f : 1f);
-        if (Time.time < game.lightsOutUntil && group <= 2) scale = scale * 0.6f;
+        if (Time.time < GameFloat("lightsOutUntil") && group <= 2) scale = scale * 0.6f;
         float seenFinale = group <= 1 ? 0f : (group == 2 ? 0.18f : finaleSeenSpeed);
         float speed = seen ? (finale ? seenFinale : 0f) : (finale ? finaleUnseenSpeed : unseenSpeed) * scale;
         if (speed <= 0f) return;
@@ -173,7 +175,7 @@ public class FirStalker : UdonSharpBehaviour
         }
         transform.position = next;
         transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
-        if (anim != null && !seen && Time.time > nextGrumble) { nextGrumble = Time.time + 4f; anim.SetMode(1, 3f); }
+        if (anim != null && !seen && Time.time > nextGrumble) { nextGrumble = Time.time + 4f; AnimMode(anim, 1, 3f); }
     }
 
     /// <summary>Straight at the nearest player if nothing is in the way, else via the best waypoint it can see.</summary>
@@ -214,7 +216,7 @@ public class FirStalker : UdonSharpBehaviour
 
     bool AnyoneLooking()
     {
-        if (Time.time < game.lightsOutUntil) return false;   // nobody can see it in the dark
+        if (Time.time < GameFloat("lightsOutUntil")) return false;   // nobody can see it in the dark
         int n = VRCPlayerApi.GetPlayerCount();
         VRCPlayerApi.GetPlayers(players);
         Vector3 e = eyes != null ? eyes.position : transform.position + Vector3.up;
@@ -249,5 +251,23 @@ public class FirStalker : UdonSharpBehaviour
             if (d < bestD) { bestD = d; best = p; }
         }
         return best;
+    }
+
+    // ---- calls to other scripts: plain Udon events (see FirGameManager's "public API")
+    void GameEv(string ev) { if (game != null) game.SendCustomEvent(ev); }
+    void GameEvA(string ev, int a) { if (game == null) return; game.SetProgramVariable("argA", a); game.SendCustomEvent(ev); }
+    void GameEvF(string ev, float f) { if (game == null) return; game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvAF(string ev, int a, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvABF(string ev, int a, int b, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argB", b); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameSay(string text, float seconds) { if (game == null) return; game.SetProgramVariable("argText", text); game.SetProgramVariable("argF", seconds); game.SendCustomEvent("EvSay"); }
+    int GameInt(string name) { return game != null ? (int)game.GetProgramVariable(name) : 0; }
+    float GameFloat(string name) { return game != null ? (float)game.GetProgramVariable(name) : 0f; }
+    bool GameBool(string name) { return game != null && (bool)game.GetProgramVariable(name); }
+    void AnimMode(UdonBehaviour a, int mode, float seconds)
+    {
+        if (a == null) return;
+        a.SetProgramVariable("argMode", mode);
+        a.SetProgramVariable("argSeconds", seconds);
+        a.SendCustomEvent("EvSetMode");
     }
 }

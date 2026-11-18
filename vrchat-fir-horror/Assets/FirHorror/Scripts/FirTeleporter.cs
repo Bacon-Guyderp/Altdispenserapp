@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -11,9 +12,9 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirTeleporter : UdonSharpBehaviour
 {
-    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
+    public UdonBehaviour watch;          // diagnostics: reports each press to the lobby board
     public Transform destination;
-    public UdonSharpBehaviour notify;
+    public UdonBehaviour notify;
     public string notifyEvent = "";
     public AudioSource sound;
     public bool walkOn;
@@ -23,7 +24,6 @@ public class FirTeleporter : UdonSharpBehaviour
 
     public override void Interact()
     {
-        if (watch != null) watch.Pressed(gameObject.name);
         Go();
     }
 
@@ -35,6 +35,7 @@ public class FirTeleporter : UdonSharpBehaviour
         if (destination != null && Utilities.IsValid(lp)) lp.TeleportTo(destination.position, destination.rotation);
         if (sound != null) sound.Play();
         if (notify != null && notifyEvent != "") notify.SendCustomEvent(notifyEvent);
+        Report();
     }
 
     void Update()
@@ -49,4 +50,5 @@ public class FirTeleporter : UdonSharpBehaviour
         if (Mathf.Abs(p.z) > zoneSize.z * 0.5f) return;
         Go();
     }
+    void Report() { if (watch == null) return; watch.SetProgramVariable("argWhat", gameObject.name); watch.SendCustomEvent("EvPressed"); }
 }

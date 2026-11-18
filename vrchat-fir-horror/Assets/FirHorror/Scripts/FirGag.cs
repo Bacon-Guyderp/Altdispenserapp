@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -12,8 +13,8 @@ using VRC.SDKBase;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class FirGag : UdonSharpBehaviour
 {
-    public FirWatchdog watch;          // diagnostics: reports each press to the lobby board
-    public FirGameManager game;
+    public UdonBehaviour watch;          // diagnostics: reports each press to the lobby board
+    public UdonBehaviour game;          // FirGameManager
     public int gagIndex;              // this gag's place in game.gags (set by the builder)
     public Transform target;          // the prop that moves
     public bool hideWhenIdle;         // pop-ups, peeks and waddlers only appear during the gag
@@ -29,7 +30,7 @@ public class FirGag : UdonSharpBehaviour
     public AudioSource voice;
     public AudioSource sfx;
     public string line;
-    public FirAnimatronic anim;       // a tree whose mouth flaps while it talks
+    public UdonBehaviour anim;       // a tree whose mouth flaps while it talks
 
     Vector3 p0, s0;
     Quaternion r0;
@@ -51,7 +52,7 @@ public class FirGag : UdonSharpBehaviour
     }
 
     public override void Interact() {
-        if (watch != null) watch.Pressed(gameObject.name); Trigger(); }
+        Report(); Trigger(); }
 
     void CheckZone()
     {
@@ -68,7 +69,7 @@ public class FirGag : UdonSharpBehaviour
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + inTime + holdTime + outTime + 0.5f;
         Play();                                   // you see it at once
-        if (game != null) game.ShareGag(0, gagIndex);   // everyone else sees it when the counter arrives
+        GameEvAB("EvShareGag", 0, gagIndex);   // everyone else sees it when the counter arrives
     }
 
     /// <summary>Plays the gag on this client only.</summary>
@@ -81,10 +82,10 @@ public class FirGag : UdonSharpBehaviour
         if (hideWhenIdle) target.gameObject.SetActive(true);
         if (sfx != null) sfx.Play();
         if (voice != null) voice.Play();
-        if (anim != null) anim.SetMode(2, inTime + holdTime);
+        AnimMode(anim, 2, inTime + holdTime);
         VRCPlayerApi lp = Networking.LocalPlayer;
-        if (game != null && line != "" && Utilities.IsValid(lp) && Vector3.Distance(lp.GetPosition(), transform.position) < 12f)
-            game.Say(line, holdTime + inTime);
+        if (line != "" && Utilities.IsValid(lp) && Vector3.Distance(lp.GetPosition(), transform.position) < 12f)
+            GameSay(line, holdTime + inTime);
     }
 
     void Update()
@@ -110,4 +111,21 @@ public class FirGag : UdonSharpBehaviour
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // ---- calls to other scripts: plain Udon events (see FirGameManager's "public API")
+    void GameEv(string ev) { if (game != null) game.SendCustomEvent(ev); }
+    void GameEvA(string ev, int a) { if (game == null) return; game.SetProgramVariable("argA", a); game.SendCustomEvent(ev); }
+    void GameEvAB(string ev, int a, int b) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argB", b); game.SendCustomEvent(ev); }
+    void GameEvF(string ev, float f) { if (game == null) return; game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameEvAF(string ev, int a, float f) { if (game == null) return; game.SetProgramVariable("argA", a); game.SetProgramVariable("argF", f); game.SendCustomEvent(ev); }
+    void GameSay(string text, float seconds) { if (game == null) return; game.SetProgramVariable("argText", text); game.SetProgramVariable("argF", seconds); game.SendCustomEvent("EvSay"); }
+    int GameInt(string name) { return game != null ? (int)game.GetProgramVariable(name) : 0; }
+    void Report() { if (watch == null) return; watch.SetProgramVariable("argWhat", gameObject.name); watch.SendCustomEvent("EvPressed"); }
+    void AnimMode(UdonBehaviour a, int mode, float seconds)
+    {
+        if (a == null) return;
+        a.SetProgramVariable("argMode", mode);
+        a.SetProgramVariable("argSeconds", seconds);
+        a.SendCustomEvent("EvSetMode");
+    }
 }
