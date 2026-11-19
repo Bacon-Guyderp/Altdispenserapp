@@ -127,6 +127,65 @@ public static class SimFly {
     Cam(new Vector3(-0.8f, 2.5f, 1.6f), new Vector3(4.0f, 1.0f, -3.5f), 2.5f);
   }
 
+  /// A walk through the map: into each room, pressing a few things on the way.
+  static void MapTour() {
+    var gags = All<FirGag>(A).Where(g => !g.walkIn).ToList();
+    var skels = All<FirSkeletonGag>(A).ToList();
+    var combos = All<FirSkeletonCombo>(A).ToList();
+    var closet = All<FirCloset>(A)[0];
+    Action<Vector3, Vector3, string> Shot = (cam, look, cap) => { Cam(cam, look); if (cap != null) Caption(cap); };
+    Action<Component, float> PressNear = (b, wait) => {
+      var t = b.transform; var fwd = t.rotation * Vector3.forward; fwd.y = 0;
+      var stand = t.position + fwd.normalized * 1.6f; stand.y = 0.05f;
+      Shot(t.position + fwd.normalized * 3.4f + new Vector3(0, 1.7f, 0) + Vector3.Cross(Vector3.up, fwd.normalized) * 1.4f, t.position + new Vector3(0, 1.1f, 0), null);
+      Walk(A, stand); Face(A, t.position);
+      Sim.Press(A, (UdonSharpBehaviour)b); Sim.Run(wait);
+    };
+    Func<float, float, IEnumerable<FirGag>> GagsIn = (z0, z1) => gags.Where(g => g.transform.position.z < z0 && g.transform.position.z > z1);
+    Shot(new Vector3(0, 2.2f, -1.0f), new Vector3(0, 1.4f, -8f), "The map: through the lobby's south doorway");
+    Walk(A, new Vector3(0, 0.05f, -5.0f)); Sim.Run(0.5f);
+    // Gift Wrap Hall
+    Shot(new Vector3(1.5f, 2.6f, -7.5f), new Vector3(-1f, 1.0f, -18f), "GIFT WRAP HALL");
+    Walk(A, new Vector3(0, 0.05f, -10f)); Sim.Run(1.5f);
+    foreach (var g in GagsIn(-6, -26).Take(3)) PressNear(g, 3.2f);
+    PressNear(skels.First(k => k.transform.position.z < -6 && k.transform.position.z > -26), 4.5f);
+    // Rainbow Hall
+    Walk(A, new Vector3(0, 0.05f, -24f));
+    Shot(new Vector3(0, 2.4f, -27.5f), new Vector3(0, 1.2f, -38f), "RAINBOW HALL");
+    Walk(A, new Vector3(0, 0.05f, -30.2f)); Sim.Run(1.0f);
+    var traffic = combos.First(c => c.combo == 0);
+    Shot(new Vector3(0, 2.0f, -32.5f), new Vector3(0, 1.4f, -38.3f), "Combo: Traffic Lights");
+    Sim.Press(A, traffic); Sim.Run(traffic.length + 0.5f);
+    // Toy Workshop
+    Walk(A, new Vector3(6.8f, 0.05f, -33f)); Walk(A, new Vector3(6.8f, 0.05f, -40.8f)); Walk(A, new Vector3(0, 0.05f, -41f));
+    Walk(A, new Vector3(0, 0.05f, -44f));
+    Shot(new Vector3(0, 2.4f, -43.5f), new Vector3(0, 1.0f, -56f), "TOY WORKSHOP");
+    Sim.Run(1.5f);
+    foreach (var g in GagsIn(-42, -62).Take(3)) PressNear(g, 3.2f);
+    // Chimney Lounge
+    Walk(A, new Vector3(0, 0.05f, -64f));
+    Shot(new Vector3(-2.0f, 2.3f, -64f), new Vector3(3f, 1.0f, -73f), "CHIMNEY LOUNGE");
+    Sim.Run(1.5f);
+    Shot(new Vector3(-3.6f, 1.8f, -66.2f), closet.transform.position + new Vector3(0, 1.0f, -0.5f), "The RED SKELETON closet");
+    Walk(A, new Vector3(-5.2f, 0.05f, -68.5f)); Face(A, closet.transform.position);
+    Sim.Press(A, closet); Sim.Run(9.5f);
+    // Talent Show
+    Walk(A, new Vector3(0, 0.05f, -79f)); Walk(A, new Vector3(0, 0.05f, -85.5f));
+    Shot(new Vector3(-3f, 2.6f, -82.5f), new Vector3(0, 1.6f, -95.5f), "TALENT SHOW");
+    Sim.Run(2f);
+    var upsy = combos.First(c => c.combo == 4);
+    var upsyAt = (upsy.pivots[0].position + upsy.pivots[10].position) / 2f;
+    Shot(new Vector3(upsyAt.x + 0.3f, 2.4f, -89.5f), upsyAt + new Vector3(0, 2.2f, 0), "Combo: Upsy-Daisy");
+    Sim.Press(A, upsy); Sim.Run(upsy.length + 0.5f);
+    // Bone Yard
+    Walk(A, new Vector3(8.0f, 0.05f, -86f)); Walk(A, new Vector3(8.0f, 0.05f, -97.2f)); Walk(A, new Vector3(7.5f, 0.05f, -100f));
+    Shot(new Vector3(7.0f, 2.4f, -100.5f), new Vector3(-1f, 1.0f, -112f), "THE BONE YARD");
+    Sim.Run(1.5f);
+    foreach (var k in skels.Where(k => k.transform.position.z < -98).Take(2)) PressNear(k, 5f);
+    Shot(new Vector3(0, 2.0f, -112f), new Vector3(0, 1.6f, -118f), "...and the way back to the lobby");
+    Walk(A, new Vector3(0, 0.05f, -116.6f)); Sim.Run(2f);
+  }
+
   static void Finish() {
     Console.Write("{\"objs\":[");
     var meshes = new Dictionary<Mesh, int>();
@@ -178,7 +237,7 @@ public static class SimFly {
     panel = All<FirCheckButton>(A).First(b => b.test == 9).testMaterial;
     Sim.OnStep = Record;
 
-    var buttons = All<FirCheckButton>(A).ToDictionary(b => b.test);
+    var buttons = All<FirCheckButton>(A).GroupBy(b => b.test).ToDictionary(g => g.Key, g => g.First());
     var typed = All<FirCheckTyped>(A)[0];
     var skel = All<FirCheckSkeleton>(A)[0];
     var tree = All<FirCheckTree>(A)[0];
@@ -187,6 +246,7 @@ public static class SimFly {
     Func<Component, Vector3> LookAt = b => b.transform.position + new Vector3(0, 0.2f, 0);
 
     if (args.Length > 0 && args[0] == "combos") { CombosOnly(); Sim.Run(1f); Finish(); return 0; }
+    if (args.Length > 0 && args[0] == "map") { MapTour(); Sim.Run(1f); Finish(); return 0; }
 
     // opening: high in the south-east corner, looking over the lobby at the test wall
     Cam(new Vector3(5.5f, 3.2f, -5.6f), new Vector3(-1, 1.4f, 3));

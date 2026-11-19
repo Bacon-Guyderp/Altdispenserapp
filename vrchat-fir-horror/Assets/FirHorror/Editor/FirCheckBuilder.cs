@@ -56,7 +56,9 @@ public static class FirCheckBuilder
         Box(lobby, "Floor", new Vector3(0, -0.1f, 0), new Vector3(14, 0.2f, 12), M("Floor"));
         Box(lobby, "Ceiling", new Vector3(0, 3.7f, 0), new Vector3(14, 0.2f, 12), M("Ceiling"));
         Box(lobby, "WallN", new Vector3(0, 1.8f, 6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));
-        Box(lobby, "WallS", new Vector3(0, 1.8f, -6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));
+        DoorWall(lobby, "WallS", -6.1f, 14.4f, 3.6f, M("Wall"));
+        Text("MapSign", lobby, new Vector3(0, 3.2f, -5.98f), Face(Vector3.forward), new Vector2(5.5f, 0.45f), 0.2f,
+             "<b>THE MAP</b>  <size=70%>gags, skeletons and combo acts: this way</size>").color = new Color(1f, 0.85f, 0.4f);
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
@@ -154,52 +156,8 @@ public static class FirCheckBuilder
         SetInteract(tree, "Press the tree", 3f);
         t8.other = UB(tree);
 
-        // ---- the rainbow of skeletons along the east wall, each with its own voiced gag (acts 0-6)
-        string[] colours = { "Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet" };
-        string[] hex = { "#ff3030", "#ff9020", "#ffe030", "#40ff50", "#4080ff", "#7a5cff", "#c060ff" };
-        string[] clips = { "skeleton_red", "Rainbow/rb_orange", "Rainbow/rb_yellow", "Rainbow/rb_green", "Rainbow/rb_blue", "Rainbow/rb_indigo", "Rainbow/rb_violet" };
-        Box(lobby, "RainbowBoard", new Vector3(6.995f, 2.42f, -1.7f), new Vector3(0.01f, 0.6f, 8.6f), M("Board"));
-        for (int i = 0; i < 7; i++)
-            GagSkeleton(lobby, colours[i], new Vector3(6.15f, 0, -5.3f + i * 1.2f), -90f, 1f, i, hex[i], clips[i],
-                        new[] { M("Bone" + colours[i]) }, new Vector3(6.98f, 2.42f, -5.3f + i * 1.2f), Vector3.left);
-
-        // ---- the second line-up along the south wall (acts 8-17)
-        string[] names2 = { "Pink", "Teal", "Gold", "Silver", "Black", "Brown", "Glow", "Rainbow", "Tiny", "Giant" };
-        string[] hex2 = { "#ff70c0", "#30e0e0", "#ffc840", "#d0d8e8", "#9a9aa8", "#c08048", "#a0ff90", "#ffffff", "#ffffff", "#ffffff" };
-        float[] scale2 = { 1, 1, 1, 1, 1, 1, 1, 1, 0.55f, 1.35f };
-        var rainbowBones = colours.Select(c => M("Bone" + c)).ToArray();
-        Box(lobby, "SouthBoard", new Vector3(-0.72f, 2.72f, -5.995f), new Vector3(11.8f, 0.6f, 0.01f), M("Board"));
-        for (int i = 0; i < 10; i++)
-        {
-            float x = -5.9f + i * 1.15f;
-            var bones = names2[i] == "Rainbow" ? rainbowBones : new[] { M(names2[i] == "Tiny" || names2[i] == "Giant" ? "BoneWhite" : "Bone" + names2[i]) };
-            string title = names2[i] == "Rainbow" ? "<color=#ff3030>R</color><color=#ff9020>A</color><color=#ffe030>I</color><color=#40ff50>N</color><color=#4080ff>B</color><color=#7a5cff>O</color><color=#c060ff>W</color>" : null;
-            GagSkeleton(lobby, names2[i], new Vector3(x, 0, -5.3f), 0f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
-                        bones, new Vector3(x, 2.72f, -5.98f), Vector3.forward, title);
-        }
-
-        // ---- the Combo Acts console: skeletons performing together
-        var normal = new Vector3(-0.6f, 0, 0.8f).normalized;   // faces the room; players look past it at the corner
-        var console = Group(lobby, "ComboConsole", new Vector3(3.0f, 1.25f, -1.6f));
-        console.localRotation = Face(normal);
-        Box(console, "ConsoleBoard", new Vector3(0, 0, 0.12f), new Vector3(2.7f, 1.5f, 0.06f), M("Board"));
-        Box(console, "LegL", new Vector3(-1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
-        Box(console, "LegR", new Vector3(1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
-        Text("ComboTitle", console, new Vector3(0, 0.6f, 0.085f), Quaternion.identity, new Vector2(2.5f, 0.24f), 0.2f, "<b>COMBO ACTS</b>  <size=70%>skeletons, together</size>").color = new Color(1f, 0.85f, 0.4f);
-        string[] south = { "Pink", "Teal", "Gold", "Silver", "Black", "Brown", "Glow", "Rainbow", "Tiny", "Giant" };
-        var everyone = south.Concat(colours).Concat(new[] { "White" }).ToArray();
-        ComboAct(console, 0, 0, "Traffic Lights", new[] { "Green", "Yellow", "Red" },
-                 new[] { "traffic_green", "traffic_yellow", "traffic_red" }, new[] { 0, 1, 2 }, 1.3f);
-        ComboAct(console, 1, 1, "Knock Knock", new[] { "Orange", "Yellow" },
-                 new[] { "knock_1", "knock_2", "knock_3", "knock_4", "knock_5", "knock_6" }, new[] { 0, 1, 0, 1, 0, 1 }, 1.4f);
-        ComboAct(console, 2, 2, "The Bone-Tones", new[] { "Blue", "Indigo", "Violet" },
-                 new[] { "bonetones_1", "bonetones_2", "bonetones_3" }, new[] { -1, 1, -1 }, 2.0f);
-        ComboAct(console, 3, 3, "Medal Ceremony", new[] { "Gold", "Silver", "Brown" },
-                 new[] { "medal_gold", "medal_silver", "medal_brown" }, new[] { 0, 1, 2 }, 1.3f);
-        ComboAct(console, 4, 4, "Upsy-Daisy", new[] { "Tiny", "Giant" },
-                 new[] { "upsy_1", "upsy_2", "upsy_3", "upsy_4", "upsy_5" }, new[] { 0, 1, 0, 1, 0 }, 1.3f);
-        ComboAct(console, 5, 5, "GRAND FINALE", everyone,
-                 new[] { "finale_1", "finale_2" }, new[] { -1, -1 }, 3.6f);
+        // ---- the map: new rooms to the south, full of gags (through the doorway in the lobby's south wall)
+        BuildMap(root, spawn);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
@@ -217,6 +175,541 @@ public static class FirCheckBuilder
         if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the systems check.\n\n" + string.Join("\n", report.Take(14)) +
                                                 "\n\nNow press Build & Test (or upload) and press every button in the lobby.", "OK");
         return true;
+    }
+
+    // =================================================================== the map
+
+    class Slot { public Vector3 pos; public float yaw; public bool used; }
+
+    /// <summary>
+    /// The rooms of the map, south of the lobby along z (each room's north wall has a doorway at x = 0).
+    /// Gag rooms line their side walls with slots; the original gags and skeleton routines fill them.
+    /// </summary>
+    static void BuildMap(Transform root, Transform spawn)
+    {
+        var map = Group(root, "Map", Vector3.zero);
+        // name, z0 (north wall), z1 (south wall), width, height, floor, wall, ceiling
+        var rooms = new[]
+        {
+            new { name = "GIFT WRAP HALL", z0 = -6f, z1 = -26f, w = 14f, h = 4.0f, floor = "Floor", wall = "Wall", ceil = "Ceiling" },
+            new { name = "RAINBOW HALL", z0 = -26f, z1 = -42f, w = 16f, h = 5.0f, floor = "Floor2", wall = "Wall2", ceil = "Ceiling" },
+            new { name = "TOY WORKSHOP", z0 = -42f, z1 = -62f, w = 14f, h = 4.0f, floor = "Floor2", wall = "BrickWall", ceil = "Ceiling" },
+            new { name = "CHIMNEY LOUNGE", z0 = -62f, z1 = -80f, w = 16f, h = 3.6f, floor = "Rug", wall = "WallGreen", ceil = "Ceiling" },
+            new { name = "TALENT SHOW", z0 = -80f, z1 = -98f, w = 18f, h = 5.5f, floor = "Floor2", wall = "WallDark", ceil = "Ceiling" },
+            new { name = "THE BONE YARD", z0 = -98f, z1 = -118f, w = 18f, h = 3.4f, floor = "Concrete", wall = "Wall", ceil = "Ceiling" },
+        };
+        // where each room's north doorway is (x): the Talent Show's stage fills the middle, so its exit is on the east side
+        float[] doorX = { 0f, 0f, 0f, 0f, 0f, 7.5f };
+        var rt = new Transform[rooms.Length];
+        for (int i = 0; i < rooms.Length; i++)
+        {
+            var r = rooms[i];
+            var g = Group(map, r.name, Vector3.zero);
+            rt[i] = g;
+            float len = r.z0 - r.z1, zc = (r.z0 + r.z1) / 2f;
+            Box(g, "Floor", new Vector3(0, -0.1f, zc), new Vector3(r.w, 0.2f, len), M(r.floor));
+            Box(g, "Ceiling", new Vector3(0, r.h + 0.1f, zc), new Vector3(r.w, 0.2f, len), M(r.ceil));
+            Box(g, "WallW", new Vector3(-r.w / 2 - 0.1f, r.h / 2, zc), new Vector3(0.2f, r.h, len), M(r.wall));
+            Box(g, "WallE", new Vector3(r.w / 2 + 0.1f, r.h / 2, zc), new Vector3(0.2f, r.h, len), M(r.wall));
+            float prevW = i == 0 ? 14.4f : rooms[i - 1].w, prevH = i == 0 ? 3.6f : rooms[i - 1].h;
+            if (i > 0) DoorWall(g, "WallN", r.z0 - 0.1f, Mathf.Max(r.w, prevW) + 0.4f, Mathf.Max(r.h, prevH), M(r.wall), doorX[i]);
+            if (i == rooms.Length - 1) Box(g, "WallS", new Vector3(0, r.h / 2, r.z1 - 0.1f), new Vector3(r.w + 0.4f, r.h, 0.2f), M(r.wall));
+            // the room's name over the doorway, readable as you walk up to it
+            Text("RoomName", g, new Vector3(doorX[i], 3.05f, r.z0 + 0.03f), Face(Vector3.forward), new Vector2(4.5f, 0.4f), 0.24f,
+                 "<b>" + r.name + "</b>").color = new Color(1f, 0.85f, 0.4f);
+        }
+
+        // ---- the original gags and skeleton routines, spread over the gag rooms
+        var slots = new Dictionary<int, List<Slot>[]>();
+        foreach (int i in new[] { 0, 2, 3, 5 })
+        {
+            var r = rooms[i];
+            var sides = new List<Slot>[2];
+            for (int sd = 0; sd < 2; sd++)
+            {
+                sides[sd] = new List<Slot>();
+                float x = (sd == 0 ? -1 : 1) * (r.w / 2 - 1.0f);
+                for (float z = r.z0 - 2.4f; z >= r.z1 + 1.6f; z -= 1.45f)
+                    sides[sd].Add(new Slot { pos = new Vector3(x, 0, z), yaw = sd == 0 ? 90f : -90f });
+            }
+            slots[i] = sides;
+        }
+        // the Chimney Lounge keeps room for the fireplace (east wall) and the closet (west wall)
+        Reserve(slots[3][1], -70f, -74.5f);
+        Reserve(slots[3][0], -67.5f, -70.5f);
+
+        int[] gagRoom = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };
+        int[] skelRoom = { 0, 0, 0, 2, 2, 2, 3, 3, 5, 5, 5, 5 };
+        BuildSkeletonRoutines(map, slots, skelRoom);
+        BuildGags(map, slots, gagRoom, rooms.Select(r => r.w).ToArray());
+
+        // ---- room furnishings
+        GiftWrapHall(rt[0]);
+        RainbowHall(rt[1]);
+        ToyWorkshop(rt[2]);
+        ChimneyLounge(rt[3]);
+        TalentShow(rt[4]);
+        BoneYard(rt[5], spawn);
+    }
+
+    static void Reserve(List<Slot> side, float zFrom, float zTo)
+    {
+        foreach (var sl in side) if (sl.pos.z <= zFrom && sl.pos.z >= zTo) sl.used = true;
+    }
+
+    /// <summary>Takes k slots in a row on one side (the side with room first, alternating); returns their middle.</summary>
+    static Slot TakeSlots(List<Slot>[] sides, int k, ref int turn)
+    {
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            var side = sides[(turn + attempt) % 2];
+            for (int a = 0; a + k <= side.Count; a++)
+            {
+                bool free = true;
+                for (int b = 0; b < k; b++) if (side[a + b].used) { free = false; break; }
+                if (!free) continue;
+                for (int b = 0; b < k; b++) side[a + b].used = true;
+                turn++;
+                var mid = new Vector3(side[a].pos.x, 0, (side[a].pos.z + side[a + k - 1].pos.z) / 2f);
+                return new Slot { pos = mid, yaw = side[a].yaw };
+            }
+        }
+        return null;
+    }
+
+    /// <summary>A wall across the room at z with a 2.4 x 2.8 m doorway centred at doorX.</summary>
+    static void DoorWall(Transform g, string name, float z, float w, float h, Material m, float doorX = 0f)
+    {
+        float gw = 2.4f, gh = 2.8f;
+        float l0 = -w / 2, l1 = doorX - gw / 2, r0 = doorX + gw / 2, r1 = w / 2;
+        if (l1 - l0 > 0.01f) Box(g, name + " L", new Vector3((l0 + l1) / 2, h / 2, z), new Vector3(l1 - l0, h, 0.2f), m);
+        if (r1 - r0 > 0.01f) Box(g, name + " R", new Vector3((r0 + r1) / 2, h / 2, z), new Vector3(r1 - r0, h, 0.2f), m);
+        Box(g, name + " Top", new Vector3(doorX, (gh + h) / 2, z), new Vector3(gw, h - gh, 0.2f), m);
+    }
+
+    /// <summary>A speech bubble (hidden until its gag talks): dark backing, white text, turned to face you by the gag.</summary>
+    static TextMeshPro Bubble(Transform parent, Vector3 pos)
+    {
+        var t = Text("Bubble", parent, pos, Quaternion.identity, new Vector2(1.8f, 0.5f), 0.11f, "");
+        t.color = Color.white;
+        Prim(PrimitiveType.Cube, "Backing", t.transform, new Vector3(0, 0, 0.012f), new Vector3(1.9f, 0.58f, 0.01f), M("Board"));
+        t.gameObject.SetActive(false);
+        return t;
+    }
+
+    // ---- the original 53 gags (Data/gags.txt), placed in the map's gag rooms
+
+    static void BuildGags(Transform map, Dictionary<int, List<Slot>[]> slots, int[] gagRoom, float[] widths)
+    {
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/gags.txt");
+        if (ta == null) { report.Add("problem: Data/gags.txt is missing, so no gags"); return; }
+        var g = Group(map, "Gags", Vector3.zero);
+        var turns = new Dictionary<int, int>();
+        int n = 0, placed = 0;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Trim() == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 10) continue;
+            int room = n < gagRoom.Length ? gagRoom[n] : 5;
+            n++;
+            if (!turns.ContainsKey(room)) turns[room] = n % 2;
+            int turn = turns[room];
+            Slot sl = TakeSlots(slots[room], 1, ref turn);
+            turns[room] = turn;
+            if (sl == null) { report.Add("problem: no room left for gag " + f[0]); continue; }
+            string kind = f[1];
+            var pos = sl.pos;
+            if (kind == "frame")
+            {
+                // hung on the wall behind its slot
+                float wx = (pos.x < 0 ? -1 : 1) * (widths[room] / 2 - 0.06f);
+                pos = new Vector3(wx, 1.6f, pos.z);
+            }
+            string back = f[9];
+            if (kind == "waddle")
+            {
+                float d = back != "" ? float.Parse(back, System.Globalization.CultureInfo.InvariantCulture) : 4f;
+                back = Mathf.Min(d, widths[room] - 3f).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            Gag(g, f[0], kind, pos, sl.yaw, f[7], f[8].Replace("\\n", "\n"), back.Replace("\\n", "\n"));
+            placed++;
+        }
+        report.Add(placed + " of " + n + " original gags placed in the map");
+    }
+
+    /// <summary>One gag: its prop, its voice line, its speech bubble and a FirGag set up for its kind.</summary>
+    static void Gag(Transform parent, string id, string kind, Vector3 pos, float yaw, string say, string front, string back)
+    {
+        var go = new GameObject("Gag " + id + " (" + kind + ")");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        var clip = Clip("Gags/gag_" + id);
+        var gag = Add<FirGag>(go);
+        gag.line = say;
+        gag.holdTime = Mathf.Max(1.5f, clip != null ? clip.length : 2f);
+        gag.voice = Src(go.transform, new Vector3(0, 1.0f, 0), clip, false, 1f, 1f, 14f, false);
+        gag.bubble = Bubble(go.transform, kind == "frame" ? new Vector3(0, 0.75f, 0.35f) : new Vector3(0, 2.25f, 0.2f));
+        var col = go.AddComponent<BoxCollider>();
+        col.center = new Vector3(0, 0.5f, 0); col.size = new Vector3(0.8f, 1.0f, 0.8f);
+        string verb = "Poke";
+        Transform mouth = null;
+        Func<Transform, Vector3, float, bool, string, Transform> GagTree = (at, p, h, hat, name) =>
+        {
+            var tr = Group(at, name, p);
+            TreeModel(tr, h, hat, out mouth);
+            return tr;
+        };
+        switch (kind)
+        {
+            case "sign":
+            {
+                Box(go.transform, "Post", new Vector3(0, 0.6f, 0), new Vector3(0.06f, 1.2f, 0.06f), M("DeskWood"), false);
+                var board = Group(go.transform, "Board", new Vector3(0, 1.35f, 0));
+                Box(board, "Panel", Vector3.zero, new Vector3(1.0f, 0.6f, 0.04f), M("Trim"), false);
+                Text("Front", board, new Vector3(0, 0, 0.025f), Face(Vector3.forward), new Vector2(0.92f, 0.52f), 0.12f, "<color=#1a1a1a><b>" + front + "</b></color>");
+                Text("Back", board, new Vector3(0, 0, -0.025f), Face(Vector3.back), new Vector2(0.92f, 0.52f), 0.12f, "<color=#a00000><b>" + back + "</b></color>");
+                gag.target = board; gag.rotateBy = new Vector3(0, 180, 0);
+                gag.inTime = 0.45f; gag.outTime = 0.45f; gag.holdTime += 1.5f;
+                col.center = new Vector3(0, 1.0f, 0); col.size = new Vector3(1.0f, 1.7f, 0.25f);
+                verb = "Flip the sign";
+                break;
+            }
+            case "pop_gift":
+            case "pop_crate":
+            {
+                bool gift = kind == "pop_gift";
+                var bx = Prim(PrimitiveType.Cube, "Box", go.transform, new Vector3(0, 0.3f, 0), new Vector3(0.6f, 0.6f, 0.6f), gift ? M("GiftRed") : M("Cardboard"));
+                if (gift)
+                {
+                    Prim(PrimitiveType.Cube, "Ribbon", bx.transform, Vector3.zero, new Vector3(1.02f, 1.02f, 0.15f), M("GiftGold"));
+                    Prim(PrimitiveType.Cube, "Ribbon2", bx.transform, Vector3.zero, new Vector3(0.15f, 1.02f, 1.02f), M("GiftGold"));
+                }
+                var t = GagTree(go.transform, new Vector3(0, 0.05f, 0), 0.6f, gift, "PopTree");
+                gag.target = t; gag.hideWhenIdle = true;
+                gag.moveBy = new Vector3(0, 0.62f, 0); gag.inTime = 0.18f; gag.outTime = 0.3f; gag.wobble = 4f;
+                gag.sfx = Src(go.transform, new Vector3(0, 0.6f, 0), Clip("whoosh"), false, 1f, 0.8f, 10f, false);
+                col.center = new Vector3(0, 0.3f, 0); col.size = new Vector3(0.65f, 0.65f, 0.65f);
+                verb = gift ? "Open the present" : "Open the box";
+                break;
+            }
+            case "spin":
+                gag.target = GagTree(go.transform, Vector3.zero, 0.95f, false, "SpinTree"); gag.inTime = 0.25f; gag.outTime = 0.25f;
+                gag.spin = 720f / gag.holdTime;   // exactly two turns, so it ends facing you
+                verb = "Spin the tree";
+                break;
+            case "inflate_tree":
+                gag.target = GagTree(go.transform, Vector3.zero, 0.9f, false, "PuffTree");
+                gag.scaleBy = 1.9f; gag.wobble = 4f; gag.inTime = 0.5f; gag.outTime = 0.4f;
+                break;
+            case "inflate_crate":
+            {
+                var crate = Group(go.transform, "Crate", new Vector3(0, 0.35f, 0));
+                Prim(PrimitiveType.Cube, "Box", crate, Vector3.zero, new Vector3(0.7f, 0.7f, 0.7f), M("Cardboard"));
+                gag.target = crate; gag.scaleBy = 1.6f; gag.wobble = 6f; gag.inTime = 0.5f; gag.outTime = 0.3f;
+                col.center = new Vector3(0, 0.35f, 0);
+                verb = "Poke the box";
+                break;
+            }
+            case "inflate_orn":
+            {
+                Prim(PrimitiveType.Cylinder, "Stand", go.transform, new Vector3(0, 0.35f, 0), new Vector3(0.05f, 0.35f, 0.05f), M("Metal"));
+                var orn = Group(go.transform, "Ornament", new Vector3(0, 0.9f, 0));
+                Prim(PrimitiveType.Sphere, "Ball", orn, Vector3.zero, Vector3.one * 0.3f, M("HatRed"));
+                Prim(PrimitiveType.Cylinder, "Cap", orn, new Vector3(0, 0.16f, 0), new Vector3(0.07f, 0.03f, 0.07f), M("GiftGold"));
+                Prim(PrimitiveType.Sphere, "Shine", orn, new Vector3(-0.06f, 0.07f, 0.12f), Vector3.one * 0.05f, M("Glint"));
+                gag.target = orn; gag.scaleBy = 2.3f; gag.wobble = 6f; gag.inTime = 0.6f; gag.outTime = 0.25f;
+                col.center = new Vector3(0, 0.7f, 0); col.size = new Vector3(0.5f, 1.4f, 0.5f);
+                verb = "Poke the ornament";
+                break;
+            }
+            case "talk":
+                gag.target = GagTree(go.transform, Vector3.zero, 1.0f, false, "TalkTree"); gag.inTime = 0.1f; gag.outTime = 0.1f;
+                verb = "Talk";
+                break;
+            case "shiver":
+                gag.target = GagTree(go.transform, Vector3.zero, 0.9f, true, "ColdTree"); gag.wobble = 7f; gag.inTime = 0.2f; gag.outTime = 0.3f;
+                break;
+            case "frame":
+            {
+                var frame = Group(go.transform, "Frame", Vector3.zero);
+                Prim(PrimitiveType.Cube, "Border", frame, Vector3.zero, new Vector3(0.75f, 0.95f, 0.03f), M("GiftGold"));
+                Prim(PrimitiveType.Cube, "Canvas", frame, new Vector3(0, 0, 0.012f), new Vector3(0.62f, 0.82f, 0.01f), M("Paper"));
+                Text("Caption", frame, new Vector3(0, 0, 0.02f), Face(Vector3.forward), new Vector2(0.56f, 0.76f), 0.08f, "<color=#1a1410><b>" + front + "</b></color>");
+                float drop = 1.15f;
+                gag.target = frame; gag.moveBy = new Vector3(0, -drop, 0.2f); gag.rotateBy = new Vector3(0, 0, -70f);
+                gag.inTime = 0.35f; gag.outTime = 0.5f;
+                gag.sfx = Src(go.transform, new Vector3(0, -drop, 0.2f), Clip("toilet_clunk"), false, 1f, 1f, 12f, false);
+                gag.voice.transform.localPosition = new Vector3(0, 0, 0.3f);
+                col.center = Vector3.zero; col.size = new Vector3(0.8f, 1.0f, 0.15f);
+                verb = "Straighten the picture";
+                break;
+            }
+            case "peek":
+                gag.target = GagTree(go.transform, Vector3.zero, 0.75f, false, "PeekTree");
+                gag.hideWhenIdle = true; gag.walkIn = true;
+                gag.moveBy = new Vector3(0.7f, 0, 0); gag.inTime = 0.4f; gag.outTime = 0.4f;
+                Object.DestroyImmediate(col); col = null;
+                gag.zoneCenter = new Vector3(0, 1.5f, 1.5f); gag.zoneSize = new Vector3(3f, 3f, 3f);
+                break;
+            case "waddle":
+            {
+                float dist = back != "" ? float.Parse(back, System.Globalization.CultureInfo.InvariantCulture) : 4f;
+                gag.target = GagTree(go.transform, Vector3.zero, 0.5f, true, "WaddleTree");
+                gag.hideWhenIdle = true; gag.walkIn = true;
+                gag.moveBy = new Vector3(0, 0, dist); gag.bob = 0.06f; gag.wobble = 3f;
+                gag.inTime = dist / 1.3f; gag.outTime = dist / 1.3f; gag.holdTime = 0.8f;
+                Object.DestroyImmediate(col); col = null;
+                gag.zoneCenter = new Vector3(0, 1.5f, dist / 2f); gag.zoneSize = new Vector3(3f, 3f, dist + 1f);
+                break;
+            }
+            default:
+                report.Add("problem: unknown gag kind " + kind + " (" + id + ")");
+                break;
+        }
+        gag.mouth = mouth;
+        if (gag.target == null) gag.target = go.transform;
+        SetInteract(gag, verb, 3f);
+    }
+
+    // ---- the original 12 skeleton routines (Data/skeleton_gags.txt)
+
+    static void BuildSkeletonRoutines(Transform map, Dictionary<int, List<Slot>[]> slots, int[] skelRoom)
+    {
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/skeleton_gags.txt");
+        if (ta == null) { report.Add("problem: Data/skeleton_gags.txt is missing, so no skeleton routines"); return; }
+        var g = Group(map, "SkeletonRoutines", Vector3.zero);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        int n = 0, placed = 0;
+        var turns = new Dictionary<int, int>();
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Trim() == "" || line.StartsWith("#")) continue;
+            var f = line.Split('|');
+            if (f.Length < 11) continue;
+            int room = n < skelRoom.Length ? skelRoom[n] : 5;
+            n++;
+            string id = f[0];
+            int act = int.Parse(f[1], inv);
+            var colours = f[6].Split(',');
+            int k = Mathf.Max(1, Mathf.CeilToInt((colours.Length * 0.7f + 0.5f) / 1.45f));
+            if (!turns.ContainsKey(room)) turns[room] = 0;
+            int turn = turns[room];
+            Slot sl = TakeSlots(slots[room], k, ref turn);
+            turns[room] = turn;
+            if (sl == null) { report.Add("problem: no room left for skeleton routine " + id); continue; }
+            var go = new GameObject("Skeleton " + id + " (act " + act + ")");
+            go.transform.SetParent(g, false);
+            go.transform.localPosition = sl.pos;
+            go.transform.localRotation = Quaternion.Euler(0, sl.yaw, 0);
+            var pivots = new List<Transform>();
+            var meshes = new List<Transform>();
+            for (int r = 0; r < colours.Length; r++)
+            {
+                string c = colours[r].Trim();
+                var bone = c == "red" ? M("BoneRed") : c == "green" ? M("BoneGreen") : M("BoneWhite");
+                var rig = SkeletonRig(go.transform, "Rig" + r + " " + c, bone);
+                rig[0].localPosition = new Vector3((r - (colours.Length - 1) / 2f) * 0.7f, 0, 0);
+                rig[0].localRotation = Quaternion.identity;
+                pivots.AddRange(rig);
+                meshes.AddRange(lastRigMeshes);
+            }
+            var sg = Add<FirSkeletonGag>(go);
+            sg.act = act; sg.rigCount = colours.Length;
+            sg.pivots = pivots.ToArray(); sg.meshes = meshes.ToArray();
+            sg.voiceDelay = float.Parse(f[8], inv);
+            sg.line = f[9];
+            sg.baseLength = act == 3 ? 5f : act == 2 ? 5.5f : 4f;
+            sg.voice = Src(go.transform, new Vector3(0, 1.6f, 0.1f), Clip("Gags/skel_" + id), false, 1f, 1f, 14f, false);
+            sg.bubble = Bubble(go.transform, new Vector3(0, 2.35f, 0.2f));
+            var col = go.AddComponent<BoxCollider>();
+            col.center = new Vector3(0, 0.9f, 0); col.size = new Vector3(colours.Length * 0.7f + 0.2f, 1.8f, 0.5f);
+            if (act == 5)
+            {
+                Box(go.transform, "MicStand", new Vector3(0, 0.75f, 0.45f), new Vector3(0.03f, 1.5f, 0.03f), M("Metal"), false);
+                Prim(PrimitiveType.Sphere, "Mic", go.transform, new Vector3(0, 1.52f, 0.42f), new Vector3(0.07f, 0.1f, 0.07f), M("Black"));
+            }
+            if (act == 7) Prim(PrimitiveType.Cube, "Phone", pivots[6], new Vector3(0, -0.4f, 0.03f), new Vector3(0.05f, 0.2f, 0.06f), M("GiftRed"));
+            if (f[10].Trim() != "")
+            {
+                var plac = Group(go.transform, "Placard", new Vector3(0, 0, 0.75f));
+                Box(plac, "Post", new Vector3(0, 0.35f, 0), new Vector3(0.04f, 0.7f, 0.04f), M("DeskWood"), false);
+                Box(plac, "Board", new Vector3(0, 0.78f, 0), new Vector3(1.1f, 0.3f, 0.03f), M("Trim"), false);
+                Text("Text", plac, new Vector3(0, 0.78f, 0.02f), Face(Vector3.forward), new Vector2(1.0f, 0.26f), 0.14f, "<color=#1a1a1a><b>" + f[10] + "</b></color>");
+            }
+            SetInteract(sg, act == 3 || act == 8 ? "Poke the skeleton" : "Say hi", 3f);
+            placed++;
+        }
+        report.Add(placed + " of " + n + " skeleton routines placed in the map");
+    }
+
+    // ---- the rooms' furnishings
+
+    static void GiftWrapHall(Transform g)
+    {
+        // a mountain of presents in the middle, wrapping tables along the aisle
+        string[] gm = { "GiftRed", "GiftGreen", "GiftGold", "GiftBlue" };
+        for (int i = 0; i < 9; i++)
+        {
+            float a = i * 2.4f, r = 0.4f + 0.18f * (i % 3);
+            float s = 0.35f + 0.12f * ((i * 7) % 3);
+            Prim(PrimitiveType.Cube, "Present", g, new Vector3(Mathf.Cos(a) * r, s / 2 + (i > 5 ? 0.45f : 0), -16f + Mathf.Sin(a) * r) + new Vector3(-3.2f, 0, 0), Vector3.one * s, M(gm[i % 4]));
+        }
+        TreeAt(g, "HallTree", new Vector3(-3.2f, 0.6f, -16f), 180f, 2.2f, true);
+    }
+
+    static void RainbowHall(Transform g)
+    {
+        string[] colours = { "Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet" };
+        string[] hex = { "#ff3030", "#ff9020", "#ffe030", "#40ff50", "#4080ff", "#7a5cff", "#c060ff" };
+        string[] clips = { "skeleton_red", "Rainbow/rb_orange", "Rainbow/rb_yellow", "Rainbow/rb_green", "Rainbow/rb_blue", "Rainbow/rb_indigo", "Rainbow/rb_violet" };
+        // a riser at the far end, the seven of them in a row facing the doorway, their names on a board behind
+        Box(g, "Riser", new Vector3(0, 0.15f, -38.2f), new Vector3(11f, 0.3f, 2.2f), M("Stage"));
+        Box(g, "NameBoard", new Vector3(0, 2.75f, -39.45f), new Vector3(11f, 0.6f, 0.04f), M("Board"));
+        for (int i = 0; i < 7; i++)
+        {
+            // they face the doorway (turned half round), so their right is the room's -x: run the line from +x
+            // to -x, so neighbours are where the combo acts expect (yellow on orange's right) and the rainbow
+            // reads red to violet, left to right, as you walk in
+            float x = 4.5f - i * 1.5f;
+            GagSkeleton(g, colours[i], new Vector3(x, 0.3f, -38.3f), 180f, 1f, i, hex[i], clips[i],
+                        new[] { M("Bone" + colours[i]) }, new Vector3(x, 2.75f, -39.42f), Vector3.forward);
+        }
+        var console = Console(g, "RainbowConsole", new Vector3(0, 1.25f, -31.5f), Vector3.forward, "COMBO ACTS  <size=70%>the rainbow</size>");
+        ComboAct(console, 0, 0, "Traffic Lights", new[] { "Green", "Yellow", "Red" },
+                 new[] { "traffic_green", "traffic_yellow", "traffic_red" }, new[] { 0, 1, 2 }, 1.3f);
+        ComboAct(console, 1, 1, "Knock Knock", new[] { "Orange", "Yellow" },
+                 new[] { "knock_1", "knock_2", "knock_3", "knock_4", "knock_5", "knock_6" }, new[] { 0, 1, 0, 1, 0, 1 }, 1.4f);
+        ComboAct(console, 2, 2, "The Bone-Tones", new[] { "Blue", "Indigo", "Violet" },
+                 new[] { "bonetones_1", "bonetones_2", "bonetones_3" }, new[] { -1, 1, -1 }, 2.0f);
+        ComboAct(console, 5, 5, "RAINBOW FINALE", colours,
+                 new[] { "finale_1", "finale_2" }, new[] { -1, -1 }, 3.6f);
+    }
+
+    static void ToyWorkshop(Transform g)
+    {
+        // two long workbenches down the middle with half-built trees on them
+        for (int b = 0; b < 2; b++)
+        {
+            float x = b == 0 ? -3.2f : 3.2f, z = -52f;
+            Box(g, "Bench" + b, new Vector3(x, 0.45f, z), new Vector3(1.4f, 0.9f, 8f), M("DeskWood"));
+            for (int k = 0; k < 4; k++) TreeAt(g, "Unfinished", new Vector3(x, 0.9f, z - 2.7f + k * 1.8f), 180f + k * 40f, 0.55f, k == 1);
+        }
+    }
+
+    static void ChimneyLounge(Transform g)
+    {
+        // the fireplace on the east wall, armchairs facing it, and the closet on the west wall
+        Box(g, "Fireplace", new Vector3(7.4f, 0.8f, -72.2f), new Vector3(1.0f, 1.6f, 2.4f), M("BrickWall"));
+        Box(g, "Chimney", new Vector3(7.6f, 2.6f, -72.2f), new Vector3(0.6f, 2.0f, 1.6f), M("BrickWall"));
+        Prim(PrimitiveType.Cube, "Fire", g, new Vector3(6.88f, 0.42f, -72.2f), new Vector3(0.05f, 0.5f, 1.1f), M("GlowOrange"));
+        Prim(PrimitiveType.Cube, "Mantel", g, new Vector3(7.2f, 1.62f, -72.2f), new Vector3(1.3f, 0.06f, 2.8f), M("DeskWood"));
+        for (int i = 0; i < 2; i++)
+        {
+            var chair = Group(g, "Armchair" + i, new Vector3(4.6f, 0, -71.2f - i * 2.0f));
+            chair.localRotation = Quaternion.Euler(0, 90, 0);
+            Box(chair, "Seat", new Vector3(0, 0.25f, 0), new Vector3(0.9f, 0.5f, 0.8f), M("Curtain"));
+            Box(chair, "Back", new Vector3(0, 0.75f, -0.35f), new Vector3(0.9f, 0.6f, 0.15f), M("Curtain"));
+        }
+        BuildSkeletonCloset(g, new Vector3(-7.2f, 0, -69.0f));
+    }
+
+    static void TalentShow(Transform g)
+    {
+        string[] names2 = { "Pink", "Teal", "Gold", "Silver", "Black", "Brown", "Glow", "Rainbow", "Tiny", "Giant" };
+        string[] hex2 = { "#ff70c0", "#30e0e0", "#ffc840", "#d0d8e8", "#9a9aa8", "#c08048", "#a0ff90", "#ffffff", "#ffffff", "#ffffff" };
+        float[] scale2 = { 1, 1, 1, 1, 1, 1, 1, 1, 0.55f, 1.35f };
+        string[] colours = { "Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet" };
+        var rainbowBones = colours.Select(c => M("Bone" + c)).ToArray();
+        // the stage across the far end, curtains, and the ten of them lined up on it
+        Box(g, "Stage", new Vector3(0, 0.3f, -94.5f), new Vector3(14f, 0.6f, 5f), M("Stage"));
+        Box(g, "CurtainBack", new Vector3(0, 2.9f, -97.7f), new Vector3(14f, 5.2f, 0.1f), M("Curtain"));
+        Box(g, "CurtainL", new Vector3(-7.4f, 2.9f, -94.5f), new Vector3(1.2f, 5.2f, 0.12f), M("Curtain"));
+        Text("ExitSign", g, new Vector3(8.95f, 2.6f, -95.5f), Face(Vector3.left), new Vector2(2.4f, 0.4f), 0.2f, "<b>THE BONE YARD</b>  >").color = new Color(1f, 0.85f, 0.4f);
+        Box(g, "NameBoard", new Vector3(-0.15f, 3.35f, -97.6f), new Vector3(12.2f, 0.6f, 0.04f), M("Board"));
+        Text("ShowTitle", g, new Vector3(0, 4.4f, -97.62f), Face(Vector3.forward), new Vector2(10f, 0.8f), 0.6f, "<b>TONIGHT: THE SKELETON CREW</b>").color = new Color(1f, 0.85f, 0.4f);
+        for (int i = 0; i < 10; i++)
+        {
+            float x = 5.3f - i * 1.15f;   // turned to face the audience: run from +x so the giant is on tiny's right
+            var bones = names2[i] == "Rainbow" ? rainbowBones : new[] { M(names2[i] == "Tiny" || names2[i] == "Giant" ? "BoneWhite" : "Bone" + names2[i]) };
+            string title = names2[i] == "Rainbow" ? "<color=#ff3030>R</color><color=#ff9020>A</color><color=#ffe030>I</color><color=#40ff50>N</color><color=#4080ff>B</color><color=#7a5cff>O</color><color=#c060ff>W</color>" : null;
+            // facing the audience (north)
+            GagSkeleton(g, names2[i], new Vector3(x, 0.6f, -95.5f), 180f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
+                        bones, new Vector3(x, 3.35f, -97.57f), Vector3.forward, title);
+        }
+        var console = Console(g, "TalentConsole", new Vector3(0, 1.25f, -87.5f), Vector3.forward, "COMBO ACTS  <size=70%>the talent show</size>");
+        ComboAct(console, 3, 3, "Medal Ceremony", new[] { "Gold", "Silver", "Brown" },
+                 new[] { "medal_gold", "medal_silver", "medal_brown" }, new[] { 0, 1, 2 }, 1.3f);
+        ComboAct(console, 4, 4, "Upsy-Daisy", new[] { "Tiny", "Giant" },
+                 new[] { "upsy_1", "upsy_2", "upsy_3", "upsy_4", "upsy_5" }, new[] { 0, 1, 0, 1, 0 }, 1.3f);
+        ComboAct(console, 5, 5, "SHOW FINALE", names2,
+                 new[] { "finale_1", "finale_2" }, new[] { -1, -1 }, 3.6f);
+    }
+
+    static void BoneYard(Transform g, Transform spawn)
+    {
+        // low beams, and the way back to the lobby at the far end
+        for (int b = 0; b < 5; b++) Box(g, "Beam" + b, new Vector3(0, 3.2f, -101f - b * 4f), new Vector3(14f, 0.2f, 0.3f), M("DeskWood"), false);
+        var back = MakeButton<FirCheckButton>(g, "Back to the lobby", new Vector3(0, 1.3f, -117.85f), Vector3.forward, out var label);
+        back.test = 11; back.title = "Back to the lobby"; back.label = label; back.destination = spawn;
+        Text("EndNote", g, new Vector3(0, 2.6f, -117.97f), Face(Vector3.forward), new Vector2(8f, 0.5f), 0.22f,
+             "<b>THE END</b> (for now): the horror comes next, once the systems check passes").color = Color.white;
+    }
+
+    /// <summary>A Combo Acts console: a dark board on legs, facing `normal`, with a title. Buttons go on with ComboAct.</summary>
+    static Transform Console(Transform parent, string name, Vector3 pos, Vector3 normal, string title)
+    {
+        var c = Group(parent, name, pos);
+        c.localRotation = Face(normal);
+        Box(c, "ConsoleBoard", new Vector3(0, 0, 0.12f), new Vector3(2.7f, 1.5f, 0.06f), M("Board"));
+        Box(c, "LegL", new Vector3(-1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
+        Box(c, "LegR", new Vector3(1.1f, -0.85f, 0.12f), new Vector3(0.08f, 0.8f, 0.06f), M("Board"));
+        Text("ComboTitle", c, new Vector3(0, 0.6f, 0.085f), Quaternion.identity, new Vector2(2.5f, 0.24f), 0.2f, "<b>" + title + "</b>").color = new Color(1f, 0.85f, 0.4f);
+        return c;
+    }
+
+    /// <summary>A decorative talking-tree model (no script).</summary>
+    static Transform TreeAt(Transform parent, string name, Vector3 pos, float yaw, float height, bool hat)
+    {
+        var t = Group(parent, name, pos);
+        t.localRotation = Quaternion.Euler(0, yaw, 0);
+        Transform mouth;
+        TreeModel(t, height, hat, out mouth);
+        return t;
+    }
+
+    /// <summary>The RED SKELETON closet: open it and a white skeleton steps out ("A skeleton."), then a red one ("Red skeleton, ha.").</summary>
+    static void BuildSkeletonCloset(Transform g, Vector3 at)
+    {
+        var c = Group(g, "SkeletonCloset", at);
+        Box(c, "ClosetBody", new Vector3(0, 1.15f, 0), new Vector3(0.7f, 2.3f, 1.5f), M("DeskWood"));
+        Prim(PrimitiveType.Cube, "Doorway", c, new Vector3(0.352f, 1.05f, 0), new Vector3(0.01f, 2.1f, 1.3f), M("Pupil"));
+        // hinged on the +Z edge so it swings open away from where the skeletons walk off (-Z)
+        var hinge = Group(c, "Hinge", new Vector3(0.38f, 0, 0.66f));
+        var door = Box(hinge, "Door", new Vector3(0, 1.05f, -0.66f), new Vector3(0.05f, 2.1f, 1.3f), M("Trim"));
+        Prim(PrimitiveType.Sphere, "Knob", door.transform, new Vector3(0.04f, 0, -0.5f), Vector3.one * 0.07f, M("GiftGold"));
+        Text("Sign", door.transform, new Vector3(0.03f, 0.55f, 0), Face(Vector3.right), new Vector2(0.9f, 0.3f), 0.09f,
+             "<color=#3a1a10><b>CLOSET</b>\n<size=70%>do not open</size></color>");
+        var white = SkeletonRig(c, "WhiteSkeleton", M("BoneWhite"));
+        var red = SkeletonRig(c, "RedSkeleton", M("BoneRed"));
+        var mist = Group(c, "Mist", Vector3.zero).gameObject;
+        float[,] puffs = { { 0.5f, 0.1f, 0.9f, 0.7f }, { 0.9f, -0.35f, 0.8f, 0.6f }, { 1.0f, 0.4f, 0.7f, 0.55f },
+                           { 1.35f, 0.0f, 0.9f, 0.7f }, { 1.6f, -0.5f, 0.6f, 0.45f }, { 1.7f, 0.55f, 0.55f, 0.4f },
+                           { 0.9f, -1.3f, 0.8f, 0.9f }, { 0.8f, -2.3f, 0.7f, 0.8f } };
+        for (int i = 0; i < puffs.GetLength(0); i++)
+            Prim(PrimitiveType.Sphere, "Puff", mist.transform, new Vector3(puffs[i, 0], 0.02f, puffs[i, 1]),
+                 new Vector3(puffs[i, 2], 0.08f + 0.03f * (i % 2), puffs[i, 3]), M("Mist"));
+        var cl = Add<FirCloset>(door);
+        cl.hinge = hinge; cl.white = white; cl.red = red; cl.mist = mist;
+        cl.creak = Src(c, new Vector3(0.4f, 1.2f, 0), Clip("creak"), false, 1f, 1f, 14f, false);
+        cl.whiteVoice = Src(white[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_white"), false, 1f, 1f, 16f, false);
+        cl.redVoice = Src(red[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_red"), false, 1f, 1f, 16f, false);
+        cl.bubble = Bubble(c, new Vector3(1.2f, 2.5f, -0.6f));
+        SetInteract(cl, "Open the closet", 2.5f);
     }
 
     /// <summary>One of the gag skeletons: your skeleton model in its colour(s), its routine (act) and its voice line.</summary>
@@ -569,6 +1062,14 @@ public static class FirCheckBuilder
         return t;
     }
 
+    /// <summary>A box without a collider (small props), or with one.</summary>
+    static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, bool collider)
+    {
+        var go = Box(parent, name, pos, size, mat);
+        if (!collider) Object.DestroyImmediate(go.GetComponent<BoxCollider>());
+        return go;
+    }
+
     /// <summary>A static box with a collider; its texture tiles every 2 m instead of stretching.</summary>
     static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
     {
@@ -714,6 +1215,26 @@ public static class FirCheckBuilder
         A("Button", null, new Color(0.15f, 0.45f, 0.75f), 1, Color.black);
         A("Board", null, new Color(0.07f, 0.06f, 0.06f), 1, Color.black);
         A("ButtonGold", null, new Color(0.85f, 0.6f, 0.1f), 1, Color.black);
+        // the map's rooms and props
+        A("WallGreen", "wallpaper", new Color(0.65f, 0.9f, 0.65f), 1, Color.black);
+        A("WallDark", "wallpaper", new Color(0.4f, 0.32f, 0.45f), 1, Color.black);
+        A("BrickWall", "brick", white, 1, Color.black);
+        A("Concrete", "concrete", white, 1, Color.black);
+        A("Rug", "carpet_red", new Color(0.7f, 0.5f, 0.35f), 1, Color.black);
+        A("Stage", "wood_floor", new Color(0.75f, 0.55f, 0.4f), 1, Color.black);
+        A("Curtain", null, new Color(0.55f, 0.04f, 0.06f), 1, Color.black);
+        A("DeskWood", "wood_floor", new Color(0.8f, 0.7f, 0.6f), 1, Color.black);
+        A("Trim", null, new Color(0.85f, 0.83f, 0.78f), 1, Color.black);
+        A("Cardboard", "cardboard", white, 1, Color.black);
+        A("Metal", "metal", white, 1, Color.black);
+        A("Paper", "paper", white, 1, Color.black);
+        A("GiftRed", null, new Color(0.7f, 0.08f, 0.1f), 1, Color.black);
+        A("GiftGreen", null, new Color(0.1f, 0.45f, 0.15f), 1, Color.black);
+        A("GiftGold", null, new Color(0.85f, 0.65f, 0.15f), 1, Color.black);
+        A("GiftBlue", null, new Color(0.15f, 0.25f, 0.6f), 1, Color.black);
+        A("Glint", null, white, 1, new Color(0.6f, 0.6f, 0.5f));
+        A("GlowOrange", null, new Color(0.8f, 0.35f, 0.05f), 1, new Color(0.6f, 0.25f, 0.02f));
+        A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1, new Color(0.03f, 0.1f, 0.07f));
         A("TestPanel", null, new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
         A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 1, new Color(0.1f, 0.1f, 0.09f));
         // the rainbow
@@ -827,7 +1348,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset" };
 
     static bool EnsureProgramAssets()
     {

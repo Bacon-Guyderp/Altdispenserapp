@@ -178,7 +178,7 @@ namespace UnityEngine {
 
   public struct Color { public float r, g, b, a; public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; a = 1; } public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; } public static Color white { get { return new Color(1, 1, 1); } } public static Color black { get { return new Color(0, 0, 0); } } public static Color red { get { return new Color(1, 0, 0); } } public static Color clear { get { return new Color(0, 0, 0, 0); } } public static Color operator *(Color c, float f) { return new Color(c.r * f, c.g * f, c.b * f, c.a * f); } public static Color operator *(Color a, Color b) { return new Color(a.r * b.r, a.g * b.g, a.b * b.b, a.a * b.a); } public static Color Lerp(Color a, Color b, float t) { return new Color(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t); } }
 
-  public static class Mathf {
+  public static class Mathf { public static int CeilToInt(float f) { return (int)Math.Ceiling(f); }
     public const float PI = 3.14159265f, Rad2Deg = 57.2957795f, Deg2Rad = 0.0174532925f;
     public static float Sin(float f) { return (float)Math.Sin(f); } public static float Cos(float f) { return (float)Math.Cos(f); }
     public static float Atan2(float y, float x) { return (float)Math.Atan2(y, x); } public static float Sqrt(float f) { return (float)Math.Sqrt(f); }

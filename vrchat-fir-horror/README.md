@@ -13,12 +13,21 @@
 > 4. Use **Build & Test**.
 > 5. Press every button in the lobby, then press the skeleton and the tree.
 >
-> The lobby also has the original talking tree, the old wallpaper, and a **rainbow of skeletons**
-> along the east wall: red, orange, yellow, green, blue, indigo and violet, each with its own voiced
-> gag (press them), plus ten more along the south wall (pink, teal, gold, silver, black, brown, glow,
-> rainbow, tiny and giant), and a **Combo Acts** console where they perform together: Traffic Lights,
-> Knock Knock, The Bone-Tones, Medal Ceremony, Upsy-Daisy and the Grand Finale. The test skeleton is the white one, so the cartoon gag ("A skeleton." / "Red
-> skeleton. Ha!") is there too. Voice lines: `python tools/make_voices.py --rainbow`.
+> The lobby also has the original talking tree and the old wallpaper. Its south doorway leads into
+> **the map**, six new rooms full of gags:
+>
+> | Room | What's in it |
+> |---|---|
+> | Gift Wrap Hall | original gags, skeleton routines, a mountain of presents |
+> | Rainbow Hall | the rainbow skeletons on a riser, plus a Combo Acts console (Traffic Lights, Knock Knock, The Bone-Tones, Rainbow Finale) |
+> | Toy Workshop | original gags and skeleton routines between the workbenches |
+> | Chimney Lounge | fireplace, armchairs, the **RED SKELETON closet**, more gags |
+> | Talent Show | the other ten skeletons on stage, plus a console (Medal Ceremony, Upsy-Daisy, Show Finale) |
+> | The Bone Yard | the remaining skeleton routines and gags, and a teleporter back to the lobby |
+>
+> All 53 original gags and all 12 original skeleton routines are in the map. Each one only moves its own
+> props and shows its line in its own speech bubble. For now each plays only for the person who presses it.
+> Puzzles, the hunting tree and the scares come next, once the systems check passes.
 >
 > Each button writes <span>PASS</span> or <span>FAIL</span> on itself. A button stuck on
 > *testing...* means its script stopped. The boards on the left wall show whether the hub script is
