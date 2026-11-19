@@ -8,7 +8,7 @@ const fs = require('fs');
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('pageerror', e => console.log('page error:', e.message));
   await page.goto(`http://127.0.0.1:${port}/flythrough.html`);
-  await page.waitForFunction(() => window.ready === true, null, { timeout: 120000 });
+  await page.waitForFunction(() => window.ready === true, null, { timeout: 900000 });
   const n = await page.evaluate(() => window.frameCount);
   fs.mkdirSync(outDir, { recursive: true });
   for (let i = 0; i < n; i++) {

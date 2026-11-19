@@ -27,7 +27,7 @@ public static class FirCheckBuilder
     static Material fontMat;
     static readonly List<string> report = new List<string>();
 
-    [MenuItem("Fir Warning/Build Systems Check", priority = 1)]
+    [MenuItem("Fir Warning/Build World", priority = 1)]
     public static void BuildMenu() { Build(false); }
 
     public static bool Build(bool quiet)
@@ -79,14 +79,28 @@ public static class FirCheckBuilder
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
+        // ---- the test room (teleport target), far from the lobby
+        var room = Group(root, "TestRoom", new Vector3(40, 0, 0));
+        Box(room, "Floor", new Vector3(0, -0.1f, 0), new Vector3(14, 0.2f, 12), M("Floor2"));
+        Box(room, "Ceiling", new Vector3(0, 3.7f, 0), new Vector3(14, 0.2f, 12), M("Ceiling"));
+        Box(room, "WallN", new Vector3(0, 1.8f, 6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall2"));
+        Box(room, "WallS", new Vector3(0, 1.8f, -6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall2"));
+        Box(room, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall2"));
+        Box(room, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall2"));
+        var roomArrive = Marker(room, "Arrive", new Vector3(0, 0.05f, -2.6f), 0);
+        Trim(room, "TestRoom", 6.0f, -6.0f, 14f, 3.6f, float.NaN, float.NaN, true);
+        StringLights(room, "TestRoom", -6f, 6f, 14f, 3.6f);
+        Text("RoomTitle", room, new Vector3(0, 2.3f, -5.98f), Face(Vector3.forward), new Vector2(9, 0.5f), 0.3f,
+             "<b>SYSTEMS CHECK ROOM</b>: the teleport worked if you're reading this").color = Color.white;
+
         // dark notice boards behind the text, so it reads clearly against the wallpaper
-        Box(lobby, "TestBoard", new Vector3(0, 1.85f, 5.995f), new Vector3(13.2f, 3.3f, 0.01f), M("Board"));
-        Box(lobby, "InfoBoard", new Vector3(-6.995f, 1.65f, 0.45f), new Vector3(0.01f, 3.0f, 9.4f), M("Board"));
-        Box(lobby, "PanelBoard", new Vector3(6.995f, 1.75f, 3.5f), new Vector3(0.01f, 1.8f, 2.2f), M("Board"));
+        Box(room, "TestBoard", new Vector3(0, 1.85f, 5.995f), new Vector3(13.2f, 3.3f, 0.01f), M("Board"));
+        Box(room, "InfoBoard", new Vector3(-6.995f, 1.65f, 0.45f), new Vector3(0.01f, 3.0f, 9.4f), M("Board"));
+        Box(room, "PanelBoard", new Vector3(6.995f, 1.75f, 3.5f), new Vector3(0.01f, 1.8f, 2.2f), M("Board"));
 
         var n = Vector3.back;   // the north wall faces the players
-        Text("Title", lobby, new Vector3(0, 3.15f, 5.98f), Face(n), new Vector2(10, 0.6f), 0.5f, "<b>FIR WARNING</b>  systems check").color = new Color(0.9f, 0.15f, 0.15f);
-        Text("Help", lobby, new Vector3(0, 2.72f, 5.98f), Face(n), new Vector2(12, 0.35f), 0.17f,
+        Text("Title", room, new Vector3(0, 3.15f, 5.98f), Face(n), new Vector2(10, 0.6f), 0.5f, "<b>FIR WARNING</b>  systems check").color = new Color(0.9f, 0.15f, 0.15f);
+        Text("Help", room, new Vector3(0, 2.72f, 5.98f), Face(n), new Vector2(12, 0.35f), 0.17f,
              "Press every button. Each one says <color=#70ff90>PASS</color> or <color=#ff6060>FAIL</color> on itself. Stuck on <color=#ffd040>testing...</color> = that test stopped. Then send a photo of the walls.").color = Color.white;
 
         // ---- the hub (everything that talks to another script talks to this)
@@ -94,56 +108,44 @@ public static class FirCheckBuilder
         hubGo.transform.SetParent(root, false);
         var hub = Add<FirCheckHub>(hubGo);
         var w = Vector3.right;   // west wall faces east
-        hub.board = Text("HubBoard", lobby, new Vector3(-6.98f, 2.2f, 2.5f), Face(w), new Vector2(5f, 1.6f), 0.2f,
+        hub.board = Text("HubBoard", room, new Vector3(-6.98f, 2.2f, 2.5f), Face(w), new Vector2(5f, 1.6f), 0.2f,
                          "<color=#ff6060><b>HUB: not running</b></color>\nIf this never changes, UdonSharp didn't run in this world.");
         hub.board.color = Color.white;
 
-        // ---- the test room (teleport target), far from the lobby
-        var room = Group(root, "TestRoom", new Vector3(40, 0, 0));
-        Box(room, "Floor", new Vector3(0, -0.1f, 0), new Vector3(8, 0.2f, 8), M("Floor2"));
-        Box(room, "WallN", new Vector3(0, 1.5f, 4.1f), new Vector3(8.4f, 3f, 0.2f), M("Wall2"));
-        Box(room, "WallS", new Vector3(0, 1.5f, -4.1f), new Vector3(8.4f, 3f, 0.2f), M("Wall2"));
-        Box(room, "WallW", new Vector3(-4.1f, 1.5f, 0), new Vector3(0.2f, 3f, 8.4f), M("Wall2"));
-        Box(room, "WallE", new Vector3(4.1f, 1.5f, 0), new Vector3(0.2f, 3f, 8.4f), M("Wall2"));
-        var roomArrive = Marker(room, "Arrive", new Vector3(0, 0.05f, -2), 0);
-        Trim(room, "TestRoom", 4.0f, -4.0f, 8f, 3f, float.NaN, float.NaN, true);
-        StringLights(room, "TestRoom", -4f, 4f, 8f, 3f);
-        Text("RoomTitle", room, new Vector3(0, 2.4f, 3.98f), Face(n), new Vector2(7, 0.5f), 0.35f, "<b>TEST ROOM</b>: teleport worked if you're reading this").color = Color.white;
-
-        // ---- the test buttons, 4 + 4 + 2 on the north wall
+        // ---- the test buttons: 1 in the lobby (teleport here), 2-10 on the test room's north wall, 11 on its south wall
         var testMat = M("TestPanel");
-        var sound = Src(lobby, new Vector3(0, 1.5f, 5), Clip("tree_laugh"), false, 0f, 1f, 20f, false);
+        var sound = Src(room, new Vector3(0, 1.5f, 5), Clip("tree_laugh"), false, 0f, 1f, 20f, false);
         Func<int, Vector3> Spot = i => new Vector3(-4.8f + (i % 4) * 3.2f, 2.05f - (i / 4) * 0.78f, 5.85f);
         Func<int, int, string, FirCheckButton> Test = (slot, test, title) =>
         {
             TextMeshPro label;
-            var b = MakeButton<FirCheckButton>(lobby, "Test " + test, Spot(slot), n, out label);
+            var b = MakeButton<FirCheckButton>(slot < 0 ? lobby : room, "Test " + test, slot < 0 ? new Vector3(-6.85f, 1.3f, -3.6f) : Spot(slot), slot < 0 ? Vector3.right : n, out label);
             b.test = test; b.title = title; b.label = label; b.hub = UB(hub);
             return b;
         };
-        var t1 = Test(0, 1, "1. Teleport"); t1.destination = roomArrive;
-        Test(1, 2, "2. Button's own script");
-        Test(2, 3, "3. Event to another script");
-        Test(3, 4, "4. Values between scripts");
-        var typed = MakeButton<FirCheckTyped>(lobby, "Test 5", Spot(4), n, out var typedLabel);
+        var t1 = Test(-1, 1, "Systems check room"); t1.destination = roomArrive;
+        Test(0, 2, "2. Button's own script");
+        Test(1, 3, "3. Event to another script");
+        Test(2, 4, "4. Values between scripts");
+        var typed = MakeButton<FirCheckTyped>(room, "Test 5", Spot(3), n, out var typedLabel);
         typed.hub = hub; typed.label = typedLabel;
-        Test(5, 6, "6. Network sync");
-        var t7 = Test(6, 7, "7. Skeleton (by event)");
-        var t8 = Test(7, 8, "8. Tree (by event)");
-        var t9 = Test(8, 9, "9. Lighting (material)"); t9.testMaterial = testMat;
-        var t10 = Test(9, 10, "10. Sound"); t10.sound = sound;
+        Test(4, 6, "6. Network sync");
+        var t7 = Test(5, 7, "7. Skeleton (by event)");
+        var t8 = Test(6, 8, "8. Tree (by event)");
+        var t9 = Test(7, 9, "9. Lighting (material)"); t9.testMaterial = testMat;
+        var t10 = Test(8, 10, "10. Sound"); t10.sound = sound;
         // test 11 is in the test room: teleport back
-        var t11 = MakeButton<FirCheckButton>(room, "Test 11", new Vector3(0, 1.3f, 3.85f), n, out var backLabel);
+        var t11 = MakeButton<FirCheckButton>(room, "Test 11", new Vector3(0, 1.3f, -5.85f), Vector3.forward, out var backLabel);
         t11.test = 11; t11.title = "11. Teleport back"; t11.label = backLabel; t11.destination = spawn; t11.hub = UB(hub);
 
         // the lighting test panel (lantern-lit, so _Dark shows) on the east wall
         var e = Vector3.left;
-        var panel = Box(lobby, "TestPanel", new Vector3(6.95f, 1.6f, 3.5f), new Vector3(0.05f, 1.2f, 1.6f), testMat);
-        Text("PanelLabel", lobby, new Vector3(6.9f, 2.45f, 3.5f), Face(e), new Vector2(2f, 0.3f), 0.15f, "test 9 panel").color = Color.white;
+        var panel = Box(room, "TestPanel", new Vector3(6.95f, 1.6f, 3.5f), new Vector3(0.05f, 1.2f, 1.6f), testMat);
+        Text("PanelLabel", room, new Vector3(6.9f, 2.45f, 3.5f), Face(e), new Vector2(2f, 0.3f), 0.15f, "test 9 panel").color = Color.white;
 
         // ---- your skeleton
         var skelGo = new GameObject("Skeleton");
-        skelGo.transform.SetParent(lobby, false);
+        skelGo.transform.SetParent(room, false);
         skelGo.transform.localPosition = new Vector3(-2.5f, 0, 1.5f);
         skelGo.transform.localRotation = Quaternion.Euler(0, 180, 0);
         var pivots = SkeletonRig(skelGo.transform, "Rig", M("BoneWhite"));
@@ -151,7 +153,7 @@ public static class FirCheckBuilder
         var skel = Add<FirCheckSkeleton>(skelGo);
         skel.pivots = pivots;
         skel.voice = Src(pivots[2], Vector3.zero, Clip("skeleton_white"), false, 1f, 1f, 15f, false);
-        skel.label = Text("SkeletonLabel", lobby, new Vector3(-2.5f, 2.35f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
+        skel.label = Text("SkeletonLabel", room, new Vector3(-2.5f, 2.35f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
                           "<b>White skeleton</b>\n<color=#ff6060>its script isn't running</color>");
         skel.label.color = Color.white;
         SetInteract(skel, "Press the skeleton", 3f);
@@ -160,7 +162,7 @@ public static class FirCheckBuilder
 
         // ---- a talking tree: the original Fir Warning model
         var treeGo = new GameObject("Tree");
-        treeGo.transform.SetParent(lobby, false);
+        treeGo.transform.SetParent(room, false);
         treeGo.transform.localPosition = new Vector3(2.5f, 0, 1.5f);
         treeGo.transform.localRotation = Quaternion.Euler(0, 180, 0);
         Transform mouth;
@@ -169,7 +171,7 @@ public static class FirCheckBuilder
         var tree = Add<FirCheckTree>(treeGo);
         tree.head = head; tree.mouth = mouth;
         tree.voice = Src(head, new Vector3(0, 0.75f, 0.35f), Clip("tree_talk"), false, 1f, 1f, 15f, false);
-        tree.label = Text("TreeLabel", lobby, new Vector3(2.5f, 2.35f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
+        tree.label = Text("TreeLabel", room, new Vector3(2.5f, 2.35f, 1.5f), Face(Vector3.back), new Vector2(2.2f, 0.45f), 0.14f,
                           "<b>Tree</b>\n<color=#ff6060>its script isn't running</color>");
         tree.label.color = Color.white;
         SetInteract(tree, "Press the tree", 3f);
@@ -182,7 +184,7 @@ public static class FirCheckBuilder
 
         // ---- copy everything into Udon, then check what UdonSharp stored
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
-        var info = Text("BuildInfo", lobby, new Vector3(-6.98f, 1.0f, -1.6f), Face(w), new Vector2(5f, 1.5f), 0.15f, "");
+        var info = Text("BuildInfo", room, new Vector3(-6.98f, 1.0f, -1.6f), Face(w), new Vector2(5f, 1.5f), 0.15f, "");
         info.color = Color.white;
         info.text = BuildReport(root);
 
@@ -194,8 +196,8 @@ public static class FirCheckBuilder
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = root.gameObject;
         foreach (var r in report) Debug.Log("Fir Warning systems check: " + r);
-        if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the systems check.\n\n" + string.Join("\n", report.Take(14)) +
-                                                "\n\nNow press Build & Test (or upload) and press every button in the lobby.", "OK");
+        if (!quiet) EditorUtility.DisplayDialog("Fir Warning", "Built the world.\n\n" + string.Join("\n", report.Take(14)) +
+                                                "\n\nNow press Build & Test (or upload). START is on the lobby's north wall; the systems check room is through the button on its west wall.", "OK");
         return true;
     }
 
@@ -2188,13 +2190,35 @@ public static class FirCheckBuilder
         ScareZone(sc, "Scare 5a", new Vector3(-8.2f, 0, -108f), 90f, 5.5f, "scream3");
         ScareZone(sc, "Scare 5b", new Vector3(8.2f, 0, -100.6f), -90f, 1.7f, "scream2");
 
-        // ---- the game panel in the lobby
-        Box(lobby, "GameBoard", new Vector3(6.995f, 1.75f, -2.1f), new Vector3(0.01f, 2.6f, 3.4f), M("Board"));
-        Text("GameTitle", lobby, new Vector3(6.97f, 2.8f, -2.1f), Face(Vector3.left), new Vector2(3.2f, 0.4f), 0.3f, "<b>THE GAME</b>").color = new Color(0.9f, 0.15f, 0.15f);
-        hunt.lobbyBoard = Text("GameStatus", lobby, new Vector3(6.97f, 2.25f, -2.1f), Face(Vector3.left), new Vector2(3.1f, 0.7f), 0.13f, "");
+        // ---- the start room: the lobby's north wall
+        var nb = Vector3.back;
+        Box(lobby, "StartBoard", new Vector3(0, 1.85f, 5.995f), new Vector3(13.2f, 3.3f, 0.01f), M("Board"));
+        Text("GameTitle", lobby, new Vector3(0, 3.1f, 5.97f), Face(nb), new Vector2(10f, 0.7f), 0.6f, "<b>FIR WARNING</b>").color = new Color(0.9f, 0.15f, 0.15f);
+        Text("Tagline", lobby, new Vector3(0, 2.62f, 5.97f), Face(nb), new Vector2(12f, 0.35f), 0.2f,
+             "<i>The animatronic Douglas firs were only meant to sing.</i>").color = new Color(1f, 0.85f, 0.4f);
+        Text("Story", lobby, new Vector3(-4.2f, 1.55f, 5.97f), Face(nb), new Vector2(4.2f, 1.7f), 0.135f,
+             "<b>THE STORY</b>\nThe toy factory's singing Christmas trees were recalled after \"the incident\". Tonight the power came back on " +
+             "and one of them got up. It won't move while someone is looking at it...\n\nGet through six rooms, solve each one's puzzle to unlock " +
+             "the next, and lead the tree to the furnace at the end.").color = Color.white;
+        Text("HowTo", lobby, new Vector3(4.2f, 1.55f, 5.97f), Face(nb), new Vector2(4.2f, 1.7f), 0.135f,
+             "<b>HOW TO PLAY</b>\n- Each room's board (by its door) says what to do.\n- Keep an eye on the tree: it only moves when nobody is watching. " +
+             "With two, one of you watches while the other works.\n- Throw a toilet at it to stun it.\n- Caught? You go back to the room's entrance.\n" +
+             "- The lobby is safe. Gags and skeletons are everywhere, game or not.").color = Color.white;
+        hunt.lobbyBoard = Text("GameStatus", lobby, new Vector3(0, 2.15f, 5.97f), Face(nb), new Vector2(3.6f, 0.6f), 0.13f, "");
         hunt.lobbyBoard.color = Color.white;
-        HB(lobby, "START", new Vector3(6.92f, 1.45f, -2.6f), Vector3.left, new Vector3(1.0f, 0.4f, 0.12f), M("ButtonGold"), 1, 0, "Start the game (or join it)", "<b>START</b>", 0.2f, true);
-        HB(lobby, "RESET", new Vector3(6.92f, 1.45f, -1.2f), Vector3.left, new Vector3(0.7f, 0.3f, 0.12f), M("Button"), 2, 0, "End the game", "<b>RESET</b>", 0.14f, true);
+        HB(lobby, "START", new Vector3(0, 1.4f, 5.9f), nb, new Vector3(1.6f, 0.55f, 0.12f), M("ButtonGold"), 1, 0, "Start the game (or join it)", "<b>START</b>", 0.3f, true);
+        HB(lobby, "RESET", new Vector3(0, 0.75f, 5.9f), nb, new Vector3(0.8f, 0.3f, 0.12f), M("Button"), 2, 0, "End the game", "<b>RESET</b>", 0.14f, true);
+        Text("Players", lobby, new Vector3(0, 0.42f, 5.97f), Face(nb), new Vector2(3.4f, 0.25f), 0.1f, "best with 2 players  -  about 45 minutes").color = new Color(0.75f, 0.75f, 0.75f);
+        // the east wall: the posters and a decorated tree in the corner; the way into the map is the south doorway
+        Poster(lobby, "poster_warning", new Vector3(6.97f, 1.85f, -3.6f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_original", new Vector3(6.97f, 1.85f, -0.6f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_safety", new Vector3(6.97f, 1.85f, 2.4f), Vector3.left, 0.9f, 1.2f);
+        TreeAt(lobby, "LobbyTree", new Vector3(-5.6f, 0, 1.2f), 90f, 2.4f, true);
+        string[] gm2 = { "GiftRed", "GiftGreen", "GiftGold", "GiftBlue" };
+        for (int i = 0; i < 6; i++)
+            DPrim(PrimitiveType.Cube, "Present", lobby, new Vector3(-5.6f + Mathf.Cos(i * 1.1f) * 0.95f, 0.17f, 1.2f + Mathf.Sin(i * 1.1f) * 0.85f), Vector3.one * (0.3f + 0.05f * (i % 3)), M(gm2[i % 4]), Quaternion.Euler(0, i * 23f, 0));
+        Text("CheckNote", lobby, new Vector3(-6.97f, 2.35f, -3.6f), Face(Vector3.right), new Vector2(2.6f, 0.5f), 0.11f,
+             "<b>Systems check</b>\n<size=85%>for the world's builder: tests that every script runs</size>").color = new Color(0.8f, 0.8f, 0.8f);
 
         hunt.huntOnly = huntOnly.ToArray();
         hunt.freeOnly = new GameObject[0];

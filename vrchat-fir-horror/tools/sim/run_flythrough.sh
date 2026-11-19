@@ -9,7 +9,7 @@ OUT="$(mktemp -d)"
 OUTFILE="$(realpath -m "${1:-fir_warning_flythrough.mp4}")"
 mcs -langversion:7.2 -d:UNITY_EDITOR -nowarn:0169,0414,0649,0219,0067,0108,0114 -out:"$OUT/fly.exe" \
     "$HERE/sim_runtime.cs" "$HERE/sim_editor.cs" "$HERE/sim_flythrough.cs" "$HERE/../../Assets/FirHorror/Editor/FirCheckBuilder.cs" "$HERE/../../Assets/FirHorror/Scripts/"*.cs
-FIR_PROJECT="$HERE/../.." mono "$OUT/fly.exe" > "$OUT/scene.json"
+FIR_PROJECT="$HERE/../.." mono "$OUT/fly.exe" ${FLY_MODE:-} > "$OUT/scene.json"
 cp "$HERE/flythrough.html" "$OUT/"
 cp "${THREE_JS:-$HERE/three.module.js}" "$OUT/three.module.js"
 (cd "$OUT" && python3 -m http.server 8778 >/dev/null 2>&1 & echo $! > "$OUT/server.pid")
