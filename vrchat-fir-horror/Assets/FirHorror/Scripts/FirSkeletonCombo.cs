@@ -1,6 +1,7 @@
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 
 /// <summary>
 /// A combination act: several gag skeletons perform together and trade lines. Press its button on the
@@ -46,6 +47,14 @@ public class FirSkeletonCombo : UdonSharpBehaviour
     }
 
     public override void Interact()
+    {
+        if (!ready || running) return;
+        Play();
+        Share(4);
+    }
+
+    /// <summary>Starts the act on this client only (FirShare calls it for the other players).</summary>
+    public void Play()
     {
         if (!ready || running) return;
         running = true;
@@ -197,4 +206,15 @@ public class FirSkeletonCombo : UdonSharpBehaviour
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // ---- playing for everyone: FirShare sends the press to the other players
+    public UdonBehaviour share;
+    public int shareIndex;
+    void Share(int kind)
+    {
+        if (share == null) return;
+        share.SetProgramVariable("argKind", kind);
+        share.SetProgramVariable("argIndex", shareIndex);
+        share.SendCustomEvent("EvShare");
+    }
 }

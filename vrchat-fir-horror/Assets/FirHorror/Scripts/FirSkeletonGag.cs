@@ -1,6 +1,7 @@
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -57,6 +58,7 @@ public class FirSkeletonGag : UdonSharpBehaviour
         if (Time.time < busyUntil) return;
         busyUntil = Time.time + Length() + 0.5f;
         Play();
+        Share(1);
     }
 
     /// <summary>Plays the routine on this client only.</summary>
@@ -245,5 +247,16 @@ public class FirSkeletonGag : UdonSharpBehaviour
         Vector3 away = bubbleTransform.position - lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
         away.y = 0f;
         if (away.magnitude > 0.01f) bubbleTransform.rotation = Quaternion.LookRotation(away, Vector3.up);
+    }
+
+    // ---- playing for everyone: FirShare sends the press to the other players
+    public UdonBehaviour share;
+    public int shareIndex;
+    void Share(int kind)
+    {
+        if (share == null) return;
+        share.SetProgramVariable("argKind", kind);
+        share.SetProgramVariable("argIndex", shareIndex);
+        share.SendCustomEvent("EvShare");
     }
 }

@@ -1,6 +1,7 @@
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 
 /// <summary>
 /// One skeleton in the rainbow line-up. Press it and it does its routine and says its line (its jaw flaps
@@ -41,7 +42,12 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
         ready = true;
     }
 
-    public override void Interact() { Play(); }
+    public override void Interact()
+    {
+        if (!ready || running) return;
+        Play();
+        Share(3);
+    }
 
     public void Play()
     {
@@ -239,4 +245,15 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // ---- playing for everyone: FirShare sends the press to the other players
+    public UdonBehaviour share;
+    public int shareIndex;
+    void Share(int kind)
+    {
+        if (share == null) return;
+        share.SetProgramVariable("argKind", kind);
+        share.SetProgramVariable("argIndex", shareIndex);
+        share.SendCustomEvent("EvShare");
+    }
 }

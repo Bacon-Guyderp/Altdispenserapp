@@ -1,6 +1,7 @@
 using TMPro;
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 using VRC.SDKBase;
 
 /// <summary>
@@ -52,7 +53,12 @@ public class FirGag : UdonSharpBehaviour
         if (mouth != null) mouthScale = mouth.localScale;
     }
 
-    public override void Interact() { Trigger(); }
+    public override void Interact()
+    {
+        if (Time.time < busyUntil) return;
+        Trigger();
+        Share(0);
+    }
 
     void CheckZone()
     {
@@ -130,4 +136,15 @@ public class FirGag : UdonSharpBehaviour
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // ---- playing for everyone: FirShare sends the press to the other players
+    public UdonBehaviour share;
+    public int shareIndex;
+    void Share(int kind)
+    {
+        if (share == null) return;
+        share.SetProgramVariable("argKind", kind);
+        share.SetProgramVariable("argIndex", shareIndex);
+        share.SendCustomEvent("EvShare");
+    }
 }

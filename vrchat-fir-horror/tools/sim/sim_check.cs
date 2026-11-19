@@ -169,6 +169,45 @@ public static class SimCheck {
     baby.body.velocity = new Vector3(0, 2f, -6f); Sim.Run(0.2f); baby.body.velocity = Vector3.zero; Sim.Run(0.2f);
     Check(Sim.Events.Any(e => e.Contains("whoosh")) && Sim.Events.Any(e => e.Contains("toilet_clunk")), "a thrown baby whooshes when grabbed and thuds when it lands");
 
+    Console.WriteLine("\n== Gags for everyone: Bob presses, Alice sees it too");
+    Sim.Run(20f);
+    Func<object, bool> Running = o => (bool)o.GetType().GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(o);
+    Func<Sim.Client, int, int, UdonSharpBehaviour> Pick = (c, kind, i) =>
+      kind == 0 ? (UdonSharpBehaviour)All<FirGag>(c).First(g => g.shareIndex == i) : kind == 1 ? (UdonSharpBehaviour)All<FirSkeletonGag>(c).First(g => g.shareIndex == i)
+      : kind == 2 ? (UdonSharpBehaviour)All<FirCloset>(c).First(g => g.shareIndex == i) : kind == 3 ? (UdonSharpBehaviour)All<FirRainbowSkeleton>(c).First(g => g.shareIndex == i)
+      : (UdonSharpBehaviour)All<FirSkeletonCombo>(c).First(g => g.shareIndex == i);
+    string[] kindName = { "pressed gags", "skeleton routines", "closet", "gag skeletons", "combo acts" };
+    int[] kindCount = { All<FirGag>(B).Count, All<FirSkeletonGag>(B).Count, All<FirCloset>(B).Count, All<FirRainbowSkeleton>(B).Count, All<FirSkeletonCombo>(B).Count };
+    for (int kind = 0; kind < 5; kind++) {
+      int ok = 0, n = 0; var bad = new List<string>();
+      for (int i = 0; i < kindCount[kind]; i++) {
+        var mine = Pick(B, kind, i);
+        if (kind == 0 && ((FirGag)mine).walkIn) continue;
+        n++;
+        B.player.pos = mine.transform.position + mine.transform.rotation * new Vector3(0, 0, 1.5f);
+        var theirs = Pick(A, kind, i);
+        Sim.Press(B, mine);
+        bool seen = false;
+        for (int f = 0; f < 50 && !seen; f++) { Sim.Step(); if (Running(theirs)) seen = true; }
+        if (seen) ok++; else bad.Add(mine.name);
+        Sim.Run(kind == 4 ? 40f : kind == 2 ? 11f : 9f);
+      }
+      Check(ok == n && n > 0, ok + " of " + n + " " + kindName[kind] + " pressed by Bob also played for Alice" + string.Concat(bad.Take(5).Select(x => " | " + x)));
+    }
+    B.player.pos = new Vector3(40, 0.05f, 0);
+    var C = Sim.Join("Carol", new Vector3(0, 0.05f, -4));
+    Sim.Run(3f);
+    bool replay = All<FirGag>(C).Any(g => Running(g)) || All<FirSkeletonGag>(C).Any(g => Running(g)) || All<FirCloset>(C).Any(g => Running(g))
+                  || All<FirRainbowSkeleton>(C).Any(g => Running(g)) || All<FirSkeletonCombo>(C).Any(g => Running(g));
+    Check(!replay, "Carol joins late and doesn't get the last press replayed");
+    var shareBob = All<FirShare>(B)[0];
+    var lastCombo = All<FirSkeletonCombo>(B)[0]; B.player.pos = lastCombo.transform.position + lastCombo.transform.rotation * new Vector3(0, 0, 1.5f);
+    Sim.Press(B, lastCombo); bool carolSees = false;
+    for (int f = 0; f < 50 && !carolSees; f++) { Sim.Step(); if (Running(All<FirSkeletonCombo>(C)[0])) carolSees = true; }
+    Check(carolSees, "...but she does see the next thing Bob presses");
+    Sim.Run(40f);
+    Sim.Leave(C);
+
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
       var hub = All<FirCheckHub>(c)[0];

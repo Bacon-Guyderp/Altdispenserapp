@@ -179,6 +179,7 @@ public static class FirCheckBuilder
 
         // ---- the map: new rooms to the south, full of gags (through the doorway in the lobby's south wall)
         BuildMap(root, spawn);
+        BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
@@ -1840,7 +1841,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare" };
 
     static bool EnsureProgramAssets()
     {
@@ -1939,6 +1940,32 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // ---- gags for everyone: one synced FirShare that tells the other players what someone pressed
+    static void BuildShare(Transform root)
+    {
+        var go = new GameObject("Share");
+        go.transform.SetParent(root, false);
+        var sh = Add<FirShare>(go);
+        var gags = root.GetComponentsInChildren<FirGag>(true);
+        var sgs = root.GetComponentsInChildren<FirSkeletonGag>(true);
+        var cls = root.GetComponentsInChildren<FirCloset>(true);
+        var rbs = root.GetComponentsInChildren<FirRainbowSkeleton>(true);
+        var cbs = root.GetComponentsInChildren<FirSkeletonCombo>(true);
+        var me = UB(sh);
+        for (int i = 0; i < gags.Length; i++) { gags[i].share = me; gags[i].shareIndex = i; }
+        for (int i = 0; i < sgs.Length; i++) { sgs[i].share = me; sgs[i].shareIndex = i; }
+        for (int i = 0; i < cls.Length; i++) { cls[i].share = me; cls[i].shareIndex = i; }
+        for (int i = 0; i < rbs.Length; i++) { rbs[i].share = me; rbs[i].shareIndex = i; }
+        for (int i = 0; i < cbs.Length; i++) { cbs[i].share = me; cbs[i].shareIndex = i; }
+        sh.gags = gags.Select(x => UB(x)).ToArray();
+        sh.skeletonGags = sgs.Select(x => UB(x)).ToArray();
+        sh.closets = cls.Select(x => UB(x)).ToArray();
+        sh.gagSkeletons = rbs.Select(x => UB(x)).ToArray();
+        sh.combos = cbs.Select(x => UB(x)).ToArray();
+        report.Add("shared with everyone: " + gags.Count(g => !g.walkIn) + " pressed gags, " + sgs.Length + " routines, " + cls.Length +
+                   " closet, " + rbs.Length + " gag skeletons, " + cbs.Length + " combo acts");
     }
 
     static VRC.Udon.UdonBehaviour UB(UdonSharpBehaviour b)
