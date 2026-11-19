@@ -32,6 +32,8 @@ public class FirGag : UdonSharpBehaviour
     public TextMeshPro bubble;        // the speech bubble's text (Udon only lets scripts set a TextMeshPro's text)
     public GameObject bubbleObject;   // ...and its object and transform, to show, hide and turn it
     public Transform bubbleTransform;
+    public bool scare;                // a jump scare: armed only while the horror game is on (hunt)
+    public UdonBehaviour hunt;
 
     Vector3 p0, s0, mouthScale;
     Quaternion r0;
@@ -66,7 +68,8 @@ public class FirGag : UdonSharpBehaviour
         if (!Utilities.IsValid(lp)) return;
         Vector3 p = transform.InverseTransformPoint(lp.GetPosition() + Vector3.up * 0.9f) - zoneCenter;
         if (Mathf.Abs(p.x) > zoneSize.x * 0.5f || Mathf.Abs(p.y) > zoneSize.y * 0.5f || Mathf.Abs(p.z) > zoneSize.z * 0.5f) return;
-        nextWalkIn = Time.time + 30f;
+        if (scare && !GameOn()) return;
+        nextWalkIn = Time.time + (scare ? 45f : 30f);
         Trigger();
     }
 
@@ -133,6 +136,12 @@ public class FirGag : UdonSharpBehaviour
             if (hideWhenIdle) target.gameObject.SetActive(false);
             if (bubbleObject != null) bubbleObject.SetActive(false);
         }
+    }
+
+    bool GameOn()
+    {
+        if (hunt == null) return false;
+        return (bool)hunt.GetProgramVariable("running") && (int)hunt.GetProgramVariable("stage") < 6;
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }

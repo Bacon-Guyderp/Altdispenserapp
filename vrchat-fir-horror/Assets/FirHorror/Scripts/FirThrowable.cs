@@ -1,6 +1,7 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using VRC.Udon;
 
 /// <summary>
 /// Something you can pick up and throw (a VRCPickup with a Rigidbody and a VRCObjectSync on the same object,
@@ -14,7 +15,10 @@ public class FirThrowable : UdonSharpBehaviour
     public AudioSource audioSrc;
     public AudioClip grabClip, landClip;
 
-    float lastSpeed, nextLand;
+    public UdonBehaviour hunt;       // the horror game: a hit on the tree stuns it
+    public Transform stalker;        // the hunting tree
+
+    float lastSpeed, nextLand, nextStun;
 
     public override void OnPickup()
     {
@@ -32,5 +36,15 @@ public class FirThrowable : UdonSharpBehaviour
             audioSrc.PlayOneShot(landClip, Mathf.Clamp01(lastSpeed / 7f));
         }
         lastSpeed = speed;
+        // the thrower's client checks for a hit on the hunting tree
+        if (stalker != null && hunt != null && speed > 2.5f && Time.time > nextStun && Networking.IsOwner(gameObject))
+        {
+            Vector3 d = transform.position - (stalker.position + Vector3.up * 1.2f);
+            if (Mathf.Abs(d.y) < 1.4f && new Vector2(d.x, d.z).magnitude < 0.9f)
+            {
+                nextStun = Time.time + 3f;
+                hunt.SendCustomEvent("EvStun");
+            }
+        }
     }
 }

@@ -131,6 +131,7 @@ namespace UnityEngine {
     public override bool Equals(object o) { return o is Vector3 && this == (Vector3)o; } public override int GetHashCode() { return 0; }
     public static float Distance(Vector3 a, Vector3 b) { return (a - b).magnitude; }
     public static float Dot(Vector3 a, Vector3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+    public static float Angle(Vector3 a, Vector3 b) { float d = a.magnitude * b.magnitude; if (d < 1e-6f) return 0f; return (float)(Math.Acos(Math.Max(-1.0, Math.Min(1.0, Dot(a, b) / d))) * 180.0 / Math.PI); }
     public static Vector3 Cross(Vector3 a, Vector3 b) { return new Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
     public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { t = Mathf.Clamp01(t); return a + (b - a) * t; }
     public static Vector3 MoveTowards(Vector3 a, Vector3 b, float d) { var v = b - a; float m = v.magnitude; return m <= d || m < 1e-6f ? b : a + v / m * d; }
@@ -285,9 +286,9 @@ namespace UnityEngine {
   }
   public static class Debug { public static readonly List<string> Warnings = new List<string>(); public static void Log(object o) { Sim.BuildLog.Add(o.ToString()); } public static void LogWarning(object o) { Warnings.Add(o.ToString()); } public static void LogWarning(object o, Object c) { Warnings.Add(o.ToString()); } public static void LogError(object o, Object c) { LogError(o); } public static void LogError(object o) { Sim.Fail("Debug.LogError: " + o); } }
   public class Material : Object {
-    public Material() { } public Material(Shader s) { shader = s; } public Material(Material m) { shader = m.shader; }
+    public Material() { } public Material(Shader s) { shader = s; } public Material(Material m) { shader = m.shader; mainTexture = m.mainTexture; foreach (var kv in m.floats) floats[kv.Key] = kv.Value; foreach (var kv in m.colors) colors[kv.Key] = kv.Value; }
     public Shader shader; public Texture mainTexture; public bool enableInstancing;
-    public bool HasProperty(string n) { return true; } public void CopyPropertiesFromMaterial(Material m) { }
+    public bool HasProperty(string n) { return true; } public void CopyPropertiesFromMaterial(Material m) { mainTexture = m.mainTexture; foreach (var kv in m.floats) floats[kv.Key] = kv.Value; foreach (var kv in m.colors) colors[kv.Key] = kv.Value; }
     public readonly Dictionary<string, float> floats = new Dictionary<string, float>();
     public readonly Dictionary<string, Color> colors = new Dictionary<string, Color>();
     public void SetFloat(string n, float f) { floats[n] = f; } public void SetColor(string n, Color c) { colors[n] = c; }

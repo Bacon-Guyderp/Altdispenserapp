@@ -74,8 +74,6 @@ public static class FirCheckBuilder
         CandyCane(lobby, new Vector3(-1.75f, 0, -5.65f), true);
         CandyCane(lobby, new Vector3(1.75f, 0, -5.65f), false);
         Rug(lobby, new Vector3(0, 0, -2.6f), new Vector2(4.2f, 3.0f), "Rug", "TrimDark");
-        Poster(lobby, "poster_warning", new Vector3(6.97f, 1.85f, -3.6f), Vector3.left, 0.9f, 1.2f);
-        Poster(lobby, "poster_original", new Vector3(6.97f, 1.85f, -0.6f), Vector3.left, 0.9f, 1.2f);
         PendantLamp(lobby, new Vector3(-3.5f, 3.6f, -0.5f), 0.45f);
         PendantLamp(lobby, new Vector3(3.5f, 3.6f, -0.5f), 0.45f);
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
@@ -179,6 +177,7 @@ public static class FirCheckBuilder
 
         // ---- the map: new rooms to the south, full of gags (through the doorway in the lobby's south wall)
         BuildMap(root, spawn);
+        BuildHunt(root, lobby, spawn);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -187,6 +186,7 @@ public static class FirCheckBuilder
         info.color = Color.white;
         info.text = BuildReport(root);
 
+        FinishHunt(root);
         SetupDescriptor(spawn);
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
@@ -1047,7 +1047,7 @@ public static class FirCheckBuilder
         var back = MakeButton<FirCheckButton>(g, "Back to the lobby", new Vector3(0, 1.3f, -117.85f), Vector3.forward, out var label);
         back.test = 11; back.title = "Back to the lobby"; back.label = label; back.destination = spawn;
         Text("EndNote", g, new Vector3(0, 2.6f, -117.97f), Face(Vector3.forward), new Vector2(8f, 0.5f), 0.22f,
-             "<b>THE END</b> (for now): the horror comes next, once the systems check passes").color = Color.white;
+             "<b>THE END</b> of the map. In the game, the furnace is your way out").color = Color.white;
     }
 
     // ---- the throwable babies (your uploaded model: Models/stewie_parts.txt)
@@ -1758,6 +1758,16 @@ public static class FirCheckBuilder
         A("Black", null, new Color(0.03f, 0.03f, 0.03f), 1, Color.black);
         A("HatRed", null, new Color(0.75f, 0.05f, 0.08f), 1, Color.black);
         A("HatWhite", null, new Color(0.95f, 0.95f, 0.95f), 1, Color.black);
+        // the horror game
+        A("DoorWood", "wood_floor", new Color(0.5f, 0.32f, 0.2f), 1, Color.black);
+        A("ScareGreen", "needles", new Color(0.35f, 0.75f, 0.35f), 1, Color.black);
+        A("GlowRedEye", null, new Color(1f, 0.1f, 0.05f), 1, new Color(1f, 0.05f, 0.02f));
+        A("GlowYellow", null, new Color(1f, 0.85f, 0.2f), 1, new Color(0.7f, 0.55f, 0.05f));
+        A("GlowRed", null, new Color(0.9f, 0.1f, 0.1f), 1, new Color(0.6f, 0.05f, 0.05f));
+        A("GlowGold", null, new Color(1f, 0.75f, 0.2f), 1, new Color(0.6f, 0.4f, 0.05f));
+        A("GlowGreen", null, new Color(0.2f, 1f, 0.3f), 1, new Color(0.1f, 0.6f, 0.15f));
+        A("Porcelain", null, new Color(0.95f, 0.95f, 0.93f), 1, Color.black);
+        A("ToiletWater", null, new Color(0.45f, 0.7f, 0.9f), 1, new Color(0.05f, 0.1f, 0.15f));
     }
 
     static Texture2D Tex(string name)
@@ -1841,7 +1851,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker" };
 
     static bool EnsureProgramAssets()
     {
@@ -1940,6 +1950,393 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== the horror game (FirHunt)
+
+    static readonly float[] RZ0 = { -6f, -26f, -42f, -62f, -80f, -98f };
+    static readonly float[] RZ1 = { -26f, -42f, -62f, -80f, -98f, -118f };
+    static readonly float[] RDoor = { 0f, 0f, 0f, 0f, 0f, 7.5f };
+    static FirHunt hunt;
+    static readonly List<FirHuntButton> huntButtons = new List<FirHuntButton>();
+    static readonly List<FirGag> scares = new List<FirGag>();
+    static readonly List<GameObject> huntOnly = new List<GameObject>();
+
+    static void BuildHunt(Transform root, Transform lobby, Transform spawn)
+    {
+        huntButtons.Clear(); scares.Clear(); huntOnly.Clear();
+        var map = root.Find("Map");
+        var hg = Group(root, "Hunt", new Vector3(0, 1.5f, -3f));
+        hunt = Add<FirHunt>(hg.gameObject);
+        hunt.sfx = Src(hg, Vector3.zero, null, false, 0f, 1f, 5f, false);
+        hunt.heartbeat = Src(hg, Vector3.zero, Clip("heartbeat"), true, 0f, 0f, 5f, false);
+        hunt.ambient = Src(hg, Vector3.zero, null, false, 1f, 0.9f, 14f, false);
+        hunt.ambientClips = new[] { Clip("whisper"), Clip("rustle"), Clip("tree_laugh"), Clip("servo"), Clip("static"), Clip("tree_sing_wrong"), Clip("music_box_broken") };
+        hunt.startClip = Clip("door_bang"); hunt.unlockClip = Clip("unlock"); hunt.wrongClip = Clip("wrong"); hunt.pickupClip = Clip("pickup");
+        hunt.switchClip = Clip("switch"); hunt.endingClip = Clip("ending"); hunt.screamClip = Clip("scream2"); hunt.stunClip = Clip("toilet_flush");
+
+        // ---- the face that fills your view when you're caught (outside the map, so it stays bright)
+        var face = Group(hg, "ScareFace", Vector3.zero);
+        Prim(PrimitiveType.Sphere, "Canopy", face, new Vector3(0, 0.05f, 0.35f), new Vector3(1.5f, 1.7f, 0.6f), M("ScareGreen"));
+        foreach (float sx in new[] { -0.2f, 0.2f })
+        {
+            Prim(PrimitiveType.Sphere, "Eye", face, new Vector3(sx, 0.17f, 0.04f), Vector3.one * 0.24f, M("Eye"));
+            Prim(PrimitiveType.Sphere, "Pupil", face, new Vector3(sx * 0.9f, 0.15f, -0.07f), Vector3.one * 0.11f, M("GlowRedEye"));
+        }
+        Prim(PrimitiveType.Sphere, "Mouth", face, new Vector3(0, -0.22f, 0.04f), new Vector3(0.55f, 0.32f, 0.14f), M("Mouth"));
+        Prim(PrimitiveType.Sphere, "Throat", face, new Vector3(0, -0.22f, 0.0f), new Vector3(0.42f, 0.22f, 0.1f), M("Black"));
+        for (int k = 0; k < 6; k++)
+            Prim(PrimitiveType.Cube, "Tooth", face, new Vector3(-0.15f + k * 0.06f, -0.13f, -0.02f), new Vector3(0.04f, 0.07f, 0.02f), M("Teeth"));
+        hunt.scareFace = face;
+
+        // ---- checkpoints (each room's entrance) and the doors between rooms
+        hunt.checkpoints = new Transform[6];
+        for (int r = 0; r < 6; r++) hunt.checkpoints[r] = Marker(map, "Checkpoint " + r, new Vector3(RDoor[r], 0.05f, RZ0[r] - 1.6f), 180f);
+        var doors = new GameObject[6];
+        for (int r = 1; r < 6; r++)
+        {
+            var d = Group(map, "Door " + r, new Vector3(RDoor[r], 0, RZ0[r] - 0.1f));
+            Box(d, "Panel", new Vector3(0, 1.4f, 0), new Vector3(2.4f, 2.8f, 0.12f), M("DoorWood"));
+            for (int s = 0; s < 2; s++)
+            {
+                float zz = s == 0 ? 0.065f : -0.065f;
+                var n = s == 0 ? Vector3.forward : Vector3.back;
+                Prim(PrimitiveType.Cube, "Bar", d, new Vector3(0, 1.25f, zz), new Vector3(2.2f, 0.12f, 0.02f), M("Metal"));
+                Prim(PrimitiveType.Cube, "Lock", d, new Vector3(0, 1.25f, zz * 1.4f), new Vector3(0.22f, 0.28f, 0.06f), M("Brass"));
+                Text("Locked", d, new Vector3(0, 2.1f, zz * 1.2f), Face(n), new Vector2(2.2f, 0.5f), 0.2f,
+                     s == 0 ? "<b>LOCKED</b>\n<size=70%>solve the room to open it</size>" : "<b>LOCKED</b>\n<size=70%>solve this room's puzzle</size>").color = new Color(1f, 0.8f, 0.3f);
+            }
+            doors[r] = d.gameObject;
+        }
+        hunt.doors = doors;
+
+        // ---- each room's task board (inside, on the north wall, left of the doorway)
+        hunt.roomBoards = new TextMeshPro[6];
+        for (int r = 0; r < 6; r++)
+        {
+            float bx = RDoor[r] - 3.3f, bz = RZ0[r] - (r == 0 ? 0.32f : 0.12f);
+            Box(map, "TaskBoard " + r, new Vector3(bx, 1.95f, bz - 0.02f), new Vector3(2.5f, 1.25f, 0.03f), M("Board"), false);
+            var t = Text("TaskText " + r, map, new Vector3(bx, 1.95f, bz - 0.04f), Face(Vector3.back), new Vector2(2.35f, 1.15f), 0.14f, "");
+            t.color = Color.white;
+            hunt.roomBoards[r] = t;
+        }
+
+        var items = new List<GameObject>(); var done = new List<GameObject>(); var itemRoom = new List<int>();
+        Func<int, string, Vector3, Vector3, Vector3, FirHuntButton> Item = (room, name, pos, normal, size) =>
+        {
+            var b = HB(map, name, pos, normal, size, null, 3, items.Count, "Pick up the " + name.ToLower(), null);
+            items.Add(b.gameObject); done.Add(null); itemRoom.Add(room);
+            return b;
+        };
+
+        // ---- room 0, Gift Wrap Hall: 5 batteries, then the power box
+        var batt = new[] { new Vector3(3.0f, 2.18f, -19f), new Vector3(-2.0f, 0.08f, -14.9f), new Vector3(-4.35f, 0.38f, -13.9f), new Vector3(-4.5f, 0.08f, -24.9f), new Vector3(4.6f, 0.08f, -7.6f) };
+        for (int i = 0; i < batt.Length; i++)
+        {
+            var b = Item(0, "Battery", batt[i], Vector3.forward, new Vector3(0.3f, 0.3f, 0.3f));
+            Prim(PrimitiveType.Cylinder, "Cell", b.transform, Vector3.zero, new Vector3(0.08f, 0.07f, 0.08f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+            Prim(PrimitiveType.Cylinder, "Tip", b.transform, new Vector3(0.08f, 0, 0), new Vector3(0.03f, 0.012f, 0.03f), M("Metal")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        }
+        var power = HB(map, "Power box", new Vector3(2.4f, 1.35f, -25.86f), Vector3.forward, new Vector3(0.7f, 0.9f, 0.18f), M("Metal"), 4, 0, "Power the door",
+                       "<b>POWER BOX</b>\n<size=70%>5 batteries go here</size>");
+
+        // ---- room 1, Rainbow Hall: 4 glowing numbers, a keypad
+        var digitSpots = new[] {
+            new { p = new Vector3(-7.95f, 3.7f, -30.5f), n = Vector3.right, c = new Color(1f, 0.19f, 0.19f) },
+            new { p = new Vector3(-2.6f, 0.15f, -37.07f), n = Vector3.forward, c = new Color(1f, 0.88f, 0.19f) },
+            new { p = new Vector3(7.95f, 0.7f, -35.0f), n = Vector3.left, c = new Color(0.25f, 1f, 0.31f) },
+            new { p = new Vector3(6.6f, 4.3f, -26.15f), n = Vector3.back, c = new Color(0.25f, 0.5f, 1f) } };
+        hunt.rainbowDigits = new TextMeshPro[4];
+        for (int k = 0; k < 4; k++)
+        {
+            var t = Text("GlowDigit " + k, map, digitSpots[k].p, Face(digitSpots[k].n), new Vector2(0.6f, 0.6f), k == 1 ? 0.24f : 0.5f, "?");
+            t.color = digitSpots[k].c;
+            hunt.rainbowDigits[k] = t;
+            huntOnly.Add(t.gameObject);
+        }
+        hunt.rainbowDisplay = Keypad(map, "Rainbow keypad", new Vector3(2.7f, 1.35f, -41.86f), Vector3.forward, 1);
+
+        // ---- room 2, Toy Workshop: notes give the order, the toy lock on the exit wall
+        hunt.toyNames = new[] { "STAR", "BELL", "SOCK", "DRUM", "BONE" };
+        var lockG = Group(map, "Toy lock", new Vector3(2.7f, 1.35f, -61.86f));
+        lockG.localRotation = Face(Vector3.forward);
+        Box(lockG, "Backing", new Vector3(0, 0.1f, 0.03f), new Vector3(2.3f, 0.9f, 0.03f), M("Board"), false);
+        Text("Title", lockG, new Vector3(0, 0.42f, -0.02f), Quaternion.identity, new Vector2(2.1f, 0.2f), 0.11f, "<b>THE TOY LOCK</b>  press the toys in order").color = Color.white;
+        hunt.toyDisplay = Text("Display", lockG, new Vector3(0, 0.24f, -0.02f), Quaternion.identity, new Vector2(1.5f, 0.2f), 0.16f, "* * * *");
+        hunt.toyDisplay.color = Color.white;
+        for (int k = 0; k < 5; k++)
+            HB(lockG, "Toy " + hunt.toyNames[k], new Vector3(-0.84f + k * 0.42f, -0.08f, 0f), Vector3.back, new Vector3(0.36f, 0.36f, 0.06f), M("ButtonGold"), 6, 200 + k,
+               "Press the " + hunt.toyNames[k].ToLower(), "<b>" + hunt.toyNames[k] + "</b>", 0.09f, true);
+        var noteSpots = new[] {
+            new { p = new Vector3(-2.47f, 1.12f, -48.4f), n = Vector3.right },
+            new { p = new Vector3(2.47f, 1.12f, -56.2f), n = Vector3.left },
+            new { p = new Vector3(5.65f, 1.62f, -60.82f), n = Vector3.forward },
+            new { p = new Vector3(-4.2f, 2.58f, -61.93f), n = Vector3.forward } };
+        hunt.toyNotes = new TextMeshPro[4];
+        for (int k = 0; k < 4; k++)
+        {
+            var ng = Group(map, "Note " + k, noteSpots[k].p);
+            ng.localRotation = Face(noteSpots[k].n);
+            Prim(PrimitiveType.Cube, "Paper", ng, new Vector3(0, 0, 0.006f), new Vector3(0.34f, 0.26f, 0.01f), M("Paper"));
+            var t = Text("Text", ng, new Vector3(0, 0, -0.002f), Quaternion.identity, new Vector2(0.3f, 0.22f), 0.08f, "#?");
+            t.color = new Color(1f, 0.95f, 0.7f);
+            hunt.toyNotes[k] = t;
+            huntOnly.Add(ng.gameObject);
+        }
+
+        // ---- room 3, Chimney Lounge: 4 ornaments, the bare tree
+        var orn = new[] { new Vector3(6.75f, 1.76f, -70.95f), new Vector3(4.6f, 0.6f, -73.2f), new Vector3(-4.6f, 2.32f, -79.6f), new Vector3(-2.0f, 0.1f, -76.5f) };
+        string[] ornMat = { "GlowRed", "GlowGold", "GlowRed", "GlowGold" };
+        for (int i = 0; i < orn.Length; i++)
+        {
+            var b = Item(3, "Ornament", orn[i], Vector3.forward, new Vector3(0.3f, 0.3f, 0.3f));
+            Prim(PrimitiveType.Sphere, "Ball", b.transform, Vector3.zero, Vector3.one * 0.15f, M(ornMat[i]));
+            Prim(PrimitiveType.Cylinder, "Cap", b.transform, new Vector3(0, 0.08f, 0), new Vector3(0.04f, 0.015f, 0.04f), M("Brass"));
+        }
+        TreeAt(map, "BareTree", new Vector3(2.4f, 0, -78.3f), 180f, 2.0f, false);
+        var bare = HB(map, "Bare tree", new Vector3(2.4f, 1.0f, -78.3f), Vector3.forward, new Vector3(1.3f, 2.0f, 1.3f), null, 4, 3, "Hang the ornaments", null);
+        var hung = Group(map, "Hung ornaments", new Vector3(2.4f, 0, -78.3f));
+        for (int k = 0; k < 8; k++)
+        {
+            float a = k * 2.4f, y = 0.9f + (k % 4) * 0.28f, rad = 0.62f - (k % 4) * 0.12f;
+            Prim(PrimitiveType.Sphere, "Ornament", hung, new Vector3(Mathf.Cos(a) * rad, y, Mathf.Sin(a) * rad), Vector3.one * 0.13f, M(k % 2 == 0 ? "GlowRed" : "GlowGold"));
+        }
+        Text("BareSign", map, new Vector3(2.4f, 2.45f, -79.92f), Face(Vector3.forward), new Vector2(2f, 0.3f), 0.15f, "<b>the bare tree</b>").color = new Color(1f, 0.85f, 0.4f);
+
+        // ---- room 4, Talent Show: the stage manager's memo, a keypad on the east walkway
+        var show = map.Find("TALENT SHOW");
+        int performers = show.GetComponentsInChildren<FirRainbowSkeleton>(true).Length;
+        int seats = show.GetComponentsInChildren<Transform>(true).Count(t => t.name == "Seat" && t.GetComponent<BoxCollider>() != null);
+        hunt.talentCode = performers.ToString() + seats.ToString();
+        Box(map, "MemoBoard", new Vector3(-8.97f, 1.55f, -90.4f), new Vector3(0.03f, 1.0f, 1.9f), M("Board"), false);
+        Text("Memo", map, new Vector3(-8.94f, 1.55f, -90.4f), Face(Vector3.right), new Vector2(1.75f, 0.9f), 0.12f,
+             "<b>STAGE MANAGER'S MEMO</b>\nStage door code: the number of performers on our stage tonight, then the number of seats in the house.\n<size=80%>(The babies don't count.)</size>").color = Color.white;
+        hunt.talentDisplay = Keypad(map, "Stage door keypad", new Vector3(8.87f, 1.35f, -93.6f), Vector3.left, 4);
+
+        // ---- room 5, Bone Yard: 3 gas valves, the furnace and its lever
+        var valves = new[] {
+            new { p = new Vector3(5.5f, 1.3f, -117.85f), n = Vector3.forward },
+            new { p = new Vector3(-4.5f, 1.2f, -98.15f), n = Vector3.back },
+            new { p = new Vector3(-3.3f, 1.2f, -110f), n = Vector3.right } };
+        DPrim(PrimitiveType.Cylinder, "GasPipe", map, new Vector3(-3.5f, 1.7f, -110f), new Vector3(0.2f, 1.7f, 0.2f), M("Metal"));
+        for (int i = 0; i < valves.Length; i++)
+        {
+            var b = Item(5, "Valve", valves[i].p, valves[i].n, new Vector3(0.45f, 0.45f, 0.12f));
+            SetInteract(b, "Open the gas valve", 2.5f);
+            Prim(PrimitiveType.Cylinder, "Wheel", b.transform, Vector3.zero, new Vector3(0.38f, 0.02f, 0.38f), M("GlowRed")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+            Prim(PrimitiveType.Cube, "Spoke", b.transform, new Vector3(0, 0, -0.012f), new Vector3(0.36f, 0.04f, 0.02f), M("Metal"));
+            var dg = Group(map, "Valve open", valves[i].p);
+            dg.localRotation = Face(valves[i].n);
+            Prim(PrimitiveType.Cylinder, "Wheel", dg, Vector3.zero, new Vector3(0.38f, 0.02f, 0.38f), M("GlowGreen")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+            Prim(PrimitiveType.Cube, "Spoke", dg, new Vector3(0, 0, -0.012f), new Vector3(0.04f, 0.36f, 0.02f), M("Metal"));
+            done[done.Count - 1] = dg.gameObject;
+        }
+        var furnace = Group(map, "Furnace", new Vector3(-4.8f, 0, -117.2f));
+        Box(furnace, "Brick", new Vector3(0, 1.1f, -0.15f), new Vector3(2.4f, 2.2f, 1.3f), M("BrickWall"));
+        Prim(PrimitiveType.Cube, "Mouth", furnace, new Vector3(0, 0.75f, 0.52f), new Vector3(1.3f, 1.1f, 0.02f), M("Black"));
+        var fire = Prim(PrimitiveType.Cube, "Fire", furnace, new Vector3(0, 0.75f, 0.54f), new Vector3(1.25f, 1.05f, 0.02f), M("GlowOrange"));
+        Text("FurnaceSign", furnace, new Vector3(0, 1.85f, 0.52f), Face(Vector3.forward), new Vector2(2.2f, 0.3f), 0.17f, "<b>THE FURNACE</b>").color = new Color(1f, 0.6f, 0.3f);
+        HB(map, "Furnace lever", new Vector3(-2.9f, 1.25f, -117.85f), Vector3.forward, new Vector3(0.4f, 0.6f, 0.16f), M("Metal"), 4, 5, "Pull the furnace lever",
+           "<b>LEVER</b>\n<size=70%>gas first</size>", 0.09f);
+        var win = Text("WinSign", map, new Vector3(0, 2.7f, -117.95f), Face(Vector3.forward), new Vector2(8f, 0.6f), 0.4f, "<b>YOU ESCAPED!</b>");
+        win.color = new Color(0.45f, 1f, 0.55f);
+        hunt.stageShow = new[] { hung.gameObject, fire, win.gameObject };
+        hunt.stageShowAt = new[] { 4, 6, 6 };
+
+        hunt.items = items.ToArray(); hunt.itemDone = done.ToArray(); hunt.itemRoom = itemRoom.ToArray();
+
+        // ---- the hunting tree
+        var sgo = new GameObject("Stalker");
+        sgo.transform.SetParent(map, false);
+        sgo.transform.localPosition = new Vector3(4f, 0, -24f);
+        var st = Add<FirStalker>(sgo);
+        var body = Group(sgo.transform, "Body", Vector3.zero);
+        Transform smouth;
+        var shead = TreeModel(body, 2.5f, false, out smouth);
+        foreach (var r in body.GetComponentsInChildren<MeshRenderer>(true))
+            if (r.name.StartsWith("Pupil")) r.sharedMaterial = M("GlowRedEye");
+        st.body = body.gameObject; st.head = shead; st.mouth = smouth;
+        st.roomZ0 = RZ0; st.roomZ1 = RZ1; st.doorX = RDoor;
+        var lairPos = new[] { new Vector3(4.5f, 0, -24.2f), new Vector3(-6.8f, 0, -40.6f), new Vector3(3.6f, 0, -60.2f), new Vector3(-1.5f, 0, -78.6f), new Vector3(-5f, 0, -90.5f), new Vector3(6f, 0, -115.5f) };
+        st.lairs = lairPos.Select((p, i) => Marker(map, "Lair " + i, p, 0f)).ToArray();
+        st.furnace = Marker(map, "In the furnace", new Vector3(-4.8f, 0, -117.4f), 0f);
+        st.voice = Src(sgo.transform, new Vector3(0, 1.8f, 0), null, false, 1f, 1f, 22f, false);
+        st.stunClip = Clip("toilet_clunk"); st.wakeClip = Clip("tree_laugh");
+        hunt.stalker = UB(st); hunt.stalkerBody = sgo.transform;
+
+        // ---- throwable toilets: hit the tree with one to stun it
+        var tg = Group(map, "Toilets", Vector3.zero);
+        var toiletAt = new[] { new Vector3(5.2f, 0, -12f), new Vector3(-1.4f, 0, -21.6f), new Vector3(-6.5f, 0, -28.2f), new Vector3(6.8f, 0, -34f),
+                               new Vector3(1.2f, 0, -45f), new Vector3(-1.2f, 0, -58.6f), new Vector3(-3.5f, 0, -65f), new Vector3(1.0f, 0, -75.5f),
+                               new Vector3(-8.0f, 0, -81.4f), new Vector3(-8.0f, 0, -88.6f), new Vector3(-6.0f, 0, -101f), new Vector3(4.5f, 0, -109f) };
+        for (int i = 0; i < toiletAt.Length; i++) Toilet(tg, toiletAt[i], i * 47f);
+        Text("ToiletTip", map, new Vector3(-3.3f, 1.12f, RZ0[0] - 0.36f), Face(Vector3.back), new Vector2(2.4f, 0.25f), 0.1f,
+             "<color=#ffd060>Tip:</color> throw a toilet at the tree to stun it").color = Color.white;
+
+        // ---- jump scares: trees that burst out as you pass (armed only during the game)
+        var sc = Group(map, "Scares", Vector3.zero);
+        ScareZone(sc, "Scare 0a", new Vector3(-6.2f, 0, -18.5f), 90f, 3.6f, "scream1");
+        ScareZone(sc, "Scare 0b", new Vector3(6.2f, 0, -23f), -90f, 3.6f, "scream3");
+        ScareZone(sc, "Scare 1a", new Vector3(-7.4f, 0, -33f), 90f, 5.5f, "scream2");
+        ScareZone(sc, "Scare 1b", new Vector3(7.4f, 0, -28.6f), -90f, 5.5f, "scream1");
+        ScareZone(sc, "Scare 2a", new Vector3(-6.2f, 0, -50f), 90f, 4.5f, "scream3");
+        ScareZone(sc, "Scare 2b", new Vector3(6.2f, 0, -59.5f), -90f, 5.5f, "scream2");
+        ScareZone(sc, "Scare 3a", new Vector3(-7.4f, 0, -76f), 90f, 5.5f, "scream1");
+        ScareZone(sc, "Scare 3b", new Vector3(7.4f, 0, -65.5f), -90f, 5.5f, "scream3");
+        ScareZone(sc, "Scare 4a", new Vector3(-8.4f, 0, -89f), 90f, 4.0f, "scream2");
+        ScareZone(sc, "Scare 4b", new Vector3(6.3f, 0, -93.8f), 90f, 1.5f, "scream1");
+        ScareZone(sc, "Scare 5a", new Vector3(-8.2f, 0, -108f), 90f, 5.5f, "scream3");
+        ScareZone(sc, "Scare 5b", new Vector3(8.2f, 0, -100.6f), -90f, 1.7f, "scream2");
+
+        // ---- the game panel in the lobby
+        Box(lobby, "GameBoard", new Vector3(6.995f, 1.75f, -2.1f), new Vector3(0.01f, 2.6f, 3.4f), M("Board"));
+        Text("GameTitle", lobby, new Vector3(6.97f, 2.8f, -2.1f), Face(Vector3.left), new Vector2(3.2f, 0.4f), 0.3f, "<b>THE GAME</b>").color = new Color(0.9f, 0.15f, 0.15f);
+        hunt.lobbyBoard = Text("GameStatus", lobby, new Vector3(6.97f, 2.25f, -2.1f), Face(Vector3.left), new Vector2(3.1f, 0.7f), 0.13f, "");
+        hunt.lobbyBoard.color = Color.white;
+        HB(lobby, "START", new Vector3(6.92f, 1.45f, -2.6f), Vector3.left, new Vector3(1.0f, 0.4f, 0.12f), M("ButtonGold"), 1, 0, "Start the game (or join it)", "<b>START</b>", 0.2f, true);
+        HB(lobby, "RESET", new Vector3(6.92f, 1.45f, -1.2f), Vector3.left, new Vector3(0.7f, 0.3f, 0.12f), M("Button"), 2, 0, "End the game", "<b>RESET</b>", 0.14f, true);
+
+        hunt.huntOnly = huntOnly.ToArray();
+        hunt.freeOnly = new GameObject[0];
+        var me = UB(hunt);
+        foreach (var b in huntButtons) b.hunt = me;
+        foreach (var g in scares) g.hunt = me;
+        report.Add("the horror game: " + items.Count + " items, " + huntButtons.Count + " buttons, 5 doors, " + scares.Count + " jump scares, " + toiletAt.Length +
+                   " toilets; talent show code " + hunt.talentCode + " (" + performers + " performers, " + seats + " seats)");
+    }
+
+    /// <summary>Once everything is built: the throwables learn about the tree, and the map's materials are handed to the game to darken.</summary>
+    static void FinishHunt(Transform root)
+    {
+        if (hunt == null) return;
+        var me = UB(hunt);
+        foreach (var th in root.GetComponentsInChildren<FirThrowable>(true)) { th.hunt = me; th.stalker = hunt.stalkerBody; }
+        var map = root.Find("Map");
+        var keepBright = new HashSet<string> { "Check_Button", "Check_ButtonGold", "Check_Paper" };
+        var dark = new HashSet<Material>();
+        foreach (var r in map.GetComponentsInChildren<Renderer>(true))
+        {
+            if (r.GetComponent<TextMeshPro>() != null) continue;
+            var m = r.sharedMaterial;
+            if (m == null || !m.name.StartsWith("Check_") || m.name.StartsWith("Check_Bulb") || m.name.StartsWith("Check_Lobby_") || keepBright.Contains(m.name)) continue;
+            dark.Add(m);
+        }
+        // anything outside the map using one of those (the lobby, the test room, the scare face) gets its own bright copy
+        int copies = 0;
+        foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+        {
+            if (r.GetComponent<TextMeshPro>() != null || r.transform.IsChildOf(map)) continue;
+            if (r.sharedMaterial != null && dark.Contains(r.sharedMaterial)) { r.sharedMaterial = BrightCopy(r.sharedMaterial); copies++; }
+        }
+        hunt.darkMats = dark.ToArray();
+        report.Add("the dark: " + dark.Count + " map materials go lantern-lit during the game (" + copies + " lobby parts keep bright copies)");
+    }
+
+    static Material BrightCopy(Material m)
+    {
+        string n = "Lobby_" + m.name.Replace("Check_", "");
+        if (mats.TryGetValue(n, out var c)) return c;
+        string path = Gen + "/Check_" + n + ".mat";
+        c = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (c == null) { c = new Material(m); AssetDatabase.CreateAsset(c, path); }
+        else { c.shader = m.shader; c.CopyPropertiesFromMaterial(m); }
+        c.name = "Check_" + n;
+        EditorUtility.SetDirty(c);
+        mats[n] = c;
+        return c;
+    }
+
+    /// <summary>A horror-game button: a box (or just a collider) facing `normal`, with optional text on its face.</summary>
+    static FirHuntButton HB(Transform parent, string name, Vector3 pos, Vector3 normal, Vector3 size, Material mat, int action, int value, string interact,
+                            string face, float faceH = 0.1f, bool pushes = false)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Face(normal);
+        go.AddComponent<BoxCollider>().size = size;
+        var front = Group(go.transform, "Front", Vector3.zero);   // the part that pushes in
+        if (mat != null) Prim(PrimitiveType.Cube, "Visual", front, Vector3.zero, size, mat);
+        if (face != null)
+            Text("Label", front, new Vector3(0, 0, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(size.x * 0.95f, size.y * 0.9f), faceH, face).color = Color.white;
+        var b = Add<FirHuntButton>(go);
+        b.action = action; b.value = value;
+        if (pushes) b.press = front;
+        SetInteract(b, interact, 2.5f);
+        huntButtons.Add(b);
+        return b;
+    }
+
+    /// <summary>A 3 x 4 keypad (1-9, C, 0, OK) with a display; returns the display.</summary>
+    static TextMeshPro Keypad(Transform parent, string name, Vector3 pos, Vector3 normal, int room)
+    {
+        var g = Group(parent, name, pos);
+        g.localRotation = Face(normal);
+        Box(g, "Backing", new Vector3(0, 0.05f, 0.03f), new Vector3(0.8f, 1.2f, 0.03f), M("Board"), false);
+        Box(g, "Screen", new Vector3(0, 0.48f, 0.0f), new Vector3(0.66f, 0.16f, 0.02f), M("Black"), false);
+        var disp = Text("Display", g, new Vector3(0, 0.48f, -0.012f), Quaternion.identity, new Vector2(0.62f, 0.15f), 0.12f, "_ _ _ _");
+        disp.color = new Color(0.5f, 1f, 0.6f);
+        string[] keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK" };
+        int[] vals = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 11 };
+        for (int i = 0; i < 12; i++)
+        {
+            float x = -0.22f + (i % 3) * 0.22f, y = 0.24f - (i / 3) * 0.22f;
+            HB(g, "Key " + keys[i], new Vector3(x, y, 0f), Vector3.back, new Vector3(0.18f, 0.18f, 0.05f), M(i == 11 ? "ButtonGold" : "Button"), 5, room * 100 + vals[i],
+               i == 9 ? "Clear" : i == 11 ? "Enter" : "Press " + keys[i], "<b>" + keys[i] + "</b>", 0.09f, true);
+        }
+        return disp;
+    }
+
+    /// <summary>A jump scare: a tree hidden against a wall (facing yaw) bursts out when you walk into the zone `reach` metres in front of it.</summary>
+    static void ScareZone(Transform parent, string name, Vector3 at, float yaw, float reach, string clip)
+    {
+        var g = Group(parent, name, at);
+        g.localRotation = Quaternion.Euler(0, yaw, 0);
+        var tree = Group(g, "Tree", Vector3.zero);
+        Transform mouth;
+        TreeModel(tree, 2.3f, false, out mouth);
+        foreach (var r in tree.GetComponentsInChildren<MeshRenderer>(true)) if (r.name.StartsWith("Pupil")) r.sharedMaterial = M("GlowRedEye");
+        var sg = Add<FirGag>(g.gameObject);
+        sg.target = tree; sg.hideWhenIdle = true; sg.walkIn = true; sg.scare = true;
+        sg.zoneCenter = new Vector3(0, 1f, reach); sg.zoneSize = new Vector3(3.2f, 2.6f, 2.6f);
+        sg.moveBy = new Vector3(0, 0, Mathf.Min(1.4f, reach - 0.8f)); sg.scaleBy = 1.15f; sg.wobble = 6f;
+        sg.inTime = 0.12f; sg.holdTime = 1.1f; sg.outTime = 0.45f;
+        sg.sfx = Src(tree, new Vector3(0, 1.6f, 0.3f), Clip(clip), false, 1f, 1f, 16f, false);
+        sg.mouth = mouth; sg.line = "";
+        scares.Add(sg);
+    }
+
+    /// <summary>A throwable toilet (a pickup with a rigidbody and object sync, like the babies).</summary>
+    static void Toilet(Transform g, Vector3 pos, float yaw)
+    {
+        var go = new GameObject("Toilet");
+        go.transform.SetParent(g, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        Prim(PrimitiveType.Cylinder, "Base", go.transform, new Vector3(0, 0.12f, 0.05f), new Vector3(0.24f, 0.12f, 0.3f), M("Porcelain"));
+        Prim(PrimitiveType.Sphere, "Bowl", go.transform, new Vector3(0, 0.33f, 0.1f), new Vector3(0.4f, 0.2f, 0.52f), M("Porcelain"));
+        Prim(PrimitiveType.Cylinder, "Water", go.transform, new Vector3(0, 0.425f, 0.1f), new Vector3(0.26f, 0.005f, 0.36f), M("ToiletWater"));
+        Prim(PrimitiveType.Cylinder, "Seat", go.transform, new Vector3(0, 0.44f, 0.1f), new Vector3(0.4f, 0.015f, 0.5f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Tank", go.transform, new Vector3(0, 0.6f, -0.2f), new Vector3(0.42f, 0.38f, 0.18f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Lid", go.transform, new Vector3(0, 0.8f, -0.2f), new Vector3(0.45f, 0.03f, 0.2f), M("Porcelain"));
+        Prim(PrimitiveType.Cube, "Handle", go.transform, new Vector3(-0.17f, 0.72f, -0.1f), new Vector3(0.08f, 0.02f, 0.02f), M("Metal"));
+        go.layer = 13;
+        foreach (Transform ch in go.GetComponentsInChildren<Transform>(true)) ch.gameObject.layer = 13;
+        var col = go.AddComponent<BoxCollider>();
+        col.center = new Vector3(0, 0.41f, -0.02f); col.size = new Vector3(0.44f, 0.82f, 0.62f);
+        var rb = go.AddComponent<Rigidbody>();
+        rb.mass = 3f; rb.useGravity = true; rb.isKinematic = false; rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        var pick = go.AddComponent<VRCPickup>();
+        pick.InteractionText = "Pick up the toilet";
+        pick.AutoHold = VRC.SDKBase.VRC_Pickup.AutoHoldMode.Yes;
+        pick.ThrowVelocityBoostScale = 1.4f;
+        pick.proximity = 2f;
+        go.AddComponent<VRCObjectSync>();
+        var th = Add<FirThrowable>(go);
+        th.pickup = pick; th.body = rb;
+        th.audioSrc = Src(go.transform, new Vector3(0, 0.5f, 0), null, false, 1f, 1f, 14f, false);
+        th.grabClip = Clip("whoosh"); th.landClip = Clip("toilet_clunk");
     }
 
     // ---- gags for everyone: one synced FirShare that tells the other players what someone pressed
