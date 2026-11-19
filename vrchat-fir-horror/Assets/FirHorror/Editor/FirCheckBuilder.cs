@@ -39,7 +39,7 @@ public static class FirCheckBuilder
         }
         if (!EnsureProgramAssets()) return false;
         Directory.CreateDirectory(Gen);
-        mats.Clear(); report.Clear(); meshCache.Clear(); rigs.Clear(); skelParts = null;
+        mats.Clear(); report.Clear(); meshCache.Clear(); rigs.Clear(); skelParts = null; stewieParts = null;
         BakeTextures();   // the wallpaper, carpet, ceiling, needles and skeleton textures (Data/textures_baked.txt)
         foreach (var name in new[] { "FirWarning", "FirWarningCheck" })
         {
@@ -59,6 +59,19 @@ public static class FirCheckBuilder
         DoorWall(lobby, "WallS", -6.1f, 14.4f, 3.6f, M("Wall"));
         Text("MapSign", lobby, new Vector3(0, 3.2f, -5.98f), Face(Vector3.forward), new Vector2(5.5f, 0.45f), 0.2f,
              "<b>THE MAP</b>  <size=70%>gags, skeletons and combo acts: this way</size>").color = new Color(1f, 0.85f, 0.4f);
+        // details: trim, twinkling lights, the doorway's frame, wreaths and candy canes, a rug, posters and lamps
+        Trim(lobby, "Lobby", 6.0f, -6.0f, 14f, 3.6f, float.NaN, 0f, false);
+        StringLights(lobby, "Lobby", -6f, 6f, 14f, 3.6f);
+        DoorFrame(lobby, 0f, -6.1f);
+        Wreath(lobby, new Vector3(-2.2f, 2.2f, -5.97f), Vector3.forward);
+        Wreath(lobby, new Vector3(2.2f, 2.2f, -5.97f), Vector3.forward);
+        CandyCane(lobby, new Vector3(-1.75f, 0, -5.65f), true);
+        CandyCane(lobby, new Vector3(1.75f, 0, -5.65f), false);
+        Rug(lobby, new Vector3(0, 0, -2.6f), new Vector2(4.2f, 3.0f), "Rug", "TrimDark");
+        Poster(lobby, "poster_warning", new Vector3(6.97f, 1.85f, -3.6f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_original", new Vector3(6.97f, 1.85f, -0.6f), Vector3.left, 0.9f, 1.2f);
+        PendantLamp(lobby, new Vector3(-3.5f, 3.6f, -0.5f), 0.45f);
+        PendantLamp(lobby, new Vector3(3.5f, 3.6f, -0.5f), 0.45f);
         Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
@@ -89,6 +102,8 @@ public static class FirCheckBuilder
         Box(room, "WallW", new Vector3(-4.1f, 1.5f, 0), new Vector3(0.2f, 3f, 8.4f), M("Wall2"));
         Box(room, "WallE", new Vector3(4.1f, 1.5f, 0), new Vector3(0.2f, 3f, 8.4f), M("Wall2"));
         var roomArrive = Marker(room, "Arrive", new Vector3(0, 0.05f, -2), 0);
+        Trim(room, "TestRoom", 4.0f, -4.0f, 8f, 3f, float.NaN, float.NaN, true);
+        StringLights(room, "TestRoom", -4f, 4f, 8f, 3f);
         Text("RoomTitle", room, new Vector3(0, 2.4f, 3.98f), Face(n), new Vector2(7, 0.5f), 0.35f, "<b>TEST ROOM</b>: teleport worked if you're reading this").color = Color.white;
 
         // ---- the test buttons, 4 + 4 + 2 on the north wall
@@ -177,6 +192,258 @@ public static class FirCheckBuilder
         return true;
     }
 
+    static void StringLights(Transform parent, string name, float z0, float z1, float w, float h)
+    {
+        if (z0 > z1) { float tmp = z0; z0 = z1; z1 = tmp; }
+        var g = Group(parent, name + " Lights", Vector3.zero);
+        string[] cols = { "BulbRed", "BulbGreen", "BulbBlue", "BulbGold" };
+        int n = 0;
+        foreach (float side in new[] { -1f, 1f })
+        {
+            float x = side * (w / 2f - 0.06f);
+            Box(g, "Wire", new Vector3(x, h - 0.2f, (z0 + z1) / 2f), new Vector3(0.015f, 0.015f, Mathf.Abs(z1 - z0) - 0.2f), M("Black"), false);
+            // bulbs sit in the middle of 0.5 m cells so the Bulb shader can give each its own twinkle
+            for (float z = Mathf.Floor(z0 * 2f) / 2f + 0.25f; z < z1 - 0.1f; z += 0.5f)
+            {
+                if (z < z0 + 0.1f) continue;
+                float swag = Mathf.Sin(Mathf.PI * Mathf.Repeat((z - z0) / 2f, 1f)) * 0.15f;
+                var b = Prim(PrimitiveType.Cube, "Bulb", g, new Vector3(x, h - 0.27f - swag, z), new Vector3(0.075f, 0.11f, 0.075f), Bulb(cols[n % 4]));
+                GameObjectUtility.SetStaticEditorFlags(b, StaticEditorFlags.BatchingStatic);
+                n++;
+            }
+        }
+    }
+
+    static Material Bulb(string name)
+    {
+        if (mats.TryGetValue(name, out var m)) return m;
+        var c = name == "BulbRed" ? new Color(1f, 0.08f, 0.06f) : name == "BulbGreen" ? new Color(0.1f, 1f, 0.2f)
+              : name == "BulbBlue" ? new Color(0.15f, 0.35f, 1f) : name == "BulbWarm" ? new Color(1f, 0.85f, 0.55f)
+              : name == "BulbGhost" ? new Color(0.45f, 1f, 0.6f) : new Color(1f, 0.75f, 0.15f);
+        string path = Gen + "/Check_" + name + ".mat";
+        m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        var shader = Shader.Find("FirHorror/Bulb");
+        if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+        m.shader = shader;
+        m.SetColor("_Color", c);
+        m.SetFloat("_Dark", 0f);
+        m.enableInstancing = true;
+        EditorUtility.SetDirty(m);
+        mats[name] = m;
+        return m;
+    }
+
+    // =================================================================== details (decoration only: no scripts, no colliders, static)
+
+    static GameObject DPrim(PrimitiveType t, string n, Transform p, Vector3 pos, Vector3 sc, Material m)
+    {
+        var g = Prim(t, n, p, pos, sc, m);
+        GameObjectUtility.SetStaticEditorFlags(g, StaticEditorFlags.BatchingStatic);
+        return g;
+    }
+
+    static GameObject DPrim(PrimitiveType t, string n, Transform p, Vector3 pos, Vector3 sc, Material m, Quaternion rot)
+    {
+        var g = DPrim(t, n, p, pos, sc, m);
+        g.transform.localRotation = rot;
+        return g;
+    }
+
+    /// <summary>
+    /// Skirting boards, wainscot panelling with a dado rail, and crown moulding round a room (interior x within
+    /// +-w/2, z from zN (north face) to zS (south face)); the cross walls leave gaps for doorways at the given x.
+    /// </summary>
+    static void Trim(Transform parent, string name, float zN, float zS, float w, float h, float doorN, float doorS, bool wainscot)
+    {
+        var g = Group(parent, name + " Trim", Vector3.zero);
+        float len = zN - zS, zc = (zN + zS) / 2f;
+        foreach (float sd in new[] { -1f, 1f })
+        {
+            float x = sd * (w / 2f - 0.02f);
+            Box(g, "Skirting", new Vector3(x - sd * 0.0f, 0.09f, zc), new Vector3(0.05f, 0.18f, len), M("TrimDark"), false);
+            Box(g, "Crown", new Vector3(x, h - 0.07f, zc), new Vector3(0.07f, 0.14f, len), M("Trim"), false);
+            if (wainscot)
+            {
+                Box(g, "Wainscot", new Vector3(x + sd * 0.005f, 0.55f, zc), new Vector3(0.02f, 0.9f, len), M("Wainscot"), false);
+                Box(g, "Rail", new Vector3(x - sd * 0.01f, 1.02f, zc), new Vector3(0.06f, 0.06f, len), M("TrimDark"), false);
+            }
+        }
+        foreach (var cw in new[] { new { z = zN - 0.02f, door = doorN }, new { z = zS + 0.02f, door = doorS } })
+        {
+            Box(g, "Crown", new Vector3(0, h - 0.07f, cw.z), new Vector3(w, 0.14f, 0.07f), M("Trim"), false);
+            float l0 = -w / 2f, r1 = w / 2f;
+            float l1 = float.IsNaN(cw.door) ? r1 : cw.door - 1.32f, r0 = float.IsNaN(cw.door) ? r1 : cw.door + 1.32f;
+            if (l1 - l0 > 0.05f)
+            {
+                Box(g, "Skirting", new Vector3((l0 + l1) / 2f, 0.09f, cw.z), new Vector3(l1 - l0, 0.18f, 0.05f), M("TrimDark"), false);
+                if (wainscot) Box(g, "Wainscot", new Vector3((l0 + l1) / 2f, 0.55f, cw.z), new Vector3(l1 - l0, 0.9f, 0.02f), M("Wainscot"), false);
+            }
+            if (r1 - r0 > 0.05f)
+            {
+                Box(g, "Skirting", new Vector3((r0 + r1) / 2f, 0.09f, cw.z), new Vector3(r1 - r0, 0.18f, 0.05f), M("TrimDark"), false);
+                if (wainscot) Box(g, "Wainscot", new Vector3((r0 + r1) / 2f, 0.55f, cw.z), new Vector3(r1 - r0, 0.9f, 0.02f), M("Wainscot"), false);
+            }
+        }
+    }
+
+    /// <summary>A wooden frame round a doorway in a wall centred at z (posts and a lintel, proud of both faces).</summary>
+    static void DoorFrame(Transform parent, float x, float z)
+    {
+        var g = Group(parent, "DoorFrame", new Vector3(x, 0, z));
+        Box(g, "PostL", new Vector3(-1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
+        Box(g, "PostR", new Vector3(1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
+        Box(g, "Lintel", new Vector3(0, 2.88f, 0), new Vector3(2.68f, 0.16f, 0.32f), M("TrimDark"), false);
+    }
+
+    /// <summary>A wreath with berries and a red bow, hung flat on a wall facing `normal`.</summary>
+    static void Wreath(Transform parent, Vector3 pos, Vector3 normal, float r = 0.28f)
+    {
+        var g = Group(parent, "Wreath", pos);
+        g.localRotation = Face(normal);
+        for (int i = 0; i < 14; i++)
+        {
+            float a = i * Mathf.PI * 2f / 14f;
+            DPrim(PrimitiveType.Sphere, "Fir", g, new Vector3(Mathf.Cos(a) * r, Mathf.Sin(a) * r, 0), Vector3.one * r * 0.62f, M("Needles"));
+            if (i % 3 == 0) DPrim(PrimitiveType.Sphere, "Berry", g, new Vector3(Mathf.Cos(a + 0.2f) * r * 1.05f, Mathf.Sin(a + 0.2f) * r * 1.05f, -r * 0.25f), Vector3.one * r * 0.16f, M("GiftRed"));
+        }
+        DPrim(PrimitiveType.Cube, "BowL", g, new Vector3(-r * 0.25f, -r, -r * 0.3f), new Vector3(r * 0.45f, r * 0.3f, r * 0.12f), M("GiftRed"), Quaternion.Euler(0, 0, 20));
+        DPrim(PrimitiveType.Cube, "BowR", g, new Vector3(r * 0.25f, -r, -r * 0.3f), new Vector3(r * 0.45f, r * 0.3f, r * 0.12f), M("GiftRed"), Quaternion.Euler(0, 0, -20));
+        DPrim(PrimitiveType.Cube, "Knot", g, new Vector3(0, -r, -r * 0.34f), Vector3.one * r * 0.18f, M("GiftRed"));
+    }
+
+    /// <summary>A candy cane, about a metre tall, its hook facing along +x of the parent unless flipped.</summary>
+    static void CandyCane(Transform parent, Vector3 pos, bool flip)
+    {
+        var g = Group(parent, "CandyCane", pos);
+        if (flip) g.localRotation = Quaternion.Euler(0, 180, 0);
+        for (int i = 0; i < 8; i++)
+            DPrim(PrimitiveType.Cylinder, "Stripe", g, new Vector3(0, 0.06f + i * 0.12f, 0), new Vector3(0.09f, 0.06f, 0.09f), M(i % 2 == 0 ? "CaneRed" : "CaneWhite"));
+        for (int i = 0; i < 4; i++)
+        {
+            float a = (i + 0.5f) * Mathf.PI / 4f;
+            DPrim(PrimitiveType.Cylinder, "Hook", g, new Vector3(0.12f - Mathf.Cos(a) * 0.12f, 0.96f + Mathf.Sin(a) * 0.12f, 0), new Vector3(0.09f, 0.055f, 0.09f),
+                  M(i % 2 == 0 ? "CaneWhite" : "CaneRed"), Quaternion.Euler(0, 0, -90f + (i + 0.5f) * 45f));
+        }
+    }
+
+    /// <summary>A pendant lamp hanging from the ceiling at (x, ceiling, z): cord, brass shade, warm bulb.</summary>
+    static void PendantLamp(Transform parent, Vector3 ceiling, float drop, string glow = "GlowWarm")
+    {
+        var g = Group(parent, "Lamp", ceiling);
+        DPrim(PrimitiveType.Cylinder, "Cord", g, new Vector3(0, -drop / 2f, 0), new Vector3(0.015f, drop / 2f, 0.015f), M("Black"));
+        DPrim(PrimitiveType.Cylinder, "Shade", g, new Vector3(0, -drop - 0.06f, 0), new Vector3(0.42f, 0.07f, 0.42f), M("Brass"));
+        DPrim(PrimitiveType.Sphere, "Bulb", g, new Vector3(0, -drop - 0.15f, 0), Vector3.one * 0.16f, M(glow));
+    }
+
+    /// <summary>A window onto a snowy night, set in a wall facing `normal`, with frame, glazing bars and sill.</summary>
+    static void SnowWindow(Transform parent, Vector3 pos, Vector3 normal, float w, float h)
+    {
+        var g = Group(parent, "Window", pos);
+        g.localRotation = Face(normal);
+        DPrim(PrimitiveType.Cube, "Glass", g, new Vector3(0, 0, 0.005f), new Vector3(w, h, 0.01f), M("WindowSnow"));
+        DPrim(PrimitiveType.Cube, "FrameT", g, new Vector3(0, h / 2f, -0.02f), new Vector3(w + 0.16f, 0.08f, 0.06f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "FrameB", g, new Vector3(0, -h / 2f, -0.02f), new Vector3(w + 0.16f, 0.08f, 0.06f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "FrameL", g, new Vector3(-w / 2f, 0, -0.02f), new Vector3(0.08f, h, 0.06f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "FrameR", g, new Vector3(w / 2f, 0, -0.02f), new Vector3(0.08f, h, 0.06f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "BarV", g, new Vector3(0, 0, -0.015f), new Vector3(0.04f, h, 0.03f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "BarH", g, new Vector3(0, 0, -0.015f), new Vector3(w, 0.04f, 0.03f), M("Trim"));
+        DPrim(PrimitiveType.Cube, "Sill", g, new Vector3(0, -h / 2f - 0.05f, -0.08f), new Vector3(w + 0.3f, 0.05f, 0.18f), M("Trim"));
+        // a little drift of snow on the sill
+        DPrim(PrimitiveType.Sphere, "Snow", g, new Vector3(-w * 0.2f, -h / 2f - 0.02f, -0.07f), new Vector3(w * 0.5f, 0.05f, 0.12f), M("Snow"));
+    }
+
+    /// <summary>A framed poster (one of the package's poster textures) on a wall facing `normal`.</summary>
+    static void Poster(Transform parent, string tex, Vector3 pos, Vector3 normal, float w, float h)
+    {
+        var g = Group(parent, "Poster " + tex, pos);
+        g.localRotation = Face(normal);
+        DPrim(PrimitiveType.Cube, "Frame", g, new Vector3(0, 0, 0.012f), new Vector3(w + 0.1f, h + 0.1f, 0.03f), M("GiftGold"));
+        DPrim(PrimitiveType.Cube, "Print", g, new Vector3(0, 0, -0.006f), new Vector3(w, h, 0.01f), PosterMat(tex));
+    }
+
+    static Material PosterMat(string tex)
+    {
+        string n = "Poster_" + tex;
+        if (!mats.ContainsKey(n)) AddMat(n, tex, Color.white, 1, Color.black);
+        return mats[n];
+    }
+
+    /// <summary>A rug (a border and a field) lying on the floor.</summary>
+    static void Rug(Transform parent, Vector3 pos, Vector2 size, string field, string border)
+    {
+        Box(parent, "RugBorder", pos + new Vector3(0, 0.006f, 0), new Vector3(size.x, 0.012f, size.y), M(border), false);
+        Box(parent, "Rug", pos + new Vector3(0, 0.014f, 0), new Vector3(size.x - 0.3f, 0.012f, size.y - 0.3f), M(field), false);
+    }
+
+    /// <summary>A Christmas stocking hanging on a hook, toe pointing along +x of its group.</summary>
+    static void Stocking(Transform parent, Vector3 pos, Vector3 normal, string colour)
+    {
+        var g = Group(parent, "Stocking", pos);
+        g.localRotation = Face(normal);
+        DPrim(PrimitiveType.Cube, "Cuff", g, new Vector3(0, 0, -0.05f), new Vector3(0.24f, 0.1f, 0.08f), M("CaneWhite"));
+        DPrim(PrimitiveType.Cube, "Leg", g, new Vector3(0, -0.22f, -0.05f), new Vector3(0.2f, 0.36f, 0.07f), M(colour));
+        DPrim(PrimitiveType.Cube, "Foot", g, new Vector3(0.08f, -0.42f, -0.05f), new Vector3(0.3f, 0.14f, 0.07f), M(colour));
+    }
+
+    /// <summary>A sagging garland of fir between two points, with a few baubles.</summary>
+    static void Garland(Transform parent, Vector3 a, Vector3 b, float sag)
+    {
+        int n = Mathf.Max(6, Mathf.RoundToInt(Vector3.Distance(a, b) / 0.12f));
+        for (int i = 0; i <= n; i++)
+        {
+            float t = (float)i / n;
+            var p = Vector3.Lerp(a, b, t) + new Vector3(0, -Mathf.Sin(t * Mathf.PI) * sag, 0);
+            DPrim(PrimitiveType.Sphere, "Garland", parent, p, Vector3.one * 0.16f, M("Needles"));
+            if (i % 5 == 2) DPrim(PrimitiveType.Sphere, "Bauble", parent, p + new Vector3(0, -0.09f, 0), Vector3.one * 0.07f, M(i % 10 == 2 ? "GiftRed" : "GiftGold"));
+        }
+    }
+
+    /// <summary>A stand of little candles with glowing flames.</summary>
+    static void Candles(Transform parent, Vector3 pos, int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            float a = i * 2.4f, r = 0.1f + 0.06f * (i % 3);
+            float hgt = 0.12f + 0.06f * ((i * 5) % 3);
+            var p = pos + new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r);
+            DPrim(PrimitiveType.Cylinder, "Candle", parent, p + new Vector3(0, hgt / 2f, 0), new Vector3(0.05f, hgt / 2f, 0.05f), M("Wax"));
+            DPrim(PrimitiveType.Sphere, "Flame", parent, p + new Vector3(0, hgt + 0.025f, 0), new Vector3(0.025f, 0.045f, 0.025f), M("GlowFlame"));
+        }
+    }
+
+    /// <summary>A cobweb strung across a ceiling corner (a few thin strands).</summary>
+    static void Cobweb(Transform parent, Vector3 corner, float sx, float sz)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            float k = 0.25f + i * 0.22f;
+            var a = corner + new Vector3(sx * k, -0.02f, 0);
+            var b = corner + new Vector3(0, -0.02f, sz * k);
+            var mid = (a + b) / 2f + new Vector3(0, -0.06f, 0);
+            float len = Vector3.Distance(a, b);
+            DPrim(PrimitiveType.Cube, "Strand", parent, mid, new Vector3(0.006f, 0.006f, len), M("Cobweb"), Quaternion.LookRotation(b - a));
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            var end = corner + new Vector3(sx * 1.0f * (i == 0 ? 1 : 0.6f), -0.02f - 0.05f * i, sz * (i == 2 ? 1 : 0.6f));
+            DPrim(PrimitiveType.Cube, "Spoke", parent, (corner + end) / 2f, new Vector3(0.006f, 0.006f, Vector3.Distance(corner, end)), M("Cobweb"), Quaternion.LookRotation(end - corner));
+        }
+    }
+
+    /// <summary>The standard dressing for a map room: trim, string lights, a doorway frame, a wreath over it and candy canes beside it.</summary>
+    static void DressRoom(Transform g, string name, float zN, float zS, float w, float h, float doorN, float doorS, bool wainscot)
+    {
+        Trim(g, name, zN, zS, w, h, doorN, doorS, wainscot);
+        StringLights(g, name, zS, zN, w, h);
+        if (!float.IsNaN(doorN))
+        {
+            DoorFrame(g, doorN, zN + 0.1f);
+            if (h >= 3.55f) Wreath(g, new Vector3(doorN, 3.25f, zN - 0.03f), Vector3.back);
+            CandyCane(g, new Vector3(doorN - 1.75f, 0, zN - 0.35f), true);
+            CandyCane(g, new Vector3(doorN + 1.75f, 0, zN - 0.35f), false);
+        }
+    }
+
     // =================================================================== the map
 
     class Slot { public Vector3 pos; public float yaw; public bool used; }
@@ -214,6 +481,10 @@ public static class FirCheckBuilder
             float prevW = i == 0 ? 14.4f : rooms[i - 1].w, prevH = i == 0 ? 3.6f : rooms[i - 1].h;
             if (i > 0) DoorWall(g, "WallN", r.z0 - 0.1f, Mathf.Max(r.w, prevW) + 0.4f, Mathf.Max(r.h, prevH), M(r.wall), doorX[i]);
             if (i == rooms.Length - 1) Box(g, "WallS", new Vector3(0, r.h / 2, r.z1 - 0.1f), new Vector3(r.w + 0.4f, r.h, 0.2f), M(r.wall));
+            // trim, string lights, a frame round the doorway in, a wreath and candy canes
+            float zN = i == 0 ? -6.2f : r.z0 - 0.2f;
+            float doorS = i < rooms.Length - 1 ? doorX[i + 1] : float.NaN;
+            DressRoom(g, r.name, zN, r.z1, r.w, r.h, doorX[i], doorS, r.wall != "BrickWall");
             // the room's name over the doorway, readable as you walk up to it
             Text("RoomName", g, new Vector3(doorX[i], 3.05f, r.z0 + 0.03f), Face(Vector3.forward), new Vector2(4.5f, 0.4f), 0.24f,
                  "<b>" + r.name + "</b>").color = new Color(1f, 0.85f, 0.4f);
@@ -560,6 +831,18 @@ public static class FirCheckBuilder
             Prim(PrimitiveType.Cube, "Present", g, new Vector3(Mathf.Cos(a) * r, s / 2 + (i > 5 ? 0.45f : 0), -16f + Mathf.Sin(a) * r) + new Vector3(-3.2f, 0, 0), Vector3.one * s, M(gm[i % 4]));
         }
         TreeAt(g, "HallTree", new Vector3(-3.2f, 0.6f, -16f), 180f, 2.2f, true);
+        // ribbon spools by the pile, a stack of parcels, lamps, a snowy window and a poster
+        string[] spools = { "CaneRed", "GiftGold", "GiftGreen" };
+        for (int i = 0; i < 3; i++)
+            DPrim(PrimitiveType.Cylinder, "Spool", g, new Vector3(-4.9f + i * 0.55f, 0.16f, -13.9f), new Vector3(0.32f, 0.12f, 0.32f), M(spools[i]), Quaternion.Euler(90, 0, 0));
+        for (int k = 0; k < 4; k++)
+        {
+            float sz = 0.7f - k * 0.13f;
+            DPrim(PrimitiveType.Cube, "Parcel", g, new Vector3(3.0f + (k % 2) * 0.05f, 0.35f + k * 0.6f - k * k * 0.04f, -19f), new Vector3(sz, 0.55f, sz), M(gm[(k + 1) % 4]), Quaternion.Euler(0, k * 17f, 0));
+        }
+        foreach (float z in new[] { -10f, -16f, -22f }) PendantLamp(g, new Vector3(0, 4f, z), 0.9f);
+        SnowWindow(g, new Vector3(-4.5f, 1.9f, -25.97f), Vector3.forward, 1.8f, 1.3f);
+        Poster(g, "poster_safety", new Vector3(4.5f, 1.9f, -25.97f), Vector3.forward, 0.9f, 1.2f);
     }
 
     static void RainbowHall(Transform g)
@@ -579,6 +862,27 @@ public static class FirCheckBuilder
             GagSkeleton(g, colours[i], new Vector3(x, 0.3f, -38.3f), 180f, 1f, i, hex[i], clips[i],
                         new[] { M("Bone" + colours[i]) }, new Vector3(x, 2.75f, -39.42f), Vector3.forward);
         }
+        // a rainbow arch on the far wall, framing the doorway behind the riser
+        string[] band = { "BoneRed", "BoneOrange", "BoneYellow", "BoneGreen", "BoneBlue", "BoneIndigo", "BoneViolet" };
+        for (int b = 0; b < 7; b++)
+        {
+            float rad = 4.4f - b * 0.14f;
+            for (int k = 0; k < 26; k++)
+            {
+                float a = Mathf.PI * (k + 0.5f) / 26f;
+                DPrim(PrimitiveType.Cube, "Arch", g, new Vector3(Mathf.Cos(a) * rad, 0.3f + Mathf.Sin(a) * rad, -41.96f), new Vector3(0.56f, 0.13f, 0.02f), M(band[b]), Quaternion.Euler(0, 0, a * Mathf.Rad2Deg + 90f));
+            }
+        }
+        // stage lights on stands at the riser's corners, lamps and posters
+        foreach (float sx in new[] { -6.2f, 6.2f })
+        {
+            DPrim(PrimitiveType.Cylinder, "LightStand", g, new Vector3(sx, 1.1f, -37.2f), new Vector3(0.06f, 1.1f, 0.06f), M("Black"));
+            DPrim(PrimitiveType.Cylinder, "LightHead", g, new Vector3(sx, 2.25f, -37.2f), new Vector3(0.3f, 0.2f, 0.3f), M("Black"), Quaternion.Euler(60, sx > 0 ? -40 : 40, 0));
+            DPrim(PrimitiveType.Sphere, "LightGlow", g, new Vector3(sx - Mathf.Sign(sx) * 0.12f, 2.2f, -37.4f), Vector3.one * 0.18f, M("GlowWarm"));
+        }
+        foreach (float sx in new[] { -4f, 4f }) PendantLamp(g, new Vector3(sx, 5f, -30.5f), 1.4f);
+        Poster(g, "poster_original", new Vector3(-5f, 2.2f, -26.23f), Vector3.back, 0.9f, 1.2f);
+        Poster(g, "poster_warning", new Vector3(5f, 2.2f, -26.23f), Vector3.back, 0.9f, 1.2f);
         var console = Console(g, "RainbowConsole", new Vector3(0, 1.25f, -31.5f), Vector3.forward, "COMBO ACTS  <size=70%>the rainbow</size>");
         ComboAct(console, 0, 0, "Traffic Lights", new[] { "Green", "Yellow", "Red" },
                  new[] { "traffic_green", "traffic_yellow", "traffic_red" }, new[] { 0, 1, 2 }, 1.3f);
@@ -598,7 +902,20 @@ public static class FirCheckBuilder
             float x = b == 0 ? -3.2f : 3.2f, z = -52f;
             Box(g, "Bench" + b, new Vector3(x, 0.45f, z), new Vector3(1.4f, 0.9f, 8f), M("DeskWood"));
             for (int k = 0; k < 4; k++) TreeAt(g, "Unfinished", new Vector3(x, 0.9f, z - 2.7f + k * 1.8f), 180f + k * 40f, 0.55f, k == 1);
+            foreach (float lz in new[] { -49f, -55f }) PendantLamp(g, new Vector3(x, 4f, lz), 1.3f);
         }
+        // a pegboard of tools on the far wall, crates in the corner, a poster by the door
+        Box(g, "Pegboard", new Vector3(-4.2f, 1.6f, -61.97f), new Vector3(2.6f, 1.4f, 0.03f), M("Cardboard"), false);
+        for (int t = 0; t < 5; t++)
+        {
+            float tx = -5.2f + t * 0.5f;
+            DPrim(PrimitiveType.Cylinder, "Handle", g, new Vector3(tx, 1.5f, -61.92f), new Vector3(0.05f, 0.2f, 0.05f), M("DeskWood"));
+            DPrim(PrimitiveType.Cube, "Head", g, new Vector3(tx, 1.74f, -61.92f), t % 2 == 0 ? new Vector3(0.22f, 0.08f, 0.06f) : new Vector3(0.08f, 0.14f, 0.04f), M("Metal"));
+        }
+        DPrim(PrimitiveType.Cube, "Saw", g, new Vector3(-3.3f, 1.95f, -61.93f), new Vector3(0.7f, 0.18f, 0.01f), M("Metal"), Quaternion.Euler(0, 0, -8));
+        for (int c = 0; c < 4; c++)
+            DPrim(PrimitiveType.Cube, "Crate", g, new Vector3(5.3f + (c % 2) * 0.75f, 0.35f + (c / 2) * 0.7f, -61.2f), new Vector3(0.7f, 0.7f, 0.7f), M("Cardboard"), Quaternion.Euler(0, c * 11f, 0));
+        Poster(g, "poster_recall", new Vector3(4.5f, 2.0f, -42.23f), Vector3.back, 0.9f, 1.2f);
     }
 
     static void ChimneyLounge(Transform g)
@@ -616,6 +933,24 @@ public static class FirCheckBuilder
             Box(chair, "Back", new Vector3(0, 0.75f, -0.35f), new Vector3(0.9f, 0.6f, 0.15f), M("Curtain"));
         }
         BuildSkeletonCloset(g, new Vector3(-7.2f, 0, -69.0f));
+        // a rug and a side table by the fire, stockings and a garland on the mantel, a wreath on the chimney
+        Rug(g, new Vector3(5.1f, 0, -72.2f), new Vector2(3.6f, 4.4f), "Rug", "TrimDark");
+        DPrim(PrimitiveType.Cylinder, "SideTable", g, new Vector3(4.6f, 0.3f, -72.2f), new Vector3(0.5f, 0.3f, 0.5f), M("DeskWood"));
+        DPrim(PrimitiveType.Cylinder, "LampBase", g, new Vector3(4.6f, 0.75f, -72.2f), new Vector3(0.08f, 0.15f, 0.08f), M("Brass"));
+        DPrim(PrimitiveType.Cylinder, "LampShade", g, new Vector3(4.6f, 1.0f, -72.2f), new Vector3(0.36f, 0.12f, 0.36f), M("GlowWarm"));
+        string[] sock = { "CaneRed", "GiftGreen", "CaneRed" };
+        for (int i = 0; i < 3; i++) Stocking(g, new Vector3(6.52f, 1.52f, -71.4f - i * 0.8f), Vector3.left, sock[i]);
+        Garland(g, new Vector3(6.5f, 1.7f, -73.55f), new Vector3(6.5f, 1.7f, -70.85f), 0.12f);
+        Wreath(g, new Vector3(7.28f, 2.7f, -72.2f), Vector3.left, 0.32f);
+        // a bookshelf and a window on the far wall
+        Box(g, "Bookshelf", new Vector3(-4.6f, 1.1f, -79.78f), new Vector3(2.2f, 2.2f, 0.4f), M("TrimDark"), false);
+        for (int sh = 0; sh < 4; sh++)
+            for (int b = 0; b < 9; b++)
+            {
+                float bh = 0.32f - 0.05f * ((b * 7 + sh) % 3);
+                DPrim(PrimitiveType.Cube, "Book", g, new Vector3(-5.5f + b * 0.21f, 0.2f + sh * 0.52f + bh / 2f, -79.55f), new Vector3(0.16f, bh, 0.28f), M("Book" + (1 + (b + sh) % 3)));
+            }
+        SnowWindow(g, new Vector3(4.5f, 1.8f, -79.97f), Vector3.forward, 1.8f, 1.3f);
     }
 
     static void TalentShow(Transform g)
@@ -641,6 +976,35 @@ public static class FirCheckBuilder
             GagSkeleton(g, names2[i], new Vector3(x, 0.6f, -95.5f), 180f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
                         bones, new Vector3(x, 3.35f, -97.57f), Vector3.forward, title);
         }
+        // footlights along the stage's edge and marquee bulbs round the title
+        for (float fx = -6.6f; fx <= 6.61f; fx += 0.45f)
+            GameObjectUtility.SetStaticEditorFlags(Prim(PrimitiveType.Sphere, "Footlight", g, new Vector3(fx, 0.62f, -92.05f), Vector3.one * 0.1f, Bulb("BulbWarm")), StaticEditorFlags.BatchingStatic);
+        for (int k = 0; k < 64; k++)
+        {
+            float t = k / 64f, px, py;
+            if (t < 0.25f) { px = -5.2f + t / 0.25f * 10.4f; py = 4.95f; }
+            else if (t < 0.5f) { px = 5.2f; py = 4.95f - (t - 0.25f) / 0.25f * 1.1f; }
+            else if (t < 0.75f) { px = 5.2f - (t - 0.5f) / 0.25f * 10.4f; py = 3.85f; }
+            else { px = -5.2f; py = 3.85f + (t - 0.75f) / 0.25f * 1.1f; }
+            GameObjectUtility.SetStaticEditorFlags(Prim(PrimitiveType.Sphere, "Marquee", g, new Vector3(px, py, -97.6f), Vector3.one * 0.09f, Bulb(k % 2 == 0 ? "BulbWarm" : "BulbGold")), StaticEditorFlags.BatchingStatic);
+        }
+        // two rows of seats for the audience, with an aisle in the middle and a walkway along the east wall
+        var seats = new List<Vector3>();
+        foreach (float rz in new[] { -82.8f, -84.6f, -86.4f })
+            for (float sx = -7.2f; sx <= 5.21f; sx += 0.9f)
+            {
+                if (Mathf.Abs(sx) < 1.7f) continue;
+                Box(g, "Seat", new Vector3(sx, 0.23f, rz), new Vector3(0.7f, 0.46f, 0.6f), M("Seat"));
+                Box(g, "SeatBack", new Vector3(sx, 0.75f, rz - 0.27f), new Vector3(0.7f, 0.6f, 0.08f), M("Seat"), false);
+                seats.Add(new Vector3(sx, 0.47f, rz + 0.05f));
+            }
+        // the audience: 30 babies in the seats, every one of them throwable
+        BuildAudience(g, seats);
+        foreach (float sx in new[] { -6.6f, 6.6f })
+        {
+            DPrim(PrimitiveType.Cylinder, "LightStand", g, new Vector3(sx, 1.4f, -91.4f), new Vector3(0.06f, 1.4f, 0.06f), M("Black"));
+            DPrim(PrimitiveType.Sphere, "LightGlow", g, new Vector3(sx, 2.85f, -91.4f), Vector3.one * 0.26f, M("GlowWarm"));
+        }
         var console = Console(g, "TalentConsole", new Vector3(0, 1.25f, -87.5f), Vector3.forward, "COMBO ACTS  <size=70%>the talent show</size>");
         ComboAct(console, 3, 3, "Medal Ceremony", new[] { "Gold", "Silver", "Brown" },
                  new[] { "medal_gold", "medal_silver", "medal_brown" }, new[] { 0, 1, 2 }, 1.3f);
@@ -653,11 +1017,108 @@ public static class FirCheckBuilder
     static void BoneYard(Transform g, Transform spawn)
     {
         // low beams, and the way back to the lobby at the far end
-        for (int b = 0; b < 5; b++) Box(g, "Beam" + b, new Vector3(0, 3.2f, -101f - b * 4f), new Vector3(14f, 0.2f, 0.3f), M("DeskWood"), false);
+        for (int b = 0; b < 5; b++) Box(g, "Beam" + b, new Vector3(0, 3.2f, -101f - b * 4f), new Vector3(18f, 0.2f, 0.3f), M("DeskWood"), false);
+        // ghostly lanterns, candles, a pile of skulls and cobwebs in the corners
+        foreach (float z in new[] { -103f, -109f, -115f }) PendantLamp(g, new Vector3(0, 3.4f, z), 0.7f, "GlowGhost");
+        Candles(g, new Vector3(-2.6f, 0, -105.5f), 5);
+        Candles(g, new Vector3(2.6f, 0, -111f), 6);
+        Candles(g, new Vector3(-2.2f, 0, -115.5f), 4);
+        for (int k = 0; k < 7; k++)
+        {
+            var sp = new Vector3(3.2f + Mathf.Cos(k * 2.1f) * 0.3f * (k % 3), 0.1f + (k > 3 ? 0.16f : 0f), -105f + Mathf.Sin(k * 2.1f) * 0.3f * (k % 3));
+            DPrim(PrimitiveType.Sphere, "Skull", g, sp, new Vector3(0.2f, 0.19f, 0.22f), M("BoneWhite"), Quaternion.Euler(0, k * 50f, 0));
+            var fwd = Quaternion.Euler(0, k * 50f, 0) * Vector3.forward;
+            var side = Quaternion.Euler(0, k * 50f, 0) * Vector3.right;
+            DPrim(PrimitiveType.Sphere, "Socket", g, sp + fwd * 0.09f + side * 0.045f + Vector3.up * 0.02f, Vector3.one * 0.05f, M("Black"));
+            DPrim(PrimitiveType.Sphere, "Socket", g, sp + fwd * 0.09f - side * 0.045f + Vector3.up * 0.02f, Vector3.one * 0.05f, M("Black"));
+        }
+        Cobweb(g, new Vector3(-9f, 3.4f, -98.2f), 1.3f, -1.3f);
+        Cobweb(g, new Vector3(-9f, 3.4f, -118f), 1.3f, 1.3f);
+        Cobweb(g, new Vector3(9f, 3.4f, -118f), -1.3f, 1.3f);
         var back = MakeButton<FirCheckButton>(g, "Back to the lobby", new Vector3(0, 1.3f, -117.85f), Vector3.forward, out var label);
         back.test = 11; back.title = "Back to the lobby"; back.label = label; back.destination = spawn;
         Text("EndNote", g, new Vector3(0, 2.6f, -117.97f), Face(Vector3.forward), new Vector2(8f, 0.5f), 0.22f,
              "<b>THE END</b> (for now): the horror comes next, once the systems check passes").color = Color.white;
+    }
+
+    // ---- the throwable babies (your uploaded model: Models/stewie_parts.txt)
+
+    class ModelPart { public string tex; public List<Vector3> v = new List<Vector3>(); public List<Vector2> uv = new List<Vector2>(); public List<int> t = new List<int>(); public Mesh mesh; }
+    static List<ModelPart> stewieParts;
+
+    static List<ModelPart> LoadStewie()
+    {
+        if (stewieParts != null) return stewieParts;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Models/stewie_parts.txt");
+        if (ta == null) { report.Add("problem: Models/stewie_parts.txt is missing, so no audience"); return null; }
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var list = new List<ModelPart>();
+        ModelPart cur = null;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var p = raw.Trim().Split(' ');
+            if (p.Length == 0 || p[0] == "" || p[0] == "#") continue;
+            if (p[0] == "sub") { cur = new ModelPart { tex = p[1] }; list.Add(cur); }
+            else if (p[0] == "v") { cur.v.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv))); cur.uv.Add(new Vector2(float.Parse(p[4], inv), float.Parse(p[5], inv))); }
+            else if (p[0] == "t") { cur.t.Add(int.Parse(p[1])); cur.t.Add(int.Parse(p[2])); cur.t.Add(int.Parse(p[3])); }
+        }
+        foreach (var sp in list)
+        {
+            string path = Gen + "/Stewie_" + sp.tex + ".asset";
+            var m = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            bool isNew = m == null;
+            if (isNew) m = new Mesh();
+            m.Clear();
+            m.name = "Stewie " + sp.tex;
+            m.SetVertices(sp.v); m.SetUVs(0, sp.uv); m.SetTriangles(sp.t, 0);
+            m.RecalculateNormals(); m.RecalculateBounds();
+            if (isNew) AssetDatabase.CreateAsset(m, path); else EditorUtility.SetDirty(m);
+            sp.mesh = m;
+            if (!mats.ContainsKey("Stewie_" + sp.tex)) AddMat("Stewie_" + sp.tex, sp.tex, Color.white, 1, Color.black);
+        }
+        stewieParts = list;
+        return list;
+    }
+
+    /// <summary>30 of the uploaded baby model sitting in the Talent Show's seats, facing the stage. Pick one up and throw it.</summary>
+    static void BuildAudience(Transform g, List<Vector3> seats)
+    {
+        var parts = LoadStewie();
+        if (parts == null) return;
+        var aud = Group(g, "Audience", Vector3.zero);
+        int n = Mathf.Min(30, seats.Count);
+        for (int i = 0; i < n; i++)
+        {
+            var go = new GameObject("Baby " + (i + 1));
+            go.transform.SetParent(aud, false);
+            go.transform.localPosition = seats[i];
+            go.transform.localRotation = Quaternion.Euler(0, 180f + ((i * 37) % 21 - 10), 0);   // facing the stage, not quite in step
+            foreach (var sp in parts)
+            {
+                var pm = new GameObject("Mesh " + sp.tex);
+                pm.transform.SetParent(go.transform, false);
+                pm.AddComponent<MeshFilter>().sharedMesh = sp.mesh;
+                NoShadows(pm.AddComponent<MeshRenderer>(), M("Stewie_" + sp.tex));
+            }
+            go.layer = 13;   // VRChat's Pickup layer
+            foreach (Transform ch in go.GetComponentsInChildren<Transform>(true)) ch.gameObject.layer = 13;
+            var col = go.AddComponent<BoxCollider>();
+            col.center = new Vector3(0, 0.45f, -0.06f); col.size = new Vector3(0.36f, 0.9f, 0.34f);
+            var rb = go.AddComponent<Rigidbody>();
+            rb.mass = 1.5f; rb.useGravity = true; rb.isKinematic = false; rb.interpolation = RigidbodyInterpolation.Interpolate;
+            var pick = go.AddComponent<VRCPickup>();
+            pick.InteractionText = "Pick up the baby";
+            pick.AutoHold = VRC.SDKBase.VRC_Pickup.AutoHoldMode.Yes;
+            pick.proximity = 2f;
+            go.AddComponent<VRCObjectSync>();
+            var th = Add<FirThrowable>(go);
+            th.pickup = pick; th.body = rb;
+            th.audioSrc = Src(go.transform, new Vector3(0, 0.5f, 0), null, false, 1f, 1f, 14f, false);
+            th.grabClip = Clip("whoosh"); th.landClip = Clip("toilet_clunk");
+        }
+        Text("AudienceSign", g, new Vector3(-8.95f, 2.4f, -84.6f), Face(Vector3.right), new Vector2(3.4f, 0.6f), 0.2f,
+             "<b>THE AUDIENCE</b>\n<size=70%>pick one up and throw it</size>").color = new Color(1f, 0.85f, 0.4f);
+        report.Add(n + " throwable babies in the Talent Show's seats");
     }
 
     /// <summary>A Combo Acts console: a dark board on legs, facing `normal`, with a title. Buttons go on with ComboAct.</summary>
@@ -1177,11 +1638,15 @@ public static class FirCheckBuilder
 
     static Material M(string name) { return mats[name]; }
 
+    static Action<string, string, Color, float, Color> AddMatImpl;
+    static void AddMat(string n, string tex, Color c, float full, Color glow) { AddMatImpl(n, tex, c, full, glow); }
+
     static void MakeMaterials()
     {
         var sh = Shader.Find("FirHorror/Lantern");
         if (sh == null) report.Add("problem: the FirHorror/Lantern shader didn't load");
-        Action<string, string, Color, float, Color> A = (n, texName, c, full, glow) =>
+        Action<string, string, Color, float, Color> A = AddMat;
+        AddMatImpl = (n, texName, c, full, glow) =>
         {
             string path = Gen + "/Check_" + n + ".mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -1235,6 +1700,23 @@ public static class FirCheckBuilder
         A("Glint", null, white, 1, new Color(0.6f, 0.6f, 0.5f));
         A("GlowOrange", null, new Color(0.8f, 0.35f, 0.05f), 1, new Color(0.6f, 0.25f, 0.02f));
         A("Mist", null, new Color(0.05f, 0.14f, 0.1f), 1, new Color(0.03f, 0.1f, 0.07f));
+        // details
+        A("TrimDark", "wood_floor", new Color(0.45f, 0.3f, 0.2f), 1, Color.black);
+        A("Wainscot", "wood_floor", new Color(0.55f, 0.38f, 0.26f), 1, Color.black);
+        A("Brass", "metal", new Color(0.95f, 0.75f, 0.35f), 1, Color.black);
+        A("GlowWarm", null, new Color(1f, 0.9f, 0.6f), 1, new Color(0.6f, 0.5f, 0.3f));
+        A("GlowGhost", null, new Color(0.5f, 1f, 0.6f), 1, new Color(0.3f, 0.7f, 0.4f));
+        A("GlowFlame", null, new Color(1f, 0.7f, 0.2f), 1, new Color(0.8f, 0.45f, 0.1f));
+        A("Wax", null, new Color(0.95f, 0.92f, 0.82f), 1, Color.black);
+        A("CaneRed", null, new Color(0.85f, 0.06f, 0.08f), 1, Color.black);
+        A("CaneWhite", null, new Color(0.97f, 0.97f, 0.97f), 1, Color.black);
+        A("Snow", null, new Color(0.95f, 0.97f, 1f), 1, new Color(0.1f, 0.1f, 0.12f));
+        A("WindowSnow", "window_snow", new Color(0.8f, 0.85f, 1f), 1, Color.black);
+        A("Cobweb", null, new Color(0.85f, 0.85f, 0.85f), 1, Color.black);
+        A("Book1", null, new Color(0.5f, 0.1f, 0.1f), 1, Color.black);
+        A("Book2", null, new Color(0.1f, 0.3f, 0.15f), 1, Color.black);
+        A("Book3", null, new Color(0.15f, 0.2f, 0.45f), 1, Color.black);
+        A("Seat", null, new Color(0.5f, 0.06f, 0.08f), 1, Color.black);
         A("TestPanel", null, new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
         A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 1, new Color(0.1f, 0.1f, 0.09f));
         // the rainbow
@@ -1348,7 +1830,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable" };
 
     static bool EnsureProgramAssets()
     {

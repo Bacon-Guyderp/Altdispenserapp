@@ -88,7 +88,7 @@ public static class SimCheck {
     Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
     // a route a player can walk, round the consoles and the stages, through every doorway; nothing may block it
     var route = new[] { new Vector3(0, 0, -2.6f), new Vector3(0, 0, -7f), new Vector3(0, 0, -27f), new Vector3(6.8f, 0, -33f), new Vector3(6.8f, 0, -40.8f),
-                        new Vector3(0, 0, -40.8f), new Vector3(0, 0, -43f), new Vector3(0, 0, -81f), new Vector3(8.0f, 0, -86f), new Vector3(8.0f, 0, -97.2f),
+                        new Vector3(0, 0, -40.8f), new Vector3(0, 0, -43f), new Vector3(0, 0, -81f), new Vector3(7.3f, 0, -82.6f), new Vector3(8.0f, 0, -86f), new Vector3(8.0f, 0, -97.2f),
                         new Vector3(7.5f, 0, -99f), new Vector3(0, 0, -112f), new Vector3(0, 0, -116.6f) };
     Sim.Current = A; Physics.SyncTransforms();
     for (int i = 0; i + 1 < route.Length; i++) {
@@ -154,6 +154,20 @@ public static class SimCheck {
     for (int f = 0; f < 80; f++) { Sim.Step(); if (closet.bubble.gameObject.activeSelf) cb = true; if (closet.white[0].gameObject.activeSelf) whiteOut = true; }
     Check((bool)clf.GetValue(closet) && cb && whiteOut, "the RED SKELETON closet opens: a skeleton steps out and its line shows");
     Sim.Run(8f);
+
+    Console.WriteLine("\n== The audience: throwable babies");
+    var babies = All<FirThrowable>(A);
+    bool kitted = babies.All(b => b.GetComponent<VRC.SDK3.Components.VRCPickup>() != null && b.GetComponent<Rigidbody>() != null && b.GetComponent<BoxCollider>() != null
+                                  && b.GetComponent<VRC.SDK3.Components.VRCObjectSync>() != null && b.gameObject.layer == 13);
+    Check(babies.Count == 30 && kitted, babies.Count + " babies, each a pickup with a rigidbody, a collider and object sync, on the Pickup layer");
+    Sim.Current = A; Physics.SyncTransforms();
+    int seated = babies.Count(b => { RaycastHit h; return Physics.Raycast(b.transform.position + Vector3.up * 0.05f, Vector3.down, out h, 0.2f, 1, QueryTriggerInteraction.Ignore) && h.collider.name == "Seat"; });
+    Sim.Current = null;
+    Check(seated == babies.Count, seated + " of them sitting on a seat, facing the stage");
+    var baby = babies[0]; Sim.Events.Clear();
+    Sim.With(A, () => baby.OnPickup());
+    baby.body.velocity = new Vector3(0, 2f, -6f); Sim.Run(0.2f); baby.body.velocity = Vector3.zero; Sim.Run(0.2f);
+    Check(Sim.Events.Any(e => e.Contains("whoosh")) && Sim.Events.Any(e => e.Contains("toilet_clunk")), "a thrown baby whooshes when grabbed and thuds when it lands");
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {

@@ -173,6 +173,24 @@ public static class SimFly {
     Walk(A, new Vector3(0, 0.05f, -79f)); Walk(A, new Vector3(0, 0.05f, -85.5f));
     Shot(new Vector3(-3f, 2.6f, -82.5f), new Vector3(0, 1.6f, -95.5f), "TALENT SHOW");
     Sim.Run(2f);
+    var aud = All<FirThrowable>(A).ToList();
+    Shot(new Vector3(-8.2f, 2.3f, -81.4f), new Vector3(-2f, 0.7f, -85.5f), "THE AUDIENCE: pick one up and throw it");
+    Walk(A, new Vector3(-6.3f, 0.05f, -81.6f)); Face(A, aud[0].transform.position);
+    Sim.Run(1.2f);
+    var thrown = aud.OrderBy(b => Vector3.Distance(b.transform.position, A.player.pos)).First();
+    Sim.With(A, () => thrown.OnPickup());
+    for (int f = 0; f < 18; f++) { thrown.transform.position = A.player.pos + new Vector3(0.3f, 1.1f, -0.3f); Sim.Step(); }
+    // thrown towards the stage: a simple ballistic arc (the simulator has no physics engine)
+    var p0 = thrown.transform.position; var vel = new Vector3(1.5f, 4f, -6.5f);
+    for (int f = 0; f < 60; f++) {
+      float tt = f * Time.deltaTime;
+      var pos = p0 + vel * tt + new Vector3(0, -4.9f * tt * tt, 0);
+      if (pos.y < 0.6f) { thrown.body.velocity = Vector3.zero; break; }
+      thrown.transform.position = pos; thrown.transform.rotation = Quaternion.Euler(f * 21f, 180f, f * 9f);
+      thrown.body.velocity = vel + new Vector3(0, -9.8f * tt, 0);
+      Sim.Step();
+    }
+    Sim.Run(2f);
     var upsy = combos.First(c => c.combo == 4);
     var upsyAt = (upsy.pivots[0].position + upsy.pivots[10].position) / 2f;
     Shot(new Vector3(upsyAt.x + 0.3f, 2.4f, -89.5f), upsyAt + new Vector3(0, 2.2f, 0), "Combo: Upsy-Daisy");
@@ -211,9 +229,12 @@ public static class SimFly {
         } else kind = "none";
         var mat = mr.sharedMaterial; Color col = Color.white; float full = 1;
         if (mat != null) { mat.colors.TryGetValue("_Color", out col); full = mat.GetFloat("_Fullbright"); }
+        bool bulb = mat != null && mat.shader != null && mat.shader.name.Contains("Bulb");
+        if (bulb) full = 1;
         string texName = mat != null && mat.mainTexture != null ? mat.mainTexture.name : "";
         float vc = mat != null ? mat.GetFloat("_VertexColor") : 0;
         Color glow = Color.black; if (mat != null) mat.colors.TryGetValue("_Glow", out glow);
+        if (bulb) glow = new Color(col.r * 0.7f, col.g * 0.7f, col.b * 0.7f);
         extra += ",\"col\":[" + F(col.r) + "," + F(col.g) + "," + F(col.b) + "],\"glow\":[" + F(glow.r) + "," + F(glow.g) + "," + F(glow.b) + "],\"full\":" + F(full) + ",\"tex\":" + J(texName) + ",\"vc\":" + F(vc) + ",\"mat\":" + J(mat != null ? mat.name : "");
       }
       Console.Write((i > 0 ? "," : "") + "{\"kind\":" + J(kind) + ",\"name\":" + J(c.name) + extra + "}");
