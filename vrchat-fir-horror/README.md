@@ -37,6 +37,25 @@ room's entrance while it backs off. **Throw a toilet at it** (there are 12 aroun
 6 seconds. A wrong code or toy also earns you a tree in the face. Random whispers and rustles play behind
 you.
 
+## Bonetown: the expansion
+
+Go through the doorway in the lobby's west wall to reach a sunny little town where the skeletons live.
+It's an original take on the life-sim genre, and none of it is scary.
+
+* **10 residents at home**, each with a voiced gag:
+  * Mint is just moving in, and Peach dances with a broom.
+  * Lavender is sleepy, Coral works out, Sky composes songs, and Navy hides from the landlord.
+  * Rust runs the Snack Shack, and Olive reads the news (a ticker rolls the headlines).
+  * Cream keeps tripping over the rug, and Plum keeps eating.
+* **10 wanderers** stroll, jog and play tag round the plaza and the fountain: Lime, Amber, Turquoise,
+  Crimson, Cocoa, Neon, Magenta, Ivory, Denim and Bubblegum. Press one to say hi, and it stops, turns to
+  you, waves and talks, then carries on. They're harmless and walk right through you. Where they are
+  comes from the server clock, so everyone sees them in the same place with no network traffic.
+* **The Bonetown Band** is Scarlet, Cobalt, Emerald and Mustard, on the bandstand. Each has its own line,
+  and the console has 4 combo acts: The Squabble, Town Band, The Proposal and the Bonetown Finale.
+* **22 more gags** (`Data/town_gags.txt`): signs, frames, pop-ups, spinners, waddlers and talking trees.
+* That's 24 new skeleton colours. The game's tree never goes to Bonetown.
+
 ## Gags (all game long)
 
 * **53 original gags** and **12 skeleton routines** line the Gift Wrap Hall, Toy Workshop, Chimney Lounge
@@ -93,6 +112,7 @@ python make_unitypackage.py
   * FirHunt, FirHuntButton, FirStalker: the game
   * FirGag, FirSkeletonGag, FirCloset, FirRainbowSkeleton, FirSkeletonCombo: the gags
   * FirShare: shares pressed gags with everyone
+  * FirWanderer, FirTicker: Bonetown's walkers and the news ticker
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -101,10 +121,11 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 145
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 196
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
   * sharing gags, and late joiners
   * a full two-player playthrough of the game (wrong answers too)
   * the tree freezing when watched, hunting, catching and being stunned by a thrown toilet
+  * Bonetown's wanderers staying in step on every client, keeping to their paths, and stopping to chat

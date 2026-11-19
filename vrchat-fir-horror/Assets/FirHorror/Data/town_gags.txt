@@ -1,0 +1,27 @@
+# Fir Warning: Bonetown (the expansion) gags. Same format as gags.txt, but placed exactly where given.
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+# ---------------------------------------------------------------- east wall (by the way in from the lobby)
+B1|sign|-13.0|0|-12.0|-90|narrator|Two hundred and six. Each.|WELCOME TO\nBONETOWN\n<size=70%>POP. 206</size>|...BONES EACH
+B2|talk|-13.0|0|-9.8|-90|tree|I moved here for the peace and quiet. Then the skeletons moved in.||
+B3|pop_gift|-13.0|0|-7.6|-90|tiny|Housewarming present! Is it warm? Is it?||
+B5|spin|-13.0|0|-5.4|-90|tree|Town square dancing! I am the square.||
+B6|inflate_orn|-13.0|0|-3.2|-90|tiny|I ate the whole snack shack menu. All of it.||
+B4|frame|-12.06|1.6|1.0|-90|narrator|Our founder. Very well preserved.|TOWN FOUNDER\n\n<size=140%>(a skull)</size>|
+B14|frame|-12.06|1.6|-1.0|-90|narrator|Best garden. Again. It's all bone meal.|BEST GARDEN\n\nThe Skeletons\n<size=60%>(it's all bone meal)</size>|
+B7|peek|-13.0|0|7.6|-90|tiny|Is the mayor gone? He wants me on the committee.||
+B9|shiver|-13.0|0|9.8|-90|old|It's draughty in here. Skeletons let all the wind through.||
+B10|sign|-13.0|0|12.0|-90|narrator|It just falls straight through.|PLEASE DO NOT\nFEED THE\nSKELETONS|IT JUST FALLS\nSTRAIGHT\nTHROUGH
+B11|inflate_tree|-13.0|0|14.2|-90|big|Bulking season! Somebody has to.||
+# ---------------------------------------------------------------- west wall (round the bandstand)
+B8|waddle|-47.0|0|-12.5|90|tree|Late for my shift at the snack shack!||4
+B12|pop_crate|-47.0|0|-10.3|90|big|Who ordered a crate of funny bones?||
+B13|talk|-47.0|0|-8.1|90|lady|My neighbour practises the trombone. On his own ribcage.||
+B15|inflate_crate|-47.0|0|-5.9|90|narrator|The lost and found is getting... full.||
+B16|spin|-47.0|0|10.5|90|tiny|I'm a merry-go-round! Nobody bought a ticket.||
+B17|peek|-47.0|0|12.7|90|old|In my day we walked to the graveyard. Uphill. Both ways.||
+B21|waddle|-47.0|0|14.9|90|tiny|Wait for me! Wait for meee!||4
+# ---------------------------------------------------------------- the plaza
+B18|sign|-28.3|0|12.0|180|narrator|Skeletons run anyway.|SPEED LIMIT\n5 MPH|SKELETONS\nRUN ANYWAY
+B19|shiver|-31.7|0|12.0|180|tree|Somebody keeps borrowing my lights.||
+B20|talk|-28.3|0|-4.5|0|big|I'm the only tree in town. I'm also the only parking.||
+B22|inflate_orn|-31.7|0|-4.5|0|lady|I'm not a bauble. I'm a bauble with ambitions.||

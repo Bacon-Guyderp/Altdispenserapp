@@ -129,21 +129,14 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(0, 1.8f, -1.2f), new Vector3(0, 1.8f, 6f), 1.2f);            // 0: lobby north wall
-    Cam(new Vector3(2.5f, 1.7f, -1.5f), new Vector3(-7f, 1.4f, 0f), 1.2f);        // 1: west wall
-    Cam(new Vector3(40f, 1.8f, -1.5f), new Vector3(40f, 1.8f, 6f), 1.2f);         // 2: systems check room
-    var start = All<FirHuntButton>(A).First(b => b.action == 1);
-    Sim.Press(A, start); Sim.Run(0.5f);
-    A.player.pos = new Vector3(0, 0.05f, -1f);
-    Cam(new Vector3(0, 1.8f, -1.2f), new Vector3(0, 1.8f, 6f), 1.2f);            // 3: lobby during the game
-    Cam(new Vector3(-2.5f, 1.7f, -9.5f), new Vector3(-3.3f, 1.8f, -6f), 1.2f);    // 4: task board, room 0
-    Cam(new Vector3(1.5f, 1.7f, -22.5f), new Vector3(2.4f, 1.3f, -26f), 1.2f);    // 5: power box
-    Cam(new Vector3(1.0f, 1.7f, -12.0f), new Vector3(0f, 1.4f, -24f), 1.2f);      // 6: hall with the tree
-    Cam(new Vector3(2.7f, 1.6f, -39.8f), new Vector3(2.7f, 1.4f, -42f), 1.2f);    // 7: rainbow keypad
-    Cam(new Vector3(2.7f, 1.6f, -59.5f), new Vector3(2.7f, 1.4f, -62f), 1.2f);    // 8: toy lock
-    Cam(new Vector3(6.5f, 1.6f, -93.6f), new Vector3(9f, 1.4f, -93.6f), 1.2f);    // 9: stage keypad
-    Cam(new Vector3(-1f, 1.7f, -112f), new Vector3(-4.5f, 1.2f, -117.5f), 1.2f);  // 10: furnace
-    Cam(new Vector3(-6.5f, 1.6f, -90.4f), new Vector3(-9f, 1.5f, -90.4f), 1.2f);  // 11: memo
+    Cam(new Vector3(-2f, 1.7f, 1.5f), new Vector3(-7f, 1.8f, 4f), 1.2f);          // 0: the lobby's west doorway
+    Cam(new Vector3(-14f, 1.8f, 4f), new Vector3(-30f, 1.4f, 4f), 1.2f);          // 1: walking into Bonetown
+    Cam(new Vector3(-30f, 3.5f, -8f), new Vector3(-30f, 1.2f, 16f), 1.2f);         // 2: the plaza and the homes
+    Cam(new Vector3(-24f, 1.7f, 12.5f), new Vector3(-24f, 1.5f, 22f), 1.2f);      // 3: two homes up close
+    Cam(new Vector3(-21f, 1.7f, -3f), new Vector3(-21f, 1.4f, -14f), 1.2f);       // 4: the snack shack and the news
+    Cam(new Vector3(-36f, 2.0f, 3f), new Vector3(-46f, 1.5f, 3f), 1.2f);          // 5: the bandstand
+    Cam(new Vector3(-36f, 1.7f, -8f), new Vector3(-47f, 1.2f, -8f), 1.2f);        // 6: west wall gags
+    Cam(new Vector3(-26f, 1.7f, 0f), new Vector3(-14f, 1.4f, -6f), 1.2f);         // 7: east wall gags
   }
 
   static void MapTour() {

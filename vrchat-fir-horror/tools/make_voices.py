@@ -90,6 +90,64 @@ COMBO = [
 ]
 
 
+# Bonetown (the expansion): every resident, band member and wanderer has its own voice and line.
+# name, MBROLA voice, words/min, pitch, rate shift, text  ->  Audio/Town/<name>.ogg
+TOWN = [
+    # residents, at home
+    ("res_mint", "mb-us3", 165, 78, 1.15, "I just moved in! I haven't even unpacked my spare ribs."),
+    ("res_peach", "mb-us1", 140, 60, 1.05, "I'm practising for the town dance. My partner is a broom. He's very quiet."),
+    ("res_lavender", "mb-us1", 95, 40, 0.92, "Five more minutes. I've only been asleep for two hundred years."),
+    ("res_coral", "mb-us2", 140, 30, 0.9, "I work out every single day. Look at these bones. All bone. No muscle. Still proud."),
+    ("res_plum", "mb-us2", 120, 45, 0.95, "I keep eating, but nothing ever stays down. Or in."),
+    ("res_sky", "mb-us3", 170, 70, 1.12, "I'm writing a song! It's called Ribcage Rock. It's mostly xylophone."),
+    ("res_navy", "mb-us2", 120, 20, 0.86, "Shh! I'm hiding from my landlord. I owe him a skull."),
+    ("res_cream", "mb-us1", 150, 75, 1.1, "I tripped over the rug. Again. Could somebody... pick me up? All of me?"),
+    ("res_rust", "mb-us3", 150, 50, 1.0, "Welcome to the snack shack! Today's special is soup. It goes right through you."),
+    ("res_olive", "mb-us1", 135, 50, 0.98, "Breaking news! Local skeleton loses his temper. Also his arm. More at eleven."),
+    # the band, each pressed on its own
+    ("band_scarlet", "mb-us3", 150, 62, 1.06, "I play the trumpet. Well. I blow through my ribs."),
+    ("band_mustard", "mb-us2", 135, 40, 0.95, "I'm on drums. And these are my own drumsticks. Literally."),
+    ("band_emerald", "mb-us3", 125, 45, 0.94, "Guitar! I only know one chord. A spinal chord."),
+    ("band_cobalt", "mb-us1", 145, 55, 1.0, "I'm the singer. Great voice, for a guy with no throat."),
+    # the wanderers: they stop to chat
+    ("wan_lime", "mb-us2", 110, 35, 0.93, "Out for my evening stroll. Want to come? I'm very slow. And very dead."),
+    ("wan_magenta", "mb-us1", 185, 80, 1.18, "Can't stop! I'm late for a very important... nothing! Bye!"),
+    ("wan_turquoise", "mb-us3", 170, 75, 1.15, "Tag! You're it! ...Oh. You're not playing. That's fine."),
+    ("wan_crimson", "mb-us3", 175, 65, 1.1, "You can't catch me! I'm not even running from anything!"),
+    ("wan_amber", "mb-us1", 130, 55, 1.0, "Lovely day for a walk. I left my legs on, just in case."),
+    ("wan_ivory", "mb-us2", 125, 50, 0.97, "Hello, neighbour! Have you met everyone? Everyone's bones."),
+    ("wan_cocoa", "mb-us2", 150, 30, 0.9, "I jog every morning. Lose weight? I haven't got any to lose!"),
+    ("wan_denim", "mb-us1", 140, 45, 0.96, "Ooh, a visitor! We don't get many living ones."),
+    ("wan_neon", "mb-us3", 180, 85, 1.2, "Wheee! Running is the best! I never get out of breath. No lungs!"),
+    ("wan_bubblegum", "mb-us1", 160, 85, 1.16, "Shopping day! I'm buying a new skull. This one's a bit hollow."),
+]
+SKV.update({"scarlet": ("mb-us3", 150, 62, 1.06), "mustard": ("mb-us2", 135, 40, 0.95),
+            "emerald": ("mb-us3", 125, 45, 0.94), "cobalt": ("mb-us1", 145, 55, 1.0)})
+COMBO += [
+    ("squabble_1", ["scarlet"], "You took my femur!"),
+    ("squabble_2", ["cobalt"], "It's MY femur!"),
+    ("squabble_3", ["scarlet"], "Then whose femur am I standing on?"),
+    ("squabble_4", ["cobalt"], "Mine. Sorry."),
+    ("squabble_5", ["scarlet", "cobalt"], "Bone buddies! Hug it out!"),
+    ("band_1", ["scarlet", "mustard", "emerald", "cobalt"], "A one, a two, a one two three four!"),
+    ("band_2", ["scarlet"], "Doot doot da doot!"),
+    ("band_3", ["cobalt"], "We are the bones! The bones of Bonetown!"),
+    ("band_4", ["scarlet", "mustard", "emerald", "cobalt"], "Thank you, Bonetown! Good night!"),
+    ("propose_1", ["emerald"], "Mustard. Will you be my neighbour?"),
+    ("propose_2", ["mustard"], "I'm already your neighbour."),
+    ("propose_3", ["emerald"], "Then will you be my BEST neighbour?"),
+    ("propose_4", ["mustard"], "Yes! Yes! A thousand times, yes!"),
+    ("town_finale_1", ["scarlet", "mustard", "emerald", "cobalt"], "Welcome to Bonetown!"),
+    ("town_finale_2", ["scarlet", "mustard", "emerald", "cobalt"], "Population: us!"),
+]
+
+
+def town_lines():
+    for name, v, speed, pitch, rate, text in TOWN:
+        yield ("Town/" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -117,8 +175,9 @@ def rainbow_lines():
 
 
 def gag_lines():
-    path = os.path.join(os.path.dirname(OUT), "Data", "gags.txt")
-    for line in open(path, encoding="utf-8"):
+    for fname in ("gags.txt", "town_gags.txt"):
+      path = os.path.join(os.path.dirname(OUT), "Data", fname)
+      for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
             continue
         f = line.rstrip("\n").split("|")
@@ -144,11 +203,23 @@ def main():
     os.makedirs(os.path.join(OUT, "Gags"), exist_ok=True)
     os.makedirs(os.path.join(OUT, "Rainbow"), exist_ok=True)
     only_rainbow = "--rainbow" in sys.argv
+    os.makedirs(os.path.join(OUT, "Town"), exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines())
+        if "--town" in sys.argv:   # only the expansion: its voices, its gags (ids starting B), and the combo lines
+            todo = list(town_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_B")]
+            for name, voice, speed, pitch, text, filt in todo:
+                wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
+                subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+                out = os.path.join(OUT, name + ".ogg")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
+                                "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
+                print(name, os.path.getsize(out) // 1024, "KB")
+            make_combo(tmp)
+            return
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

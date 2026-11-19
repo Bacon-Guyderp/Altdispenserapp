@@ -76,7 +76,13 @@ public static class FirCheckBuilder
         Rug(lobby, new Vector3(0, 0, -2.6f), new Vector2(4.2f, 3.0f), "Rug", "TrimDark");
         PendantLamp(lobby, new Vector3(-3.5f, 3.6f, -0.5f), 0.45f);
         PendantLamp(lobby, new Vector3(3.5f, 3.6f, -0.5f), 0.45f);
-        Box(lobby, "WallW", new Vector3(-7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
+        // the west wall has a doorway (z 2.8 to 5.2) through to Bonetown, the expansion
+        Box(lobby, "WallW S", new Vector3(-7.1f, 1.8f, -1.7f), new Vector3(0.2f, 3.6f, 9.0f), M("Wall"));
+        Box(lobby, "WallW N", new Vector3(-7.1f, 1.8f, 5.7f), new Vector3(0.2f, 3.6f, 1.0f), M("Wall"));
+        Box(lobby, "WallW Top", new Vector3(-7.1f, 3.2f, 4.0f), new Vector3(0.2f, 0.8f, 2.4f), M("Wall"));
+        DoorFrameX(lobby, -7.0f, 4.0f);
+        Text("TownDoorSign", lobby, new Vector3(-6.98f, 3.25f, 4.0f), Face(Vector3.right), new Vector2(2.6f, 0.5f), 0.2f,
+             "<b>BONETOWN</b>\n<size=70%>the expansion: skeletons live here</size>").color = new Color(1f, 0.85f, 0.4f);
         Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
         // ---- the test room (teleport target), far from the lobby
@@ -180,6 +186,7 @@ public static class FirCheckBuilder
         // ---- the map: new rooms to the south, full of gags (through the doorway in the lobby's south wall)
         BuildMap(root, spawn);
         BuildHunt(root, lobby, spawn);
+        BuildTown(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -299,6 +306,16 @@ public static class FirCheckBuilder
     static void DoorFrame(Transform parent, float x, float z)
     {
         var g = Group(parent, "DoorFrame", new Vector3(x, 0, z));
+        Box(g, "PostL", new Vector3(-1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
+        Box(g, "PostR", new Vector3(1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
+        Box(g, "Lintel", new Vector3(0, 2.88f, 0), new Vector3(2.68f, 0.16f, 0.32f), M("TrimDark"), false);
+    }
+
+    /// <summary>A door frame for a doorway in a wall that runs along z (an east or west wall).</summary>
+    static void DoorFrameX(Transform parent, float x, float z)
+    {
+        var g = Group(parent, "DoorFrame", new Vector3(x, 0, z));
+        g.localRotation = Quaternion.Euler(0, 90, 0);
         Box(g, "PostL", new Vector3(-1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
         Box(g, "PostR", new Vector3(1.27f, 1.43f, 0), new Vector3(0.14f, 2.86f, 0.32f), M("TrimDark"), false);
         Box(g, "Lintel", new Vector3(0, 2.88f, 0), new Vector3(2.68f, 0.16f, 0.32f), M("TrimDark"), false);
@@ -1768,6 +1785,10 @@ public static class FirCheckBuilder
         A("GlowRed", null, new Color(0.9f, 0.1f, 0.1f), 1, new Color(0.6f, 0.05f, 0.05f));
         A("GlowGold", null, new Color(1f, 0.75f, 0.2f), 1, new Color(0.6f, 0.4f, 0.05f));
         A("GlowGreen", null, new Color(0.2f, 1f, 0.3f), 1, new Color(0.1f, 0.6f, 0.15f));
+        A("Grass", null, new Color(0.36f, 0.72f, 0.3f), 1, Color.black);
+        A("Sky", null, new Color(0.62f, 0.8f, 1f), 1, new Color(0.12f, 0.16f, 0.2f));
+        A("Hedge", "needles", new Color(0.45f, 0.8f, 0.4f), 1, Color.black);
+        A("Water", null, new Color(0.35f, 0.65f, 1f), 1, new Color(0.1f, 0.22f, 0.35f));
         A("Porcelain", null, new Color(0.95f, 0.95f, 0.93f), 1, Color.black);
         A("ToiletWater", null, new Color(0.45f, 0.7f, 0.9f), 1, new Color(0.05f, 0.1f, 0.15f));
     }
@@ -1853,7 +1874,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker" };
 
     static bool EnsureProgramAssets()
     {
@@ -1952,6 +1973,299 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== Bonetown (the expansion), west of the lobby
+
+    static Color Hex(string h)
+    {
+        h = h.TrimStart('#');
+        return new Color(Convert.ToInt32(h.Substring(0, 2), 16) / 255f, Convert.ToInt32(h.Substring(2, 2), 16) / 255f, Convert.ToInt32(h.Substring(4, 2), 16) / 255f);
+    }
+
+    static Material BoneMat(string name, string hex)
+    {
+        string n = "Bone" + name;
+        if (mats.TryGetValue(n, out var m)) return m;
+        var c = Hex(hex);
+        AddMat(n, "skeleton", new Color(c.r * 1.05f + 0.05f, c.g * 1.05f + 0.05f, c.b * 1.05f + 0.05f), 1, c * (name == "Neon" ? 0.45f : 0.15f));
+        return mats[n];
+    }
+
+    static void BuildTown(Transform root)
+    {
+        var g = Group(root, "Bonetown", Vector3.zero);
+        float x0 = -12f, x1 = -48f, z0 = -14f, z1 = 22f, h = 6f;
+        float cx = (x0 + x1) / 2f, cz = (z0 + z1) / 2f;
+        // ---- the corridor from the lobby's west doorway (z 2.8 to 5.2)
+        Box(g, "CorridorFloor", new Vector3(-9.6f, -0.1f, 4f), new Vector3(5.0f, 0.2f, 2.4f), M("Floor"));
+        Box(g, "CorridorCeiling", new Vector3(-9.6f, 3.1f, 4f), new Vector3(5.0f, 0.2f, 2.8f), M("Ceiling"));
+        Box(g, "CorridorS", new Vector3(-9.6f, 1.5f, 2.7f), new Vector3(5.0f, 3f, 0.2f), M("Wall"));
+        Box(g, "CorridorN", new Vector3(-9.6f, 1.5f, 5.3f), new Vector3(5.0f, 3f, 0.2f), M("Wall"));
+        PendantLamp(g, new Vector3(-9.6f, 3.0f, 4f), 0.45f);
+        Text("CorridorSign", g, new Vector3(-9.6f, 2.3f, 5.18f), Face(Vector3.back), new Vector2(4f, 0.4f), 0.2f, "<b>BONETOWN</b> this way  <").color = new Color(1f, 0.85f, 0.4f);
+        // ---- the town: grass, sky, a hedge round the walls
+        Box(g, "Grass", new Vector3(cx, -0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Grass"));
+        Box(g, "Sky", new Vector3(cx, h + 0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Sky"));
+        Box(g, "WallW", new Vector3(x1 - 0.1f, h / 2, cz), new Vector3(0.2f, h, 36.4f), M("Sky"));
+        Box(g, "WallN", new Vector3(cx, h / 2, z1 + 0.1f), new Vector3(36.4f, h, 0.2f), M("Sky"));
+        Box(g, "WallS", new Vector3(cx, h / 2, z0 - 0.1f), new Vector3(36.4f, h, 0.2f), M("Sky"));
+        // the east wall, with the doorway in from the corridor
+        Box(g, "WallE S", new Vector3(x0 + 0.1f, h / 2, (z0 + 2.8f) / 2f), new Vector3(0.2f, h, 2.8f - z0), M("Sky"));
+        Box(g, "WallE N", new Vector3(x0 + 0.1f, h / 2, (5.2f + z1) / 2f), new Vector3(0.2f, h, z1 - 5.2f), M("Sky"));
+        Box(g, "WallE Top", new Vector3(x0 + 0.1f, (3f + h) / 2f, 4f), new Vector3(0.2f, h - 3f, 2.4f), M("Sky"));
+        foreach (var hw in new[] {
+            new { p = new Vector3(x1 + 0.25f, 0.6f, cz), s = new Vector3(0.3f, 1.2f, 36f) },
+            new { p = new Vector3(cx, 0.6f, z1 - 0.25f), s = new Vector3(36f, 1.2f, 0.3f) },
+            new { p = new Vector3(cx, 0.6f, z0 + 0.25f), s = new Vector3(36f, 1.2f, 0.3f) },
+            new { p = new Vector3(x0 - 0.25f, 0.6f, (z0 + 2.6f) / 2f), s = new Vector3(0.3f, 1.2f, 2.6f - z0) },
+            new { p = new Vector3(x0 - 0.25f, 0.6f, (5.4f + z1) / 2f), s = new Vector3(0.3f, 1.2f, z1 - 5.4f) } })
+            Box(g, "Hedge", hw.p, hw.s, M("Hedge"), false);
+        Text("TownTitle", g, new Vector3(x0 - 0.02f, 4.2f, 4f), Face(Vector3.left), new Vector2(6f, 0.8f), 0.6f, "<b>BONETOWN</b>").color = new Color(1f, 0.95f, 0.85f);
+        Text("TownWelcome", g, new Vector3(x0 - 0.02f, 3.45f, 4f), Face(Vector3.left), new Vector2(7f, 0.4f), 0.17f,
+             "where the skeletons live.  Press anyone to say hi. Everyone here is harmless.").color = new Color(0.2f, 0.25f, 0.4f);
+        // paths: from the doorway to the fountain, and a ring round it
+        Box(g, "Path", new Vector3(-18.5f, 0.005f, 4f), new Vector3(13f, 0.01f, 2.0f), M("Concrete"), false);
+        for (int k = 0; k < 24; k++)
+        {
+            float a = k * Mathf.PI * 2f / 24f;
+            DPrim(PrimitiveType.Cube, "PathRing", g, new Vector3(-30f + Mathf.Cos(a) * 3.3f, 0.006f, 4f + Mathf.Sin(a) * 3.3f), new Vector3(1.0f, 0.01f, 1.4f), M("Concrete"), Quaternion.Euler(0, -a * Mathf.Rad2Deg, 0));
+        }
+        // the fountain
+        var f = Group(g, "Fountain", new Vector3(-30f, 0, 4f));
+        Box(f, "Basin", new Vector3(0, 0.25f, 0), new Vector3(3.6f, 0.5f, 3.6f), M("Concrete"), true);
+        Prim(PrimitiveType.Cylinder, "Rim", f, new Vector3(0, 0.27f, 0), new Vector3(4.0f, 0.27f, 4.0f), M("Concrete"));
+        Prim(PrimitiveType.Cylinder, "Water", f, new Vector3(0, 0.55f, 0), new Vector3(3.6f, 0.01f, 3.6f), M("Water"));
+        Prim(PrimitiveType.Cylinder, "Column", f, new Vector3(0, 1.1f, 0), new Vector3(0.4f, 0.6f, 0.4f), M("Concrete"));
+        Prim(PrimitiveType.Sphere, "Skull", f, new Vector3(0, 1.9f, 0), new Vector3(0.5f, 0.48f, 0.55f), M("BoneWhite"));
+        foreach (float sx in new[] { -0.11f, 0.11f }) Prim(PrimitiveType.Sphere, "Socket", f, new Vector3(sx, 1.95f, 0.22f), Vector3.one * 0.13f, M("Black"));
+        Prim(PrimitiveType.Cylinder, "Spout", f, new Vector3(0, 1.0f, 0), new Vector3(1.6f, 0.02f, 1.6f), M("Water"));
+        Text("FountainSign", f, new Vector3(0, 0.3f, 2.02f), Face(Vector3.forward), new Vector2(3f, 0.25f), 0.12f, "<b>THE FOUNTAIN OF YOUTH</b>  <size=70%>(out of order)</size>").color = new Color(0.15f, 0.15f, 0.2f);
+        // lamp posts, benches and a few trees round the plaza
+        foreach (var lp in new[] { new Vector3(-22.5f, 0, -4f), new Vector3(-35f, 0, -4f), new Vector3(-22.5f, 0, 12f), new Vector3(-35f, 0, 12f) })
+        {
+            DPrim(PrimitiveType.Cylinder, "LampPost", g, lp + new Vector3(0, 1.6f, 0), new Vector3(0.12f, 1.6f, 0.12f), M("Black"));
+            DPrim(PrimitiveType.Sphere, "LampGlow", g, lp + new Vector3(0, 3.3f, 0), Vector3.one * 0.45f, M("GlowWarm"));
+        }
+        foreach (var bp in new[] { new { p = new Vector3(-21f, 0, 1.2f), y = 90f }, new { p = new Vector3(-21f, 0, 7.2f), y = 90f }, new { p = new Vector3(-39f, 0, 1f), y = -90f }, new { p = new Vector3(-39f, 0, 7f), y = -90f } })
+        {
+            var b = Group(g, "Bench", bp.p);
+            b.localRotation = Quaternion.Euler(0, bp.y, 0);
+            Box(b, "Seat", new Vector3(0, 0.42f, 0), new Vector3(1.8f, 0.08f, 0.5f), M("DeskWood"));
+            Box(b, "Back", new Vector3(0, 0.75f, -0.22f), new Vector3(1.8f, 0.5f, 0.06f), M("DeskWood"), false);
+            foreach (float lx in new[] { -0.75f, 0.75f }) Box(b, "Leg", new Vector3(lx, 0.2f, 0), new Vector3(0.08f, 0.4f, 0.45f), M("Black"), false);
+        }
+        TreeAt(g, "TownTree", new Vector3(-14.0f, 0, -1.3f), -90f, 2.6f, false);
+        TreeAt(g, "TownTree", new Vector3(-13.8f, 0, 16.6f), -90f, 2.6f, true);
+        TreeAt(g, "TownTree", new Vector3(-46f, 0, 18.5f), 135f, 2.2f, false);
+
+        // ---- the residents: six homes along the north side, and four along the south (the snack shack, the news, two homes)
+        var homes = new[] {
+            new { who = "Mint", hex = "#7dffc0", act = 16, side = 1, x = -16.5f, wall = "Wall2", prop = "boxes" },
+            new { who = "Peach", hex = "#ffb48a", act = 4, side = 1, x = -21.5f, wall = "Wall", prop = "broom" },
+            new { who = "Lavender", hex = "#c8a8ff", act = 3, side = 1, x = -26.5f, wall = "WallDark", prop = "bed" },
+            new { who = "Coral", hex = "#ff7f6a", act = 10, side = 1, x = -31.5f, wall = "BrickWall", prop = "gym" },
+            new { who = "Sky", hex = "#7ec8ff", act = 15, side = 1, x = -36.5f, wall = "WallGreen", prop = "xylophone" },
+            new { who = "Navy", hex = "#2c3e8c", act = 12, side = 1, x = -41.5f, wall = "Wall", prop = "wardrobe" },
+            new { who = "Rust", hex = "#b5502a", act = 1, side = -1, x = -17.5f, wall = "BrickWall", prop = "shack" },
+            new { who = "Olive", hex = "#8a9a3a", act = 11, side = -1, x = -24.5f, wall = "WallDark", prop = "news" },
+            new { who = "Cream", hex = "#fff2c8", act = 6, side = -1, x = -31.0f, wall = "Wall2", prop = "rug" },
+            new { who = "Plum", hex = "#8e3b7a", act = 13, side = -1, x = -37.0f, wall = "WallGreen", prop = "kitchen" } };
+        float[] roomW = { 5f, 5f, 5f, 5f, 5f, 5f, 6f, 6f, 5.5f, 5.5f };
+        for (int i = 0; i < homes.Length; i++)
+        {
+            var hm = homes[i];
+            float w = roomW[i], s = hm.side;
+            float back = s > 0 ? z1 : z0, front = back - s * 4.5f, mid = (back + front) / 2f;
+            var u = Group(g, "Home " + hm.who, Vector3.zero);
+            Box(u, "BackWall", new Vector3(hm.x, 1.75f, back - s * 0.12f), new Vector3(w, 3.5f, 0.04f), M(hm.wall), false);
+            Box(u, "SideA", new Vector3(hm.x - w / 2f, 1.75f, mid), new Vector3(0.2f, 3.5f, 4.5f), M("Trim"));
+            Box(u, "SideB", new Vector3(hm.x + w / 2f, 1.75f, mid), new Vector3(0.2f, 3.5f, 4.5f), M("Trim"));
+            Box(u, "Roof", new Vector3(hm.x, 3.6f, mid), new Vector3(w + 0.4f, 0.2f, 4.9f), M(s > 0 ? "CaneRed" : "GiftBlue"));
+            Box(u, "Header", new Vector3(hm.x, 3.15f, front), new Vector3(w, 0.7f, 0.2f), M("Trim"), false);
+            Rug(u, new Vector3(hm.x, 0, mid), new Vector2(w - 0.8f, 3.6f), "Rug", "TrimDark");
+            string title = hm.prop == "shack" ? "SNACK SHACK" : hm.prop == "news" ? "BONETOWN NEWS" : hm.who.ToUpper() + "'S PLACE";
+            Text("Nameplate", u, new Vector3(hm.x, 3.2f, front - s * 0.12f), Face(new Vector3(0, 0, -s)), new Vector2(w - 0.4f, 0.5f), 0.3f, "<b>" + title + "</b>").color = new Color(0.25f, 0.15f, 0.1f);
+            var skPos = new Vector3(hm.x + 0.5f, 0, mid + s * 0.2f);
+            HomeProps(u, hm.prop, hm.x, mid, s, w);
+            GagSkeleton(u, hm.who, skPos, s > 0 ? 180f : 0f, 1f, hm.act, hm.hex, "Town/res_" + hm.who.ToLower(),
+                        new[] { BoneMat(hm.who, hm.hex) }, new Vector3(hm.x, 2.55f, front - s * 0.12f), new Vector3(0, 0, -s));
+        }
+
+        // ---- the bandstand (west side): four of them, and a console of combo acts
+        Box(g, "Bandstand", new Vector3(-45.5f, 0.25f, 3f), new Vector3(4.6f, 0.5f, 9f), M("Stage"));
+        for (int k = 0; k < 7; k++)
+            DPrim(PrimitiveType.Cube, "Bunting", g, new Vector3(-43.3f, 3.6f - (k % 2) * 0.2f, -1f + k * 1.33f), new Vector3(0.05f, 0.35f, 0.5f), M(k % 2 == 0 ? "CaneRed" : "GiftGold"), Quaternion.Euler(0, 0, 0));
+        Text("BandSign", g, new Vector3(x1 + 0.02f, 5.1f, 3f), Face(Vector3.right), new Vector2(8f, 0.7f), 0.5f, "<b>THE BONETOWN BAND</b>").color = new Color(0.9f, 0.2f, 0.3f);
+        var band = new[] {
+            new { who = "Scarlet", hex = "#ff2a2a", act = 0, z = 5.1f },
+            new { who = "Cobalt", hex = "#2050e0", act = 9, z = 3.9f },
+            new { who = "Emerald", hex = "#20c070", act = 14, z = 2.1f },
+            new { who = "Mustard", hex = "#e0b030", act = 5, z = 0.9f } };
+        foreach (var b in band)
+            GagSkeleton(g, b.who, new Vector3(-45.6f, 0.5f, b.z), 90f, 1f, b.act, b.hex, "Town/band_" + b.who.ToLower(),
+                        new[] { BoneMat(b.who, b.hex) }, new Vector3(x1 + 0.02f, 2.8f, b.z), Vector3.right);
+        // instruments: a drum by Mustard, a mic stand by Cobalt
+        DPrim(PrimitiveType.Cylinder, "Drum", g, new Vector3(-44.6f, 0.75f, 0.9f), new Vector3(0.6f, 0.25f, 0.6f), M("CaneRed"));
+        DPrim(PrimitiveType.Cylinder, "MicStand", g, new Vector3(-44.7f, 1.2f, 3.9f), new Vector3(0.04f, 0.7f, 0.04f), M("Black"));
+        DPrim(PrimitiveType.Sphere, "Mic", g, new Vector3(-44.7f, 1.95f, 3.9f), Vector3.one * 0.1f, M("Metal"));
+        var console = Console(g, "BandConsole", new Vector3(-42.3f, 1.25f, -2.2f), Vector3.right, "COMBO ACTS  <size=70%>the band</size>");
+        ComboAct(console, 0, 6, "The Squabble", new[] { "Scarlet", "Cobalt" },
+                 new[] { "squabble_1", "squabble_2", "squabble_3", "squabble_4", "squabble_5" }, new[] { 0, 1, 0, 1, -1 }, 1.6f);
+        ComboAct(console, 1, 7, "Town Band", new[] { "Scarlet", "Mustard", "Emerald", "Cobalt" },
+                 new[] { "band_1", "band_2", "band_3", "band_4" }, new[] { -1, 0, 3, -1 }, 2.0f);
+        ComboAct(console, 2, 8, "The Proposal", new[] { "Emerald", "Mustard" },
+                 new[] { "propose_1", "propose_2", "propose_3", "propose_4" }, new[] { 0, 1, 0, 1 }, 1.8f);
+        ComboAct(console, 5, 9, "BONETOWN FINALE", new[] { "Scarlet", "Cobalt", "Emerald", "Mustard" },
+                 new[] { "town_finale_1", "town_finale_2" }, new[] { -1, -1 }, 3.6f);
+
+        // ---- the wanderers: harmless, walking and running round the town on their own loops
+        var sq = new[] { new Vector3(-24f, 0, -2f), new Vector3(-24f, 0, 10f), new Vector3(-36f, 0, 10f), new Vector3(-36f, 0, -2f) };
+        var big = new[] { new Vector3(-16f, 0, -7f), new Vector3(-16f, 0, 14f), new Vector3(-40f, 0, 14f), new Vector3(-40f, 0, -7f) };
+        var ring = Enumerable.Range(0, 16).Select(k => new Vector3(-30f + Mathf.Cos(k * Mathf.PI / 8f) * 3.3f, 0, 4f + Mathf.Sin(k * Mathf.PI / 8f) * 3.3f)).ToArray();
+        var wan = new[] {
+            new { who = "Lime", hex = "#a8ff30", route = sq, pace = new[] { 1f, 1f, 1f, 1f }, speed = 0.9f, head = 0 },
+            new { who = "Amber", hex = "#ffb020", route = sq.Reverse().ToArray(), pace = new[] { 1f, 1f, 1f, 1f }, speed = 1.0f, head = 20000 },
+            new { who = "Turquoise", hex = "#30e8d0", route = ring, pace = Enumerable.Repeat(2.6f, 16).ToArray(), speed = 1.1f, head = 0 },
+            new { who = "Crimson", hex = "#c0103a", route = ring, pace = Enumerable.Repeat(2.6f, 16).ToArray(), speed = 1.1f, head = 1400 },
+            new { who = "Cocoa", hex = "#6b4226", route = big, pace = new[] { 2.1f, 2.1f, 2.1f, 2.1f }, speed = 1.1f, head = 0 },
+            new { who = "Neon", hex = "#d0ff00", route = big.Reverse().ToArray(), pace = new[] { 2.8f, 1f, 2.8f, 1f }, speed = 1.1f, head = 15000 },
+            new { who = "Magenta", hex = "#ff30d0", route = new[] { new Vector3(-19f, 0, -6f), new Vector3(-19f, 0, 13f), new Vector3(-26.5f, 0, 13f), new Vector3(-26.5f, 0, -6f) }, pace = new[] { 2.7f, 1f, 2.7f, 1f }, speed = 1.1f, head = 5000 },
+            new { who = "Ivory", hex = "#fffaf0", route = new[] { new Vector3(-14.5f, 0, 4f), new Vector3(-20f, 0, 7.5f), new Vector3(-20f, 0, 0.5f) }, pace = new[] { 1f, 1f, 1f }, speed = 0.7f, head = 0 },
+            new { who = "Denim", hex = "#4a6fa5", route = new[] { new Vector3(-37.5f, 0, -7f), new Vector3(-37.5f, 0, 13f), new Vector3(-33f, 0, 13f), new Vector3(-33f, 0, -7f) }, pace = new[] { 1f, 1f, 1f, 1f }, speed = 1.0f, head = 9000 },
+            new { who = "Bubblegum", hex = "#ff8ad8", route = new[] { new Vector3(-17f, 0, -6.5f), new Vector3(-30f, 0, -7.5f), new Vector3(-41f, 0, -6f), new Vector3(-41f, 0, 14.5f), new Vector3(-30f, 0, 15f), new Vector3(-17f, 0, 14.5f) }, pace = new[] { 1f, 1f, 1f, 1f, 1f, 1f }, speed = 1.0f, head = 3000 } };
+        var wg = Group(g, "Wanderers", Vector3.zero);
+        foreach (var wd in wan)
+        {
+            var go = new GameObject(wd.who + " Wanderer");
+            go.transform.SetParent(wg, false);
+            go.transform.localPosition = wd.route[0];
+            var ps = SkeletonRig(go.transform, "Rig", BoneMat(wd.who, wd.hex));
+            var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.6f, 1.9f, 0.45f);
+            go.layer = 17;   // Walkthrough: you can press them, but they walk through you instead of shoving you
+            var wv = Add<FirWanderer>(go);
+            wv.pivots = ps; wv.route = wd.route; wv.pace = wd.pace; wv.walkSpeed = wd.speed; wv.headStartMs = wd.head;
+            var clip = Clip("Town/wan_" + wd.who.ToLower());
+            wv.voice = Src(ps[2], Vector3.zero, clip, false, 1f, 1f, 15f, false);
+            var line = TownLine("wan_" + wd.who.ToLower());
+            wv.line = "<b><color=" + wd.hex + ">" + wd.who.ToUpper() + ":</color></b> " + line;
+            wv.bubble = Bubble(go.transform, new Vector3(0, 2.3f, 0f));
+            wv.bubbleObject = wv.bubble.gameObject; wv.bubbleTransform = wv.bubble.transform;
+            SetInteract(wv, "Say hi to " + wd.who, 3f);
+        }
+
+        // ---- the news ticker over the news desk
+        var tick = Text("Ticker", g, new Vector3(-24.5f, 2.2f, z0 + 0.17f), Face(Vector3.forward), new Vector2(5.4f, 0.4f), 0.17f, "");
+        tick.color = new Color(1f, 0.95f, 0.5f);
+        var tk = Add<FirTicker>(tick.gameObject);
+        tk.text = tick;
+        tk.headlines = new[] {
+            "LOCAL SKELETON WINS 'MOST LIKELY TO RATTLE' FOR 300TH YEAR",
+            "SNACK SHACK SOUP 'GOES RIGHT THROUGH YOU', SAY CUSTOMERS",
+            "TWO WANDERERS STILL PLAYING TAG. NOBODY KNOWS WHO IS 'IT'",
+            "FOUNTAIN OF YOUTH STILL OUT OF ORDER. NOBODY MINDS",
+            "BAND ANNOUNCES NEW SONG: 'NO BODY KNOWS'",
+            "WEATHER: SUNNY, WITH A CHANCE OF FEMURS",
+            "CREAM TRIPS OVER RUG AGAIN. RUG 'NOT SORRY'",
+            "NAVY SEEN HIDING IN WARDROBE. LANDLORD STILL WAITING" };
+        Text("TickerLabel", g, new Vector3(-24.5f, 2.55f, z0 + 0.17f), Face(Vector3.forward), new Vector2(5.4f, 0.25f), 0.12f, "<b>LIVE</b>").color = new Color(1f, 0.3f, 0.3f);
+
+        // ---- the town's gags (Data/town_gags.txt)
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/town_gags.txt");
+        if (ta == null) report.Add("problem: Data/town_gags.txt is missing");
+        else
+        {
+            var gg = Group(g, "Gags", Vector3.zero);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var raw in ta.text.Split('\n'))
+            {
+                var line = raw.TrimEnd('\r');
+                if (line.Trim() == "" || line.StartsWith("#")) continue;
+                var p = line.Split('|');
+                if (p.Length < 10) continue;
+                Gag(gg, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                    p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+                placed++;
+            }
+        }
+        report.Add("Bonetown: " + homes.Length + " residents, " + band.Length + " in the band, " + wan.Length + " wanderers, 4 combo acts, " + placed + " gags");
+    }
+
+    static string TownLine(string name)
+    {
+        return townLines.TryGetValue(name, out var s) ? s : "";
+    }
+    static readonly Dictionary<string, string> townLines = new Dictionary<string, string> {
+        { "wan_lime", "Out for my evening stroll. Want to come? I'm very slow. And very dead." },
+        { "wan_magenta", "Can't stop! I'm late for a very important... nothing! Bye!" },
+        { "wan_turquoise", "Tag! You're it! ...Oh. You're not playing. That's fine." },
+        { "wan_crimson", "You can't catch me! I'm not even running from anything!" },
+        { "wan_amber", "Lovely day for a walk. I left my legs on, just in case." },
+        { "wan_ivory", "Hello, neighbour! Have you met everyone? Everyone's bones." },
+        { "wan_cocoa", "I jog every morning. Lose weight? I haven't got any to lose!" },
+        { "wan_denim", "Ooh, a visitor! We don't get many living ones." },
+        { "wan_neon", "Wheee! Running is the best! I never get out of breath. No lungs!" },
+        { "wan_bubblegum", "Shopping day! I'm buying a new skull. This one's a bit hollow." } };
+
+    static void HomeProps(Transform u, string prop, float x, float mid, float s, float w)
+    {
+        float backZ = mid + s * 1.6f;   // near the back wall
+        switch (prop)
+        {
+            case "boxes":
+                for (int k = 0; k < 5; k++)
+                    DPrim(PrimitiveType.Cube, "MovingBox", u, new Vector3(x - 1.4f + (k % 3) * 0.6f, 0.25f + (k / 3) * 0.5f, backZ), Vector3.one * 0.5f, M("Cardboard"), Quaternion.Euler(0, k * 13f, 0));
+                break;
+            case "broom":
+                DPrim(PrimitiveType.Cylinder, "Broom", u, new Vector3(x - 0.7f, 0.85f, mid), new Vector3(0.05f, 0.75f, 0.05f), M("DeskWood"), Quaternion.Euler(0, 0, 12));
+                DPrim(PrimitiveType.Cube, "Bristles", u, new Vector3(x - 0.85f, 0.12f, mid), new Vector3(0.3f, 0.22f, 0.12f), M("GiftGold"));
+                DPrim(PrimitiveType.Cube, "Radio", u, new Vector3(x - 1.6f, 0.2f, backZ), new Vector3(0.5f, 0.35f, 0.25f), M("CaneRed"));
+                break;
+            case "bed":
+                Box(u, "Bed", new Vector3(x - 1.2f, 0.25f, mid), new Vector3(1.0f, 0.5f, 2.0f), M("DeskWood"));
+                DPrim(PrimitiveType.Cube, "Blanket", u, new Vector3(x - 1.2f, 0.52f, mid - s * 0.2f), new Vector3(1.02f, 0.06f, 1.4f), M("GiftBlue"));
+                DPrim(PrimitiveType.Cube, "Pillow", u, new Vector3(x - 1.2f, 0.56f, mid + s * 0.75f), new Vector3(0.7f, 0.12f, 0.35f), M("CaneWhite"));
+                break;
+            case "gym":
+                foreach (float dx in new[] { -1.6f, -1.0f })
+                {
+                    DPrim(PrimitiveType.Cylinder, "Bar", u, new Vector3(x + dx, 0.12f, backZ), new Vector3(0.05f, 0.35f, 0.05f), M("Metal"), Quaternion.Euler(90, 0, 0));
+                    foreach (float dz in new[] { -0.32f, 0.32f })
+                        DPrim(PrimitiveType.Cylinder, "Weight", u, new Vector3(x + dx, 0.12f, backZ + dz), new Vector3(0.24f, 0.05f, 0.24f), M("Black"), Quaternion.Euler(90, 0, 0));
+                }
+                break;
+            case "xylophone":
+                string[] bars = { "BoneRed", "BoneOrange", "BoneYellow", "BoneGreen", "BoneBlue", "BoneViolet" };
+                for (int k = 0; k < 6; k++)
+                    DPrim(PrimitiveType.Cube, "Bar", u, new Vector3(x - 1.8f + k * 0.2f, 0.7f, mid), new Vector3(0.16f, 0.04f, 0.5f - k * 0.05f), M(bars[k]));
+                DPrim(PrimitiveType.Cube, "Stand", u, new Vector3(x - 1.3f, 0.34f, mid), new Vector3(1.2f, 0.68f, 0.05f), M("DeskWood"));
+                break;
+            case "wardrobe":
+                Box(u, "Wardrobe", new Vector3(x - 1.4f, 1.0f, backZ), new Vector3(1.1f, 2.0f, 0.6f), M("TrimDark"));
+                Text("RentNote", u, new Vector3(x - 1.4f, 1.3f, backZ - s * 0.31f), Face(new Vector3(0, 0, -s)), new Vector2(0.8f, 0.4f), 0.12f, "<b>RENT DUE</b>\n<size=70%>one (1) skull</size>").color = new Color(0.9f, 0.1f, 0.1f);
+                break;
+            case "shack":
+                Box(u, "Counter", new Vector3(x, 0.5f, mid - s * 1.0f), new Vector3(w - 0.6f, 1.0f, 0.6f), M("DeskWood"));
+                for (int k = 0; k < 8; k++)
+                    DPrim(PrimitiveType.Cube, "Awning", u, new Vector3(x - w / 2f + 0.4f + k * (w - 0.8f) / 7f, 2.75f, mid - s * 2.5f), new Vector3((w - 0.8f) / 8f, 0.06f, 0.8f), M(k % 2 == 0 ? "CaneRed" : "CaneWhite"), Quaternion.Euler(s * -20f, 0, 0));
+                Text("Menu", u, new Vector3(x - 1.6f, 1.9f, mid + s * 2.1f), Face(new Vector3(0, 0, -s)), new Vector2(2.2f, 1.1f), 0.12f,
+                     "<b>MENU</b>\nBone broth .... 2\nSpare ribs .... 3\nFinger food .... 1\n<color=#a00000>Soup of the day</color> .... free\n<size=70%>(it goes right through you)</size>").color = new Color(0.15f, 0.1f, 0.05f);
+                break;
+            case "news":
+                Box(u, "Desk", new Vector3(x, 0.45f, mid - s * 0.9f), new Vector3(2.6f, 0.9f, 0.7f), M("DeskWood"));
+                DPrim(PrimitiveType.Cube, "Papers", u, new Vector3(x - 0.6f, 0.92f, mid - s * 0.9f), new Vector3(0.4f, 0.02f, 0.3f), M("Paper"));
+                break;
+            case "rug":
+                DPrim(PrimitiveType.Cube, "RuckedRug", u, new Vector3(x - 0.2f, 0.07f, mid - s * 0.6f), new Vector3(1.2f, 0.12f, 0.35f), M("TrimDark"), Quaternion.Euler(0, 15, 0));
+                break;
+            case "kitchen":
+                Box(u, "Fridge", new Vector3(x - 1.9f, 0.9f, backZ), new Vector3(0.8f, 1.8f, 0.6f), M("CaneWhite"));
+                Box(u, "Table", new Vector3(x - 0.9f, 0.38f, mid - s * 0.3f), new Vector3(1.0f, 0.76f, 0.8f), M("DeskWood"));
+                DPrim(PrimitiveType.Cylinder, "Plate", u, new Vector3(x - 0.9f, 0.78f, mid - s * 0.3f), new Vector3(0.3f, 0.01f, 0.3f), M("CaneWhite"));
+                DPrim(PrimitiveType.Sphere, "Food", u, new Vector3(x - 0.9f, 0.82f, mid - s * 0.3f), new Vector3(0.18f, 0.08f, 0.18f), M("GlowOrange"));
+                break;
+        }
     }
 
     // =================================================================== the horror game (FirHunt)
@@ -2374,19 +2688,22 @@ public static class FirCheckBuilder
         var cls = root.GetComponentsInChildren<FirCloset>(true);
         var rbs = root.GetComponentsInChildren<FirRainbowSkeleton>(true);
         var cbs = root.GetComponentsInChildren<FirSkeletonCombo>(true);
+        var wns = root.GetComponentsInChildren<FirWanderer>(true);
         var me = UB(sh);
         for (int i = 0; i < gags.Length; i++) { gags[i].share = me; gags[i].shareIndex = i; }
         for (int i = 0; i < sgs.Length; i++) { sgs[i].share = me; sgs[i].shareIndex = i; }
         for (int i = 0; i < cls.Length; i++) { cls[i].share = me; cls[i].shareIndex = i; }
         for (int i = 0; i < rbs.Length; i++) { rbs[i].share = me; rbs[i].shareIndex = i; }
         for (int i = 0; i < cbs.Length; i++) { cbs[i].share = me; cbs[i].shareIndex = i; }
+        for (int i = 0; i < wns.Length; i++) { wns[i].share = me; wns[i].shareIndex = i; }
         sh.gags = gags.Select(x => UB(x)).ToArray();
         sh.skeletonGags = sgs.Select(x => UB(x)).ToArray();
         sh.closets = cls.Select(x => UB(x)).ToArray();
         sh.gagSkeletons = rbs.Select(x => UB(x)).ToArray();
         sh.combos = cbs.Select(x => UB(x)).ToArray();
+        sh.wanderers = wns.Select(x => UB(x)).ToArray();
         report.Add("shared with everyone: " + gags.Count(g => !g.walkIn) + " pressed gags, " + sgs.Length + " routines, " + cls.Length +
-                   " closet, " + rbs.Length + " gag skeletons, " + cbs.Length + " combo acts");
+                   " closet, " + rbs.Length + " gag skeletons, " + cbs.Length + " combo acts, " + wns.Length + " wanderers");
     }
 
     static VRC.Udon.UdonBehaviour UB(UdonSharpBehaviour b)

@@ -8,7 +8,7 @@ using VRC.Udon;
 /// act, it plays for them at once and tells this script (EvShare, with argKind and argIndex). This sends a press
 /// over the network (manual sync); everyone else plays the same thing when it arrives. Each press has a random id,
 /// so nothing plays twice, and a player who joins late doesn't get old presses replayed.
-/// Kinds: 0 gags, 1 skeleton routines, 2 closets, 3 gag skeletons, 4 combo acts.
+/// Kinds: 0 gags, 1 skeleton routines, 2 closets, 3 gag skeletons, 4 combo acts, 5 Bonetown wanderers.
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class FirShare : UdonSharpBehaviour
@@ -22,6 +22,7 @@ public class FirShare : UdonSharpBehaviour
     public UdonBehaviour[] closets;
     public UdonBehaviour[] gagSkeletons;
     public UdonBehaviour[] combos;
+    public UdonBehaviour[] wanderers;
 
     // arguments for EvShare
     public int argKind;
@@ -47,7 +48,7 @@ public class FirShare : UdonSharpBehaviour
         if (!synced) { synced = true; lastSeen = pressId; return; }   // just joined: don't replay the last press
         if (pressId == lastSeen) return;
         lastSeen = pressId;
-        UdonBehaviour[] list = kind == 0 ? gags : kind == 1 ? skeletonGags : kind == 2 ? closets : kind == 3 ? gagSkeletons : combos;
+        UdonBehaviour[] list = kind == 0 ? gags : kind == 1 ? skeletonGags : kind == 2 ? closets : kind == 3 ? gagSkeletons : kind == 4 ? combos : wanderers;
         if (index >= 0 && index < list.Length && list[index] != null) list[index].SendCustomEvent("Play");
     }
 }

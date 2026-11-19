@@ -447,7 +447,7 @@ public class FirHunt : UdonSharpBehaviour
             return;
         }
         Vector3 me = lp.GetPosition();
-        bool inMap = me.z < -6.2f;
+        bool inMap = me.z < -6.2f && Mathf.Abs(me.x) < 9.5f;   // (Bonetown, the expansion, is off to the west)
         float d = 99f;
         if (stalkerBody != null && stalkerBody.gameObject.activeInHierarchy)
         {

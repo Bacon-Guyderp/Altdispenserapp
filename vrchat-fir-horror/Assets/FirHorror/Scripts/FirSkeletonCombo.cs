@@ -169,6 +169,42 @@ public class FirSkeletonCombo : UdonSharpBehaviour
                       -60f * bend - 170f * lift, -10f * lift, -60f * bend - 170f * lift, 10f * lift, -20f * bend, 0, -20f * bend, 0, 0, 0);
             }
         }
+        else if (combo == 6)       // the squabble: finger-pointing and fist-shaking, then they hug it out
+        {
+            float me = r == 0 ? 1f : -1f;                       // r0 stands west of r1: + x is towards the other
+            float hug = Ramp(t, Line(4) - 0.4f, Line(4) + 0.2f, L - 0.7f, L - 0.3f);
+            float myLine = 0f;
+            for (int i = 0; i < 4; i++) if (i % 2 == r) myLine = Mathf.Max(myLine, Ramp(t, Line(i) - 0.15f, Line(i) + 0.15f, Line(i + 1) - 0.4f, Line(i + 1) - 0.1f));
+            float shake = Mathf.Sin(t * 18f) * myLine;
+            float sorry = r == 1 ? Ramp(t, Line(3) - 0.1f, Line(3) + 0.3f, Line(4) - 0.4f, Line(4)) : 0f;
+            float a = (1f - hug) * k;
+            Apply(r, 0.38f * me * hug, 0, 0, 0, -6f * myLine * a + 15f * sorry + 10f * hug, 12f * sorry, 0, 0,
+                  -80f * hug - 15f * a, -10f * a + 60f * hug, -90f * myLine * a - 80f * hug + 10f * shake, 25f * me * myLine * a - 60f * hug,
+                  -30f * hug, 0, -20f * myLine * a - 30f * hug, 0, 0, 0);
+        }
+        else if (combo == 7)       // the town band: trumpet, drums, guitar and a singer, swaying; a jump on the last note
+        {
+            float sway = Mathf.Sin(t * 3.4f + r * 0.6f), beat = Mathf.Sin(t * 10f);
+            float jump = Ramp(t, L - 1.4f, L - 1.2f, L - 1.0f, L - 0.8f);
+            float m = k * (1f - jump);
+            if (r == 0)      Apply(r, 0, 0, 8f * sway * m, 0.25f * jump, -10f * m, -15f * m, 0, 6f * sway * m, -95f * m, 15f * m, -95f * m, -15f * m, -70f * m, 0, -70f * m, 0, 0, 0);
+            else if (r == 1) Apply(r, 0, 0, 0, 0.25f * jump + 0.01f * Mathf.Abs(beat) * m, 10f * m, 10f * beat * m, 0, 0, -40f * m, -10f * m, -40f * m, 10f * m, -50f * m + 30f * beat * m, 0, -50f * m - 30f * beat * m, 0, 0, 0);
+            else if (r == 2) Apply(r, 0.04f * sway * m, 0, 15f * m, 0.25f * jump, 0, 0, 0, 10f * sway * m, -30f * m, -20f * m, -40f * m, 30f * m, -80f * m, 0, -60f * m + 25f * beat * m, 0, 6f * sway * m, -6f * sway * m);
+            else             Apply(r, 0.05f * sway * m, 0, 10f * sway * m, 0.25f * jump, -8f * m, -20f * m, 0, 12f * sway * m, -120f * m - 40f * jump, -50f * m, -120f * m - 40f * jump, 50f * m, -20f * m, 0, -20f * m, 0, 8f * sway * m, -8f * sway * m);
+        }
+        else if (combo == 8)       // the proposal: down on one knee... to be best neighbours. Yes! Jumping for joy.
+        {
+            float kneel = Ramp(t, 0.2f, 0.8f, Line(3) + 0.2f, Line(3) + 0.6f);
+            float yes = Ramp(t, Line(3) - 0.1f, Line(3) + 0.2f, L - 0.6f, L - 0.3f), hop = Mathf.Abs(Mathf.Sin(t * 8f));
+            if (r == 0)
+                Apply(r, 0.25f * kneel, 0, 0, -0.32f * kneel + 0.15f * hop * yes, -10f * kneel, -15f * kneel, 0, 0, -10f * kneel, 0, -85f * kneel - 140f * yes, -15f * yes, 0, 0, -30f * kneel, 0, -85f * kneel, 10f * kneel);
+            else
+            {
+                float shock = Ramp(t, Line(0) + 0.6f, Line(0) + 0.9f, Line(3) - 0.2f, Line(3));
+                Apply(r, 0, 0, 0, 0.18f * hop * yes, 6f * shock, -10f * shock, 0, 0, -150f * shock - 160f * yes, 25f * shock - 30f * yes, -150f * shock - 160f * yes, -25f * shock + 30f * yes,
+                      -60f * shock, 0, -60f * shock, 0, 15f * hop * yes, -15f * hop * yes);
+            }
+        }
         else                       // grand finale: a Mexican wave down the lines, a shimmy, then a bow
         {
             float d = r * 0.12f;

@@ -101,6 +101,15 @@ public static class SimCheck {
       nextLeg:;
     }
     Check(true, "walked the route: lobby -> 6 rooms -> the end (" + route.Length + " points)");
+    var townRoute = new[] { new Vector3(0, 0, -2.6f), new Vector3(-4f, 0, 4f), new Vector3(-13f, 0, 4f), new Vector3(-24.5f, 0, 4f), new Vector3(-26f, 0, 9f),
+                            new Vector3(-38f, 0, 9f), new Vector3(-38f, 0, 0f), new Vector3(-34f, 0, -5.5f), new Vector3(-20f, 0, -5.5f), new Vector3(-14f, 0, 4f) };
+    int townBlocked = 0;
+    for (int i = 0; i + 1 < townRoute.Length; i++)
+      foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
+        var d = townRoute[i + 1] - townRoute[i]; RaycastHit hit;
+        if (Physics.Raycast(townRoute[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { townBlocked++; Console.WriteLine("    town leg " + i + " blocked by " + hit.collider.name + " at " + hit.point); break; }
+      }
+    Check(townBlocked == 0, "walked from the lobby's west doorway into Bonetown and round the plaza");
     Sim.Current = null;
     // the way home
     var home = All<FirCheckButton>(A).First(x => x.title == "Back to the lobby");
@@ -133,7 +142,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 53, gagOk + " of " + gagN + " original gags played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 75, gagOk + " of " + gagN + " gags (53 original + 22 in Bonetown) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -172,18 +181,20 @@ public static class SimCheck {
 
     Console.WriteLine("\n== Gags for everyone: Bob presses, Alice sees it too");
     Sim.Run(20f);
-    Func<object, bool> Running = o => (bool)o.GetType().GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(o);
+    Func<object, bool> Running = o => (bool)(o.GetType().GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+      ?? o.GetType().GetField("chatting", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)).GetValue(o);
     Func<Sim.Client, int, int, UdonSharpBehaviour> Pick = (c, kind, i) =>
       kind == 0 ? (UdonSharpBehaviour)All<FirGag>(c).First(g => g.shareIndex == i) : kind == 1 ? (UdonSharpBehaviour)All<FirSkeletonGag>(c).First(g => g.shareIndex == i)
       : kind == 2 ? (UdonSharpBehaviour)All<FirCloset>(c).First(g => g.shareIndex == i) : kind == 3 ? (UdonSharpBehaviour)All<FirRainbowSkeleton>(c).First(g => g.shareIndex == i)
-      : (UdonSharpBehaviour)All<FirSkeletonCombo>(c).First(g => g.shareIndex == i);
-    string[] kindName = { "pressed gags", "skeleton routines", "closet", "gag skeletons", "combo acts" };
-    int[] kindCount = { All<FirGag>(B).Count, All<FirSkeletonGag>(B).Count, All<FirCloset>(B).Count, All<FirRainbowSkeleton>(B).Count, All<FirSkeletonCombo>(B).Count };
-    for (int kind = 0; kind < 5; kind++) {
+      : kind == 4 ? (UdonSharpBehaviour)All<FirSkeletonCombo>(c).First(g => g.shareIndex == i) : (UdonSharpBehaviour)All<FirWanderer>(c).First(g => g.shareIndex == i);
+    string[] kindName = { "pressed gags", "skeleton routines", "closet", "gag skeletons", "combo acts", "Bonetown wanderers" };
+    int[] kindCount = { All<FirGag>(B).Count, All<FirSkeletonGag>(B).Count, All<FirCloset>(B).Count, All<FirRainbowSkeleton>(B).Count, All<FirSkeletonCombo>(B).Count, All<FirWanderer>(B).Count };
+    for (int kind = 0; kind < 6; kind++) {
       int ok = 0, n = 0; var bad = new List<string>();
       for (int i = 0; i < kindCount[kind]; i++) {
         var mine = Pick(B, kind, i);
         if (kind == 0 && ((FirGag)mine).walkIn) continue;
+        if (kind == 0 && ((FirGag)mine).scare) continue;
         n++;
         B.player.pos = mine.transform.position + mine.transform.rotation * new Vector3(0, 0, 1.5f);
         var theirs = Pick(A, kind, i);
@@ -210,6 +221,7 @@ public static class SimCheck {
     Sim.Leave(C);
 
     HuntTests(A, B);
+    TownTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -387,5 +399,67 @@ public static class SimCheck {
     Check(Flat(C.player.pos, H(C).checkpoints[H(C).stage].position) < 0.3f && H(A).round == H(C).round, "...START puts her in the current room without restarting it");
     Sim.Leave(C);
     Sim.Press(A, Btn(A, 2, 0)); Sim.Run(1f);
+  }
+
+  // ======================================================================== Bonetown, the expansion
+  static void TownTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Bonetown: the wanderers");
+    var wa = All<FirWanderer>(A); var wb = All<FirWanderer>(B);
+    Check(wa.Count == 10, wa.Count + " wanderers live in Bonetown");
+    Sim.Run(1f);
+    var p0 = wa.Select(w => w.transform.position).ToList();
+    var leg0 = wa.Select(w => w.pivots[7].localRotation).ToList();
+    float maxLeg = 0f;
+    for (int f = 0; f < 60; f++) { Sim.Step(); for (int i = 0; i < wa.Count; i++) maxLeg = Mathf.Max(maxLeg, Quaternion.Angle(leg0[i], wa[i].pivots[7].localRotation)); }
+    var speeds = wa.Select((w, i) => Flat(w.transform.position, p0[i]) / (60f * Time.deltaTime)).ToList();
+    Check(speeds.All(v => v > 0.4f) && maxLeg > 15f, "they all walk (0.4+ m/s), legs swinging (" + maxLeg.ToString("F0") + " degrees): " + string.Join(", ", wa.Select((w, i) => w.name.Split(' ')[0] + " " + speeds[i].ToString("F1"))));
+    Check(wa.Zip(wb, (x, y) => Flat(x.transform.position, y.transform.position)).All(d => d < 0.05f), "Alice and Bob see every wanderer in the same place (no syncing: it's the server clock)");
+    var cocoa = wa.First(w => w.name.StartsWith("Cocoa")); var lime = wa.First(w => w.name.StartsWith("Lime"));
+    Check(speeds[wa.IndexOf(cocoa)] > 1.8f && speeds[wa.IndexOf(lime)] < 1.2f, "Cocoa jogs (" + speeds[wa.IndexOf(cocoa)].ToString("F1") + " m/s), Lime strolls (" + speeds[wa.IndexOf(lime)].ToString("F1") + " m/s)");
+    // they stay on their paths: inside the town, off the fountain, the homes and the bandstand, and nothing solid in the way
+    int bad = 0; string what = "";
+    Sim.Current = A; Physics.SyncTransforms(); Sim.Current = null;
+    var last = wa.Select(w => w.transform.position).ToList();
+    for (int k = 0; k < 160; k++) {
+      Sim.Run(0.5f);
+      Sim.Current = A;
+      for (int i = 0; i < wa.Count; i++) {
+        var p = wa[i].transform.position;
+        bool ok = p.x < -12.6f && p.x > -47.4f && p.z > -9.2f && p.z < 17.2f && Flat(p, new Vector3(-30f, 0, 4f)) > 2.3f && !(p.x < -43f && p.z > -1.7f && p.z < 7.7f);
+        RaycastHit hit;
+        var d = p - last[i];
+        if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = wa[i].name + " walked through " + hit.collider.name; }
+        if (!ok) { bad++; if (what == "") what = wa[i].name + " at " + p; }
+        last[i] = p;
+      }
+      Sim.Current = null;
+    }
+    Check(bad == 0, "80 seconds of wandering: every one stays on its path, clear of walls, homes, benches, the fountain and the bandstand" + (bad > 0 ? " | " + bad + " problems, e.g. " + what : ""));
+    // say hi
+    var la = lime; var lb = wb.First(w => w.name.StartsWith("Lime"));
+    B.player.pos = lb.transform.position + new Vector3(1.2f, 0, 0);
+    Sim.Events.Clear();
+    var stopAt = lb.transform.position;
+    Sim.Press(B, lb); Sim.Run(1.0f);
+    var chat = typeof(FirWanderer).GetField("chatting", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+    Check((bool)chat.GetValue(lb) && (bool)chat.GetValue(la) && lb.bubbleObject.activeSelf && Sim.Events.Any(e => e.Contains("wan_lime")),
+          "Bob says hi to Lime: it stops, waves and talks, for both of them: \"" + Plain(lb.line) + "\"");
+    float len = lb.voice.clip.length + 1.4f;
+    Sim.Run(len - 1.3f);
+    Check(Flat(lb.transform.position, stopAt) < 0.05f, "...and stays put while it chats");
+    Sim.Run(3f);
+    Check(!(bool)chat.GetValue(lb) && Flat(lb.transform.position, stopAt) > 1f && Flat(la.transform.position, lb.transform.position) < 0.5f,
+          "then it carries on its way, from where it stopped, still in step on both clients (" + Flat(la.transform.position, lb.transform.position).ToString("F2") + " m apart)");
+
+    Console.WriteLine("\n== Bonetown: residents, the band and the gags");
+    var names = new[] { "Mint", "Peach", "Lavender", "Coral", "Sky", "Navy", "Rust", "Olive", "Cream", "Plum", "Scarlet", "Cobalt", "Emerald", "Mustard" };
+    var rsA = All<FirRainbowSkeleton>(A).Where(r => names.Any(n => r.name == n + " Skeleton")).ToList();
+    Check(rsA.Count == 14 && rsA.All(r => r.voice.clip != null && r.voice.clip.name.StartsWith(r.name.Split(' ')[0].ToLower() == "scarlet" || r.name.StartsWith("Cobalt") || r.name.StartsWith("Emerald") || r.name.StartsWith("Mustard") ? "band_" : "res_")),
+          rsA.Count + " residents and band members, each with its own voice line");
+    var combos = All<FirSkeletonCombo>(A).Where(c => c.combo >= 6).ToList();
+    Check(combos.Count == 4, combos.Count + " Bonetown combo acts: " + string.Join(", ", combos.Select(c => c.title)));
+    Check(Sim.BuildLog.Any(l => l.Contains("Bonetown: 10 residents, 4 in the band, 10 wanderers, 4 combo acts, 22 gags")), "the builder placed all of Bonetown");
+    var tick = All<FirTicker>(A)[0]; string t0 = tick.text.text; Sim.Run(6.5f);
+    Check(tick.text.text != "" && tick.text.text != t0, "the news ticker rolls: " + tick.text.text);
   }
 }

@@ -156,7 +156,7 @@ public class FirStalker : UdonSharpBehaviour
                 VRCPlayerApi p = players[i];
                 if (!Utilities.IsValid(p)) continue;
                 Vector3 pp = p.GetPosition();
-                if (RoomOf(pp.z) < 0 || RoomOf(pp.z) > stage) continue;   // in the lobby (safe), or somewhere it can't go
+                if (Mathf.Abs(pp.x) > 9.5f || RoomOf(pp.z) < 0 || RoomOf(pp.z) > stage) continue;   // not in the map (lobby, Bonetown)   // in the lobby (safe), or somewhere it can't go
                 Vector3 flat = pp - transform.position;
                 flat.y = 0f;
                 if (flat.magnitude < best) { best = flat.magnitude; target = pp; hasTarget = true; }
