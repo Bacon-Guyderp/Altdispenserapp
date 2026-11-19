@@ -13,12 +13,15 @@ import os, subprocess, sys, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "Assets", "FirHorror", "Audio")
 
+# every skeleton line is played 43% louder than the tree and narrator gag voices
+SKELETON_BOOST = 1.43
+
 LINES = [
     # name, MBROLA voice, words/min, pitch (0-99), text, ffmpeg filter (pitch shift + closet echo)
     ("skeleton_white", "mb-us2", 118, 32, "A skeleton.",
-     "asetrate=16000*0.93,aresample=22050,aecho=0.8:0.6:45:0.22,volume=1.8"),
+     f"asetrate=16000*0.93,aresample=22050,aecho=0.8:0.6:45:0.22,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled"),
     ("skeleton_red", "mb-us3", 150, 62, "Red skeleton. Ha!",
-     "asetrate=16000*1.06,aresample=22050,aecho=0.8:0.6:40:0.2,volume=1.8"),
+     f"asetrate=16000*1.06,aresample=22050,aecho=0.8:0.6:40:0.2,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled"),
 ]
 
 
@@ -145,7 +148,7 @@ COMBO += [
 def town_lines():
     for name, v, speed, pitch, rate, text in TOWN:
         yield ("Town/" + name, v, speed, pitch, text,
-               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
 def make_combo(tmp):
@@ -162,7 +165,7 @@ def make_combo(tmp):
         args = ["ffmpeg", "-y", "-loglevel", "error"]
         for wav, _, _ in parts: args += ["-i", wav]
         filt = [f"[{i}:a]asetrate=16000*{rate},aresample=22050,adelay={d}|{d}[p{i}]" for i, (_, rate, d) in enumerate(parts)]
-        mix = "".join(f"[p{i}]" for i in range(len(parts))) + f"amix=inputs={len(parts)}:normalize=0,volume={1.8 if len(parts) == 1 else 0.9},aecho=0.8:0.5:35:0.15,apad=pad_dur=0.25[a]"
+        mix = "".join(f"[p{i}]" for i in range(len(parts))) + f"amix=inputs={len(parts)}:normalize=0,volume={(1.8 if len(parts) == 1 else 0.9) * SKELETON_BOOST:.3f},aecho=0.8:0.5:35:0.15,alimiter=limit=0.95:level=disabled,apad=pad_dur=0.25[a]"
         args += ["-filter_complex", ";".join(filt + [mix]), "-map", "[a]", "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out]
         subprocess.run(args, check=True)
         print("Combo/" + name, os.path.getsize(out) // 1024, "KB")
@@ -171,7 +174,7 @@ def make_combo(tmp):
 def rainbow_lines():
     for colour, v, speed, pitch, rate, text in RAINBOW:
         yield ("Rainbow/rb_" + colour, v, speed, pitch, text,
-               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
 def gag_lines():
@@ -195,7 +198,7 @@ def skeleton_lines():
         f = line.rstrip("\n").split("|")
         v, speed, pitch, rate = PRESETS[f[7]]
         yield ("Gags/skel_" + f[0], v, speed, pitch, f[9],
-               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume=1.8")
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
 def main():
