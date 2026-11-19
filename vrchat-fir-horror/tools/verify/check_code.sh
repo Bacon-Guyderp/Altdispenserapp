@@ -25,5 +25,20 @@ PY
 mcs -t:library -langversion:7.2 -warn:4 -nowarn:0169,0414,0649,0219,0067 -d:UNITY_EDITOR -out:"$TMP/check.dll" \
     "$HERE/stubs_runtime.cs" "$HERE/stubs_editor.cs" "$ASSETS"/Scripts/*.cs "$TMP"/*.cs 2>&1 | grep -v "stubs_" || true
 echo "C#: compiled"
+# Udon only exposes a TextMeshPro's text: flag any other use of a TextMeshPro field in the world's scripts
+python3 - "$ASSETS"/Scripts/*.cs <<'PY'
+import re, sys
+bad = 0
+for p in sys.argv[1:]:
+    s = open(p).read()
+    names = re.findall(r"public\s+TextMeshPro\s+(\w+)\s*;", s)
+    for n in names:
+        for m in re.finditer(r"\b" + n + r"\.(\w+)", s):
+            if m.group(1) != "text":
+                line = s.count("\n", 0, m.start()) + 1
+                print(f"{p.split('/')[-1]}:{line}: '{n}.{m.group(1)}' - Udon only exposes a TextMeshPro's text")
+                bad += 1
+print("Udon exposure lint: " + ("OK" if bad == 0 else f"{bad} problem(s)"))
+PY
 python3 "$HERE/../check_shaders.py"
 rm -rf "$TMP"

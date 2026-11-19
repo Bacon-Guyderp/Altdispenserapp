@@ -28,7 +28,9 @@ public class FirGag : UdonSharpBehaviour
     public AudioSource sfx;
     public string line = "";
     public Transform mouth;           // a tree's mouth, flapped while the line plays
-    public TextMeshPro bubble;        // the speech bubble
+    public TextMeshPro bubble;        // the speech bubble's text (Udon only lets scripts set a TextMeshPro's text)
+    public GameObject bubbleObject;   // ...and its object and transform, to show, hide and turn it
+    public Transform bubbleTransform;
 
     Vector3 p0, s0, mouthScale;
     Quaternion r0;
@@ -39,7 +41,7 @@ public class FirGag : UdonSharpBehaviour
     {
         Init();
         if (hideWhenIdle && !running) target.gameObject.SetActive(false);
-        if (bubble != null && !running) bubble.gameObject.SetActive(false);
+        if (bubbleObject != null && !running) bubbleObject.SetActive(false);
     }
 
     void Init()
@@ -80,10 +82,10 @@ public class FirGag : UdonSharpBehaviour
         if (voice != null) voice.Play();
         float len = voice != null && voice.clip != null ? voice.clip.length - 0.2f : holdTime;
         talkUntil = Time.time + len;
-        if (bubble != null && line != "")
+        if (bubble != null && bubbleObject != null && line != "")
         {
             bubble.text = line;
-            bubble.gameObject.SetActive(true);
+            bubbleObject.SetActive(true);
         }
     }
 
@@ -106,15 +108,15 @@ public class FirGag : UdonSharpBehaviour
             float open = Time.time < talkUntil ? Mathf.Abs(Mathf.Sin(t * 13f)) : 0f;
             mouth.localScale = new Vector3(mouthScale.x, mouthScale.y * (0.35f + 1.3f * open), mouthScale.z);
         }
-        if (bubble != null && bubble.gameObject.activeSelf)
+        if (bubbleObject != null && bubbleObject.activeSelf)
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (Utilities.IsValid(lp))
             {
                 Vector3 head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
-                Vector3 away = bubble.transform.position - head;
+                Vector3 away = bubbleTransform.position - head;
                 away.y = 0f;
-                if (away.magnitude > 0.01f) bubble.transform.rotation = Quaternion.LookRotation(away, Vector3.up);
+                if (away.magnitude > 0.01f) bubbleTransform.rotation = Quaternion.LookRotation(away, Vector3.up);
             }
         }
         if (t >= total)
@@ -123,7 +125,7 @@ public class FirGag : UdonSharpBehaviour
             target.localPosition = p0; target.localRotation = r0; target.localScale = s0;
             if (mouth != null) mouth.localScale = mouthScale;
             if (hideWhenIdle) target.gameObject.SetActive(false);
-            if (bubble != null) bubble.gameObject.SetActive(false);
+            if (bubbleObject != null) bubbleObject.SetActive(false);
         }
     }
 

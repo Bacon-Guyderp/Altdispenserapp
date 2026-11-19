@@ -223,25 +223,27 @@ public class FirSkeletonGag : UdonSharpBehaviour
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
 
     // ---- the speech bubble: shows a line for a while, turned to face you
-    public TextMeshPro bubble;
+    public TextMeshPro bubble;           // the text (Udon only lets scripts set a TextMeshPro's text)
+    public GameObject bubbleObject;      // ...and its object and transform, to show, hide and turn it
+    public Transform bubbleTransform;
     float bubbleUntil = -1f;
 
     void ShowBubble(string text, float seconds)
     {
-        if (bubble == null) return;
+        if (bubble == null || bubbleObject == null) return;
         bubble.text = text;
-        bubble.gameObject.SetActive(true);
+        bubbleObject.SetActive(true);
         bubbleUntil = Time.time + seconds;
     }
 
     void UpdateBubble()
     {
-        if (bubble == null || !bubble.gameObject.activeSelf) return;
-        if (Time.time > bubbleUntil) { bubble.gameObject.SetActive(false); return; }
+        if (bubbleObject == null || !bubbleObject.activeSelf) return;
+        if (Time.time > bubbleUntil) { bubbleObject.SetActive(false); return; }
         VRCPlayerApi lp = Networking.LocalPlayer;
         if (!Utilities.IsValid(lp)) return;
-        Vector3 away = bubble.transform.position - lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+        Vector3 away = bubbleTransform.position - lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
         away.y = 0f;
-        if (away.magnitude > 0.01f) bubble.transform.rotation = Quaternion.LookRotation(away, Vector3.up);
+        if (away.magnitude > 0.01f) bubbleTransform.rotation = Quaternion.LookRotation(away, Vector3.up);
     }
 }

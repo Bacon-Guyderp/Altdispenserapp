@@ -101,9 +101,17 @@ namespace UdonSharp { public class UdonSharpProgramAsset : UnityEngine.Scriptabl
 
 // UdonSharp's editor helper, as the builder finds it by reflection: each U# behaviour gets a backing UdonBehaviour
 namespace UdonSharpEditor {
+  /// UdonSharp's public way to add a U# behaviour (it sets up the backing UdonBehaviour)
+  public static class UdonSharpUndo {
+    public static UdonSharp.UdonSharpBehaviour AddComponent(UnityEngine.GameObject go, Type t) {
+      var b = (UdonSharp.UdonSharpBehaviour)go.AddComponent(t);
+      UdonSharpEditorUtility.RunBehaviourSetup(b);
+      return b;
+    }
+  }
   public static class UdonSharpEditorUtility {
     static readonly System.Collections.Generic.Dictionary<UdonSharp.UdonSharpBehaviour, VRC.Udon.UdonBehaviour> backing = new System.Collections.Generic.Dictionary<UdonSharp.UdonSharpBehaviour, VRC.Udon.UdonBehaviour>();
-    public static void RunBehaviourSetup(UdonSharp.UdonSharpBehaviour b) { if (!backing.ContainsKey(b)) backing[b] = Sim.UB(b); }
+    internal static void RunBehaviourSetup(UdonSharp.UdonSharpBehaviour b) { if (!backing.ContainsKey(b)) backing[b] = Sim.UB(b); }
     public static VRC.Udon.UdonBehaviour GetBackingUdonBehaviour(UdonSharp.UdonSharpBehaviour b) { VRC.Udon.UdonBehaviour u; return backing.TryGetValue(b, out u) ? u : null; }
     public static void CopyProxyToUdon(UdonSharp.UdonSharpBehaviour b) { }
   }

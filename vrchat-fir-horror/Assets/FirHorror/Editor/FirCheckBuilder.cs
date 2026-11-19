@@ -38,6 +38,13 @@ public static class FirCheckBuilder
             return false;
         }
         if (!EnsureProgramAssets()) return false;
+        if (UdonSharpHasErrors())
+        {
+            EditorUtility.DisplayDialog("Fir Warning: UdonSharp has errors",
+                "UdonSharp can't compile the scripts, so nothing in the world would work. Open the Console, look for the first " +
+                "red UdonSharp error, and send it (or the Editor log). Nothing was built.", "OK");
+            return false;
+        }
         Directory.CreateDirectory(Gen);
         mats.Clear(); report.Clear(); meshCache.Clear(); rigs.Clear(); skelParts = null; stewieParts = null;
         BakeTextures();   // the wallpaper, carpet, ceiling, needles and skeleton textures (Data/textures_baked.txt)
@@ -623,6 +630,7 @@ public static class FirCheckBuilder
         gag.holdTime = Mathf.Max(1.5f, clip != null ? clip.length : 2f);
         gag.voice = Src(go.transform, new Vector3(0, 1.0f, 0), clip, false, 1f, 1f, 14f, false);
         gag.bubble = Bubble(go.transform, kind == "frame" ? new Vector3(0, 0.75f, 0.35f) : new Vector3(0, 2.25f, 0.2f));
+        gag.bubbleObject = gag.bubble.gameObject; gag.bubbleTransform = gag.bubble.transform;
         var col = go.AddComponent<BoxCollider>();
         col.center = new Vector3(0, 0.5f, 0); col.size = new Vector3(0.8f, 1.0f, 0.8f);
         string verb = "Poke";
@@ -796,6 +804,7 @@ public static class FirCheckBuilder
             sg.baseLength = act == 3 ? 5f : act == 2 ? 5.5f : 4f;
             sg.voice = Src(go.transform, new Vector3(0, 1.6f, 0.1f), Clip("Gags/skel_" + id), false, 1f, 1f, 14f, false);
             sg.bubble = Bubble(go.transform, new Vector3(0, 2.35f, 0.2f));
+        sg.bubbleObject = sg.bubble.gameObject; sg.bubbleTransform = sg.bubble.transform;
             var col = go.AddComponent<BoxCollider>();
             col.center = new Vector3(0, 0.9f, 0); col.size = new Vector3(colours.Length * 0.7f + 0.2f, 1.8f, 0.5f);
             if (act == 5)
@@ -1169,6 +1178,7 @@ public static class FirCheckBuilder
         cl.whiteVoice = Src(white[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_white"), false, 1f, 1f, 16f, false);
         cl.redVoice = Src(red[2], new Vector3(0, 0.1f, 0.1f), Clip("skeleton_red"), false, 1f, 1f, 16f, false);
         cl.bubble = Bubble(c, new Vector3(1.2f, 2.5f, -0.6f));
+        cl.bubbleObject = cl.bubble.gameObject; cl.bubbleTransform = cl.bubble.transform;
         SetInteract(cl, "Open the closet", 2.5f);
     }
 
@@ -1855,8 +1865,25 @@ public static class FirCheckBuilder
         return true;
     }
 
+    /// <summary>
+    /// Adds a U# behaviour the way UdonSharp wants: UdonSharpUndo.AddComponent (public; it creates the backing
+    /// UdonBehaviour and links the program). If that isn't there, AddComponent plus UdonSharp's own setup.
+    /// </summary>
     static T Add<T>(GameObject go) where T : UdonSharpBehaviour
     {
+        var undo = FindAnyType("UdonSharpEditor.UdonSharpUndo");
+        var add = undo?.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                       .FirstOrDefault(m => m.Name == "AddComponent" && !m.IsGenericMethod && m.GetParameters().Length == 2
+                                            && m.GetParameters()[0].ParameterType == typeof(GameObject) && m.GetParameters()[1].ParameterType == typeof(Type));
+        if (add != null)
+        {
+            try
+            {
+                var made = add.Invoke(null, new object[] { go, typeof(T) }) as T;
+                if (made != null) return made;
+            }
+            catch (Exception e) { report.Add("problem: UdonSharpUndo.AddComponent failed: " + (e.InnerException ?? e).Message); }
+        }
         var b = go.AddComponent<T>();
         Setup(b);
         return b;
@@ -1865,6 +1892,17 @@ public static class FirCheckBuilder
     static Type EditorUtil => FindAnyType("UdonSharpEditor.UdonSharpEditorUtility");
 
     static Type FindAnyType(string full) => AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(full)).FirstOrDefault(t => t != null);
+
+    /// <summary>Whether UdonSharp currently reports compile errors (then no U# script works and serialising fails).</summary>
+    static bool UdonSharpHasErrors()
+    {
+        try
+        {
+            var m = typeof(UdonSharpProgramAsset).GetMethod("AnyUdonSharpScriptHasError", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            return m != null && m.GetParameters().Length == 0 && (bool)m.Invoke(null, null);
+        }
+        catch (Exception) { return false; }
+    }
 
     static object[] Args(MethodInfo m, object first)
     {
@@ -1884,7 +1922,8 @@ public static class FirCheckBuilder
 
     static void Setup(UdonSharpBehaviour b)
     {
-        var ms = EditorUtil?.GetMethods(BindingFlags.Public | BindingFlags.Static).Where(x => x.Name == "RunBehaviourSetup").ToArray() ?? new MethodInfo[0];
+        // RunBehaviourSetup is internal in UdonSharp 1.x, so look at non-public methods too
+        var ms = EditorUtil?.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).Where(x => x.Name == "RunBehaviourSetup").ToArray() ?? new MethodInfo[0];
         var m = ms.FirstOrDefault(x => x.GetParameters().Length == 1) ?? ms.FirstOrDefault();
         if (m == null) { report.Add("problem: UdonSharp's RunBehaviourSetup wasn't found"); return; }
         m.Invoke(null, Args(m, b));
