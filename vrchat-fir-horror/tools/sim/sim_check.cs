@@ -222,6 +222,7 @@ public static class SimCheck {
 
     HuntTests(A, B);
     TownTests(A, B);
+    FacingTests(A);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -461,5 +462,22 @@ public static class SimCheck {
     Check(Sim.BuildLog.Any(l => l.Contains("Bonetown: 10 residents, 4 in the band, 10 wanderers, 4 combo acts, 22 gags")), "the builder placed all of Bonetown");
     var tick = All<FirTicker>(A)[0]; string t0 = tick.text.text; Sim.Run(6.5f);
     Check(tick.text.text != "" && tick.text.text != t0, "the news ticker rolls: " + tick.text.text);
+  }
+
+  // ======================================================================== which way everyone faces (the models face +z)
+  static void FacingTests(Sim.Client A) {
+    Console.WriteLine("\n== Facing the right way");
+    var rs = All<FirRainbowSkeleton>(A);
+    Func<FirRainbowSkeleton, Vector3> Fwd = r => r.transform.rotation * Vector3.forward;
+    var theatre = rs.Where(r => Mathf.Abs(r.transform.position.x) < 9.5f && r.transform.position.z < -26f).ToList();
+    Check(theatre.Count == 17 && theatre.All(r => Fwd(r).z > 0.9f), theatre.Count + " skeletons in the Rainbow Hall and on the Talent Show stage face the audience (north)");
+    var town = rs.Where(r => r.transform.position.x < -12f).ToList();
+    var plaza = new Vector3(-30f, 0, 4f);
+    Check(town.Count == 14 && town.All(r => Vector3.Dot(Fwd(r), (plaza - r.transform.position).normalized) > 0.5f), town.Count + " Bonetown residents and band members face the plaza");
+    var babies = All<FirThrowable>(A).Where(b => b.name.StartsWith("Baby")).ToList();
+    var backs = All<MeshRenderer>(A).Where(m => m.name == "SeatBack").Select(m => m.transform.position).ToList();
+    bool ok = babies.All(b => (b.transform.rotation * Vector3.forward).z < -0.9f
+                            && backs.Any(p => Mathf.Abs(p.x - b.transform.position.x) < 0.05f && p.z > b.transform.position.z + 0.2f && p.z < b.transform.position.z + 0.6f));
+    Check(babies.Count == 30 && ok, "every baby faces the stage, with its seat's backrest behind it");
   }
 }

@@ -883,11 +883,10 @@ public static class FirCheckBuilder
         Box(g, "NameBoard", new Vector3(0, 2.75f, -39.45f), new Vector3(11f, 0.6f, 0.04f), M("Board"));
         for (int i = 0; i < 7; i++)
         {
-            // they face the doorway (turned half round), so their right is the room's -x: run the line from +x
-            // to -x, so neighbours are where the combo acts expect (yellow on orange's right) and the rainbow
-            // reads red to violet, left to right, as you walk in
+            // the model faces +z, so yaw 0 faces the doorway (north). Red is at +x, so the rainbow reads red to
+            // violet, left to right, as you walk in
             float x = 4.5f - i * 1.5f;
-            GagSkeleton(g, colours[i], new Vector3(x, 0.3f, -38.3f), 180f, 1f, i, hex[i], clips[i],
+            GagSkeleton(g, colours[i], new Vector3(x, 0.3f, -38.3f), 0f, 1f, i, hex[i], clips[i],
                         new[] { M("Bone" + colours[i]) }, new Vector3(x, 2.75f, -39.42f), Vector3.forward);
         }
         // a rainbow arch on the far wall, framing the doorway behind the riser
@@ -997,11 +996,11 @@ public static class FirCheckBuilder
         Text("ShowTitle", g, new Vector3(0, 4.4f, -97.62f), Face(Vector3.forward), new Vector2(10f, 0.8f), 0.6f, "<b>TONIGHT: THE SKELETON CREW</b>").color = new Color(1f, 0.85f, 0.4f);
         for (int i = 0; i < 10; i++)
         {
-            float x = 5.3f - i * 1.15f;   // turned to face the audience: run from +x so the giant is on tiny's right
+            float x = -5.3f + i * 1.15f;  // facing the audience (+z), their right is +x: the giant is on tiny's right
             var bones = names2[i] == "Rainbow" ? rainbowBones : new[] { M(names2[i] == "Tiny" || names2[i] == "Giant" ? "BoneWhite" : "Bone" + names2[i]) };
             string title = names2[i] == "Rainbow" ? "<color=#ff3030>R</color><color=#ff9020>A</color><color=#ffe030>I</color><color=#40ff50>N</color><color=#4080ff>B</color><color=#7a5cff>O</color><color=#c060ff>W</color>" : null;
             // facing the audience (north)
-            GagSkeleton(g, names2[i], new Vector3(x, 0.6f, -95.5f), 180f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
+            GagSkeleton(g, names2[i], new Vector3(x, 0.6f, -95.5f), 0f, scale2[i], 8 + i, hex2[i], "Rainbow/rb_" + names2[i].ToLower(),
                         bones, new Vector3(x, 3.35f, -97.57f), Vector3.forward, title);
         }
         // footlights along the stage's edge and marquee bulbs round the title
@@ -1023,8 +1022,8 @@ public static class FirCheckBuilder
             {
                 if (Mathf.Abs(sx) < 1.7f) continue;
                 Box(g, "Seat", new Vector3(sx, 0.23f, rz), new Vector3(0.7f, 0.46f, 0.6f), M("Seat"));
-                Box(g, "SeatBack", new Vector3(sx, 0.75f, rz - 0.27f), new Vector3(0.7f, 0.6f, 0.08f), M("Seat"), false);
-                seats.Add(new Vector3(sx, 0.47f, rz + 0.05f));
+                Box(g, "SeatBack", new Vector3(sx, 0.75f, rz + 0.3f), new Vector3(0.7f, 0.6f, 0.08f), M("Seat"), false);   // behind the baby, away from the stage
+                seats.Add(new Vector3(sx, 0.47f, rz - 0.12f));
             }
         // the audience: 30 babies in the seats, every one of them throwable
         BuildAudience(g, seats);

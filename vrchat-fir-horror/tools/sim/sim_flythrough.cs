@@ -129,14 +129,10 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(-2f, 1.7f, 1.5f), new Vector3(-7f, 1.8f, 4f), 1.2f);          // 0: the lobby's west doorway
-    Cam(new Vector3(-14f, 1.8f, 4f), new Vector3(-30f, 1.4f, 4f), 1.2f);          // 1: walking into Bonetown
-    Cam(new Vector3(-30f, 3.5f, -8f), new Vector3(-30f, 1.2f, 16f), 1.2f);         // 2: the plaza and the homes
-    Cam(new Vector3(-24f, 1.7f, 12.5f), new Vector3(-24f, 1.5f, 22f), 1.2f);      // 3: two homes up close
-    Cam(new Vector3(-21f, 1.7f, -3f), new Vector3(-21f, 1.4f, -14f), 1.2f);       // 4: the snack shack and the news
-    Cam(new Vector3(-36f, 2.0f, 3f), new Vector3(-46f, 1.5f, 3f), 1.2f);          // 5: the bandstand
-    Cam(new Vector3(-36f, 1.7f, -8f), new Vector3(-47f, 1.2f, -8f), 1.2f);        // 6: west wall gags
-    Cam(new Vector3(-26f, 1.7f, 0f), new Vector3(-14f, 1.4f, -6f), 1.2f);         // 7: east wall gags
+    Cam(new Vector3(-7.2f, 0.95f, -84.3f), new Vector3(-7.2f, 0.75f, -82.9f), 1.2f);   // 0: a baby from the stage side
+    Cam(new Vector3(-7.2f, 1.1f, -81.3f), new Vector3(-7.2f, 0.75f, -82.9f), 1.2f);    // 1: the same baby from behind its seat
+    Cam(new Vector3(-0.7f, 2.0f, -93.0f), new Vector3(-0.7f, 2.0f, -95.5f), 1.2f);     // 2: a stage skeleton from the audience side
+    Cam(new Vector3(0f, 1.6f, -35.8f), new Vector3(0f, 1.6f, -38.3f), 1.2f);           // 3: rainbow skeleton from the doorway side
   }
 
   static void MapTour() {
