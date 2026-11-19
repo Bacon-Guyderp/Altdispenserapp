@@ -57,8 +57,7 @@ public static class FirCheckBuilder
         Box(lobby, "Ceiling", new Vector3(0, 3.7f, 0), new Vector3(14, 0.2f, 12), M("Ceiling"));
         Box(lobby, "WallN", new Vector3(0, 1.8f, 6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));
         DoorWall(lobby, "WallS", -6.1f, 14.4f, 3.6f, M("Wall"));
-        Text("MapSign", lobby, new Vector3(0, 3.2f, -5.98f), Face(Vector3.forward), new Vector2(5.5f, 0.45f), 0.2f,
-             "<b>THE MAP</b>  <size=70%>gags, skeletons and combo acts: this way</size>").color = new Color(1f, 0.85f, 0.4f);
+
         // details: trim, twinkling lights, the doorway's frame, wreaths and candy canes, a rug, posters and lamps
         Trim(lobby, "Lobby", 6.0f, -6.0f, 14f, 3.6f, float.NaN, 0f, false);
         StringLights(lobby, "Lobby", -6f, 6f, 14f, 3.6f);
@@ -486,8 +485,8 @@ public static class FirCheckBuilder
             float doorS = i < rooms.Length - 1 ? doorX[i + 1] : float.NaN;
             DressRoom(g, r.name, zN, r.z1, r.w, r.h, doorX[i], doorS, r.wall != "BrickWall");
             // the room's name over the doorway, readable as you walk up to it
-            Text("RoomName", g, new Vector3(doorX[i], 3.05f, r.z0 + 0.03f), Face(Vector3.forward), new Vector2(4.5f, 0.4f), 0.24f,
-                 "<b>" + r.name + "</b>").color = new Color(1f, 0.85f, 0.4f);
+            Text("RoomName", g, new Vector3(doorX[i], 3.12f, r.z0 + 0.03f), Face(Vector3.forward), new Vector2(i == 0 ? 6f : 4.5f, i == 0 ? 0.5f : 0.4f), 0.24f,
+                 "<b>" + r.name + "</b>" + (i == 0 ? "\n<size=60%>the map: gags, skeletons and combo acts this way</size>" : "")).color = new Color(1f, 0.85f, 0.4f);
         }
 
         // ---- the original gags and skeleton routines, spread over the gag rooms
@@ -905,7 +904,7 @@ public static class FirCheckBuilder
             foreach (float lz in new[] { -49f, -55f }) PendantLamp(g, new Vector3(x, 4f, lz), 1.3f);
         }
         // a pegboard of tools on the far wall, crates in the corner, a poster by the door
-        Box(g, "Pegboard", new Vector3(-4.2f, 1.6f, -61.97f), new Vector3(2.6f, 1.4f, 0.03f), M("Cardboard"), false);
+        Box(g, "Pegboard", new Vector3(-4.2f, 1.6f, -61.97f), new Vector3(2.6f, 1.4f, 0.03f), M("Pegboard"), false);
         for (int t = 0; t < 5; t++)
         {
             float tx = -5.2f + t * 0.5f;
@@ -1092,7 +1091,7 @@ public static class FirCheckBuilder
             var go = new GameObject("Baby " + (i + 1));
             go.transform.SetParent(aud, false);
             go.transform.localPosition = seats[i];
-            go.transform.localRotation = Quaternion.Euler(0, 180f + ((i * 37) % 21 - 10), 0);   // facing the stage, not quite in step
+            go.transform.localRotation = Quaternion.Euler(0, 180f + ((i * 37) % 21 - 10), 0);   // the model faces +z: turned to watch the stage, not quite in step
             foreach (var sp in parts)
             {
                 var pm = new GameObject("Mesh " + sp.tex);
@@ -1717,6 +1716,7 @@ public static class FirCheckBuilder
         A("Book2", null, new Color(0.1f, 0.3f, 0.15f), 1, Color.black);
         A("Book3", null, new Color(0.15f, 0.2f, 0.45f), 1, Color.black);
         A("Seat", null, new Color(0.5f, 0.06f, 0.08f), 1, Color.black);
+        A("Pegboard", null, new Color(0.72f, 0.58f, 0.4f), 1, Color.black);
         A("TestPanel", null, new Color(0.8f, 0.8f, 0.8f), 0, Color.black);
         A("BoneWhite", "skeleton", new Color(1.05f, 1.02f, 0.96f), 1, new Color(0.1f, 0.1f, 0.09f));
         // the rainbow

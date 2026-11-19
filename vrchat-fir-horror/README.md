@@ -25,6 +25,10 @@
 > | Talent Show | the other ten skeletons on stage, plus a console (Medal Ceremony, Upsy-Daisy, Show Finale) |
 > | The Bone Yard | the remaining skeleton routines and gags, and a teleporter back to the lobby |
 >
+> Every room is dressed: skirting and wainscot, crown moulding, framed doorways, twinkling string lights,
+> wreaths, candy canes and each room's own props. The Talent Show's audience is 30 throwable copies of the
+> uploaded baby model (`python tools/make_stewie.py <folder>`).
+>
 > All 53 original gags and all 12 original skeleton routines are in the map. Each one only moves its own
 > props and shows its line in its own speech bubble. For now each plays only for the person who presses it.
 > Puzzles, the hunting tree and the scares come next, once the systems check passes.
