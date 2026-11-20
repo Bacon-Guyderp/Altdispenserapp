@@ -17,6 +17,7 @@ public static class SimCheck {
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
     if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -135,30 +136,8 @@ public static class SimCheck {
     Check(Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "the Bone Yard's teleporter took Alice back to the lobby");
 
     Console.WriteLine("\n== The original gags (Bob)");
-    var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-    int gagOk = 0, gagN = 0; var gagBad = new List<string>();
-    foreach (var gag in All<FirGag>(B)) {
-      if (gag.scare || gag.bubble == null || gag.name.StartsWith("Proctor")) continue;   // jump scares (no line), and PROCTOR's announcements (a voice, nothing moves)
-      gagN++;
-      Sim.Events.Clear();
-      var home0 = gag.target.localPosition; var rot0 = gag.target.localRotation; var sc0 = gag.target.localScale;
-      float mouthRest = gag.mouth != null ? gag.mouth.localScale.y : 0f;
-      if (gag.walkIn) { B.player.pos = gag.transform.TransformPoint(gag.zoneCenter) - new Vector3(0, 0.9f, 0); }
-      else Sim.Press(B, gag);
-      float moved = 0f; bool bubbled = false;
-      for (int f = 0; f < 40; f++) {
-        Sim.Step();
-        moved = Mathf.Max(moved, Vector3.Distance(home0, gag.target.localPosition) * 100f + Quaternion.Angle(rot0, gag.target.localRotation) + Mathf.Abs(gag.target.localScale.x - sc0.x) * 100f);
-        if (gag.bubble.gameObject.activeSelf && gag.bubble.text == gag.line) bubbled = true;
-        if (gag.mouth != null) moved = Mathf.Max(moved, Mathf.Abs(gag.mouth.localScale.y - mouthRest) * 100f);
-      }
-      bool spoke = Sim.Events.Any(e => e.Contains("sound:") && gag.voice.clip != null && e.Contains(gag.voice.clip.name));
-      bool wasRunning = (bool)gf.GetValue(gag) || moved > 1f;
-      B.player.pos = new Vector3(40, 0.05f, 0);   // out of every walk-in zone
-      Sim.Run(gag.inTime + gag.holdTime + gag.outTime + 0.5f);
-      bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
-      if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
-    }
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x < 555f, out gagN, gagBad);
     Check(gagOk == gagN && gagN == 175, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
@@ -248,6 +227,7 @@ public static class SimCheck {
     LabTests(A, B);
     NorthTests(A, B);
     MysteryTests(A, B);
+    LaterTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -940,6 +920,92 @@ public static class SimCheck {
   }
 
   // ======================================================================== the Mystery Hut
+  static int RunGags(Sim.Client B, Func<FirGag, bool> keep, out int gagN, List<string> gagBad) {
+  var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+  int gagOk = 0; gagN = 0;
+  foreach (var gag in All<FirGag>(B)) {
+    if (!keep(gag) || gag.scare || gag.bubble == null || gag.name.StartsWith("Proctor")) continue;   // jump scares (no line), and PROCTOR's announcements (a voice, nothing moves)
+    gagN++;
+    Sim.Events.Clear();
+    var home0 = gag.target.localPosition; var rot0 = gag.target.localRotation; var sc0 = gag.target.localScale;
+    float mouthRest = gag.mouth != null ? gag.mouth.localScale.y : 0f;
+    if (gag.walkIn) { B.player.pos = gag.transform.TransformPoint(gag.zoneCenter) - new Vector3(0, 0.9f, 0); }
+    else Sim.Press(B, gag);
+    float moved = 0f; bool bubbled = false;
+    for (int f = 0; f < 40; f++) {
+      Sim.Step();
+      moved = Mathf.Max(moved, Vector3.Distance(home0, gag.target.localPosition) * 100f + Quaternion.Angle(rot0, gag.target.localRotation) + Mathf.Abs(gag.target.localScale.x - sc0.x) * 100f);
+      if (gag.bubble.gameObject.activeSelf && gag.bubble.text == gag.line) bubbled = true;
+      if (gag.mouth != null) moved = Mathf.Max(moved, Mathf.Abs(gag.mouth.localScale.y - mouthRest) * 100f);
+    }
+    bool spoke = Sim.Events.Any(e => e.Contains("sound:") && gag.voice.clip != null && e.Contains(gag.voice.clip.name));
+    bool wasRunning = (bool)gf.GetValue(gag) || moved > 1f;
+    B.player.pos = new Vector3(40, 0.05f, 0);   // out of every walk-in zone
+    Sim.Run(gag.inTime + gag.holdTime + gag.outTime + 0.5f);
+    bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
+    if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
+  }
+    return gagOk;
+  }
+
+  static void LaterTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The later Station stops");
+    var stops = new[] { new { t = "THE REDEMPTION INN", at = new Vector3(580f, 0, 22f) }, new { t = "THE SPEED ZONE", at = new Vector3(650f, 0, 22f) },
+                        new { t = "THE PLATFORM WORLD", at = new Vector3(730f, 0, 22f) }, new { t = "NORTH CAROLINA", at = new Vector3(810f, 0, 22f) },
+                        new { t = "THE DIGITAL CIRCUS", at = new Vector3(880f, 0, 22f) }, new { t = "THE SKITS", at = new Vector3(938f, 0, 22f) },
+                        new { t = "CORN FLAKES ROOM", at = new Vector3(992f, 0, 22f) } };
+    foreach (var st in stops) {
+      A.player.pos = new Vector3(-4f, 0.05f, -1f);
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == st.t)); Sim.Run(1f);
+      bool there = Flat(A.player.pos, st.at) < 0.3f;
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && Mathf.Abs(t.transform.position.x - st.at.x) < 40f && t.transform.position.x > 550f)); Sim.Run(1f);
+      Check(there && Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "the Station goes to " + st.t + " and back");
+    }
+    foreach (var rep in new[] { "The Redemption Inn: 6 voiced", "The Speed Zone: 5 boost pads and springs, 24 rings", "The Platform World: 12 platforms", "North Carolina: the Blue Ridge", "The Digital Circus: a TV-headed", "The Skits: 10 stick-figure", "The Corn Flakes Room: 9 corn flake jokes" })
+      Check(Sim.BuildLog.Any(l => l.Contains(rep)), "built: " + Plain(Sim.BuildLog.First(l => l.Contains(rep.Split(':')[0]))));
+    // the inn's elevator only goes down
+    A.player.pos = new Vector3(598.5f, 0.05f, 48f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Going down")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(22f, 0, -2f)) < 0.3f, "the Inn's elevator goes down... to the cellar shed");
+    // boost pads, springs and rings
+    var fb = All<FirBoost>(A)[0];
+    A.player.velocity = Vector3.zero; A.player.pos = fb.pads[0].position + new Vector3(0, 0.03f, 0); Sim.Run(0.2f);
+    Check(A.player.velocity.z > 12f, "a boost pad launches Alice down the track (" + A.player.velocity + ")");
+    A.player.pos = new Vector3(650f, 0.05f, 22f); Sim.Run(0.8f);
+    A.player.velocity = Vector3.zero; A.player.pos = fb.pads[3].position + new Vector3(0, 0.03f, 0); Sim.Run(0.2f);
+    Check(A.player.velocity.y > 8f, "a spring throws her up (" + A.player.velocity + ")");
+    int before = fb.Count();
+    A.player.pos = fb.rings[0].position - new Vector3(0, 0.9f, 0); Sim.Run(0.3f);
+    Check(fb.Count() == before + 1 && !fb.rings[0].gameObject.activeSelf && Plain(fb.counter.text).Contains("1"), "running through a ring collects it: \"" + Plain(fb.counter.text) + "\"");
+    var fbB = All<FirBoost>(B)[0];
+    Check(fbB.rings[0].gameObject.activeSelf, "...rings are per player (Bob's is still there)");
+    A.player.pos = new Vector3(650f, 0.05f, 22f); Sim.Run(21f);
+    Check(fb.rings[0].gameObject.activeSelf, "...and it comes back after 20 seconds");
+    // warp tubes
+    A.player.pos = new Vector3(650f, 0.05f, 22f); Sim.Run(1.5f);
+    var tubes = All<FirPortal>(A).Where(p => p.a.position.x > 700f && p.a.position.x < 760f).ToList();
+    A.player.pos = tubes[0].a.position + new Vector3(0, 0.05f, 0); Sim.Run(0.3f);
+    Check(tubes.Count == 2 && Flat(A.player.pos, tubes[0].b.position) < 1.5f, "a warp tube pops Alice out of the other tube across the level");
+    var cloud = All<FirRide>(A).FirstOrDefault(r => r.name == "Cloud Ride");
+    var c0 = cloud.carts[0].position; Sim.Run(2f);
+    Check(cloud != null && Vector3.Distance(c0, cloud.carts[0].position) > 1f, "the cloud ride drifts round the course");
+    // the circus: the EXIT isn't, the void talks
+    A.player.pos = new Vector3(880f, 0.05f, 57f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "EXIT")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(880f, 0, 22f)) < 0.3f, "the circus EXIT puts you back at the circus entrance");
+    var vd = All<FirSay>(A).First(x => x.transform.position.x > 859f && x.transform.position.x < 901f);
+    Sim.Press(A, vd); Sim.Run(1f);
+    Check(Plain(vd.caption.text).Contains("void"), "the void says: \"" + Plain(vd.caption.text) + "\"");
+    // the people
+    var voiced = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && new[] { "in_", "sp_", "pl_", "nc_", "ci_", "cf_" }.Any(pre => r.voice.clip.name.StartsWith(pre))).ToList();
+    Check(voiced.Count == 21, voiced.Count + " voiced skeletons (6 inn, 2 speed, 2 platform, 5 NC, 4 circus, 2 corn)");
+    Check(All<FirWanderer>(A).Any(w => w.voice.clip != null && w.voice.clip.name == "sp_dash"), "Dash laps the speed zone");
+    // every gag in the new areas
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x >= 555f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 46, gagOk + " of " + gagN + " new gags (16 placed + 4 bonk blocks + flag + 5 NC/circus + 10 skits + 10 corn) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+  }
+
   static void MysteryTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The Mystery Hut");
     A.player.pos = new Vector3(-4f, 0.05f, -1f);

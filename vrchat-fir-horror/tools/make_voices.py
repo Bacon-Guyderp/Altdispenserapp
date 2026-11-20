@@ -416,6 +416,97 @@ def mystery_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# The rest of the Station's areas: (folder/prefix_name, voice, words/min, pitch, rate, kind, text)
+# kind: "skel" (a skeleton: boosted), "narr" (narrator), "radio" (an old radio host), "glitch" (a glitchy ringmaster)
+AREAS = [
+    # the Redemption Inn
+    ("Inn/in_dial", "mb-us2", 150, 30, 0.95, "radio", "Good evening, listeners, and welcome to the Redemption Inn! Please stay tuned. You can't change the station anyway."),
+    ("Inn/in_cinder", "mb-us1", 175, 80, 1.12, "skel", "Hi! I'm Cinder! This hotel redeems sinners! So far we've redeemed a sock. It was a very bad sock."),
+    ("Inn/in_brimstone", "mb-us2", 105, 10, 0.82, "skel", "I'm the bartender. Drinks are on the house. The house is on fire. Same thing."),
+    ("Inn/in_hop", "mb-us3", 185, 95, 1.35, "skel", "Bellhop! I carry the luggage! Sometimes the luggage carries me! It's a partnership!"),
+    ("Inn/in_dusty", "mb-us1", 120, 45, 0.95, "skel", "I dust every inch of this hotel. The dust comes back. The dust always comes back."),
+    ("Inn/in_lustre", "mb-us1", 120, 60, 1.0, "skel", "Darling, I've been checked in for three hundred years. The minibar is simply divine."),
+    # the speed zone
+    ("Speed/sp_dash", "mb-us3", 200, 70, 1.15, "skel", "Gotta go! Gotta go! I don't know where. I've never known where. Gotta go!"),
+    ("Speed/sp_coach", "mb-us2", 140, 35, 0.95, "skel", "Hit the boost pads. Bounce on the springs. Grab the rings. That's it. That's the whole sport."),
+    ("Speed/sp_tired", "mb-us2", 100, 25, 0.88, "skel", "I've run this course nine thousand times. I'm not tired. Skeletons don't get tired. I'm lying down for fun."),
+    # the platform world
+    ("Plat/pl_bonny", "mb-us1", 150, 60, 1.04, "skel", "I built all these floating platforms. Don't ask how they float. I don't know either."),
+    ("Plat/pl_coins", "mb-us3", 140, 50, 1.0, "skel", "Every block has a coin in it. Who keeps putting coins in blocks? That's what I want to know."),
+    ("Plat/pl_flag", "mb-us1", 135, 50, 1.0, "narr", "Course clear! You win absolutely nothing. Congratulations!"),
+    ("Plat/pl_bonk", "mb-us3", 175, 80, 1.2, "narr", "Bonk! A coin! Bonk! Another coin! Your head will feel this tomorrow."),
+    # North Carolina
+    ("NC/nc_vern", "mb-us2", 125, 30, 0.9, "skel", "Eastern style! Whole hog, vinegar and pepper. Anything else is just a sandwich with a ketchup problem."),
+    ("NC/nc_kay", "mb-us1", 140, 60, 1.04, "skel", "Lexington dip! A little tomato never hurt anybody. Well. It hurt Vern's feelings."),
+    ("NC/nc_keeper", "mb-us2", 115, 30, 0.9, "skel", "They moved this lighthouse half a mile inland once. Lighthouses don't usually go for walks. This one did."),
+    ("NC/nc_surfer", "mb-us3", 160, 65, 1.08, "skel", "Surf's up on the Outer Banks! The sharks are up too. We have an understanding."),
+    ("NC/nc_hiker", "mb-us1", 135, 50, 1.0, "skel", "I hiked the Blue Ridge. Turns out it's only blue because it's very, very far away."),
+    ("NC/nc_flight", "mb-us1", 130, 50, 1.0, "narr", "First in flight! Twelve seconds, a hundred and twenty feet. The skeletons would like it noted that they were not invited."),
+    ("NC/nc_flytrap", "mb-us2", 120, 20, 0.86, "narr", "Venus flytraps only grow wild around here. I'm very picky about my neighbours. And my lunch."),
+    ("NC/nc_tea", "mb-us1", 130, 50, 1.0, "narr", "Sweet tea. So sweet it's legally a dessert."),
+    ("NC/nc_pony", "mb-us1", 130, 50, 1.0, "narr", "The wild ponies of the Outer Banks. Do not feed them. Do not pet them. Do not challenge them to a race."),
+    ("NC/nc_mitchell", "mb-us1", 130, 50, 1.0, "narr", "Mount Mitchell. The highest peak east of the Mississippi. Our version is a bit smaller."),
+    # the digital circus
+    ("Circus/ci_ringmaster", "mb-us2", 165, 45, 1.0, "glitch", "Welcome, welcome, welcome, to the show! The show never ends! That's a feature!"),
+    ("Circus/ci_acrobat", "mb-us1", 165, 75, 1.12, "skel", "I've been doing this backflip for six hours. I'm not sure which way is up any more. Is it you?"),
+    ("Circus/ci_strongman", "mb-us2", 110, 10, 0.82, "skel", "I lift weights. The weights are drawn on. I am lifting a drawing. Very heavy drawing."),
+    ("Circus/ci_juggler", "mb-us3", 150, 60, 1.04, "skel", "I juggle cubes, spheres, and existential dread. The cubes are the hardest."),
+    ("Circus/ci_mime", "mb-us1", 130, 50, 1.0, "narr", "The mime would like you to know he is trapped in a box. The box is also trapped. In a circus."),
+    ("Circus/ci_exit", "mb-us2", 165, 45, 1.0, "glitch", "Welcome back to the show!"),
+    ("Circus/ci_void", "mb-us1", 90, 20, 0.85, "narr", "The void says hi. The void would like to know how your day is going."),
+    # the asdf-style skits
+    ("Asdf/as_magic", "mb-us3", 160, 70, 1.1, "skel", "Want to see a magic trick? I'm still here. It wasn't a good trick."),
+    ("Asdf/as_potato", "mb-us1", 150, 75, 1.1, "skel", "I'm a potato. No, really. I'm a potato now."),
+    ("Asdf/as_spoon", "mb-us3", 170, 80, 1.15, "skel", "Look, a spoon! That's a fork. This is the worst day of my life."),
+    ("Asdf/as_hat", "mb-us2", 140, 40, 0.95, "skel", "I bought a new hat. And thirty more, apparently."),
+    ("Asdf/as_cake", "mb-us1", 150, 60, 1.05, "skel", "Who ordered the cake? Nobody? It's mine now."),
+    ("Asdf/as_duck", "mb-us3", 140, 60, 1.05, "skel", "Quack. I'm not a duck. I'm a skeleton saying quack. Quack."),
+    ("Asdf/as_knock", "mb-us2", 140, 40, 0.95, "skel", "Knock knock. Who's there? Nobody. I'm a skeleton. There is literally no body."),
+    ("Asdf/as_stairs", "mb-us1", 150, 55, 1.02, "skel", "I fell down the stairs. What stairs? Exactly."),
+    ("Asdf/as_balloon", "mb-us3", 175, 85, 1.2, "skel", "I'm going to pop this balloon! Waaaaah!"),
+    ("Asdf/as_sandwich", "mb-us2", 135, 45, 0.96, "skel", "I made a sandwich. Wait. I'm the filling."),
+    # the corn flakes room
+    ("Corn/cf_box", "mb-us2", 130, 40, 0.95, "narr", "I'm the cereal box. Every joke in this room is about me. I've made my peace with it."),
+    ("Corn/cf_1", "mb-us1", 135, 55, 1.0, "narr", "Corn flakes. The only breakfast that's scared of milk."),
+    ("Corn/cf_2", "mb-us3", 140, 50, 1.0, "narr", "I'd tell you a corn flake joke, but it's a bit corny. And flaky. And soggy by the end."),
+    ("Corn/cf_3", "mb-us2", 130, 35, 0.94, "narr", "What do you call a corn flake that won't stay in the bowl? A cereal escapist."),
+    ("Corn/cf_4", "mb-us1", 135, 55, 1.0, "narr", "Corn flakes never crack under pressure. They just go soggy."),
+    ("Corn/cf_5", "mb-us3", 140, 50, 1.0, "narr", "Corn flakes are just popcorn that gave up."),
+    ("Corn/cf_6", "mb-us2", 130, 35, 0.94, "narr", "Me and my corn flakes have a lot in common. We both fall apart in the morning."),
+    ("Corn/cf_7", "mb-us1", 135, 55, 1.0, "narr", "How do corn flakes stay in shape? Daily bowling."),
+    ("Corn/cf_8", "mb-us3", 140, 50, 1.0, "narr", "Doctor, I think I'm a corn flake. Well, that's a bit flaky of you."),
+    ("Corn/cf_9", "mb-us2", 130, 35, 0.94, "narr", "The corn flake went to therapy. It had layers to work through. Well. One layer."),
+    ("Corn/cf_chef", "mb-us2", 130, 40, 0.95, "skel", "I'm the breakfast chef. I make corn flakes. I pour them. That's the whole recipe."),
+    ("Corn/cf_swim", "mb-us3", 160, 70, 1.1, "skel", "The milk's lovely today! A bit flaky."),
+]
+SKV.update({"cinder": ("mb-us1", 175, 80, 1.12), "dial": ("mb-us2", 150, 30, 0.95), "brimstone": ("mb-us2", 105, 10, 0.82), "hop": ("mb-us3", 185, 95, 1.35),
+            "vern": ("mb-us2", 125, 30, 0.9), "kay": ("mb-us1", 140, 60, 1.04)})
+COMBO += [
+    ("inn_1", ["cinder"], "Welcome to the Redemption Inn!"),
+    ("inn_2", ["dial"], "Where every guest gets a second chance!"),
+    ("inn_3", ["brimstone"], "And a third. And a fourth. I'm not singing."),
+    ("inn_4", ["hop"], "He's singing a little bit!"),
+    ("inn_5", ["cinder", "dial", "brimstone", "hop"], "Check in, cheer up, and stay forever!"),
+    ("bbq_1", ["vern"], "Vinegar!"),
+    ("bbq_2", ["kay"], "Tomato!"),
+    ("bbq_3", ["vern"], "Vinegar is tradition!"),
+    ("bbq_4", ["kay"], "Tomato is also tradition!"),
+    ("bbq_5", ["vern", "kay"], "Hush puppies? Hush puppies."),
+]
+AREA_FILTERS = {
+    "skel": "aecho=0.8:0.5:35:0.15,volume={v:.3f},alimiter=limit=0.95:level=disabled",
+    "narr": "aecho=0.8:0.5:30:0.12,volume=1.8,alimiter=limit=0.95:level=disabled",
+    "radio": "highpass=f=450,lowpass=f=2800,aecho=0.6:0.4:12:0.3,volume=2.6,alimiter=limit=0.95:level=disabled",
+    "glitch": "flanger=delay=3:depth=4:speed=2,tremolo=f=9:d=0.35,aecho=0.8:0.5:25:0.2,volume=2.0,alimiter=limit=0.95:level=disabled",
+}
+
+
+def area_lines():
+    for name, v, speed, pitch, rate, kind, text in AREAS:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -443,7 +534,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt", "pixel_gags.txt", "lab_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt", "pixel_gags.txt", "lab_gags.txt", "more_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -477,6 +568,17 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--moregags" in sys.argv:   # only the later areas' gags (ids starting I and J)
+            render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
+            return
+        if "--areas" in sys.argv:   # only the later Station areas, and their two combo acts
+            for folder in sorted({n.split("/")[0] for n, *_ in AREAS}): os.makedirs(os.path.join(OUT, folder), exist_ok=True)
+            render_only(tmp, list(area_lines()), "Inn")
+            only = [c for c in COMBO if c[0].startswith(("inn_", "bbq_"))]
+            saved = COMBO[:]; COMBO[:] = only
+            try: make_combo(tmp)
+            finally: COMBO[:] = saved
             return
         if "--mystery" in sys.argv:   # only the Mystery Hut
             render_only(tmp, list(mystery_lines()), "Mystery")
@@ -532,7 +634,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines()) + list(area_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

@@ -1,0 +1,23 @@
+# Fir Warning: gags for the later Station areas (the Redemption Inn, the speed zone, the platform world, North Carolina, the circus).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+# ---------------------------------------------------------------- the Redemption Inn
+I1|sign|562|0|24|90|narrator|Mostly eternity.|ROOM SERVICE\n24/7/eternity|(mostly eternity)
+I2|talk|598|0|24|-90|tree|I'm the lobby plant. I'm very redeemed. I just photosynthesise now.||
+I3|sign|562|0|34|90|narrator|Except the floor.|NO SMOKING|(except the floor)
+I4|frame|599.94|1.6|34|-90|narrator|Guest of the month. Nobody. Yet.|GUEST OF\nTHE MONTH\n\n<b>nobody</b>\n<size=60%>(yet)</size>|
+I5|pop_gift|598|0|42|-90|tiny|Room service! I'm the mint on your pillow!||
+I6|sign|562|0|56|90|narrator|The pool is closed. It's lava.|POOL|(it's lava)\n(closed)
+I7|shiver|598|0|57|-90|old|It's freezing in here. Somebody turned the furnace down to medium.||
+I8|frame|560.06|1.6|40|90|narrator|Redemption progress: half a percent. We're thrilled.|<b>REDEMPTION\nPROGRESS</b>\n\n[|.........]\n0.5%|
+# ---------------------------------------------------------------- the speed zone
+J1|sign|641|0|24|90|narrator|Go faster.|SPEED LIMIT:\nYES|(go faster)
+J2|sign|659|0|50|-90|narrator|Springs are springy. You have been warned.|CAUTION:\nSPRINGS|(they are\nspringy)
+# ---------------------------------------------------------------- the platform world
+J3|sign|721|0|23|90|narrator|They are.|WARNING:\nPLATFORMS MAY\nBE FLOATING|(they are)
+J4|talk|739|0|23|-90|tree|I'm the only tree in this level. I don't do anything. I'm scenery.||
+# ---------------------------------------------------------------- North Carolina
+J5|sign|783|0|30|90|narrator|Our version is a bit smaller.|MOUNT MITCHELL\n6,684 ft|(ours is\nsmaller)
+J6|sign|813|0|23|0|narrator|First in flight. Second in skeletons.|FIRST IN\nFLIGHT|(second in\nskeletons)
+# ---------------------------------------------------------------- the digital circus
+J7|sign|862|0|24|90|narrator|And on. And on.|THE SHOW\nMUST GO ON|(and on)\n(and on)
+J8|talk|898|0|24|-90|tree|I'm the tent pole. I hold everything up. Nobody claps for me.||

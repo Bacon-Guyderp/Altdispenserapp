@@ -313,6 +313,9 @@ namespace VRC.SDKBase {
     public bool isLocal { get { return Sim.Current != null && Sim.Current.player == this; } }
     public bool isMaster { get { return Sim.Master == this; } }
     public Vector3 GetPosition() { return pos; }
+    public Vector3 velocity;
+    public void SetVelocity(Vector3 v) { if (!isLocal) Sim.Fail("SetVelocity on a remote player"); velocity = v; Sim.Log("velocity", displayName + " -> " + v); }
+    public Vector3 GetVelocity() { return velocity; }
     public Quaternion GetRotation() { return rot; }
     public void TeleportTo(Vector3 p, Quaternion r) {
       if (!isLocal) Sim.Fail("TeleportTo called on a remote player (VRChat ignores this)");
