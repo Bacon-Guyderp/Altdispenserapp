@@ -48,7 +48,8 @@ public static class SimCheck {
       bool spoke = Sim.Events.Any(e => e.Contains("sound:") && e.Contains(rs.voice.clip.name));
       Check((bool)rf.GetValue(rs) && spoke && maxJaw > 10f, Plain(rs.colourName) + " skeleton: routine running, said its line (" + rs.voice.clip.name + "), jaw moved " + maxJaw.ToString("F0") + " degrees");
       if (rs.act == 6) Check(maxDrop > 1.0f, "  violet went to pieces (its skull fell " + maxDrop.ToString("F2") + " m)");
-      Sim.Run(8f);
+      for (int f = 0; f < 600 && (bool)rf.GetValue(rs); f++) Sim.Step();
+      Sim.Run(0.5f);
       Check(!(bool)rf.GetValue(rs) && Quaternion.Angle(jawRest, rs.pivots[9].localRotation) < 0.5f && Vector3.Distance(rs.meshes[2].position, skullHome) < 0.01f, "  ...and back to standing");
     }
     Console.WriteLine("\n== Combination acts (Bob presses each one)");
@@ -101,8 +102,8 @@ public static class SimCheck {
       nextLeg:;
     }
     Check(true, "walked the route: lobby -> 6 rooms -> the end (" + route.Length + " points)");
-    var townRoute = new[] { new Vector3(0, 0, -2.6f), new Vector3(-4f, 0, 4f), new Vector3(-13f, 0, 4f), new Vector3(-24.5f, 0, 4f), new Vector3(-26f, 0, 9f),
-                            new Vector3(-38f, 0, 9f), new Vector3(-38f, 0, 0f), new Vector3(-34f, 0, -5.5f), new Vector3(-20f, 0, -5.5f), new Vector3(-14f, 0, 4f) };
+    var townRoute = new[] { new Vector3(0, 0, -2.6f), new Vector3(-4f, 0, 4f), new Vector3(-13f, 0, 4f), new Vector3(-24.5f, 0, 4f), new Vector3(-28f, 0, 6f), new Vector3(-28f, 0, 9.6f),
+                            new Vector3(-38.5f, 0, 9.6f), new Vector3(-38.5f, 0, 0f), new Vector3(-34f, 0, -5.5f), new Vector3(-20f, 0, -5.5f), new Vector3(-14f, 0, 4f) };
     int townBlocked = 0;
     for (int i = 0; i + 1 < townRoute.Length; i++)
       foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
@@ -110,6 +111,16 @@ public static class SimCheck {
         if (Physics.Raycast(townRoute[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { townBlocked++; Console.WriteLine("    town leg " + i + " blocked by " + hit.collider.name + " at " + hit.point); break; }
       }
     Check(townBlocked == 0, "walked from the lobby's west doorway into Bonetown and round the plaza");
+    var cellarRoute = new[] { new Vector3(0, 0, -2.6f), new Vector3(4f, 0, -2f), new Vector3(22f, 0, -2f), new Vector3(22f, 0, -9f), new Vector3(22f, 0, -27.5f),
+                              new Vector3(25f, 0, -33f), new Vector3(25f, 0, -42.5f), new Vector3(26f, 0, -43.5f), new Vector3(26f, 0, -45.5f), new Vector3(21.5f, 0, -55f), new Vector3(16.5f, 0, -56f),
+                              new Vector3(17.5f, 0, -60.5f), new Vector3(18f, 0, -61.5f), new Vector3(18f, 0, -63.5f), new Vector3(22f, 0, -72f), new Vector3(22f, 0, -90f) };
+    int cellarBlocked = 0;
+    for (int i = 0; i + 1 < cellarRoute.Length; i++)
+      foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
+        var d = cellarRoute[i + 1] - cellarRoute[i]; RaycastHit hit;
+        if (Physics.Raycast(cellarRoute[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { cellarBlocked++; Console.WriteLine("    cellar leg " + i + " blocked by " + hit.collider.name + " at " + hit.point); break; }
+      }
+    Check(cellarBlocked == 0, "walked from the lobby's east doorway through the potting shed and all five rooms of the Root Cellar");
     Sim.Current = null;
     // the way home
     var home = All<FirCheckButton>(A).First(x => x.title == "Back to the lobby");
@@ -223,6 +234,7 @@ public static class SimCheck {
     HuntTests(A, B);
     TownTests(A, B);
     FacingTests(A);
+    CellarTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -406,7 +418,7 @@ public static class SimCheck {
   static void TownTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== Bonetown: the wanderers");
     var wa = All<FirWanderer>(A); var wb = All<FirWanderer>(B);
-    Check(wa.Count == 10, wa.Count + " wanderers live in Bonetown");
+    Check(wa.Count == 14, wa.Count + " wanderers live in Bonetown");
     Sim.Run(1f);
     var p0 = wa.Select(w => w.transform.position).ToList();
     var leg0 = wa.Select(w => w.pivots[7].localRotation).ToList();
@@ -469,9 +481,10 @@ public static class SimCheck {
     Console.WriteLine("\n== Facing the right way");
     var rs = All<FirRainbowSkeleton>(A);
     Func<FirRainbowSkeleton, Vector3> Fwd = r => r.transform.rotation * Vector3.forward;
-    var theatre = rs.Where(r => Mathf.Abs(r.transform.position.x) < 9.5f && r.transform.position.z < -26f).ToList();
+    var theatre = rs.Where(r => r.transform.parent != null && (r.transform.parent.name == "RAINBOW HALL" || r.transform.parent.name == "TALENT SHOW")).ToList();
     Check(theatre.Count == 17 && theatre.All(r => Fwd(r).z > 0.9f), theatre.Count + " skeletons in the Rainbow Hall and on the Talent Show stage face the audience (north)");
-    var town = rs.Where(r => r.transform.position.x < -12f).ToList();
+    var townNames = new[] { "Mint", "Peach", "Lavender", "Coral", "Sky", "Navy", "Rust", "Olive", "Cream", "Plum", "Scarlet", "Cobalt", "Emerald", "Mustard" };
+    var town = rs.Where(r => townNames.Any(n => r.name == n + " Skeleton")).ToList();
     var plaza = new Vector3(-30f, 0, 4f);
     Check(town.Count == 14 && town.All(r => Vector3.Dot(Fwd(r), (plaza - r.transform.position).normalized) > 0.5f), town.Count + " Bonetown residents and band members face the plaza");
     var babies = All<FirThrowable>(A).Where(b => b.name.StartsWith("Baby")).ToList();
@@ -479,5 +492,82 @@ public static class SimCheck {
     bool ok = babies.All(b => (b.transform.rotation * Vector3.forward).z < -0.9f
                             && backs.Any(p => Mathf.Abs(p.x - b.transform.position.x) < 0.05f && p.z > b.transform.position.z + 0.2f && p.z < b.transform.position.z + 0.6f));
     Check(babies.Count == 30 && ok, "every baby faces the stage, with its seat's backrest behind it");
+  }
+
+  // ======================================================================== the Root Cellar (the second game) and the 40 new skeletons
+  static FirHunt H2(Sim.Client c) { return All<FirHunt>(c)[1]; }
+  static FirHuntButton Btn2(Sim.Client c, int act, int val) { var h = H2(c); return All<FirHuntButton>(c).First(b => b.action == act && b.value == val && b.hunt != null && b.hunt.program == h); }
+  static void Enter2(Sim.Client c, int room, string code) {
+    foreach (char ch in code) { Sim.Press(c, Btn2(c, 5, room * 100 + (ch - '0'))); Sim.Step(); }
+    Sim.Press(c, Btn2(c, 5, room * 100 + 11));
+  }
+  static bool DoorsMatch2(Sim.Client c, int stage, bool running) { var h = H2(c); for (int i = 1; i < 5; i++) if (h.doors[i].activeSelf != (running && stage < 5 && stage < i)) return false; return true; }
+
+  static void CellarTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The 40 new skeletons");
+    var xs = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && r.voice.clip.name.StartsWith("xs_")).ToList();
+    var xw = All<FirWanderer>(A).Where(w => w.voice.clip != null && w.voice.clip.name.StartsWith("xs_")).ToList();
+    Check(xs.Count + xw.Count == 40, (xs.Count + xw.Count) + " new skeletons, each with its own voice line (" + xs.Count + " standing, " + xw.Count + " wandering Bonetown)");
+    Check(Sim.BuildLog.Any(l => l.Contains("18 of 18 new skeletons placed in the map")), "18 of them found free spots along the original rooms' walls");
+    var newActs = All<FirRainbowSkeleton>(A).Select(r => r.act).Where(a => a >= 18).Distinct().Count();
+    Check(newActs == 15, newActs + " of the 15 new moves are in use");
+
+    Console.WriteLine("\n== The Root Cellar: Alice presses START in the potting shed");
+    var shed = new Vector3(22f, 0.05f, -2f);
+    A.player.pos = shed; B.player.pos = shed + new Vector3(1, 0, 0);
+    Sim.Run(1f);
+    Check(!H2(A).running && DoorsMatch2(A, 0, false) && H2(A).darkMats.Length > 20 && H2(A).darkMats.All(m => m.GetFloat("_Fullbright") > 0.5f), "no game yet: the cellar is open and lit (" + H2(A).darkMats.Length + " materials of its own)");
+    Sim.Press(A, Btn2(A, 1, 0)); Sim.Run(1f);
+    foreach (var c in new[] { A, B }) {
+      var h = H2(c);
+      Check(h.running && h.stage == 0 && DoorsMatch2(c, 0, true) && Flat(c.player.pos, h.checkpoints[0].position) < 0.5f && !H(c).running,
+            c.player.displayName + ": the cellar game is on (the first game isn't), pulled into the Greenhouse, doors locked");
+      Check(h.darkMats.All(m => m.GetFloat("_Fullbright") < 0.5f) && H(c).darkMats.All(m => m.GetFloat("_Fullbright") > 0.5f),
+            c.player.displayName + ": the cellar went dark; the first game's rooms stay lit");
+    }
+    var stA = All<FirStalker>(A).Where(x => x.name.StartsWith("Cellar Stalker")).ToList();
+    Check(stA.Count == 2 && stA[0].body.activeSelf && !stA[1].body.activeSelf, "two trees down here: the first is up, the second still asleep");
+    // the lights fail now and then
+    bool flick = false;
+    for (int f = 0; f < 900 && !flick; f++) { Sim.Step(); if (H2(A).darkMats[0].GetFloat("_Dark") > 0.5f) flick = true; }
+    Check(flick, "the lights flicker out for a moment (Alice's view)");
+    A.player.pos = shed; B.player.pos = shed + new Vector3(1, 0, 0); Sim.Run(1.5f);
+
+    Console.WriteLine("\n== The Root Cellar: five rooms");
+    Sim.Press(A, Btn2(A, 4, 0)); Sim.Run(0.3f);
+    Check(H2(A).stage == 0, "the big pot needs the seeds first");
+    foreach (int i in Enumerable.Range(0, H2(B).items.Length).Where(i => H2(B).itemRoom[i] == 0)) { Sim.Press(B, H2(B).items[i].GetComponent<FirHuntButton>()); Sim.Run(0.3f); }
+    Sim.Press(A, Btn2(A, 4, 0)); Sim.Run(0.5f);
+    Check(H2(A).stage == 1 && H2(B).stage == 1 && H2(B).stageShow[0].activeSelf && DoorsMatch2(A, 1, true), "4 seeds planted: a sapling sprouts, and the Sawmill opens");
+    string code = string.Concat(H2(A).rainbowDigits.Select(t => t.text));
+    Check(code.Length == 4 && code == string.Concat(H2(B).rainbowDigits.Select(t => t.text)), "the stumps' carved numbers: " + code);
+    Enter2(B, 1, code); Sim.Run(0.5f);
+    Check(H2(A).stage == 2 && H2(B).stage == 2, "the carved code opens the Tool Room");
+    Sim.Run(0.5f);
+    var stB = All<FirStalker>(B).Where(x => x.name.StartsWith("Cellar Stalker")).ToList();
+    Check(stA[1].body.activeSelf && stB[1].body.activeSelf && Flat(stA[1].transform.position, stA[1].lairs[2].position) < 0.3f, "...and the second tree wakes up, at the far end of the Tool Room");
+    var names = H2(A).toyNames;
+    var order = H2(A).toyNotes.Select(t => Array.IndexOf(names, Plain(t.text).Split('|').Last().Trim())).ToList();
+    Check(order.All(i => i >= 0) && order.Distinct().Count() == 4, "the notes give the tool order: " + string.Join(", ", order.Select(i => names[i])));
+    foreach (int i in order) { Sim.Press(A, Btn2(A, 6, 200 + i)); Sim.Step(); }
+    Sim.Run(0.5f);
+    Check(H2(A).stage == 3 && H2(B).stage == 3, "the tools in order open the Generator room");
+    foreach (int i in Enumerable.Range(0, H2(A).items.Length).Where(i => H2(A).itemRoom[i] == 3)) { Sim.Press(A, H2(A).items[i].GetComponent<FirHuntButton>()); Sim.Run(0.3f); }
+    Sim.Press(B, Btn2(B, 4, 3)); Sim.Run(0.5f);
+    Check(H2(A).stage == 4 && H2(B).stage == 4 && DoorsMatch2(B, 4, true), "3 fuses in the box: the Woodchipper room opens");
+    Check(H2(A).talentCode == "127", "the foreman's code works out to " + H2(A).talentCode + " (12 skeletons on the night shift, 7 saw blades)");
+    Enter2(A, 4, "1270"); Sim.Run(0.3f);
+    Check(H2(A).stage == 4, "a wrong code doesn't start the chipper");
+    Sim.Run(1f);
+    Enter2(A, 4, H2(A).talentCode); Sim.Run(1f);
+    foreach (var c in new[] { A, B }) {
+      var h = H2(c);
+      Check(h.stage == 5 && DoorsMatch2(c, 5, true) && h.stageShow[2].activeSelf && h.darkMats.All(m => m.GetFloat("_Fullbright") > 0.5f) && Plain(h.lobbyBoard.text).Contains("ESCAPED")
+            && All<FirStalker>(c).Where(x => x.name.StartsWith("Cellar Stalker")).All(x => Flat(x.transform.position, x.furnace.position) < 0.5f),
+            c.player.displayName + ": YOU ESCAPED THE CELLAR: both trees in the woodchipper, the lights back on");
+    }
+    Sim.Press(A, Btn2(A, 2, 0)); Sim.Run(1f);
+    Check(!H2(B).running && DoorsMatch2(B, 0, false), "RESET: the cellar is open and lit again");
+    A.player.pos = new Vector3(0, 0.05f, -1f); B.player.pos = new Vector3(1, 0.05f, -1f);
   }
 }

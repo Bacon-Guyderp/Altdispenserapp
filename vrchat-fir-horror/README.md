@@ -37,6 +37,38 @@ room's entrance while it backs off. **Throw a toilet at it** (there are 12 aroun
 6 seconds. A wrong code or toy also earns you a tree in the face. Random whispers and rustles play behind
 you.
 
+## The Root Cellar: the horror expansion
+
+Through the doorway in the lobby's east wall is a potting shed with its own START. It's a second,
+harder game, separate from the first (both can even run at once).
+
+| Room | Puzzle |
+|---|---|
+| The Greenhouse | Find 4 seed packets, then plant them in the big pot |
+| The Sawmill | Numbers carved into 4 stumps glow red, yellow, green and blue; type them in that order |
+| The Tool Room | 4 notes give an order; press the tools on the lock in that order |
+| The Generator | Find 3 fuses, then fix the fuse box |
+| The Woodchipper | The foreman's code: how many skeletons work the night shift, then how many saw blades hang in the sawmill. Both trees go into the chipper |
+
+* **Two hunting trees:** the second wakes up when you reach the Tool Room.
+* **The lights fail:** for a moment every so often.
+* **Also:** 10 more jump scares, 10 toilets, and 12 skeletons on the night shift.
+
+## 40 new skeletons and 15 new moves
+
+There are 40 more skeletons, each with its own colour and voiced gag:
+
+| Where | How many |
+|---|---|
+| The original rooms' free wall spots | 18 |
+| Doormen by the lobby's south door | 2 |
+| Bonetown picnickers | 4 |
+| New Bonetown wanderers | 4 |
+| The Root Cellar's night shift | 12 |
+
+The 15 new moves are twirl, boo lunge, salute-and-march, head off, moonwalk, jumping jacks, head spin,
+robot, deep bow, air guitar, chicken dance, rattle-shiver, peekaboo, can-can and limbo.
+
 ## Bonetown: the expansion
 
 Go through the doorway in the lobby's west wall to reach a sunny little town where the skeletons live.
@@ -121,7 +153,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 196
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 297
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
@@ -129,3 +161,4 @@ python make_unitypackage.py
   * a full two-player playthrough of the game (wrong answers too)
   * the tree freezing when watched, hunting, catching and being stunned by a thrown toilet
   * Bonetown's wanderers staying in step on every client, keeping to their paths, and stopping to chat
+  * a full Root Cellar playthrough, its second tree and flickering lights, and every new skeleton and move

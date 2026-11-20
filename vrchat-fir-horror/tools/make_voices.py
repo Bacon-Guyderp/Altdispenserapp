@@ -151,6 +151,65 @@ def town_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# The 40 new skeletons spread through the map (Audio/Extra/xs_<name>.ogg): name, voice, words/min, pitch, rate, text
+EXTRA = [
+    # the Gift Wrap Hall
+    ("ash", "mb-us2", 120, 35, 0.94, "I'm wrapping myself as a present. Nobody ever wants to unwrap a skeleton."),
+    ("slate", "mb-us2", 110, 25, 0.9, "Somebody wrapped me in a box with air holes. Very thoughtful. I don't breathe."),
+    ("rose", "mb-us1", 165, 80, 1.15, "The ribbon tickles! It goes right between my ribs!"),
+    ("saffron", "mb-us3", 150, 55, 1.04, "Gift wrap inspector, reporting for duty! This one's a sock. Again."),
+    ("tangerine", "mb-us3", 140, 60, 1.08, "Knock knock. It's me, inside the present. Please let me out."),
+    # the Toy Workshop
+    ("lemon", "mb-us3", 170, 85, 1.2, "I'm a jack in the box! Well, a skeleton in the box. Same spring."),
+    ("sage", "mb-us2", 100, 35, 0.9, "I've been building the same toy for three hundred years. Still missing one screw."),
+    ("seafoam", "mb-us1", 140, 55, 1.0, "Need a hand? How about a head? Here. Hold this."),
+    ("aqua", "mb-us3", 175, 70, 1.12, "Wind me up and watch me go! Clickety clack!"),
+    ("sapphire", "mb-us2", 130, 25, 0.9, "Quality control! I tested every single toy. I broke every single toy."),
+    # the Chimney Lounge
+    ("periwinkle", "mb-us1", 105, 45, 0.95, "Santa never comes down this chimney. I think it's because of me."),
+    ("orchid", "mb-us1", 135, 65, 1.05, "Chestnuts roasting by the fire. Not me. I'm not roasting. I'm chilling."),
+    ("fuchsia", "mb-us3", 120, 50, 0.98, "I'm the ghost of Christmas past. Mostly past. Very, very past."),
+    # the Bone Yard
+    ("cherry", "mb-us3", 160, 60, 1.06, "Boo! Sorry. Force of habit. It's the Bone Yard."),
+    ("maroon", "mb-us2", 110, 20, 0.86, "I live here. The rent's cheap, and the neighbours are dead quiet."),
+    ("copper", "mb-us2", 130, 40, 0.95, "I came here for the bone broth. Turns out I was the bone broth."),
+    ("bronze", "mb-us3", 120, 40, 0.94, "Third place in the skeleton contest. Bronze. Story of my life. Well. Afterlife."),
+    ("caramel", "mb-us1", 145, 55, 1.02, "Don't mind me. I'm just falling apart. It happens."),
+    # the lobby
+    ("frost", "mb-us1", 150, 60, 1.03, "Welcome to Fir Warning! Doors that way. Trees everywhere. Good luck!"),
+    ("holly", "mb-us3", 160, 70, 1.1, "Hi! I'm the welcome committee. And the goodbye committee, if the trees get you."),
+    # Bonetown: picnics
+    ("honey", "mb-us1", 145, 60, 1.04, "Picnic time! I brought sandwiches. They go right through me, but I love the taste."),
+    ("butter", "mb-us2", 115, 45, 0.95, "I'm lying in the sun, working on my tan. It's not working."),
+    ("jade", "mb-us2", 90, 30, 0.9, "I'm meditating. I've been very still for a very long time. I'm good at it."),
+    ("blush", "mb-us1", 170, 85, 1.16, "Is it true the trees in the cellar are awake? Ooh, spooky! Count me out!"),
+    # Bonetown: new wanderers
+    ("pistachio", "mb-us3", 140, 55, 1.02, "Just walking my invisible dog. He's a very good boy. Mostly bones."),
+    ("salmon", "mb-us1", 135, 60, 1.0, "I swim upstream every single day. Well. I walk. Upstream is that way."),
+    ("apricot", "mb-us3", 185, 75, 1.15, "Can't talk! Training for the skeleton marathon! It's all downhill from here!"),
+    ("lilac", "mb-us1", 125, 55, 0.98, "Lovely evening. Have you been down to the root cellar? Don't."),
+    # the Root Cellar night shift
+    ("moss", "mb-us2", 125, 30, 0.92, "Welcome to the night shift. The trees down here bite. Clock in!"),
+    ("bark", "mb-us3", 140, 45, 0.96, "Shh! Did you hear that? That was the tree. Or my knees."),
+    ("fern", "mb-us1", 120, 50, 0.98, "I water the plants. The plants water me back. With their eyes."),
+    ("midnight", "mb-us2", 105, 15, 0.84, "It's always midnight down here. That's why they named me Midnight. Also my mum."),
+    ("steel", "mb-us2", 130, 25, 0.9, "I run the sawmill. Keep your arms inside the ride. I don't have that problem."),
+    ("pewter", "mb-us3", 125, 40, 0.95, "I lost my head in the sawmill once. Found it. Still a bit loose."),
+    ("charcoal", "mb-us3", 165, 65, 1.08, "Don't look away from them! I looked away once. Now I'm a skeleton."),
+    ("mauve", "mb-us1", 140, 55, 1.0, "This is the tool library. Borrow anything except the axe. The tree has the axe."),
+    ("burgundy", "mb-us2", 150, 35, 0.95, "The generator's broken. I've been pedalling for a hundred years. Hello!"),
+    ("mocha", "mb-us1", 115, 45, 0.96, "Coffee break. I drink it and it goes straight through. Mostly onto the floor."),
+    ("chartreuse", "mb-us3", 150, 75, 1.12, "I glow. It's not a gift. It's the fuses. Don't touch the fuses."),
+    ("wine", "mb-us2", 135, 40, 0.96, "Count us! The foreman says the number of us is the code. I always lose count. Of me."),
+]
+
+
+def extra_lines():
+    for name, v, speed, pitch, rate, text in EXTRA:
+        yield ("Extra/xs_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -207,9 +266,20 @@ def main():
     os.makedirs(os.path.join(OUT, "Rainbow"), exist_ok=True)
     only_rainbow = "--rainbow" in sys.argv
     os.makedirs(os.path.join(OUT, "Town"), exist_ok=True)
+    os.makedirs(os.path.join(OUT, "Extra"), exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--extra" in sys.argv:   # only the 40 new skeletons
+            os.makedirs(os.path.join(OUT, "Extra"), exist_ok=True)
+            for name, voice, speed, pitch, text, filt in extra_lines():
+                wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
+                subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+                out = os.path.join(OUT, name + ".ogg")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
+                                "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
+                print(name, os.path.getsize(out) // 1024, "KB")
             return
         if "--town" in sys.argv:   # only the expansion: its voices, its gags (ids starting B), and the combo lines
             todo = list(town_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_B")]
@@ -222,7 +292,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

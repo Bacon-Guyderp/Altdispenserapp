@@ -16,7 +16,7 @@ public class FirThrowable : UdonSharpBehaviour
     public AudioClip grabClip, landClip;
 
     public UdonBehaviour hunt;       // the horror game: a hit on the tree stuns it
-    public Transform stalker;        // the hunting tree
+    public Transform[] stalkers;     // the hunting trees of the game this one belongs to
 
     float lastSpeed, nextLand, nextStun;
 
@@ -37,13 +37,18 @@ public class FirThrowable : UdonSharpBehaviour
         }
         lastSpeed = speed;
         // the thrower's client checks for a hit on the hunting tree
-        if (stalker != null && hunt != null && speed > 2.5f && Time.time > nextStun && Networking.IsOwner(gameObject))
+        if (hunt != null && speed > 2.5f && Time.time > nextStun && Networking.IsOwner(gameObject))
         {
-            Vector3 d = transform.position - (stalker.position + Vector3.up * 1.2f);
-            if (Mathf.Abs(d.y) < 1.4f && new Vector2(d.x, d.z).magnitude < 0.9f)
+            for (int i = 0; i < stalkers.Length; i++)
             {
-                nextStun = Time.time + 3f;
-                hunt.SendCustomEvent("EvStun");
+                if (stalkers[i] == null) continue;
+                Vector3 d = transform.position - (stalkers[i].position + Vector3.up * 1.2f);
+                if (Mathf.Abs(d.y) < 1.4f && new Vector2(d.x, d.z).magnitude < 0.9f)
+                {
+                    nextStun = Time.time + 3f;
+                    hunt.SendCustomEvent("EvStun");
+                    break;
+                }
             }
         }
     }

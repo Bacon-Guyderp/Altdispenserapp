@@ -141,7 +141,7 @@ public class FirGag : UdonSharpBehaviour
     bool GameOn()
     {
         if (hunt == null) return false;
-        return (bool)hunt.GetProgramVariable("running") && (int)hunt.GetProgramVariable("stage") < 6;
+        return (bool)hunt.GetProgramVariable("live");
     }
 
     float S(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }

@@ -33,6 +33,8 @@ public class FirStalker : UdonSharpBehaviour
     public AudioSource voice;
     public AudioClip stunClip, wakeClip;
     public float baseSpeed = 1.3f, speedPerRoom = 0.18f, viewAngle = 40f, viewDistance = 20f;
+    public float areaMinX = -9.5f, areaMaxX = 9.5f;   // its game's rooms (players outside are ignored)
+    public int wakeStage;              // a second tree stays hidden until the game reaches this room
 
     float stunUntil, waitUntil, nextThink, nextSend;
     int lastRound = -1, lastStage = -1;
@@ -58,11 +60,12 @@ public class FirStalker : UdonSharpBehaviour
     public void Refresh()
     {
         Init();
-        if (body != null) body.SetActive(active || won);
+        bool awake = (active && stage >= wakeStage) || won;
+        if (body != null) body.SetActive(awake);
         bool owner = Networking.IsOwner(gameObject);
         if (won) { if (owner && furnace != null) Place(furnace.position, furnace.eulerAngles.y); }
-        else if (active && round != lastRound) { if (owner) Place(Lair(0), 0f); waitUntil = Time.time + 20f; }
-        else if (active && stage > lastStage) { if (owner) Place(Lair(stage), 0f); waitUntil = Time.time + 8f; if (voice != null && wakeClip != null) voice.PlayOneShot(wakeClip, 0.8f); }
+        else if (active && round != lastRound) { if (owner) Place(Lair(stage), 0f); waitUntil = Time.time + 20f; }
+        else if (active && stage > lastStage && stage >= wakeStage) { if (owner) Place(Lair(stage), 0f); waitUntil = Time.time + 8f; if (voice != null && wakeClip != null) voice.PlayOneShot(wakeClip, 0.8f); }
         lastRound = active || won ? round : -1;
         lastStage = active || won ? stage : -1;
     }
@@ -140,7 +143,7 @@ public class FirStalker : UdonSharpBehaviour
 
     void Think()
     {
-        if (!active || won) return;
+        if (!active || won || stage < wakeStage) return;
         if (Time.time >= nextThink)
         {
             nextThink = Time.time + 0.1f;
@@ -156,7 +159,7 @@ public class FirStalker : UdonSharpBehaviour
                 VRCPlayerApi p = players[i];
                 if (!Utilities.IsValid(p)) continue;
                 Vector3 pp = p.GetPosition();
-                if (Mathf.Abs(pp.x) > 9.5f || RoomOf(pp.z) < 0 || RoomOf(pp.z) > stage) continue;   // not in the map (lobby, Bonetown)   // in the lobby (safe), or somewhere it can't go
+                if (pp.x < areaMinX || pp.x > areaMaxX || RoomOf(pp.z) < 0 || RoomOf(pp.z) > stage) continue;   // not in its game's rooms   // in the lobby (safe), or somewhere it can't go
                 Vector3 flat = pp - transform.position;
                 flat.y = 0f;
                 if (flat.magnitude < best) { best = flat.magnitude; target = pp; hasTarget = true; }

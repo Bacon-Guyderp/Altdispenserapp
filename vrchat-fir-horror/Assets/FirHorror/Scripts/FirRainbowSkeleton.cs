@@ -199,6 +199,97 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
             Apply(0, 0, 0, 0.03f * st, -12f * st + 5f * pat, -20f * st, 0, 0, -170f * st - 30f * pat, -15f * st, -170f * st - 40f * pat, 15f * st,
                   -20f * st - 90f * pat, 0, -20f * st - 90f * pat + 15f * p * pat, 0, 0, 0);
         }
+        else if (act == 18)    // twirl: two spins with its arms out, like a music-box dancer
+        {
+            float k = Ramp(t, 0.1f, 0.4f, L - 0.6f, L - 0.3f);
+            float spin = S(Mathf.Clamp01((t - 0.3f) / Mathf.Max(0.5f, L - 1.2f)));
+            Apply(0, 0, 720f * spin, 0.04f * Mathf.Abs(Mathf.Sin(t * 6f)) * k, 0, -10f * k, 0, 8f * Mathf.Sin(t * 3f) * k,
+                  -20f * k, -80f * k, -20f * k, 80f * k, -20f * k, 0, -20f * k, 0, 0, -30f * k);
+        }
+        else if (act == 19)    // lunge: BOO! a quick step at you, claws up, then it straightens up, a bit sheepish
+        {
+            float lunge = Ramp(t, 0.2f, 0.35f, 1.6f, 2.1f);
+            float sorry = Ramp(t, 2.1f, 2.4f, L - 0.6f, L - 0.3f);
+            Apply(0, 0.35f * lunge, 0, -0.06f * lunge, 18f * lunge + 8f * sorry, 15f * lunge + 15f * sorry, 0, 10f * sorry,
+                  -150f * lunge - 30f * sorry, -15f * lunge, -150f * lunge - 30f * sorry, 15f * lunge, -45f * lunge - 90f * sorry, 0, -45f * lunge - 90f * sorry, 0, -25f * lunge, 15f * lunge);
+        }
+        else if (act == 20)    // salute, and a smart little march on the spot
+        {
+            float k = Ramp(t, 0.15f, 0.45f, L - 0.6f, L - 0.3f), m = Mathf.Sin(t * 6f);
+            Apply(0, 0, 0, 0.03f * Mathf.Abs(m) * k, -4f * k, -8f * k, 0, 0, 20f * m * k, 0, -130f * k, 45f * k, -15f * k, 0, -120f * k, 0, 30f * Mathf.Max(0f, m) * k, 30f * Mathf.Max(0f, -m) * k);
+        }
+        else if (act == 21)    // takes its own head off and holds it up for you, then pops it back on
+        {
+            float k = Ramp(t, 0.2f, 0.5f, L - 0.7f, L - 0.4f);
+            float lift = Ramp(t, 0.6f, 1.1f, L - 1.2f, L - 0.6f);
+            Apply(0, 0, 0, 0, -5f * k, 0, 0, 10f * Mathf.Sin(t * 4f) * lift, -150f * k, -10f * k, -150f * k, 10f * k, -40f * k, 0, -40f * k, 0, 0, 0);
+            pivots[2].localPosition = restPos[2] + new Vector3(0f, 0.38f * lift, 0.18f * lift);
+        }
+        else if (act == 22)    // moonwalk: glides backwards while its feet walk forwards
+        {
+            float k = Ramp(t, 0.1f, 0.4f, L - 0.6f, L - 0.3f), m = Mathf.Sin(t * 5f);
+            float slide = Mathf.Sin(Mathf.Clamp01(t / L) * Mathf.PI) * k;
+            Apply(0, -0.45f * slide, 0, 0.02f * Mathf.Abs(m) * k, -6f * k, -8f * k, 0, 0, 15f * m * k, -10f * k, -15f * m * k, 10f * k, -30f * k, 0, -30f * k, 0, 20f * Mathf.Max(0f, m) * k, 20f * Mathf.Max(0f, -m) * k);
+        }
+        else if (act == 23)    // jumping jacks
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.5f, L - 0.2f), j = Mathf.Abs(Mathf.Sin(t * 6f)), o = 0.5f + 0.5f * Mathf.Sin(t * 12f - 1.5f);
+            Apply(0, 0, 0, 0.12f * j * k, 0, 0, 0, 0, 0, -170f * o * k, 0, 170f * o * k, 0, 0, 0, 0, 0, 0);
+            pivots[7].localRotation = restRot[7] * Quaternion.Euler(0, 0, -18f * o * k);
+            pivots[8].localRotation = restRot[8] * Quaternion.Euler(0, 0, 18f * o * k);
+        }
+        else if (act == 24)    // head spin: its skull goes round and round (and round)
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.6f, L - 0.3f);
+            float spin = S(Mathf.Clamp01((t - 0.3f) / Mathf.Max(0.5f, L - 1.0f)));
+            Apply(0, 0, 0, 0, 0, 0, 1080f * spin, 0, -40f * k, -50f * k, -40f * k, 50f * k, -90f * k, 0, -90f * k, 0, 0, 0);
+        }
+        else if (act == 25)    // robot dance: stiff, jerky, one beat at a time
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.5f, L - 0.2f);
+            int beat = (int)(t * 3f) % 4;
+            float a1 = beat == 0 ? 1f : 0f, a2 = beat == 1 ? 1f : 0f, a3 = beat == 2 ? 1f : 0f, a4 = beat == 3 ? 1f : 0f;
+            Apply(0, 0, (20f * a2 - 20f * a4) * k, 0, 0, 0, (30f * a1 - 30f * a3) * k, 0, -90f * (a1 + a3) * k, 0, -90f * (a2 + a4) * k, 0,
+                  -90f * a1 * k, 0, 90f * a2 * k - 90f * a4 * k, 0, 0, 0);
+        }
+        else if (act == 26)    // a deep, grand bow with a sweep of the arm
+        {
+            float b = Ramp(t, 0.4f, 1.0f, L - 1.0f, L - 0.4f);
+            Apply(0, 0, 0, -0.04f * b, 55f * b, 20f * b, 0, 0, 20f * b, -20f * b, -100f * b + 60f * b * Mathf.Clamp01(t - 1.0f), 30f * b, -30f * b, 0, -40f * b, 0, -10f * b, 15f * b);
+        }
+        else if (act == 27)    // air guitar, with a big finish
+        {
+            float k = Ramp(t, 0.1f, 0.4f, L - 0.6f, L - 0.3f), strum = Mathf.Sin(t * 18f), nod = Mathf.Sin(t * 8f);
+            Apply(0, 0, 15f * k, 0.02f * Mathf.Abs(nod) * k, 12f * k, 18f * nod * k, 0, 0, -50f * k, -35f * k, -40f * k, 20f * k, -110f * k, 0, -60f * k + 30f * strum * k, 0, -25f * k, 10f * k);
+        }
+        else if (act == 28)    // the chicken dance: elbows flapping, bobbing
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.5f, L - 0.2f), f = Mathf.Abs(Mathf.Sin(t * 10f)), b = Mathf.Sin(t * 5f);
+            Apply(0, 0, 0, 0.04f * Mathf.Abs(b) * k, 10f * k, -10f * b * k, 0, 15f * b * k, -10f * k, -50f * f * k, -10f * k, 50f * f * k, -130f * k, 0, -130f * k, 0, -20f * Mathf.Max(0f, b) * k, -20f * Mathf.Max(0f, -b) * k);
+        }
+        else if (act == 29)    // rattle: shivers so hard its bones chatter
+        {
+            float k = Ramp(t, 0.1f, 0.2f, L - 0.5f, L - 0.2f), r = Mathf.Sin(t * 55f), q = Mathf.Sin(t * 47f);
+            Apply(0.015f * r * k, 0.01f * q * k, 4f * q * k, 0.01f * Mathf.Abs(r) * k, 6f * k + 3f * r * k, 5f * q * k, 4f * r * k, 4f * q * k,
+                  -60f * k + 6f * r * k, -30f * k, -60f * k - 6f * r * k, 30f * k, -120f * k, 0, -120f * k, 0, 4f * r * k, -4f * r * k);
+        }
+        else if (act == 30)    // peekaboo: hides its face behind its hands, then BOO!
+        {
+            float hide = Ramp(t, 0.2f, 0.5f, 1.5f, 1.65f);
+            float boo = Ramp(t, 1.6f, 1.75f, L - 0.6f, L - 0.3f);
+            Apply(0, 0.12f * boo, 0, 0, -8f * hide + 10f * boo, -15f * hide, 0, 0, -110f * hide - 140f * boo, -10f * hide - 40f * boo, -110f * hide - 140f * boo, 10f * hide + 40f * boo,
+                  -100f * hide, 0, -100f * hide, 0, 0, 0);
+        }
+        else if (act == 31)    // the can-can: high kicks, left, right, left
+        {
+            float k = Ramp(t, 0.1f, 0.3f, L - 0.5f, L - 0.2f), kick = Mathf.Sin(t * 7f);
+            Apply(0, 0, 0, 0.03f * Mathf.Abs(kick) * k, -8f * k, 0, 0, 10f * kick * k, 0, -60f * k, 0, 60f * k, 0, 0, 0, 0, -95f * Mathf.Max(0f, kick) * k, -95f * Mathf.Max(0f, -kick) * k);
+        }
+        else if (act == 32)    // limbo: leans back, further, further... and wobbles back up
+        {
+            float l = Ramp(t, 0.3f, 1.4f, L - 1.0f, L - 0.3f), w = Mathf.Sin(t * 9f) * l;
+            Apply(0, -0.1f * l, 0, -0.35f * l, -45f * l + 3f * w, -20f * l, 0, 0, -80f * l, -60f * l, -80f * l, 60f * l, 0, 0, 0, 0, -60f * l, -60f * l);
+        }
         else                   // white: a lazy shrug ("A skeleton.")
         {
             float k = Ramp(t, 0.2f, 0.5f, L - 0.7f, L - 0.4f);

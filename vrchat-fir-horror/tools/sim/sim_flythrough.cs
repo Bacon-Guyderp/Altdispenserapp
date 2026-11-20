@@ -129,10 +129,14 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(-7.2f, 0.95f, -84.3f), new Vector3(-7.2f, 0.75f, -82.9f), 1.2f);   // 0: a baby from the stage side
-    Cam(new Vector3(-7.2f, 1.1f, -81.3f), new Vector3(-7.2f, 0.75f, -82.9f), 1.2f);    // 1: the same baby from behind its seat
-    Cam(new Vector3(-0.7f, 2.0f, -93.0f), new Vector3(-0.7f, 2.0f, -95.5f), 1.2f);     // 2: a stage skeleton from the audience side
-    Cam(new Vector3(0f, 1.6f, -35.8f), new Vector3(0f, 1.6f, -38.3f), 1.2f);           // 3: rainbow skeleton from the doorway side
+    Cam(new Vector3(3f, 1.7f, 1f), new Vector3(7f, 1.6f, -2f), 1.2f);              // 0: the lobby's east doorway
+    Cam(new Vector3(17f, 1.7f, -6f), new Vector3(24f, 1.6f, 2f), 1.2f);            // 1: the potting shed
+    var start = All<FirHuntButton>(A).Where(b => b.action == 1).ToList()[1];
+    Sim.Press(A, start); Sim.Run(0.5f); A.player.pos = new Vector3(22f, 0.05f, -2f);
+    Cam(new Vector3(22f, 1.7f, -10f), new Vector3(22f, 1.3f, -24f), 1.2f);         // 2: the greenhouse (game on)
+    Cam(new Vector3(22f, 1.8f, -28f), new Vector3(22f, 1.2f, -42f), 1.2f);         // 3: the sawmill
+    Cam(new Vector3(19f, 1.7f, -84f), new Vector3(18f, 1.2f, -95f), 1.2f);         // 4: the woodchipper
+    Cam(new Vector3(0f, 1.6f, -10.5f), new Vector3(-6f, 1.2f, -12f), 1.2f);        // 5: new skeletons in the Gift Wrap Hall
   }
 
   static void MapTour() {

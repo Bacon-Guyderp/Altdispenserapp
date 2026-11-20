@@ -83,7 +83,13 @@ public static class FirCheckBuilder
         DoorFrameX(lobby, -7.0f, 4.0f);
         Text("TownDoorSign", lobby, new Vector3(-6.98f, 3.25f, 4.0f), Face(Vector3.right), new Vector2(2.6f, 0.5f), 0.2f,
              "<b>BONETOWN</b>\n<size=70%>the expansion: skeletons live here</size>").color = new Color(1f, 0.85f, 0.4f);
-        Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));
+        // the east wall has a doorway (z -3.2 to -0.8) through to the Root Cellar, the horror expansion
+        Box(lobby, "WallE S", new Vector3(7.1f, 1.8f, -4.7f), new Vector3(0.2f, 3.6f, 3.0f), M("Wall"));
+        Box(lobby, "WallE N", new Vector3(7.1f, 1.8f, 2.7f), new Vector3(0.2f, 3.6f, 7.0f), M("Wall"));
+        Box(lobby, "WallE Top", new Vector3(7.1f, 3.2f, -2.0f), new Vector3(0.2f, 0.8f, 2.4f), M("Wall"));
+        DoorFrameX(lobby, 7.0f, -2.0f);
+        Text("CellarDoorSign", lobby, new Vector3(6.98f, 3.25f, -2.0f), Face(Vector3.left), new Vector2(2.6f, 0.5f), 0.2f,
+             "<b>THE ROOT CELLAR</b>\n<size=70%>the horror expansion</size>").color = new Color(0.9f, 0.3f, 0.25f);
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
         // ---- the test room (teleport target), far from the lobby
         var room = Group(root, "TestRoom", new Vector3(40, 0, 0));
@@ -187,6 +193,7 @@ public static class FirCheckBuilder
         BuildMap(root, spawn);
         BuildHunt(root, lobby, spawn);
         BuildTown(root);
+        BuildCellar(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -540,6 +547,7 @@ public static class FirCheckBuilder
         int[] skelRoom = { 0, 0, 0, 2, 2, 2, 3, 3, 5, 5, 5, 5 };
         BuildSkeletonRoutines(map, slots, skelRoom);
         BuildGags(map, slots, gagRoom, rooms.Select(r => r.w).ToArray());
+        BuildMapSkeletons(map, slots);
 
         // ---- room furnishings
         GiftWrapHall(rt[0]);
@@ -1873,7 +1881,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker" };
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -1972,6 +1980,387 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== the Root Cellar (horror expansion), east of the lobby
+
+    static readonly float CX = 22f;   // the cellar's rooms are centred on x = 22
+    static readonly float[] CZ0 = { -8f, -26f, -44f, -62f, -78f };
+    static readonly float[] CZ1 = { -26f, -44f, -62f, -78f, -96f };
+    static readonly float[] CDoor = { 0f, 0f, 4f, -4f, 0f };   // each room's north doorway, local x
+
+    static void BuildCellar(Transform root)
+    {
+        // ---- the potting shed: the safe room with the cellar game's START (lit, outside the game)
+        var shed = Group(root, "Shed", new Vector3(CX, 0, 0));
+        Box(shed, "Floor", new Vector3(0, -0.1f, -3f), new Vector3(18f, 0.2f, 10f), M("Floor2"));
+        Box(shed, "Ceiling", new Vector3(0, 3.7f, -3f), new Vector3(18f, 0.2f, 10f), M("Ceiling"));
+        Box(shed, "WallN", new Vector3(0, 1.8f, 2.1f), new Vector3(18.4f, 3.6f, 0.2f), M("Wainscot"));
+        Box(shed, "WallE", new Vector3(9.1f, 1.8f, -3f), new Vector3(0.2f, 3.6f, 10.4f), M("Wainscot"));
+        Box(shed, "WallW S", new Vector3(-9.1f, 1.8f, -5.6f), new Vector3(0.2f, 3.6f, 4.8f), M("Wainscot"));
+        Box(shed, "WallW N", new Vector3(-9.1f, 1.8f, 0.6f), new Vector3(0.2f, 3.6f, 2.8f), M("Wainscot"));
+        Box(shed, "WallW Top", new Vector3(-9.1f, 3.2f, -2f), new Vector3(0.2f, 0.8f, 2.4f), M("Wainscot"));
+        // the corridor from the lobby's east doorway (z -3.2 to -0.8)
+        var cor = Group(root, "Cellar Corridor", Vector3.zero);
+        Box(cor, "Floor", new Vector3(10.1f, -0.1f, -2f), new Vector3(5.8f, 0.2f, 2.4f), M("Floor2"));
+        Box(cor, "Ceiling", new Vector3(10.1f, 3.1f, -2f), new Vector3(5.8f, 0.2f, 2.8f), M("Ceiling"));
+        Box(cor, "WallS", new Vector3(10.1f, 1.5f, -3.3f), new Vector3(5.8f, 3f, 0.2f), M("Wainscot"));
+        Box(cor, "WallN", new Vector3(10.1f, 1.5f, -0.7f), new Vector3(5.8f, 3f, 0.2f), M("Wainscot"));
+        PendantLamp(cor, new Vector3(10.1f, 3.0f, -2f), 0.45f);
+        Text("CorridorSign", cor, new Vector3(10.1f, 2.3f, -0.82f), Face(Vector3.back), new Vector2(4.6f, 0.4f), 0.2f, "<b>THE ROOT CELLAR</b> this way  >").color = new Color(0.9f, 0.3f, 0.25f);
+        PendantLamp(shed, new Vector3(-4f, 3.6f, -3f), 0.5f);
+        PendantLamp(shed, new Vector3(4f, 3.6f, -3f), 0.5f);
+        for (int k = 0; k < 6; k++)
+            DPrim(PrimitiveType.Cylinder, "Pot", shed, new Vector3(-7.5f + k * 0.55f, 0.2f, 1.6f), new Vector3(0.4f, 0.2f, 0.4f), M("Pot"));
+        Box(shed, "Shelf", new Vector3(-6f, 1.4f, 1.85f), new Vector3(3.6f, 0.05f, 0.4f), M("DeskWood"), false);
+        for (int k = 0; k < 5; k++)
+            DPrim(PrimitiveType.Cylinder, "Jar", shed, new Vector3(-7.4f + k * 0.7f, 1.6f, 1.85f), new Vector3(0.2f, 0.15f, 0.2f), M("Water"));
+        // the story, the status board, START and RESET on the north wall
+        var nb = Vector3.back;
+        Box(shed, "StartBoard", new Vector3(2.2f, 1.85f, 1.995f), new Vector3(8.6f, 3.0f, 0.01f), M("Board"));
+        Text("Title", shed, new Vector3(2.2f, 3.0f, 1.97f), Face(nb), new Vector2(8f, 0.6f), 0.45f, "<b>THE ROOT CELLAR</b>").color = new Color(0.9f, 0.25f, 0.2f);
+        Text("Story", shed, new Vector3(-0.3f, 1.65f, 1.97f), Face(nb), new Vector2(3.4f, 1.8f), 0.12f,
+             "Under the factory, the trees grew roots. The night shift went down there and never came up (they're still down there; they're fine; they're skeletons).\n\n" +
+             "<b>Two</b> trees hunt down here, the second wakes up halfway, and the lights don't stay on. Five rooms. The way out is the woodchipper.").color = Color.white;
+        cellarHunt = null;
+        var hg = Group(root, "Cellar Hunt", new Vector3(CX, 1.5f, -3f));
+        var h2 = Add<FirHunt>(hg.gameObject);
+        cellarHunt = h2;
+        h2.lobbyBoard = Text("Status", shed, new Vector3(3.9f, 2.2f, 1.97f), Face(nb), new Vector2(3.6f, 0.7f), 0.13f, "");
+        h2.lobbyBoard.color = Color.white;
+        int b0 = huntButtons.Count, s0 = scares.Count, o0 = huntOnly.Count;
+        HB(shed, "START", new Vector3(3.9f, 1.3f, 1.9f), nb, new Vector3(1.4f, 0.5f, 0.12f), M("ButtonGold"), 1, 0, "Start the Root Cellar (or join it)", "<b>START</b>", 0.28f, true);
+        HB(shed, "RESET", new Vector3(3.9f, 0.7f, 1.9f), nb, new Vector3(0.8f, 0.3f, 0.12f), M("Button"), 2, 0, "End the Root Cellar game", "<b>RESET</b>", 0.14f, true);
+        Text("Players", shed, new Vector3(3.9f, 0.4f, 1.97f), Face(nb), new Vector2(3.4f, 0.25f), 0.1f, "best with 2 players  -  harder than the first game").color = new Color(0.75f, 0.75f, 0.75f);
+
+        // ---- the five rooms
+        var cel = Group(root, "Cellar", new Vector3(CX, 0, 0));
+        var rooms = new[] {
+            new { name = "THE GREENHOUSE", h = 4.0f, floor = "Concrete", wall = "WallGreen" },
+            new { name = "THE SAWMILL", h = 4.5f, floor = "Floor2", wall = "BrickWall" },
+            new { name = "THE TOOL ROOM", h = 3.6f, floor = "Floor2", wall = "WallDark" },
+            new { name = "THE GENERATOR", h = 3.4f, floor = "Concrete", wall = "Concrete" },
+            new { name = "THE WOODCHIPPER", h = 4.5f, floor = "Concrete", wall = "BrickWall" } };
+        float w = 18f;
+        for (int i = 0; i < 5; i++)
+        {
+            var r = rooms[i];
+            float z0 = CZ0[i], z1 = CZ1[i], len = z0 - z1, zc = (z0 + z1) / 2f;
+            var g = Group(cel, r.name, Vector3.zero);
+            Box(g, "Floor", new Vector3(0, -0.1f, zc), new Vector3(w, 0.2f, len), M(r.floor));
+            Box(g, "Ceiling", new Vector3(0, r.h + 0.1f, zc), new Vector3(w, 0.2f, len), M("Ceiling"));
+            Box(g, "WallW", new Vector3(-w / 2 - 0.1f, r.h / 2, zc), new Vector3(0.2f, r.h, len), M(r.wall));
+            Box(g, "WallE", new Vector3(w / 2 + 0.1f, r.h / 2, zc), new Vector3(0.2f, r.h, len), M(r.wall));
+            DoorWall(g, "WallN", z0 - 0.1f, w + 0.4f, Mathf.Max(r.h, i == 0 ? 3.6f : rooms[i - 1].h), M(r.wall), CDoor[i]);
+            if (i == 4) Box(g, "WallS", new Vector3(0, r.h / 2, z1 - 0.1f), new Vector3(w + 0.4f, r.h, 0.2f), M(r.wall));
+            DoorFrame(g, CDoor[i], z0 - 0.1f);
+            Text("RoomName", g, new Vector3(CDoor[i], 3.12f, z0 + 0.03f), Face(Vector3.forward), new Vector2(4.5f, 0.4f), 0.24f, "<b>" + r.name + "</b>").color = new Color(0.9f, 0.3f, 0.25f);
+            // roots: thick, twisted, across the ceiling and down the walls
+            for (int k = 0; k < (int)(len / 3f); k++)
+            {
+                float rz = z0 - 1.5f - k * 3f, rx = Mathf.Sin(k * 2.3f + i) * 5f;
+                DPrim(PrimitiveType.Cylinder, "Root", g, new Vector3(rx, r.h - 0.15f, rz), new Vector3(0.22f, w / 2.2f, 0.22f), M("Trunk"), Quaternion.Euler(0, k * 37f + i * 20f, 90));
+                DPrim(PrimitiveType.Cylinder, "Root", g, new Vector3(k % 2 == 0 ? -w / 2 + 0.12f : w / 2 - 0.12f, r.h / 2, rz + 1f), new Vector3(0.16f, r.h / 2, 0.16f), M("Trunk"), Quaternion.Euler(8f * Mathf.Sin(k), 0, 6f * Mathf.Cos(k)));
+            }
+            PendantLamp(g, new Vector3(0, r.h, zc + len / 4f), 0.6f);
+            PendantLamp(g, new Vector3(0, r.h, zc - len / 4f), 0.6f);
+        }
+
+        // ---- the game: doors, checkpoints, boards
+        h2.sfx = Src(hg, Vector3.zero, null, false, 0f, 1f, 5f, false);
+        h2.heartbeat = Src(hg, Vector3.zero, Clip("heartbeat"), true, 0f, 0f, 5f, false);
+        h2.ambient = Src(hg, Vector3.zero, null, false, 1f, 0.9f, 14f, false);
+        h2.ambientClips = new[] { Clip("whisper"), Clip("rustle"), Clip("tree_laugh"), Clip("servo"), Clip("static"), Clip("music_box_broken"), Clip("creak"), Clip("door_bang") };
+        h2.startClip = Clip("door_bang"); h2.unlockClip = Clip("unlock"); h2.wrongClip = Clip("wrong"); h2.pickupClip = Clip("pickup");
+        h2.switchClip = Clip("switch"); h2.endingClip = Clip("ending"); h2.screamClip = Clip("scream3"); h2.stunClip = Clip("toilet_flush");
+        h2.scareFace = ScareFace(hg);
+        h2.checkpoints = new Transform[5];
+        for (int r = 0; r < 5; r++) h2.checkpoints[r] = Marker(cel, "Checkpoint " + r, new Vector3(CDoor[r], 0.05f, CZ0[r] - 1.6f), 180f);
+        var doors = new GameObject[5];
+        for (int r = 1; r < 5; r++) doors[r] = LockedDoor(cel, "Door " + r, new Vector3(CDoor[r], 0, CZ0[r] - 0.1f));
+        h2.doors = doors;
+        h2.roomBoards = new TextMeshPro[5];
+        for (int r = 0; r < 5; r++)
+        {
+            float bx = CDoor[r] - 3.3f, bz = CZ0[r] - 0.12f;
+            Box(cel, "TaskBoard " + r, new Vector3(bx, 1.95f, bz - 0.02f), new Vector3(2.5f, 1.25f, 0.03f), M("Board"), false);
+            var t = Text("TaskText " + r, cel, new Vector3(bx, 1.95f, bz - 0.04f), Face(Vector3.back), new Vector2(2.35f, 1.15f), 0.14f, "");
+            t.color = Color.white;
+            h2.roomBoards[r] = t;
+        }
+        var items = new List<GameObject>(); var done = new List<GameObject>(); var itemRoom = new List<int>();
+        Func<int, string, Vector3, Vector3, FirHuntButton> Item = (room, name, pos, normal) =>
+        {
+            var b = HB(cel, name, pos, normal, new Vector3(0.32f, 0.32f, 0.32f), null, 3, items.Count, "Pick up the " + name.ToLower(), null);
+            items.Add(b.gameObject); done.Add(null); itemRoom.Add(room);
+            return b;
+        };
+
+        // ---- room 1, the Greenhouse: 4 seed packets, then the big pot
+        foreach (float bx in new[] { -4f, 4f })
+        {
+            Box(cel, "PlantBed", new Vector3(bx, 0.3f, -17f), new Vector3(1.6f, 0.6f, 12f), M("DeskWood"));
+            for (int k = 0; k < 7; k++)
+                DPrim(PrimitiveType.Sphere, "Plant", cel, new Vector3(bx + Mathf.Sin(k * 1.7f) * 0.3f, 0.75f, -11.8f - k * 1.7f), new Vector3(0.6f, 0.5f + 0.1f * (k % 3), 0.6f), M("Hedge"));
+        }
+        Box(cel, "WallShelf", new Vector3(8.75f, 1.75f, -11f), new Vector3(0.5f, 0.05f, 1.4f), M("DeskWood"), false);
+        var seeds = new[] { new Vector3(-4.6f, 0.75f, -14.2f), new Vector3(4.5f, 0.75f, -21.3f), new Vector3(-7.8f, 0.1f, -24.6f), new Vector3(8.7f, 1.9f, -11f) };
+        foreach (var p in seeds)
+        {
+            var b = Item(0, "Seed packet", p, Vector3.forward);
+            Prim(PrimitiveType.Cube, "Packet", b.transform, Vector3.zero, new Vector3(0.18f, 0.24f, 0.02f), M("GlowYellow"));
+            Prim(PrimitiveType.Cube, "Stripe", b.transform, new Vector3(0, -0.04f, -0.011f), new Vector3(0.18f, 0.06f, 0.005f), M("GlowGreen"));
+        }
+        var pot = HB(cel, "Big pot", new Vector3(2.6f, 0.55f, -25.4f), Vector3.forward, new Vector3(1.2f, 1.1f, 1.0f), null, 4, 0, "Plant the seeds", null);
+        Prim(PrimitiveType.Cylinder, "Pot", pot.transform, new Vector3(0, -0.15f, 0), new Vector3(1.1f, 0.4f, 1.1f), M("Pot"));
+        Text("PotSign", cel, new Vector3(2.6f, 1.5f, -25.85f), Face(Vector3.forward), new Vector2(2f, 0.4f), 0.13f, "<b>THE BIG POT</b>\n<size=75%>plant 4 seeds to open the door</size>").color = new Color(1f, 0.85f, 0.4f);
+        var sprout = Group(cel, "Sprouted", new Vector3(2.6f, 0.4f, -25.4f));
+        TreeAt(sprout, "Sapling", new Vector3(0, 0.3f, 0), 0f, 1.0f, false);
+
+        // ---- room 2, the Sawmill: numbers carved in the stumps (red, yellow, green, blue), saw blades on the walls
+        var stumps = new[] { new Vector3(-6f, 0, -30f), new Vector3(6f, 0, -33f), new Vector3(-5f, 0, -40f), new Vector3(5.5f, 0, -41f) };
+        Color[] cc = { new Color(1f, 0.19f, 0.19f), new Color(1f, 0.88f, 0.19f), new Color(0.25f, 1f, 0.31f), new Color(0.25f, 0.5f, 1f) };
+        h2.rainbowDigits = new TextMeshPro[4];
+        for (int k = 0; k < 4; k++)
+        {
+            Box(cel, "Stump", stumps[k] + new Vector3(0, 0.35f, 0), new Vector3(0.9f, 0.7f, 0.9f), M("Trunk"));
+            var t = Text("Carved " + k, cel, stumps[k] + new Vector3(0, 0.72f, 0), Quaternion.LookRotation(Vector3.down, Vector3.forward), new Vector2(0.6f, 0.6f), 0.45f, "?");
+            t.color = cc[k];
+            h2.rainbowDigits[k] = t;
+            huntOnly.Add(t.gameObject);
+        }
+        int blades = 0;
+        foreach (var bp in new[] { new Vector3(-8.95f, 2.6f, -29f), new Vector3(-8.95f, 2.6f, -33.5f), new Vector3(-8.95f, 2.6f, -38f), new Vector3(-8.95f, 2.6f, -42.2f),
+                                   new Vector3(8.95f, 2.6f, -30f), new Vector3(8.95f, 2.6f, -35f), new Vector3(8.95f, 2.6f, -39.5f) })
+        {
+            DPrim(PrimitiveType.Cylinder, "SawBlade", cel, bp, new Vector3(0.9f, 0.01f, 0.9f), M("Metal"), Quaternion.Euler(0, 0, 90));
+            DPrim(PrimitiveType.Cylinder, "Hub", cel, bp + new Vector3(bp.x < 0 ? 0.02f : -0.02f, 0, 0), new Vector3(0.18f, 0.012f, 0.18f), M("Black"), Quaternion.Euler(0, 0, 90));
+            blades++;
+        }
+        Box(cel, "LogPile", new Vector3(0, 0.3f, -36.5f), new Vector3(2.2f, 0.6f, 1.2f), M("Trunk"));
+        Text("SawSign", cel, new Vector3(-3.3f, 2.9f, -26.14f), Face(Vector3.back), new Vector2(2.4f, 0.3f), 0.12f, "<b>SAFETY FIRST</b> (we stopped counting at day 0)").color = new Color(1f, 0.85f, 0.4f);
+        h2.rainbowDisplay = Keypad(cel, "Sawmill keypad", new Vector3(1.2f, 1.35f, -43.86f), Vector3.forward, 1);
+
+        // ---- room 3, the Tool Room: notes give the order of 4 tools; the tool lock by the exit (x -4)
+        h2.toyNames = new[] { "HAMMER", "SAW", "DRILL", "WRENCH", "AXE" };
+        var lockG = Group(cel, "Tool lock", new Vector3(-0.2f, 1.35f, -61.86f));
+        lockG.localRotation = Face(Vector3.forward);
+        Box(lockG, "Backing", new Vector3(0, 0.1f, 0.03f), new Vector3(2.3f, 0.9f, 0.03f), M("Board"), false);
+        Text("Title", lockG, new Vector3(0, 0.42f, -0.02f), Quaternion.identity, new Vector2(2.1f, 0.2f), 0.11f, "<b>THE TOOL LOCK</b>  press the tools in order").color = Color.white;
+        h2.toyDisplay = Text("Display", lockG, new Vector3(0, 0.24f, -0.02f), Quaternion.identity, new Vector2(1.5f, 0.2f), 0.16f, "* * * *");
+        h2.toyDisplay.color = Color.white;
+        for (int k = 0; k < 5; k++)
+            HB(lockG, "Tool " + h2.toyNames[k], new Vector3(-0.84f + k * 0.42f, -0.08f, 0f), Vector3.back, new Vector3(0.36f, 0.36f, 0.06f), M("ButtonGold"), 6, 200 + k,
+               "Press the " + h2.toyNames[k].ToLower(), "<b>" + h2.toyNames[k] + "</b>", 0.07f, true);
+        Box(cel, "Workbench", new Vector3(-3f, 0.45f, -58.5f), new Vector3(2.0f, 0.9f, 0.8f), M("DeskWood"));
+        var noteSpots = new[] {
+            new { p = new Vector3(-8.93f, 1.5f, -48f), n = Vector3.right },
+            new { p = new Vector3(8.93f, 1.5f, -55f), n = Vector3.left },
+            new { p = new Vector3(-3f, 1.12f, -58.08f), n = Vector3.forward },
+            new { p = new Vector3(2.6f, 2.2f, -44.13f), n = Vector3.back } };
+        h2.toyNotes = new TextMeshPro[4];
+        for (int k = 0; k < 4; k++)
+        {
+            var ng = Group(cel, "Note " + k, noteSpots[k].p);
+            ng.localRotation = Face(noteSpots[k].n);
+            Prim(PrimitiveType.Cube, "Paper", ng, new Vector3(0, 0, 0.006f), new Vector3(0.34f, 0.26f, 0.01f), M("Paper"));
+            var t = Text("Text", ng, new Vector3(0, 0, -0.002f), Quaternion.identity, new Vector2(0.3f, 0.22f), 0.07f, "#?");
+            t.color = new Color(1f, 0.95f, 0.7f);
+            h2.toyNotes[k] = t;
+            huntOnly.Add(ng.gameObject);
+        }
+
+        // ---- room 4, the Generator: 3 fuses, then the fuse box
+        Box(cel, "Generator", new Vector3(2.5f, 0.7f, -70f), new Vector3(2f, 1.4f, 1.4f), M("Metal"));
+        DPrim(PrimitiveType.Cylinder, "Exhaust", cel, new Vector3(2.9f, 2.0f, -70f), new Vector3(0.25f, 0.6f, 0.25f), M("Black"));
+        Box(cel, "FuseShelf", new Vector3(-8.75f, 0.9f, -66f), new Vector3(0.5f, 0.05f, 1.2f), M("DeskWood"), false);
+        var fuses = new[] { new Vector3(-8.65f, 1.05f, -66f), new Vector3(7.0f, 0.1f, -76.5f), new Vector3(2.0f, 1.55f, -70f) };
+        foreach (var p in fuses)
+        {
+            var b = Item(3, "Fuse", p, Vector3.forward);
+            Prim(PrimitiveType.Cylinder, "Glass", b.transform, Vector3.zero, new Vector3(0.07f, 0.1f, 0.07f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+            foreach (float e in new[] { -0.11f, 0.11f }) Prim(PrimitiveType.Cylinder, "Cap", b.transform, new Vector3(e, 0, 0), new Vector3(0.08f, 0.02f, 0.08f), M("Brass")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        }
+        HB(cel, "Fuse box", new Vector3(2.4f, 1.35f, -77.86f), Vector3.forward, new Vector3(0.7f, 0.9f, 0.18f), M("Metal"), 4, 3, "Fix the fuse box",
+           "<b>FUSE BOX</b>\n<size=70%>3 fuses missing</size>");
+
+        // ---- room 5, the Woodchipper: the foreman's note, the keypad, the machine
+        var chip = Group(cel, "Woodchipper", new Vector3(-4f, 0, -94.6f));
+        Box(chip, "Body", new Vector3(0, 1.1f, 0), new Vector3(3f, 2.2f, 2f), M("CaneRed"));
+        Box(chip, "Hopper", new Vector3(0, 2.4f, 0.6f), new Vector3(2.2f, 0.6f, 1.0f), M("Metal"), false);
+        Prim(PrimitiveType.Cube, "Mouth", chip, new Vector3(0, 1.4f, 1.02f), new Vector3(1.6f, 0.9f, 0.02f), M("Black"));
+        var roar = Prim(PrimitiveType.Cube, "Roar", chip, new Vector3(0, 1.4f, 1.04f), new Vector3(1.5f, 0.85f, 0.02f), M("GlowOrange"));
+        Text("ChipperSign", chip, new Vector3(0, 2.45f, 1.12f), Face(Vector3.forward), new Vector2(2.6f, 0.3f), 0.17f, "<b>THE WOODCHIPPER</b>").color = Color.white;
+        int crew = 0;
+        Box(cel, "NoteBoard", new Vector3(-8.97f, 1.6f, -86f), new Vector3(0.03f, 1.0f, 1.9f), M("Board"), false);
+        h2.talentDisplay = Keypad(cel, "Chipper keypad", new Vector3(2.7f, 1.35f, -95.86f), Vector3.forward, 4);
+        var win = Text("WinSign", cel, new Vector3(0, 3.2f, -95.95f), Face(Vector3.forward), new Vector2(8f, 0.6f), 0.4f, "<b>YOU ESCAPED THE CELLAR!</b>");
+        win.color = new Color(0.45f, 1f, 0.55f);
+        h2.stageShow = new[] { sprout.gameObject, roar, win.gameObject };
+        h2.stageShowAt = new[] { 1, 5, 5 };
+
+        // ---- the night shift: 12 skeletons (they're the code)
+        var shift = new[] {
+            new { who = "Moss", p = new Vector3(-7.8f, 0, -17f), yaw = 90f }, new { who = "Fern", p = new Vector3(7.8f, 0, -14f), yaw = -90f },
+            new { who = "Bark", p = new Vector3(-7.8f, 0, -36f), yaw = 90f }, new { who = "Steel", p = new Vector3(7.8f, 0, -37.5f), yaw = -90f },
+            new { who = "Pewter", p = new Vector3(-7.8f, 0, -31.5f), yaw = 90f },
+            new { who = "Midnight", p = new Vector3(-7.8f, 0, -51f), yaw = 90f }, new { who = "Charcoal", p = new Vector3(7.8f, 0, -50f), yaw = -90f },
+            new { who = "Mauve", p = new Vector3(7.8f, 0, -58.5f), yaw = -90f },
+            new { who = "Burgundy", p = new Vector3(-7.8f, 0, -72f), yaw = 90f }, new { who = "Chartreuse", p = new Vector3(7.8f, 0, -66.5f), yaw = -90f },
+            new { who = "Mocha", p = new Vector3(-7.8f, 0, -82f), yaw = 90f }, new { who = "Wine", p = new Vector3(7.8f, 0, -88f), yaw = -90f } };
+        foreach (var sk in shift) { ExtraSkeleton(cel, Extra40.First(x => x[0] == sk.who), sk.p, sk.yaw); crew++; }
+        h2.talentCode = crew.ToString() + blades.ToString();
+        Text("ForemanNote", cel, new Vector3(-8.94f, 1.6f, -86f), Face(Vector3.right), new Vector2(1.75f, 0.9f), 0.11f,
+             "<b>FOREMAN'S NOTE</b>\nThe chipper's code: how many skeletons work the night shift down here (all five rooms), then how many saw blades hang in the sawmill.").color = Color.white;
+
+        // ---- two trees
+        var stalkers = new List<FirStalker>();
+        foreach (var spec in new[] { new { name = "Cellar Stalker A", h = 2.6f, wake = 0, speed = 1.5f, lairX = 4.5f },
+                                     new { name = "Cellar Stalker B", h = 3.0f, wake = 2, speed = 1.35f, lairX = -5f } })
+        {
+            var sgo = new GameObject(spec.name);
+            sgo.transform.SetParent(cel, false);
+            sgo.transform.localPosition = new Vector3(spec.lairX, 0, -24f);
+            var st = Add<FirStalker>(sgo);
+            var body = Group(sgo.transform, "Body", Vector3.zero);
+            Transform smouth;
+            var shead = TreeModel(body, spec.h, spec.wake > 0, out smouth);
+            foreach (var r in body.GetComponentsInChildren<MeshRenderer>(true)) if (r.name.StartsWith("Pupil")) r.sharedMaterial = M("GlowRedEye");
+            st.body = body.gameObject; st.head = shead; st.mouth = smouth;
+            st.roomZ0 = CZ0; st.roomZ1 = CZ1; st.doorX = CDoor.Select(x => x + CX).ToArray();
+            st.areaMinX = CX - 9.5f; st.areaMaxX = CX + 9.5f;
+            st.wakeStage = spec.wake; st.baseSpeed = spec.speed; st.speedPerRoom = 0.22f;
+            st.lairs = Enumerable.Range(0, 5).Select(i => Marker(cel, spec.name + " lair " + i, new Vector3(spec.lairX, 0, CZ1[i] + 2.2f), 0f)).ToArray();
+            st.furnace = Marker(cel, spec.name + " in the chipper", new Vector3(-4f + (spec.wake > 0 ? 0.6f : -0.6f), 0, -94.0f), 0f);
+            st.voice = Src(sgo.transform, new Vector3(0, 1.8f, 0), null, false, 1f, 1f, 22f, false);
+            st.stunClip = Clip("toilet_clunk"); st.wakeClip = Clip("tree_laugh");
+            stalkers.Add(st);
+        }
+        h2.stalkers = stalkers.Select(x => UB(x)).ToArray();
+        h2.stalkerBodies = stalkers.Select(x => x.transform).ToArray();
+        h2.stalkerVisuals = stalkers.Select(x => x.body).ToArray();
+
+        // ---- toilets and jump scares
+        var tg = Group(cel, "Toilets", Vector3.zero);
+        foreach (var tp in new[] { new Vector3(-6.5f, 0, -9.5f), new Vector3(6.5f, 0, -24.8f), new Vector3(6.5f, 0, -27.5f), new Vector3(-6.5f, 0, -43f),
+                                   new Vector3(-6.5f, 0, -45.5f), new Vector3(6.5f, 0, -61f), new Vector3(6.5f, 0, -63.5f), new Vector3(-6.5f, 0, -77f),
+                                   new Vector3(6.5f, 0, -79.5f), new Vector3(-6.5f, 0, -91f) })
+            Toilet(tg, tp, tp.z * 31f);
+        var sc = Group(cel, "Scares", Vector3.zero);
+        ScareZone(sc, "Scare C0a", new Vector3(-8.4f, 0, -21f), 90f, 4.5f, "scream1");
+        ScareZone(sc, "Scare C0b", new Vector3(8.4f, 0, -19f), -90f, 4.5f, "scream3");
+        ScareZone(sc, "Scare C1a", new Vector3(-8.4f, 0, -41f), 90f, 5.5f, "scream2");
+        ScareZone(sc, "Scare C1b", new Vector3(8.4f, 0, -28.5f), -90f, 5.5f, "scream1");
+        ScareZone(sc, "Scare C2a", new Vector3(-8.4f, 0, -56f), 90f, 5.5f, "scream3");
+        ScareZone(sc, "Scare C2b", new Vector3(8.4f, 0, -46.5f), -90f, 4.5f, "scream2");
+        ScareZone(sc, "Scare C3a", new Vector3(-8.4f, 0, -67.5f), 90f, 5.5f, "scream1");
+        ScareZone(sc, "Scare C3b", new Vector3(8.4f, 0, -74f), -90f, 5.5f, "scream3");
+        ScareZone(sc, "Scare C4a", new Vector3(-8.4f, 0, -91.5f), 90f, 5.5f, "scream2");
+        ScareZone(sc, "Scare C4b", new Vector3(8.4f, 0, -80.5f), -90f, 5.5f, "scream1");
+
+        // ---- the game's shape
+        h2.items = items.ToArray(); h2.itemDone = done.ToArray(); h2.itemRoom = itemRoom.ToArray();
+        h2.rooms = 5;
+        h2.roomKind = new[] { 0, 1, 2, 0, 3 };
+        h2.boardTitles = new[] { "THE GREENHOUSE", "THE SAWMILL", "THE TOOL ROOM", "THE GENERATOR", "THE WOODCHIPPER" };
+        h2.boardTasks = new[] {
+            "Find the 4 seed packets, then plant them in the big pot by the exit.",
+            "Four numbers are carved into the stumps, glowing <color=#ff3030>red</color>, <color=#ffe030>yellow</color>, <color=#40ff50>green</color> and <color=#4080ff>blue</color>. Type them in that order on the exit keypad.",
+            "The night shift left 4 numbered notes. Press the tools on the exit panel in their order. A wrong tool starts you over.",
+            "Find the 3 fuses, then fix the fuse box by the exit.",
+            "Read the foreman's note (west wall), then type the code on the keypad by the woodchipper. Bring the trees close..." };
+        h2.winText = "The trees went into the woodchipper.";
+        h2.gameWhere = "the potting shed";
+        h2.areaMinX = CX - 9.5f; h2.areaMaxX = CX + 9.5f; h2.areaTopZ = -8.2f;
+        h2.flicker = true;
+        h2.huntOnly = huntOnly.Skip(o0).ToArray();
+        h2.freeOnly = new GameObject[0];
+        var me = UB(h2);
+        foreach (var b in huntButtons.Skip(b0)) b.hunt = me;
+        foreach (var g in scares.Skip(s0)) g.hunt = me;
+        report.Add("the Root Cellar: " + items.Count + " items, " + (huntButtons.Count - b0) + " buttons, 4 doors, " + (scares.Count - s0) + " jump scares, 2 trees, " +
+                   crew + " skeletons on the night shift; chipper code " + h2.talentCode + " (" + crew + " skeletons, " + blades + " saw blades)");
+    }
+
+    /// <summary>A locked door filling a 2.4 x 2.8 doorway, with LOCKED on both sides.</summary>
+    static GameObject LockedDoor(Transform parent, string name, Vector3 pos)
+    {
+        var d = Group(parent, name, pos);
+        Box(d, "Panel", new Vector3(0, 1.4f, 0), new Vector3(2.4f, 2.8f, 0.12f), M("DoorWood"));
+        for (int s = 0; s < 2; s++)
+        {
+            float zz = s == 0 ? 0.065f : -0.065f;
+            var n = s == 0 ? Vector3.forward : Vector3.back;
+            Prim(PrimitiveType.Cube, "Bar", d, new Vector3(0, 1.25f, zz), new Vector3(2.2f, 0.12f, 0.02f), M("Metal"));
+            Prim(PrimitiveType.Cube, "Lock", d, new Vector3(0, 1.25f, zz * 1.4f), new Vector3(0.22f, 0.28f, 0.06f), M("Brass"));
+            Text("Locked", d, new Vector3(0, 2.1f, zz * 1.2f), Face(n), new Vector2(2.2f, 0.5f), 0.2f,
+                 s == 0 ? "<b>LOCKED</b>\n<size=70%>solve the room to open it</size>" : "<b>LOCKED</b>\n<size=70%>solve this room's puzzle</size>").color = new Color(1f, 0.8f, 0.3f);
+        }
+        return d.gameObject;
+    }
+
+    /// <summary>The tree face that fills your view when you're caught (kept outside the dark rooms, so it stays bright).</summary>
+    static Transform ScareFace(Transform parent)
+    {
+        var face = Group(parent, "ScareFace", Vector3.zero);
+        Prim(PrimitiveType.Sphere, "Canopy", face, new Vector3(0, 0.05f, 0.35f), new Vector3(1.5f, 1.7f, 0.6f), M("ScareGreen"));
+        foreach (float sx in new[] { -0.2f, 0.2f })
+        {
+            Prim(PrimitiveType.Sphere, "Eye", face, new Vector3(sx, 0.17f, 0.04f), Vector3.one * 0.24f, M("Eye"));
+            Prim(PrimitiveType.Sphere, "Pupil", face, new Vector3(sx * 0.9f, 0.15f, -0.07f), Vector3.one * 0.11f, M("GlowRedEye"));
+        }
+        Prim(PrimitiveType.Sphere, "Mouth", face, new Vector3(0, -0.22f, 0.04f), new Vector3(0.55f, 0.32f, 0.14f), M("Mouth"));
+        Prim(PrimitiveType.Sphere, "Throat", face, new Vector3(0, -0.22f, 0.0f), new Vector3(0.42f, 0.22f, 0.1f), M("Black"));
+        for (int k = 0; k < 6; k++)
+            Prim(PrimitiveType.Cube, "Tooth", face, new Vector3(-0.15f + k * 0.06f, -0.13f, -0.02f), new Vector3(0.04f, 0.07f, 0.02f), M("Teeth"));
+        return face;
+    }
+
+    // =================================================================== the 40 new skeletons (Audio/Extra/xs_<name>.ogg)
+
+    // name, colour, act, where: 0/2/3/5 = that map room's free wall spots, L = lobby, B = Bonetown picnic, W = Bonetown wanderer, C = Root Cellar
+    static readonly string[][] Extra40 = {
+        new[] { "Ash", "#b2b2b2", "18", "0" }, new[] { "Slate", "#5a6a7a", "26", "0" }, new[] { "Rose", "#ff7090", "31", "0" },
+        new[] { "Saffron", "#f4c430", "20", "0" }, new[] { "Tangerine", "#ff8c1a", "30", "0" },
+        new[] { "Lemon", "#fff44f", "23", "2" }, new[] { "Sage", "#9caf88", "25", "2" }, new[] { "Seafoam", "#8fe3c8", "21", "2" },
+        new[] { "Aqua", "#30d5f0", "28", "2" }, new[] { "Sapphire", "#1f4fd0", "27", "2" },
+        new[] { "Periwinkle", "#8c9cff", "22", "3" }, new[] { "Orchid", "#da70d6", "32", "3" }, new[] { "Fuchsia", "#ff40c0", "24", "3" },
+        new[] { "Cherry", "#d2042d", "19", "5" }, new[] { "Maroon", "#800030", "29", "5" }, new[] { "Copper", "#c87533", "13", "5" },
+        new[] { "Bronze", "#cd7f32", "26", "5" }, new[] { "Caramel", "#c68e4a", "6", "5" },
+        new[] { "Frost", "#cfefff", "20", "L" }, new[] { "Holly", "#2e8b57", "18", "L" },
+        new[] { "Honey", "#ffc040", "28", "B" }, new[] { "Butter", "#fff0a0", "32", "B" }, new[] { "Jade", "#00a86b", "14", "B" }, new[] { "Blush", "#ffa0b0", "23", "B" },
+        new[] { "Pistachio", "#93c572", "0", "W" }, new[] { "Salmon", "#fa8072", "0", "W" }, new[] { "Apricot", "#ffb07c", "0", "W" }, new[] { "Lilac", "#c8a2c8", "0", "W" },
+        new[] { "Moss", "#6a8f3a", "25", "C" }, new[] { "Bark", "#7a5230", "29", "C" }, new[] { "Fern", "#4f9a4a", "30", "C" }, new[] { "Midnight", "#191970", "22", "C" },
+        new[] { "Steel", "#8a9aa8", "27", "C" }, new[] { "Pewter", "#96a8a1", "21", "C" }, new[] { "Charcoal", "#36454f", "19", "C" }, new[] { "Mauve", "#b784a7", "24", "C" },
+        new[] { "Burgundy", "#800020", "31", "C" }, new[] { "Mocha", "#8b5a3c", "11", "C" }, new[] { "Chartreuse", "#c8ff00", "14", "C" }, new[] { "Wine", "#722f37", "18", "C" } };
+
+    /// <summary>A free-standing gag skeleton facing yaw, with its name floating over its head.</summary>
+    static void ExtraSkeleton(Transform parent, string[] e, Vector3 pos, float yaw)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, e[0], pos, yaw, 1f, int.Parse(e[2]), e[1], "Extra/xs_" + e[0].ToLower(),
+                    new[] { BoneMat(e[0], e[1]) }, pos + new Vector3(0, 2.15f, 0) + face * 0.1f, face);
+    }
+
+    /// <summary>The 18 new skeletons that go in the original map's free wall spots.</summary>
+    static void BuildMapSkeletons(Transform map, Dictionary<int, List<Slot>[]> slots)
+    {
+        var g = Group(map, "New skeletons", Vector3.zero);
+        int placed = 0, want = 0;
+        var turns = new Dictionary<int, int>();
+        foreach (var e in Extra40)
+        {
+            if (!int.TryParse(e[3], out int room)) continue;
+            want++;
+            if (!turns.ContainsKey(room)) turns[room] = want % 2;
+            int turn = turns[room];
+            var sl = TakeSlots(slots[room], 1, ref turn);
+            turns[room] = turn;
+            if (sl == null) { report.Add("problem: no room left for the " + e[0] + " skeleton"); continue; }
+            ExtraSkeleton(g, e, sl.pos, sl.yaw);
+            placed++;
+        }
+        report.Add(placed + " of " + want + " new skeletons placed in the map");
     }
 
     // =================================================================== Bonetown (the expansion), west of the lobby
@@ -2135,22 +2524,26 @@ public static class FirCheckBuilder
             new { who = "Bubblegum", hex = "#ff8ad8", route = new[] { new Vector3(-17f, 0, -6.5f), new Vector3(-30f, 0, -7.5f), new Vector3(-41f, 0, -6f), new Vector3(-41f, 0, 14.5f), new Vector3(-30f, 0, 15f), new Vector3(-17f, 0, 14.5f) }, pace = new[] { 1f, 1f, 1f, 1f, 1f, 1f }, speed = 1.0f, head = 3000 } };
         var wg = Group(g, "Wanderers", Vector3.zero);
         foreach (var wd in wan)
+            MakeWanderer(wg, wd.who, wd.hex, wd.route, wd.pace, wd.speed, wd.head, "Town/wan_" + wd.who.ToLower(), TownLine("wan_" + wd.who.ToLower()));
+        // ---- four more wanderers and four picnickers (of the 40 new skeletons)
+        var extraWan = new[] {
+            new { who = "Pistachio", route = new[] { new Vector3(-16.5f, 0, 16.6f), new Vector3(-42.5f, 0, 16.6f) }, pace = new[] { 1f, 1f }, speed = 0.9f, head = 4000 },
+            new { who = "Salmon", route = new[] { new Vector3(-41f, 0, -8.4f), new Vector3(-15.5f, 0, -8.4f) }, pace = new[] { 1f, 1f }, speed = 1.0f, head = 12000 },
+            new { who = "Apricot", route = big, pace = new[] { 2.4f, 2.4f, 2.4f, 2.4f }, speed = 1.1f, head = 30000 },
+            new { who = "Lilac", route = sq, pace = new[] { 1f, 1f, 1f, 1f }, speed = 0.95f, head = 10000 } };
+        foreach (var wd in extraWan)
         {
-            var go = new GameObject(wd.who + " Wanderer");
-            go.transform.SetParent(wg, false);
-            go.transform.localPosition = wd.route[0];
-            var ps = SkeletonRig(go.transform, "Rig", BoneMat(wd.who, wd.hex));
-            var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.6f, 1.9f, 0.45f);
-            go.layer = 17;   // Walkthrough: you can press them, but they walk through you instead of shoving you
-            var wv = Add<FirWanderer>(go);
-            wv.pivots = ps; wv.route = wd.route; wv.pace = wd.pace; wv.walkSpeed = wd.speed; wv.headStartMs = wd.head;
-            var clip = Clip("Town/wan_" + wd.who.ToLower());
-            wv.voice = Src(ps[2], Vector3.zero, clip, false, 1f, 1f, 15f, false);
-            var line = TownLine("wan_" + wd.who.ToLower());
-            wv.line = "<b><color=" + wd.hex + ">" + wd.who.ToUpper() + ":</color></b> " + line;
-            wv.bubble = Bubble(go.transform, new Vector3(0, 2.3f, 0f));
-            wv.bubbleObject = wv.bubble.gameObject; wv.bubbleTransform = wv.bubble.transform;
-            SetInteract(wv, "Say hi to " + wd.who, 3f);
+            var e = Extra40.First(x => x[0] == wd.who);
+            MakeWanderer(wg, wd.who, e[1], wd.route, wd.pace, wd.speed, wd.head, "Extra/xs_" + wd.who.ToLower(), ExtraLine(wd.who));
+        }
+        var picnic = new[] { new { who = "Honey", p = new Vector3(-25.2f, 0, -0.4f) }, new { who = "Butter", p = new Vector3(-34.5f, 0, 0.0f) },
+                             new { who = "Jade", p = new Vector3(-25.2f, 0, 8.6f) }, new { who = "Blush", p = new Vector3(-34.6f, 0, 8.6f) } };
+        foreach (var pc in picnic)
+        {
+            var toFountain = new Vector3(-30f, 0, 4f) - pc.p;
+            float yaw = Mathf.Atan2(toFountain.x, toFountain.z) * Mathf.Rad2Deg;
+            Rug(g, pc.p + toFountain.normalized * 0.5f, new Vector2(1.4f, 1.4f), "GiftRed", "CaneWhite");
+            ExtraSkeleton(g, Extra40.First(x => x[0] == pc.who), pc.p, yaw);
         }
 
         // ---- the news ticker over the news desk
@@ -2188,7 +2581,36 @@ public static class FirCheckBuilder
                 placed++;
             }
         }
-        report.Add("Bonetown: " + homes.Length + " residents, " + band.Length + " in the band, " + wan.Length + " wanderers, 4 combo acts, " + placed + " gags");
+        report.Add("Bonetown: " + homes.Length + " residents, " + band.Length + " in the band, " + wan.Length + " wanderers, 4 combo acts, " + placed + " gags; plus 4 picnickers and 4 more wanderers");
+    }
+
+    static void MakeWanderer(Transform wg, string who, string hex, Vector3[] route, float[] pace, float speed, int head, string clipName, string line)
+    {
+        var go = new GameObject(who + " Wanderer");
+        go.transform.SetParent(wg, false);
+        go.transform.localPosition = route[0];
+        var ps = SkeletonRig(go.transform, "Rig", BoneMat(who, hex));
+        var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.95f, 0); col.size = new Vector3(0.6f, 1.9f, 0.45f);
+        go.layer = 17;   // Walkthrough: you can press them, but they walk through you instead of shoving you
+        var wv = Add<FirWanderer>(go);
+        wv.pivots = ps; wv.route = route; wv.pace = pace; wv.walkSpeed = speed; wv.headStartMs = head;
+        wv.voice = Src(ps[2], Vector3.zero, Clip(clipName), false, 1f, 1f, 15f, false);
+        wv.line = "<b><color=" + hex + ">" + who.ToUpper() + ":</color></b> " + line;
+        wv.bubble = Bubble(go.transform, new Vector3(0, 2.3f, 0f));
+        wv.bubbleObject = wv.bubble.gameObject; wv.bubbleTransform = wv.bubble.transform;
+        SetInteract(wv, "Say hi to " + who, 3f);
+    }
+
+    static string ExtraLine(string who)
+    {
+        switch (who)
+        {
+            case "Pistachio": return "Just walking my invisible dog. He's a very good boy. Mostly bones.";
+            case "Salmon": return "I swim upstream every single day. Well. I walk. Upstream is that way.";
+            case "Apricot": return "Can't talk! Training for the skeleton marathon! It's all downhill from here!";
+            case "Lilac": return "Lovely evening. Have you been down to the root cellar? Don't.";
+        }
+        return "";
     }
 
     static string TownLine(string name)
@@ -2272,7 +2694,7 @@ public static class FirCheckBuilder
     static readonly float[] RZ0 = { -6f, -26f, -42f, -62f, -80f, -98f };
     static readonly float[] RZ1 = { -26f, -42f, -62f, -80f, -98f, -118f };
     static readonly float[] RDoor = { 0f, 0f, 0f, 0f, 0f, 7.5f };
-    static FirHunt hunt;
+    static FirHunt hunt, cellarHunt;
     static readonly List<FirHuntButton> huntButtons = new List<FirHuntButton>();
     static readonly List<FirGag> scares = new List<FirGag>();
     static readonly List<GameObject> huntOnly = new List<GameObject>();
@@ -2477,7 +2899,20 @@ public static class FirCheckBuilder
         st.furnace = Marker(map, "In the furnace", new Vector3(-4.8f, 0, -117.4f), 0f);
         st.voice = Src(sgo.transform, new Vector3(0, 1.8f, 0), null, false, 1f, 1f, 22f, false);
         st.stunClip = Clip("toilet_clunk"); st.wakeClip = Clip("tree_laugh");
-        hunt.stalker = UB(st); hunt.stalkerBody = sgo.transform;
+        hunt.stalkers = new[] { UB(st) }; hunt.stalkerBodies = new[] { sgo.transform }; hunt.stalkerVisuals = new[] { body.gameObject };
+        hunt.rooms = 6;
+        hunt.roomKind = new[] { 0, 1, 2, 0, 3, 0 };
+        hunt.boardTitles = new[] { "THE POWER IS OUT", "LIGHTS OUT, RAINBOW", "THE TOY LOCK", "DECORATE THE TREE", "THE STAGE DOOR", "THE FURNACE" };
+        hunt.boardTasks = new[] {
+            "Find the 5 batteries hidden in the hall, then press the power box by the exit.",
+            "The rainbow hid 4 glowing numbers in here. Type them on the exit keypad in rainbow order:\n<color=#ff3030>red</color>, <color=#ffe030>yellow</color>, <color=#40ff50>green</color>, <color=#4080ff>blue</color>.",
+            "The elves left 4 numbered notes. Press the toys on the exit panel in their order. A wrong toy starts you over.",
+            "Find the 4 ornaments, then hang them on the bare tree by the far wall.",
+            "Read the stage manager's memo, then type the code on the keypad by the exit (east side).",
+            "Open the 3 gas valves, then pull the furnace lever. Lure the tree close first..." };
+        hunt.winText = "The tree went into the furnace.";
+        hunt.gameWhere = "the lobby";
+        hunt.areaMinX = -9.5f; hunt.areaMaxX = 9.5f; hunt.areaTopZ = -6.2f;
 
         // ---- throwable toilets: hit the tree with one to stun it
         var tg = Group(map, "Toilets", Vector3.zero);
@@ -2523,9 +2958,11 @@ public static class FirCheckBuilder
         HB(lobby, "RESET", new Vector3(0, 0.75f, 5.9f), nb, new Vector3(0.8f, 0.3f, 0.12f), M("Button"), 2, 0, "End the game", "<b>RESET</b>", 0.14f, true);
         Text("Players", lobby, new Vector3(0, 0.42f, 5.97f), Face(nb), new Vector2(3.4f, 0.25f), 0.1f, "best with 2 players  -  about 45 minutes").color = new Color(0.75f, 0.75f, 0.75f);
         // the east wall: the posters and a decorated tree in the corner; the way into the map is the south doorway
-        Poster(lobby, "poster_warning", new Vector3(6.97f, 1.85f, -3.6f), Vector3.left, 0.9f, 1.2f);
-        Poster(lobby, "poster_original", new Vector3(6.97f, 1.85f, -0.6f), Vector3.left, 0.9f, 1.2f);
-        Poster(lobby, "poster_safety", new Vector3(6.97f, 1.85f, 2.4f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_warning", new Vector3(6.97f, 1.85f, -4.7f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_original", new Vector3(6.97f, 1.85f, 1.0f), Vector3.left, 0.9f, 1.2f);
+        Poster(lobby, "poster_safety", new Vector3(6.97f, 1.85f, 3.6f), Vector3.left, 0.9f, 1.2f);
+        ExtraSkeleton(lobby, Extra40.First(x => x[0] == "Frost"), new Vector3(-3.3f, 0, -4.6f), 0f);
+        ExtraSkeleton(lobby, Extra40.First(x => x[0] == "Holly"), new Vector3(3.3f, 0, -4.6f), 0f);
         TreeAt(lobby, "LobbyTree", new Vector3(-5.6f, 0, 1.2f), 90f, 2.4f, true);
         string[] gm2 = { "GiftRed", "GiftGreen", "GiftGold", "GiftBlue" };
         for (int i = 0; i < 6; i++)
@@ -2543,20 +2980,41 @@ public static class FirCheckBuilder
     }
 
     /// <summary>Once everything is built: the throwables learn about the tree, and the map's materials are handed to the game to darken.</summary>
+    /// <summary>
+    /// Once everything is built: the throwables learn which game they belong to (by where they are), and each
+    /// game gets its own materials to darken. The Root Cellar's are copied first, so the two games never share one.
+    /// </summary>
     static void FinishHunt(Transform root)
     {
         if (hunt == null) return;
-        var me = UB(hunt);
-        foreach (var th in root.GetComponentsInChildren<FirThrowable>(true)) { th.hunt = me; th.stalker = hunt.stalkerBody; }
-        var map = root.Find("Map");
         var keepBright = new HashSet<string> { "Check_Button", "Check_ButtonGold", "Check_Paper" };
+        Func<Material, bool> Darkens = m => m != null && m.name.StartsWith("Check_") && !m.name.StartsWith("Check_Bulb") && !m.name.StartsWith("Check_Lobby_")
+                                           && !m.name.StartsWith("Check_Cellar_") && !keepBright.Contains(m.name);
+        // the Root Cellar: its own copies of everything it uses
+        var cellar = root.Find("Cellar");
+        if (cellar != null && cellarHunt != null)
+        {
+            var copies2 = new Dictionary<Material, Material>();
+            foreach (var r in cellar.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.GetComponent<TextMeshPro>() != null || !Darkens(r.sharedMaterial)) continue;
+                if (!copies2.TryGetValue(r.sharedMaterial, out var c)) { c = PrefixedCopy(r.sharedMaterial, "Cellar_"); copies2[r.sharedMaterial] = c; }
+                r.sharedMaterial = c;
+            }
+            cellarHunt.darkMats = copies2.Values.ToArray();
+            var me2 = UB(cellarHunt);
+            foreach (var th in cellar.GetComponentsInChildren<FirThrowable>(true)) { th.hunt = me2; th.stalkers = cellarHunt.stalkerBodies; }
+            report.Add("the Root Cellar's dark: " + copies2.Count + " materials of its own");
+        }
+        var me = UB(hunt);
+        foreach (var th in root.GetComponentsInChildren<FirThrowable>(true))
+            if (cellar == null || !th.transform.IsChildOf(cellar)) { th.hunt = me; th.stalkers = hunt.stalkerBodies; }
+        var map = root.Find("Map");
         var dark = new HashSet<Material>();
         foreach (var r in map.GetComponentsInChildren<Renderer>(true))
         {
             if (r.GetComponent<TextMeshPro>() != null) continue;
-            var m = r.sharedMaterial;
-            if (m == null || !m.name.StartsWith("Check_") || m.name.StartsWith("Check_Bulb") || m.name.StartsWith("Check_Lobby_") || keepBright.Contains(m.name)) continue;
-            dark.Add(m);
+            if (Darkens(r.sharedMaterial)) dark.Add(r.sharedMaterial);
         }
         // anything outside the map using one of those (the lobby, the test room, the scare face) gets its own bright copy
         int copies = 0;
@@ -2567,6 +3025,20 @@ public static class FirCheckBuilder
         }
         hunt.darkMats = dark.ToArray();
         report.Add("the dark: " + dark.Count + " map materials go lantern-lit during the game (" + copies + " lobby parts keep bright copies)");
+    }
+
+    static Material PrefixedCopy(Material m, string prefix)
+    {
+        string n = prefix + m.name.Replace("Check_", "");
+        if (mats.TryGetValue(n, out var c)) return c;
+        string path = Gen + "/Check_" + n + ".mat";
+        c = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (c == null) { c = new Material(m); AssetDatabase.CreateAsset(c, path); }
+        else { c.shader = m.shader; c.CopyPropertiesFromMaterial(m); }
+        c.name = "Check_" + n;
+        EditorUtility.SetDirty(c);
+        mats[n] = c;
+        return c;
     }
 
     static Material BrightCopy(Material m)

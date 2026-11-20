@@ -50,9 +50,21 @@ public class FirHunt : UdonSharpBehaviour
     public TextMeshPro[] toyNotes;
     public TextMeshPro toyDisplay;
     public string[] toyNames;              // the five toys on the Toy Workshop's panel
-    public string talentCode = "";
-    public UdonBehaviour stalker;
-    public Transform stalkerBody;          // where the tree is (for catching and the heartbeat)
+    public string talentCode = "";         // the fixed code (kind 3 room)
+    public UdonBehaviour[] stalkers;       // the hunting trees (FirStalker)
+    public Transform[] stalkerBodies;      // where each tree is (for catching and the heartbeat)
+    public GameObject[] stalkerVisuals;    // a tree only counts while it's showing (a second tree can wake up later)
+
+    // ---- the game's shape (set by the builder; one script runs both the original game and the Root Cellar)
+    public int rooms = 6;                  // solve them all and you've won
+    public int[] roomKind;                 // 0 find items then press the panel, 1 type the 4 glowing digits, 2 press 4 of 5 in order, 3 type a fixed code
+    public string[] boardTitles;
+    public string[] boardTasks;
+    public string winText = "";
+    public string gameWhere = "the lobby"; // where START is, for the boards
+    public float areaMinX = -9.5f, areaMaxX = 9.5f, areaTopZ = -6.2f;   // the game's rooms: inside x, south of z
+    public bool flicker;                   // random blackouts during the game
+    public bool live;                      // (not synced) read by the jump scares: the game is on and not yet won
     public AudioSource sfx;                // 2D, for this player's one-shots
     public AudioClip startClip, unlockClip, wrongClip, pickupClip, switchClip, endingClip, screamClip, stunClip;
     public AudioSource ambient;            // moved behind you for random whispers and rustles
@@ -68,8 +80,10 @@ public class FirHunt : UdonSharpBehaviour
     // ---- this player only
     int lastRound = -1, lastStage = -1, lastStun, lastCaught;
     bool darkNow, darkSet;
-    string typed1 = "", typed4 = "";
-    int seqPos;
+    string typed = "";
+    int seqPos, digitsRoom = -1, seqRoom = -1, codeRoom = -1;
+    float nextFlicker, flickerUntil;
+    bool flickering;
     float nextAmbient, scareUntil, teleportAt, catchReady, boardsAt;
     bool teleportPending;
     int[] pow;
@@ -84,6 +98,12 @@ public class FirHunt : UdonSharpBehaviour
         for (int i = 0; i < 30; i++) { pow[i] = p; p = p * 2; }
         toyOrder = new int[4];
         rainbowCode = new int[4];
+        for (int r = 0; r < roomKind.Length; r++)
+        {
+            if (roomKind[r] == 1) digitsRoom = r;
+            else if (roomKind[r] == 2) seqRoom = r;
+            else if (roomKind[r] == 3) codeRoom = r;
+        }
         if (scareFace != null) scareFace.gameObject.SetActive(false);
         Apply(false);
     }
@@ -103,7 +123,7 @@ public class FirHunt : UdonSharpBehaviour
 
     void Begin()
     {
-        if (running && stage < 6)
+        if (running && stage < rooms)
         {
             // a game is on: this is "join in": go to the furthest room
             Teleport(stage);
@@ -139,7 +159,7 @@ public class FirHunt : UdonSharpBehaviour
     void Panel(int room)
     {
         if (!running) { Play(wrongClip); return; }
-        if (room != stage) return;
+        if (room != stage || Kind(room) != 0) return;
         int missing = Missing(room);
         if (missing > 0) { Play(wrongClip); return; }
         Solve(room);
@@ -148,7 +168,7 @@ public class FirHunt : UdonSharpBehaviour
     void Key(int room, int key)
     {
         if (!running || room != stage) { Play(wrongClip); return; }
-        string t = room == 1 ? typed1 : typed4;
+        string t = typed;
         if (key <= 9)
         {
             if (t.Length < 4) t = t + key.ToString();
@@ -160,18 +180,18 @@ public class FirHunt : UdonSharpBehaviour
             if (t == Code(room)) { t = ""; Solve(room); }
             else { t = ""; Wrong(); }
         }
-        if (room == 1) typed1 = t; else typed4 = t;
+        typed = t;
         UpdateDisplays();
     }
 
     void Toy(int toy)
     {
-        if (!running || stage != 2) { Play(wrongClip); return; }
+        if (!running || stage != seqRoom) { Play(wrongClip); return; }
         if (toy == toyOrder[seqPos])
         {
             seqPos++;
             Play(switchClip);
-            if (seqPos >= 4) { seqPos = 0; Solve(2); }
+            if (seqPos >= 4) { seqPos = 0; Solve(seqRoom); }
         }
         else { seqPos = 0; Wrong(); }
         UpdateDisplays();
@@ -225,7 +245,7 @@ public class FirHunt : UdonSharpBehaviour
         if (newRound)
         {
             MakeCodes();
-            typed1 = ""; typed4 = ""; seqPos = 0;
+            typed = ""; seqPos = 0;
             // pull everyone in when a game starts, but not a player who just joined into one already running
             if (announce) { Teleport(0); Play(startClip); }
             lastStage = stage;
@@ -233,8 +253,9 @@ public class FirHunt : UdonSharpBehaviour
         }
         else if (running && stage != lastStage)
         {
-            if (announce && stage > lastStage) Play(stage >= 6 ? endingClip : unlockClip);
+            if (announce && stage > lastStage) Play(stage >= rooms ? endingClip : unlockClip);
             lastStage = stage;
+            typed = ""; seqPos = 0;
         }
         if (running) lastRound = round;
         if (!running) { lastRound = -1; lastStage = -1; }
@@ -245,7 +266,7 @@ public class FirHunt : UdonSharpBehaviour
         lastCaught = caughtCount;
         if (stun) Play(stunClip);
 
-        bool live = running && stage < 6;
+        live = running && stage < rooms;
         for (int i = 1; i < doors.Length; i++) if (doors[i] != null) doors[i].SetActive(live && stage < i);
         for (int i = 0; i < items.Length; i++)
         {
@@ -258,15 +279,17 @@ public class FirHunt : UdonSharpBehaviour
         for (int i = 0; i < stageShow.Length; i++) if (stageShow[i] != null) stageShow[i].SetActive(running && stage >= stageShowAt[i]);
         SetDark(live);
 
-        if (stalker != null)
+        for (int i = 0; i < stalkers.Length; i++)
         {
-            stalker.SetProgramVariable("active", live);
-            stalker.SetProgramVariable("stage", stage);
-            stalker.SetProgramVariable("round", running ? round : 0);
-            stalker.SetProgramVariable("won", running && stage >= 6);
-            stalker.SendCustomEvent("Refresh");
-            if (stun) stalker.SendCustomEvent("Stun");
-            if (retreat) stalker.SendCustomEvent("Retreat");
+            UdonBehaviour st = stalkers[i];
+            if (st == null) continue;
+            st.SetProgramVariable("active", live);
+            st.SetProgramVariable("stage", stage);
+            st.SetProgramVariable("round", running ? round : 0);
+            st.SetProgramVariable("won", running && stage >= rooms);
+            st.SendCustomEvent("Refresh");
+            if (stun) st.SendCustomEvent("Stun");
+            if (retreat) st.SendCustomEvent("Retreat");
         }
         UpdateDisplays();
         UpdateBoards();
@@ -284,8 +307,11 @@ public class FirHunt : UdonSharpBehaviour
             m.SetFloat("_Fullbright", dark ? 0f : 1f);
             m.SetFloat("_Reach", dark ? 8f : 14f);
             m.SetFloat("_Ambient", dark ? 0.03f : 0.35f);
+            m.SetFloat("_Dark", 0f);
         }
     }
+
+    int Kind(int room) { return room >= 0 && room < roomKind.Length ? roomKind[room] : 0; }
 
     bool Found(int i) { return pow != null && i >= 0 && i < 30 && (foundMask / pow[i]) % 2 == 1; }
 
@@ -328,23 +354,23 @@ public class FirHunt : UdonSharpBehaviour
 
     string Code(int room)
     {
-        if (room == 4) return talentCode;
+        if (Kind(room) == 3) return talentCode;
         string c = "";
         for (int k = 0; k < 4; k++) c = c + rainbowCode[k].ToString();
         return c;
     }
 
     /// <summary>The rainbow code, for tests and the systems check.</summary>
-    public string RainbowCode() { return Code(1); }
+    public string RainbowCode() { return Code(digitsRoom); }
 
     void UpdateDisplays()
     {
-        if (rainbowDisplay != null) rainbowDisplay.text = Typed(typed1, stage > 1);
-        if (talentDisplay != null) talentDisplay.text = Typed(typed4, stage > 4);
+        if (rainbowDisplay != null) rainbowDisplay.text = Typed(stage == digitsRoom ? typed : "", stage > digitsRoom);
+        if (talentDisplay != null) talentDisplay.text = Typed(stage == codeRoom ? typed : "", stage > codeRoom);
         if (toyDisplay != null)
         {
             string d = "";
-            for (int k = 0; k < 4; k++) d = d + (stage > 2 || k < seqPos ? "<color=#70ff90>*</color> " : "<color=#666666>*</color> ");
+            for (int k = 0; k < 4; k++) d = d + (stage > seqRoom || (stage == seqRoom && k < seqPos) ? "<color=#70ff90>*</color> " : "<color=#666666>*</color> ");
             toyDisplay.text = d;
         }
     }
@@ -369,22 +395,17 @@ public class FirHunt : UdonSharpBehaviour
         if (lobbyBoard != null)
         {
             if (!running) lobbyBoard.text = "<b>No game running.</b>\nPress <color=#ffd060>START</color> to begin. Everyone here is pulled in.";
-            else if (stage >= 6) lobbyBoard.text = "<color=#70ff90><b>YOU ESCAPED!</b></color>\nThe tree went into the furnace. Press <color=#ffd060>RESET</color> to play again.";
-            else lobbyBoard.text = "<b>Game on:</b> room " + (stage + 1) + " of 6\nCaught " + caughtCount + " times. Toilets thrown home: " + stunCount +
+            else if (stage >= rooms) lobbyBoard.text = "<color=#70ff90><b>YOU ESCAPED!</b></color>\n" + winText + " Press <color=#ffd060>RESET</color> to play again.";
+            else lobbyBoard.text = "<b>Game on:</b> room " + (stage + 1) + " of " + rooms + "\nCaught " + caughtCount + " times. Toilets thrown home: " + stunCount +
                                    "\nPress <color=#ffd060>START</color> to join in.";
         }
     }
 
     string Board(int r)
     {
-        string title = r == 0 ? "THE POWER IS OUT" : r == 1 ? "LIGHTS OUT, RAINBOW" : r == 2 ? "THE TOY LOCK" : r == 3 ? "DECORATE THE TREE" : r == 4 ? "THE STAGE DOOR" : "THE FURNACE";
-        string task = r == 0 ? "Find the 5 batteries hidden in the hall, then press the power box by the exit."
-                    : r == 1 ? "The rainbow hid 4 glowing numbers in here. Type them on the exit keypad in rainbow order:\n<color=#ff3030>red</color>, <color=#ffe030>yellow</color>, <color=#40ff50>green</color>, <color=#4080ff>blue</color>."
-                    : r == 2 ? "The elves left 4 numbered notes. Press the toys on the exit panel in their order. A wrong toy starts you over."
-                    : r == 3 ? "Find the 4 ornaments, then hang them on the bare tree by the far wall."
-                    : r == 4 ? "Read the stage manager's memo, then type the code on the keypad by the exit (east side)."
-                    : "Open the 3 gas valves, then pull the furnace lever. Lure the tree close first...";
-        if (!running) return "<b>" + title + "</b>\n<size=75%><color=#aaaaaa>" + task + "\n(Press START in the lobby to play.)</color></size>";
+        string title = r < boardTitles.Length ? boardTitles[r] : "";
+        string task = r < boardTasks.Length ? boardTasks[r] : "";
+        if (!running) return "<b>" + title + "</b>\n<size=75%><color=#aaaaaa>" + task + "\n(Press START in " + gameWhere + " to play.)</color></size>";
         if (stage > r) return "<b>" + title + "</b>\n<color=#70ff90>SOLVED: the way on is open.</color>";
         if (stage < r) return "<b>" + title + "</b>\n<color=#aaaaaa>Locked.</color>";
         int c = Count(r);
@@ -399,6 +420,12 @@ public class FirHunt : UdonSharpBehaviour
         int r = Mathf.Clamp(room, 0, checkpoints.Length - 1);
         if (checkpoints[r] == null) return;
         lp.TeleportTo(checkpoints[r].position, checkpoints[r].rotation);
+    }
+
+    void EndFlicker()
+    {
+        flickering = false;
+        for (int i = 0; i < darkMats.Length; i++) if (darkMats[i] != null) darkMats[i].SetFloat("_Dark", 0f);
     }
 
     void Play(AudioClip c) { if (sfx != null && c != null) sfx.PlayOneShot(c, 1f); }
@@ -439,21 +466,35 @@ public class FirHunt : UdonSharpBehaviour
         if (teleportPending && Time.time >= teleportAt) { teleportPending = false; Teleport(stage); }
         if (Time.time > boardsAt && running) UpdateBoards();
 
-        bool live = running && stage < 6;
         VRCPlayerApi lp = Networking.LocalPlayer;
         if (!live || !Utilities.IsValid(lp))
         {
             if (heartbeat != null && heartbeat.isPlaying) heartbeat.Stop();
+            if (flickering) EndFlicker();
             return;
         }
         Vector3 me = lp.GetPosition();
-        bool inMap = me.z < -6.2f && Mathf.Abs(me.x) < 9.5f;   // (Bonetown, the expansion, is off to the west)
+        bool inMap = me.z < areaTopZ && me.x > areaMinX && me.x < areaMaxX;   // in this game's rooms (not the lobby, Bonetown or the other game)
         float d = 99f;
-        if (stalkerBody != null && stalkerBody.gameObject.activeInHierarchy)
+        for (int i = 0; i < stalkerBodies.Length; i++)
         {
-            Vector3 dv = stalkerBody.position - me;
+            if (stalkerBodies[i] == null) continue;
+            if (stalkerVisuals != null && i < stalkerVisuals.Length && stalkerVisuals[i] != null && !stalkerVisuals[i].activeSelf) continue;
+            Vector3 dv = stalkerBodies[i].position - me;
             dv.y = 0f;
-            d = dv.magnitude;
+            if (dv.magnitude < d) d = dv.magnitude;
+        }
+        // the lights fail for a moment, now and then (this player only)
+        if (flicker)
+        {
+            if (flickering && Time.time > flickerUntil) EndFlicker();
+            else if (!flickering && inMap && Time.time > nextFlicker)
+            {
+                nextFlicker = Time.time + Random.Range(14f, 32f);
+                flickerUntil = Time.time + Random.Range(0.25f, 1.4f);
+                flickering = true;
+                for (int i = 0; i < darkMats.Length; i++) if (darkMats[i] != null) darkMats[i].SetFloat("_Dark", 1f);
+            }
         }
         // caught
         if (inMap && d < catchDistance && Time.time > catchReady && !teleportPending)
