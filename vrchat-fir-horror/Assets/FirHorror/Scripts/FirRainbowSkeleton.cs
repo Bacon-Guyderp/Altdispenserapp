@@ -23,6 +23,7 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
     public AudioSource voice;
     public float voiceDelay = 0.4f;
     public TextMeshPro label;
+    public string caption = "";       // what it says, shown under its name while it talks
 
     Vector3[] restPos, meshPos;
     Quaternion[] restRot, meshRot;
@@ -59,7 +60,7 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
         length = Mathf.Max(4f, voiceDelay + clip + 1.0f);
         talkFrom = 999f;
         talkUntil = 0f;
-        if (label != null) label.text = "<b>" + colourName + "</b>";
+        if (label != null) label.text = caption != "" ? "<b>" + colourName + "</b>\n<size=55%>\"" + caption + "\"</size>" : "<b>" + colourName + "</b>";
     }
 
     void Update()
@@ -79,6 +80,7 @@ public class FirRainbowSkeleton : UdonSharpBehaviour
         if (t >= length)
         {
             running = false;
+            if (label != null && caption != "") label.text = "<b>" + colourName + "</b>";
             for (int i = 0; i < pivots.Length; i++)
             {
                 pivots[i].localPosition = restPos[i]; pivots[i].localRotation = restRot[i];

@@ -188,6 +188,24 @@ that are (literally) watching.
 * **Outside:** a garden gnome that pops out of a bush, and a lake monster that is very obviously a
   cardboard cutout.
 
+## The later Station stops
+
+All original takes on their genres, each with voiced skeletons and gags (`Data/more_gags.txt`):
+
+* **The Redemption Inn:** a cheerful hotel somewhere very warm. A radio-voiced host, a bartender, a
+  bellhop, a musical number ("The Redemption Song") and an elevator that only goes down.
+* **The Speed Zone:** a checkered track with boost pads, springs, rings to collect (with a counter),
+  a runner who laps it forever, a coach and an exhausted skeleton at the finish.
+* **The Platform World:** floating platforms, bonk blocks that pop coins, two pairs of warp tubes,
+  a cloud you can ride and a flagpole at the end.
+* **North Carolina:** the Blue Ridge, the Outer Banks with a banded lighthouse, wild ponies,
+  longleaf pines with cardinals, sweet tea, a Venus flytrap, the first flight over the dunes, and a
+  barbecue shack where Vern and Kay argue about vinegar against tomato.
+* **The Digital Circus:** a big top inside a computer, with a TV-headed ringmaster, performers, a mime
+  in his box, floating shapes, an EXIT that drops you back at the entrance, and the void.
+* **The Skits:** 10 rapid-fire stick-figure skits in a white room.
+* **The Corn Flakes Room:** a giant bowl, a talking cereal box, a chef, a swimmer, and 9 corn flake jokes.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -221,6 +239,18 @@ It's an original take on the life-sim genre, and none of it is scary.
   and the console has 4 combo acts: The Squabble, Town Band, The Proposal and the Bonetown Finale.
 * **22 more gags** (`Data/town_gags.txt`): signs, frames, pop-ups, spinners, waddlers and talking trees.
 * That's 24 new skeleton colours. The game's tree never goes to Bonetown.
+* **The Marrow Arms** (through the doorway in Bonetown's west wall) is an apartment building: a lobby
+  with a clock, mailboxes and a lift that has never gone up, a hallway, 7 flats, a gym, a common room
+  and a laundry. Its 8 residents live their own days on the Bonetown clock (a day is 12 minutes):
+  * Clavicle works out, Mortimer plays sad guitar all night, Granny Tibia waters plastic plants and
+    knocks on Mortimer's door at 11 pm, and Coccyx works from home.
+  * Ribsy gossips, Phalange cleans the clean, Scapula teaches a dance class nobody comes to, and Femur
+    the superintendent fixes the lift (again).
+  * A caption over each head says what they're doing ("on the way: ..." while walking). Press one and
+    they stop and talk, captioned, for everyone. It all comes from the server clock, so everyone sees
+    the same day with no network traffic.
+* **Captions everywhere:** every voiced skeleton shows what it says under its name while it talks, and
+  combo acts show each line on their button (`Data/captions.txt`, written by `make_voices.py --captions`).
 
 ## Gags (all game long)
 
@@ -284,6 +314,8 @@ python make_unitypackage.py
   * FirEncounter, FirTiles, FirSay: Pixel Hollow's encounters, tile gate and talking props
   * FirPortal, FirPad, FirVoxel: the Test Annex's portals and buttons, and Blocklands
   * FirCodeLock: the Mystery Hut's secret keypad
+  * FirBoost: the Speed Zone's boost pads, springs and rings
+  * FirResident: the Marrow Arms residents' daily routines
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.

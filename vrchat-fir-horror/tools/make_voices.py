@@ -501,6 +501,45 @@ AREA_FILTERS = {
 }
 
 
+# The Marrow Arms apartments in Bonetown: the residents and the building's gags -> Audio/Apart/ap_<name>.ogg
+APART = [
+    ("Apart/ap_clavicle", "mb-us3", 170, 70, 1.1, "skel", "Morning! I've done four hundred push-ups. My bones are very toned. That's all I have. Bones."),
+    ("Apart/ap_mortimer", "mb-us2", 110, 25, 0.88, "skel", "I write sad songs on the guitar. Granny Tibia says they're too loud. I say they're too sad. We're both right."),
+    ("Apart/ap_tibia", "mb-us1", 115, 75, 1.15, "skel", "Back in my day we didn't have apartments. We had crypts. And we were grateful!"),
+    ("Apart/ap_coccyx", "mb-us2", 150, 45, 0.98, "skel", "I work from home. My commute is eleven steps. I'm still late."),
+    ("Apart/ap_ribsy", "mb-us1", 180, 70, 1.12, "skel", "Have you heard? Apartment two got a new guitar string! And apartment four ordered soup! Again!"),
+    ("Apart/ap_phalange", "mb-us3", 160, 55, 1.05, "skel", "I've swept this hallway nine times today. There's still dust. I think the dust is me."),
+    ("Apart/ap_scapula", "mb-us1", 170, 65, 1.1, "skel", "I teach dance in the common room! Nobody comes. The dancing is still mandatory."),
+    ("Apart/ap_femur", "mb-us2", 120, 20, 0.85, "skel", "I'm the superintendent. The lift's been broken since I got here. I'm starting to think it's decorative."),
+    ("Apart/ap_lift", "mb-us2", 140, 40, 1.0, "narr", "Going up! ...Just kidding. It has never gone up."),
+    ("Apart/ap_mail", "mb-us1", 150, 55, 1.0, "narr", "You've got mail! It's a bill. For the mailbox."),
+    ("Apart/ap_dryer", "mb-us3", 150, 50, 1.0, "narr", "The dryer ate a sock. And a femur. Femur would like it back."),
+]
+
+
+def apart_lines():
+    for name, v, speed, pitch, rate, kind, text in APART:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
+def write_captions():
+    """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
+    rows = {}
+    for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines()):
+        for row in gen:
+            rows[row[0].split("/")[-1]] = row[4]
+    for name, _, text in COMBO:
+        rows[name] = text
+    path = os.path.join(os.path.dirname(OUT), "Data", "captions.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# clip|caption (written by tools/make_voices.py --captions)\n")
+        for k in sorted(rows):
+            f.write(k + "|" + " ".join(rows[k].split()).replace("|", "/") + "\n")
+    print(len(rows), "captions ->", path)
+
+
 def area_lines():
     for name, v, speed, pitch, rate, kind, text in AREAS:
         filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
@@ -572,6 +611,13 @@ def main():
         if "--moregags" in sys.argv:   # only the later areas' gags (ids starting I and J)
             render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
             return
+        if "--captions" in sys.argv:
+            write_captions()
+            return
+        if "--apart" in sys.argv:   # only the Marrow Arms apartments
+            render_only(tmp, list(apart_lines()), "Apart")
+            write_captions()
+            return
         if "--areas" in sys.argv:   # only the later Station areas, and their two combo acts
             for folder in sorted({n.split("/")[0] for n, *_ in AREAS}): os.makedirs(os.path.join(OUT, folder), exist_ok=True)
             render_only(tmp, list(area_lines()), "Inn")
@@ -634,7 +680,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines()) + list(area_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines()) + list(area_lines()) + list(apart_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

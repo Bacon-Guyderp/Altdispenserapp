@@ -23,6 +23,7 @@ public class FirShare : UdonSharpBehaviour
     public UdonBehaviour[] gagSkeletons;
     public UdonBehaviour[] combos;
     public UdonBehaviour[] wanderers;
+    public UdonBehaviour[] residents;
 
     // arguments for EvShare
     public int argKind;
@@ -48,7 +49,7 @@ public class FirShare : UdonSharpBehaviour
         if (!synced) { synced = true; lastSeen = pressId; return; }   // just joined: don't replay the last press
         if (pressId == lastSeen) return;
         lastSeen = pressId;
-        UdonBehaviour[] list = kind == 0 ? gags : kind == 1 ? skeletonGags : kind == 2 ? closets : kind == 3 ? gagSkeletons : kind == 4 ? combos : wanderers;
+        UdonBehaviour[] list = kind == 0 ? gags : kind == 1 ? skeletonGags : kind == 2 ? closets : kind == 3 ? gagSkeletons : kind == 4 ? combos : kind == 5 ? wanderers : residents;
         if (index >= 0 && index < list.Length && list[index] != null) list[index].SendCustomEvent("Play");
     }
 }

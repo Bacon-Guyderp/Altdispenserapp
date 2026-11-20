@@ -18,6 +18,7 @@ public static class SimCheck {
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
     if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "apart") { ApartTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -138,7 +139,7 @@ public static class SimCheck {
     Console.WriteLine("\n== The original gags (Bob)");
     int gagN; var gagBad = new List<string>();
     int gagOk = RunGags(B, g => g.transform.position.x < 555f, out gagN, gagBad);
-    Check(gagOk == gagN && gagN == 175, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 178, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 3 apartments + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -182,10 +183,10 @@ public static class SimCheck {
     Func<Sim.Client, int, int, UdonSharpBehaviour> Pick = (c, kind, i) =>
       kind == 0 ? (UdonSharpBehaviour)All<FirGag>(c).First(g => g.shareIndex == i) : kind == 1 ? (UdonSharpBehaviour)All<FirSkeletonGag>(c).First(g => g.shareIndex == i)
       : kind == 2 ? (UdonSharpBehaviour)All<FirCloset>(c).First(g => g.shareIndex == i) : kind == 3 ? (UdonSharpBehaviour)All<FirRainbowSkeleton>(c).First(g => g.shareIndex == i)
-      : kind == 4 ? (UdonSharpBehaviour)All<FirSkeletonCombo>(c).First(g => g.shareIndex == i) : (UdonSharpBehaviour)All<FirWanderer>(c).First(g => g.shareIndex == i);
-    string[] kindName = { "pressed gags", "skeleton routines", "closet", "gag skeletons", "combo acts", "Bonetown wanderers" };
-    int[] kindCount = { All<FirGag>(B).Count, All<FirSkeletonGag>(B).Count, All<FirCloset>(B).Count, All<FirRainbowSkeleton>(B).Count, All<FirSkeletonCombo>(B).Count, All<FirWanderer>(B).Count };
-    for (int kind = 0; kind < 6; kind++) {
+      : kind == 4 ? (UdonSharpBehaviour)All<FirSkeletonCombo>(c).First(g => g.shareIndex == i) : kind == 5 ? (UdonSharpBehaviour)All<FirWanderer>(c).First(g => g.shareIndex == i) : (UdonSharpBehaviour)All<FirResident>(c).First(g => g.shareIndex == i);
+    string[] kindName = { "pressed gags", "skeleton routines", "closet", "gag skeletons", "combo acts", "Bonetown wanderers", "apartment residents" };
+    int[] kindCount = { All<FirGag>(B).Count, All<FirSkeletonGag>(B).Count, All<FirCloset>(B).Count, All<FirRainbowSkeleton>(B).Count, All<FirSkeletonCombo>(B).Count, All<FirWanderer>(B).Count, All<FirResident>(B).Count };
+    for (int kind = 0; kind < 7; kind++) {
       int ok = 0, n = 0; var bad = new List<string>();
       for (int i = 0; i < kindCount[kind]; i++) {
         var mine = Pick(B, kind, i);
@@ -228,6 +229,7 @@ public static class SimCheck {
     NorthTests(A, B);
     MysteryTests(A, B);
     LaterTests(A, B);
+    ApartTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -946,6 +948,81 @@ public static class SimCheck {
     if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
   }
     return gagOk;
+  }
+
+  static void SetDayHour(float h) {
+    int day = 720000;
+    int now = VRC.SDKBase.Networking.GetServerTimeInMilliseconds();
+    int want = (int)(h / 24f * day);
+    int cur = ((now % day) + day) % day;
+    VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void ApartTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Marrow Arms (Bonetown's apartments)");
+    Check(Sim.BuildLog.Any(l => l.Contains("The Marrow Arms: 7 apartments")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Marrow Arms")) ?? "no Marrow Arms in the build log"));
+    var probs = Sim.BuildLog.Where(l => l.Contains("can't get to") || l.Contains("are both at")).ToList();
+    Check(probs.Count == 0, "every routine fits its day, and nobody stands in anybody's spot" + string.Concat(probs.Take(4).Select(x => " | " + x)));
+    string what;
+    float[] xc = { -61.75f, -69.25f, -76.75f, -84.25f };
+    Check(!Blocked(A, new[] { new Vector3(-40f, 0, 11f), new Vector3(-55f, 0, 11f), new Vector3(-86.5f, 0, 11f) }, out what), "from Bonetown's plaza, through the west doorway, the lobby and down the hallway" + (what != "" ? " | " + what : ""));
+    int open = 0;
+    foreach (float x in xc) {
+      if (!Blocked(A, new[] { new Vector3(x, 0, 11f), new Vector3(x, 0, 16f) }, out what)) open++;
+      if (!Blocked(A, new[] { new Vector3(x, 0, 11f), new Vector3(x, 0, 6f) }, out what)) open++;
+    }
+    Check(open == 8, open + " of 8 doorways off the hallway walk in (7 flats and the laundry)");
+    Check(!Blocked(A, new[] { new Vector3(-55f, 0, 11f), new Vector3(-55f, 0, 19f) }, out what) && !Blocked(A, new[] { new Vector3(-55f, 0, 11f), new Vector3(-55f, 0, 2f) }, out what), "the gym and the common room open off the lobby");
+    var res = All<FirResident>(A);
+    Check(res.Count == 8, res.Count + " residents: " + string.Join(", ", res.Select(r => r.who)));
+    // a day on the Bonetown clock, checked every hour: everyone is where their routine says, doing it, captioned
+    int checks = 0, right = 0; var wrong = new List<string>();
+    for (float h = 0.75f; h < 24f; h += 1f) {
+      SetDayHour(h); Sim.Run(2.5f);
+      foreach (var r in res) {
+        float hh = r.DayHour();
+        int s = r.StopAt(hh);
+        float since = hh - r.hour[s]; if (since < 0f) since += 24f;
+        bool shouldBeThere = since * (r.dayMs / 1000f / 24f) * r.walkSpeed > r.PathLength(s) + 2.5f * 4f;
+        if (!shouldBeThere) continue;
+        checks++;
+        bool ok = Flat(r.transform.position, r.spot[s]) < 0.15f && r.Walking() == 0 && Plain(r.caption.text).Contains(r.doing[s]);
+        if (ok) right++; else wrong.Add(r.who + " at " + hh.ToString("0.0") + "h: " + Plain(r.caption.text) + " @" + r.transform.position);
+      }
+    }
+    Check(checks > 120 && right == checks, right + " of " + checks + " hourly checks: each resident in the right place doing the right thing" + string.Concat(wrong.Take(4).Select(x => " | " + x)));
+    var mort = res.First(r => r.who == "Mortimer"); var tib = res.First(r => r.who == "Granny Tibia");
+    SetDayHour(23.1f); Sim.Run(2.5f);
+    Check(Plain(tib.caption.text).Contains("TOO LOUD") && Plain(mort.caption.text).Contains("loudly"), "at 11 pm Granny Tibia knocks on Mortimer's door (\"" + Plain(tib.caption.text) + "\") while he practises (\"" + Plain(mort.caption.text) + "\")");
+    SetDayHour(18.9f); Sim.Run(0.5f);
+    Check(mort.Walking() == 1 && Plain(mort.caption.text).Contains("on the way") && Flat(mort.transform.position, mort.spot[mort.Stop()]) > 2f, "on the way out to busk: \"" + Plain(mort.caption.text) + "\" " + mort.transform.position);
+    var clock = All<TMPro.TextMeshPro>(A).First(t => t.name == "MarrowClock");
+    Check(Plain(clock.text).Contains("BONETOWN TIME") && Plain(clock.text).Contains("PM"), "the lobby clock: " + Plain(clock.text));
+    // press someone: they stop, say their line, and it's captioned
+    SetDayHour(10.6f); Sim.Run(2.5f);
+    var cl = res.First(r => r.who == "Coccyx");
+    Sim.Events.Clear();
+    Sim.Press(A, cl); Sim.Run(1f);
+    var capB = All<FirResident>(B).First(r => r.who == "Coccyx");
+    Check(cl.IsChatting() && Plain(cl.caption.text).Contains(cl.line) && cl.line.Length > 20 && Sim.Events.Any(e => e.Contains("sound:") && e.Contains("ap_coccyx")) && capB.IsChatting(),
+          "press Coccyx: he stops and says (captioned, for everyone) \"" + cl.line + "\"");
+    Sim.Run(8f);
+    Check(!cl.IsChatting() && Plain(cl.caption.text).Contains(cl.doing[cl.Stop()]), "...then gets back to it: \"" + Plain(cl.caption.text) + "\"");
+    // captions for every voiced skeleton and every combo line
+    var rbs = All<FirRainbowSkeleton>(A).Where(r => r.voice != null && r.voice.clip != null).ToList();
+    var noCap = rbs.Where(r => string.IsNullOrEmpty(r.caption)).Select(r => r.name + " (" + r.voice.clip.name + ")").ToList();
+    Check(noCap.Count == 0, (rbs.Count - noCap.Count) + " of " + rbs.Count + " voiced skeletons have captions" + string.Concat(noCap.Take(5).Select(x => " | " + x)));
+    var rb = rbs.First(r => r.voice.clip.name == "in_hop");
+    Sim.Press(A, rb); Sim.Run(1f);
+    Check(Plain(rb.label.text).Contains(rb.caption), "pressed, a skeleton's label shows what it says: \"" + Plain(rb.label.text) + "\"");
+    var cbs = All<FirSkeletonCombo>(A);
+    int lines = cbs.Sum(c => c.lines.Length), capped = cbs.Sum(c => c.lineText.Count(t => !string.IsNullOrEmpty(t)));
+    Check(lines == capped, capped + " of " + lines + " combo lines have captions");
+    var gw = All<FirWanderer>(A);
+    Check(gw.All(w => w.line.Length > 5), "all " + gw.Count + " wanderers caption their lines");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x < -48f && g.transform.position.x > -88f && g.transform.position.z > -5f && g.transform.position.z < 27f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 3, gagOk + " of " + gagN + " apartment gags (the lift, the mailboxes, the dryer)" + string.Concat(gagBad.Select(x => " | " + x)));
   }
 
   static void LaterTests(Sim.Client A, Sim.Client B) {

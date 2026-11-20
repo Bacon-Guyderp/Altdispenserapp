@@ -24,6 +24,7 @@ public class FirSkeletonCombo : UdonSharpBehaviour
     public int[] lineSpeaker;
     public float length = 10f;
     public TextMeshPro label;
+    public string[] lineText;          // the captions, one per line
 
     Vector3[] restPos;
     Quaternion[] restRot;
@@ -78,6 +79,7 @@ public class FirSkeletonCombo : UdonSharpBehaviour
             if (played[i] || t < lineStart[i]) continue;
             played[i] = true;
             if (lines[i] != null) lines[i].Play();
+            if (lineText != null && i < lineText.Length && lineText[i] != "") Show("<size=70%><color=#ffe080>" + lineText[i] + "</color></size>");
             float len = lines[i] != null && lines[i].clip != null ? lines[i].clip.length - 0.25f : 1.5f;
             int who = lineSpeaker[i];
             for (int r = 0; r < riders; r++) if (who < 0 || who == r) talkUntil[r] = t + len;

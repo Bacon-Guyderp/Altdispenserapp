@@ -334,7 +334,8 @@ namespace VRC.SDKBase {
     public static bool IsOwner(GameObject g) { return Sim.OwnerOf(g) == Sim.Current.player; }
     public static VRCPlayerApi GetOwner(GameObject g) { return Sim.OwnerOf(g); }
     public static void SetOwner(VRCPlayerApi p, GameObject g) { Sim.SetOwner(p, g); }
-    public static int GetServerTimeInMilliseconds() { return 50000000 + (int)(Time.time * 1000); }
+    public static int ServerOffsetMs;   // the tests move the server clock forward with this
+    public static int GetServerTimeInMilliseconds() { return 50000000 + ServerOffsetMs + (int)(Time.time * 1000); }
   }
   public class VRC_SceneDescriptor : UnityEngine.MonoBehaviour { public UnityEngine.Transform[] spawns; public float RespawnHeightY; public UnityEngine.GameObject ReferenceCamera; }
   public static class Utilities { public static bool IsValid(object o) { return o != null; } }

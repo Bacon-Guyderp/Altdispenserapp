@@ -1,0 +1,484 @@
+# clip|caption (written by tools/make_voices.py --captions)
+ap_clavicle|Morning! I've done four hundred push-ups. My bones are very toned. That's all I have. Bones.
+ap_coccyx|I work from home. My commute is eleven steps. I'm still late.
+ap_dryer|The dryer ate a sock. And a femur. Femur would like it back.
+ap_femur|I'm the superintendent. The lift's been broken since I got here. I'm starting to think it's decorative.
+ap_lift|Going up! ...Just kidding. It has never gone up.
+ap_mail|You've got mail! It's a bill. For the mailbox.
+ap_mortimer|I write sad songs on the guitar. Granny Tibia says they're too loud. I say they're too sad. We're both right.
+ap_phalange|I've swept this hallway nine times today. There's still dust. I think the dust is me.
+ap_ribsy|Have you heard? Apartment two got a new guitar string! And apartment four ordered soup! Again!
+ap_scapula|I teach dance in the common room! Nobody comes. The dancing is still mandatory.
+ap_tibia|Back in my day we didn't have apartments. We had crypts. And we were grateful!
+as_balloon|I'm going to pop this balloon! Waaaaah!
+as_cake|Who ordered the cake? Nobody? It's mine now.
+as_duck|Quack. I'm not a duck. I'm a skeleton saying quack. Quack.
+as_hat|I bought a new hat. And thirty more, apparently.
+as_knock|Knock knock. Who's there? Nobody. I'm a skeleton. There is literally no body.
+as_magic|Want to see a magic trick? I'm still here. It wasn't a good trick.
+as_potato|I'm a potato. No, really. I'm a potato now.
+as_sandwich|I made a sandwich. Wait. I'm the filling.
+as_spoon|Look, a spoon! That's a fork. This is the worst day of my life.
+as_stairs|I fell down the stairs. What stairs? Exactly.
+band_1|A one, a two, a one two three four!
+band_2|Doot doot da doot!
+band_3|We are the bones! The bones of Bonetown!
+band_4|Thank you, Bonetown! Good night!
+band_cobalt|I'm the singer. Great voice, for a guy with no throat.
+band_emerald|Guitar! I only know one chord. A spinal chord.
+band_mustard|I'm on drums. And these are my own drumsticks. Literally.
+band_scarlet|I play the trumpet. Well. I blow through my ribs.
+bbq_1|Vinegar!
+bbq_2|Tomato!
+bbq_3|Vinegar is tradition!
+bbq_4|Tomato is also tradition!
+bbq_5|Hush puppies? Hush puppies.
+bonetones_1|Doo wop, doo wop, doo wop.
+bonetones_2|We're the Bone Tones!
+bonetones_3|Shoo be doo wah. Oooooh!
+cf_1|Corn flakes. The only breakfast that's scared of milk.
+cf_2|I'd tell you a corn flake joke, but it's a bit corny. And flaky. And soggy by the end.
+cf_3|What do you call a corn flake that won't stay in the bowl? A cereal escapist.
+cf_4|Corn flakes never crack under pressure. They just go soggy.
+cf_5|Corn flakes are just popcorn that gave up.
+cf_6|Me and my corn flakes have a lot in common. We both fall apart in the morning.
+cf_7|How do corn flakes stay in shape? Daily bowling.
+cf_8|Doctor, I think I'm a corn flake. Well, that's a bit flaky of you.
+cf_9|The corn flake went to therapy. It had layers to work through. Well. One layer.
+cf_box|I'm the cereal box. Every joke in this room is about me. I've made my peace with it.
+cf_chef|I'm the breakfast chef. I make corn flakes. I pour them. That's the whole recipe.
+cf_swim|The milk's lovely today! A bit flaky.
+ci_acrobat|I've been doing this backflip for six hours. I'm not sure which way is up any more. Is it you?
+ci_exit|Welcome back to the show!
+ci_juggler|I juggle cubes, spheres, and existential dread. The cubes are the hardest.
+ci_mime|The mime would like you to know he is trapped in a box. The box is also trapped. In a circus.
+ci_ringmaster|Welcome, welcome, welcome, to the show! The show never ends! That's a feature!
+ci_strongman|I lift weights. The weights are drawn on. I am lifting a drawing. Very heavy drawing.
+ci_void|The void says hi. The void would like to know how your day is going.
+finale_1|We are the skeleton crew!
+finale_2|Thank you, good night!
+gag_B1|Two hundred and six. Each.
+gag_B10|It just falls straight through.
+gag_B11|Bulking season! Somebody has to.
+gag_B12|Who ordered a crate of funny bones?
+gag_B13|My neighbour practises the trombone. On his own ribcage.
+gag_B14|Best garden. Again. It's all bone meal.
+gag_B15|The lost and found is getting... full.
+gag_B16|I'm a merry-go-round! Nobody bought a ticket.
+gag_B17|In my day we walked to the graveyard. Uphill. Both ways.
+gag_B18|Skeletons run anyway.
+gag_B19|Somebody keeps borrowing my lights.
+gag_B2|I moved here for the peace and quiet. Then the skeletons moved in.
+gag_B20|I'm the only tree in town. I'm also the only parking.
+gag_B21|Wait for me! Wait for meee!
+gag_B22|I'm not a bauble. I'm a bauble with ambitions.
+gag_B3|Housewarming present! Is it warm? Is it?
+gag_B4|Our founder. Very well preserved.
+gag_B5|Town square dancing! I am the square.
+gag_B6|I ate the whole snack shack menu. All of it.
+gag_B7|Is the mayor gone? He wants me on the committee.
+gag_B8|Late for my shift at the snack shack!
+gag_B9|It's draughty in here. Skeletons let all the wind through.
+gag_E1|Leaving so soon? We made cake. Tree cake.
+gag_E2|Sequel coming soon.
+gag_E3|Here's your participation trophy. It's me.
+gag_E4|Victory spin!
+gag_H1|Everyone looks so wooden.
+gag_H2|I wrapped myself. Don't ask how.
+gag_H3|Is the fire for warmth? Or for us?
+gag_H4|Mistletoe? On me? No thank you!
+gag_H5|Not on that mat.
+gag_H6|Shiny. Round. Terrified.
+gag_H7|I'm just here for the view.
+gag_I1|Mostly eternity.
+gag_I2|I'm the lobby plant. I'm very redeemed. I just photosynthesise now.
+gag_I3|Except the floor.
+gag_I4|Guest of the month. Nobody. Yet.
+gag_I5|Room service! I'm the mint on your pillow!
+gag_I6|The pool is closed. It's lava.
+gag_I7|It's freezing in here. Somebody turned the furnace down to medium.
+gag_I8|Redemption progress: half a percent. We're thrilled.
+gag_J1|Go faster.
+gag_J2|Springs are springy. You have been warned.
+gag_J3|They are.
+gag_J4|I'm the only tree in this level. I don't do anything. I'm scenery.
+gag_J5|Our version is a bit smaller.
+gag_J6|First in flight. Second in skeletons.
+gag_J7|And on. And on.
+gag_J8|I'm the tent pole. I hold everything up. Nobody claps for me.
+gag_K1|Return to sender!
+gag_K2|We don't even have a forklift.
+gag_K3|Excuse me. Tiny tree coming through.
+gag_K4|This aisle is haunted. By me. Boo.
+gag_K5|I asked for a raise. They gave me a taller pot.
+gag_K6|Bubble wrap! Bubble wrap!
+gag_K7|Inventory complete! I counted myself twice.
+gag_L1|Now look what you did.
+gag_L2|Surprise! I'm the present!
+gag_L3|Wheee! I'm a festive tornado!
+gag_L4|Please don't pop me. Please.
+gag_L5|I'd tell you a tree joke, but it's a bit sappy.
+gag_L6|Brr! Who left the front door open?
+gag_O1|The coffee machine is a tree now.
+gag_O2|Did you hear? Gary from accounting got recycled.
+gag_O3|I couldn't hang in there.
+gag_O4|I'm not hiding. I'm filing.
+gag_O5|Wheee! Office chair races!
+gag_O6|I ate the whole holiday party.
+gag_O7|Who set the thermostat to winter?
+gag_P1|You must be this tall to ride. And have a body.
+gag_P10|I was the ring toss prize for forty years. Nobody ever won me.
+gag_P11|Lost and found! Mostly found bones.
+gag_P12|Side effects include loose bones.
+gag_P13|Longest ride on the big wheel: Loop. Still going.
+gag_P14|Tilt-a-tree! Tilt-a-tree! Tilt-a-tree!
+gag_P15|The fun house mirror made me look like a bush. Thanks a lot.
+gag_P16|The prize crate is full of stuffed skeletons. Very realistic.
+gag_P17|Did somebody say drop tower? I'm not going on the drop tower.
+gag_P18|There is no fire. Only trees.
+gag_P19|Psst. The ghost train is cheaper on Tuesdays. Same ghosts.
+gag_P2|Prize! You won me! No returns.
+gag_P20|Surprise! I'm the grand prize. You should have picked the goldfish.
+gag_P3|I'm the cheapest ride in the park. Free, and you don't even have to get on.
+gag_P4|I guess your weight! You weigh... more than a skeleton.
+gag_P5|I'm a water balloon. Please don't throw me. Please.
+gag_P6|Some fun fair. Freezing! And the candy floss is all needles.
+gag_P7|Wait! I'm not tall enough! Let me on anyway!
+gag_P8|Is the ghost train over? Can I come out now?
+gag_P9|Too many corn dogs!
+gag_Q1|No parkour either.
+gag_Q10|Is this the line-up? I'd like to pick out a suspect. The blue one, please.
+gag_Q11|I've been walking this beat for twenty years. It's mostly a drum.
+gag_Q12|I was on a stakeout. Mostly the steak.
+gag_Q13|I spun round to see who was behind me. Nobody. So I spun round again. Still nobody.
+gag_Q14|Help is on its lunch break.
+gag_Q15|The suspect was armed. Two arms, actually. Very suspicious.
+gag_Q16|Surprise! I'm the stakeout! You found me!
+gag_Q17|He fixes the computers.
+gag_Q18|Wanted: a man with one arm. Also wanted: his other arm.
+gag_Q19|Officer of the month. Never once late.
+gag_Q2|I'm undercover. As a tree. It's going extremely well.
+gag_Q20|For bravery in the line of fire. It was a barbecue.
+gag_Q21|Precinct rules. Number three: don't.
+gag_Q22|All the crime happens right here. In this pin.
+gag_Q23|Before. And after. Training budget well spent.
+gag_Q24|Back in my day we solved crimes with a hunch and a pencil. Mainly the pencil.
+gag_Q25|I swallowed the evidence. It was a whistle. Tweet!
+gag_Q26|I saw the whole thing. Well, I didn't. I'm a tree. Big eyes, though.
+gag_Q27|I'd like to report a crime. Somebody stole my identity. Now I don't know who I am.
+gag_Q28|Seriously. It's still warm.
+gag_Q29|Freeze! Oh. I'm a Christmas tree. I'm always frozen.
+gag_Q3|We are on number seven. It has been seven since nineteen eighty seven.
+gag_Q30|He won't talk. He's a vending machine. We've tried everything except money.
+gag_Q31|I'm the chief's spinny chair! Wheee! Don't tell the chief!
+gag_Q32|I've been in holding for an hour. Nobody told me what I'm holding.
+gag_Q33|The evidence locker is completely full. Of evidence that it's full.
+gag_Q34|Found the missing evidence! It was in the box marked missing evidence.
+gag_Q35|Today's briefing has been cancelled. Due to a briefing.
+gag_Q4|I called for backup. They sent a tree. Twice.
+gag_Q5|Very slow.
+gag_Q6|Hot pursuit! Very hot! Somebody turn the heating down!
+gag_Q7|I called the police about a noise. It was the police. Being noisy.
+gag_Q8|It's a cold case. Very cold. Somebody left the freezer open.
+gag_Q9|The good chair is taken.
+gag_R1|Just kidding. Mostly.
+gag_R2|I'm not an imitation. I'm a tribute.
+gag_R3|Do I look recalled to you?
+gag_R4|If I spin fast enough, I'm a blender!
+gag_R5|Too big for the furnace! Ha!
+gag_R6|It's freezing. Can we light the furnace? Wait. No.
+gag_R7|I'm just going to... leave.
+gag_R8|Zero accidents. Zero survivors.
+gag_S1|Is it Christmas yet? No? Bye.
+gag_S2|Every month. Every single month.
+gag_S3|Batteries not included.
+gag_S4|I'm not dizzy. The room is spinning.
+gag_S5|Is the coast clear? Oh. Hi.
+gag_S6|I used to be a pine. Then I got my needles done.
+gag_S7|I've been working out!
+gag_U1|Population: low resolution.
+gag_U10|Wanted. Someone to fix the music loop.
+gag_U2|I'm an eight bit tree. I used to be sixteen bit. Budget cuts.
+gag_U3|They mostly want to chat.
+gag_U4|Random encounter! Just kidding. I'm a tree.
+gag_U5|Is it my turn? Is it my turn yet?
+gag_U6|Level up! Level up! Oh. I'm just inflating.
+gag_U7|I'm the boss tree. My weakness is being asked nicely.
+gag_U8|It's always snowing in the pixel woods. In big square flakes.
+gag_U9|Already taken.
+gag_V1|Testing. Testing. Is this thing on?
+gag_V2|Take two!
+gag_V3|Whoops. Wrong side.
+gag_V4|I do all my own stunts!
+gag_V5|This is my big break!
+gag_V6|Ten copies. Ten!
+gag_V7|Did somebody say audition?
+gag_X1|They taste purple.
+gag_X2|Test subject of the month. You. By default.
+gag_X3|I'm the control group. I just stand here. It's going great.
+gag_X4|Wheee! I fell through a portal into another portal!
+gag_X5|We know. You will anyway.
+gag_X6|I'm a blocky tree. I come in one shape. Square.
+gag_X7|The chest is full of dirt. Sixty four dirt.
+gag_X8|Is it night yet? Things come out at night. Mostly me.
+gag_Z1|Now with thirty percent fewer needles.
+gag_Z10|I came for the pizza. I stayed because the doors locked.
+gag_Z11|Lost and found. One arm, two ears, and a whole tree.
+gag_Z12|Spare parts! Nobody's missing any. Yet.
+gag_Z2|I'm the delivery tree. Thirty minutes or it's free. It's always free. I'm a tree.
+gag_Z3|Happy birthday! I'm the cake! Please don't cut me!
+gag_Z4|I'm the ball pit lifeguard! Wheee!
+gag_Z5|I ate the whole party platter. And the platter.
+gag_Z6|Rule one: don't. Rule two: also don't.
+gag_Z7|Survival not guaranteed.
+gag_Z8|They keep it very cold in here. For the pizzas. And the... other things.
+gag_Z9|Is it closing time yet? That's when the fun starts. For them.
+in_brimstone|I'm the bartender. Drinks are on the house. The house is on fire. Same thing.
+in_cinder|Hi! I'm Cinder! This hotel redeems sinners! So far we've redeemed a sock. It was a very bad sock.
+in_dial|Good evening, listeners, and welcome to the Redemption Inn! Please stay tuned. You can't change the station anyway.
+in_dusty|I dust every inch of this hotel. The dust comes back. The dust always comes back.
+in_hop|Bellhop! I carry the luggage! Sometimes the luggage carries me! It's a partnership!
+in_lustre|Darling, I've been checked in for three hundred years. The minibar is simply divine.
+inn_1|Welcome to the Redemption Inn!
+inn_2|Where every guest gets a second chance!
+inn_3|And a third. And a fourth. I'm not singing.
+inn_4|He's singing a little bit!
+inn_5|Check in, cheer up, and stay forever!
+knock_1|Knock knock.
+knock_2|Who's there?
+knock_3|Orange.
+knock_4|Orange who?
+knock_5|Orange you glad I didn't say banana?
+knock_6|That's not even a skeleton joke.
+lb_brick|I built a house out of dirt. It's mostly dirt. And a door. A dirt door.
+lb_digby|I dig. Then I dig some more. The hole is my friend now.
+lb_proctor0|Welcome to the Bonewell Testing Annex. You have volunteered. Please do not check whether you volunteered.
+lb_proctor1|Test one. The door is locked. The portal is not. Draw your own conclusions.
+lb_proctor2|Excellent. You walked through a hole. Science thanks you.
+lb_proctor3|Test two. Place the crate on the button. The crate does not mind. We asked.
+lb_proctor4|The door is open. Please do not grow attached to the crate. It has already forgotten you.
+lb_proctor5|Test three. The crate is on the other side of the glass. So is a portal. Coincidence? Yes.
+lb_proctor6|Testing complete. Your reward is the satisfaction of a test completed. And this sign.
+lb_sprout|Square wheat. Square carrots. I grew a round potato once. Nobody believed me.
+lb_woolly|My sheep are cubes. When they jump, they go boing. A square boing.
+medal_brown|Third! That's bronze, right? Close enough.
+medal_gold|First place!
+medal_silver|Second. Again.
+my_dad|I came for the mysteries. I've paid forty dollars to see a rock. It's a good rock.
+my_detector|Beep. Beep. Weirdness level: yes.
+my_gnome|You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye.
+my_jar|Get me out of this jar. Also, the gift shop is that way.
+my_journal|Day one. The trees are watching me. Day two. The trees are still watching me. Day three. I have started watching the trees back. It is a stalemate.
+my_kid|Dad, is the unicorn a goat? Dad. Dad. It's a goat, Dad.
+my_lake|The lake monster! It's a cardboard cutout. Or is it? It is.
+my_lumberjack|I chop trees for a living. Around here, the trees chop back. I've stopped.
+my_marrowby|Welcome to the Mystery Hut! Every exhibit is one hundred percent genuine. Some percent. A percent.
+my_mirror|The mirror of truth! It shows you as you truly are. A person who paid to look at a mirror.
+my_pip|Gift shop's open. Everything is a mug. Even the T-shirts are mugs.
+my_pit|The bottomless pit. Drop something in. Still falling. Still falling. That'll be one dollar.
+my_rock|A rock that looks exactly like a rock. Uncanny.
+my_shrink|The incredible shrinking tree! Please don't ask it about its feelings.
+my_squirrel|Behold! The six legged squirrel! Please ignore the tape.
+my_toenail|Bigfoot's toenail! He wants it back. He can't have it.
+my_unicorn|The genuine unicorn! Do not look at the tape. Do not ask about the goat.
+nc_flight|First in flight! Twelve seconds, a hundred and twenty feet. The skeletons would like it noted that they were not invited.
+nc_flytrap|Venus flytraps only grow wild around here. I'm very picky about my neighbours. And my lunch.
+nc_hiker|I hiked the Blue Ridge. Turns out it's only blue because it's very, very far away.
+nc_kay|Lexington dip! A little tomato never hurt anybody. Well. It hurt Vern's feelings.
+nc_keeper|They moved this lighthouse half a mile inland once. Lighthouses don't usually go for walks. This one did.
+nc_mitchell|Mount Mitchell. The highest peak east of the Mississippi. Our version is a bit smaller.
+nc_pony|The wild ponies of the Outer Banks. Do not feed them. Do not pet them. Do not challenge them to a race.
+nc_surfer|Surf's up on the Outer Banks! The sharks are up too. We have an understanding.
+nc_tea|Sweet tea. So sweet it's legally a dessert.
+nc_vern|Eastern style! Whole hog, vinegar and pepper. Anything else is just a sandwich with a ketchup problem.
+nt_bucket|Hm? Who's there? I can't see a thing. Take whatever you like. I mean. Don't.
+nt_cheese|And the cheese wheels roll down the mountain. As is tradition.
+nt_guard1|I used to wander like you. Then I took a pine cone to the knee.
+nt_guard2|Let me guess. Someone stole your pine roll.
+nt_guard3|Do you get to the Bone District very often? Oh, what am I saying. Of course you don't.
+nt_horse|The horse has decided that the mountain is a road. Nobody can stop the horse.
+nt_launch|Wheeeeeeee! I can see my house from here!
+nt_passenger|Hey. You. You're finally awake. Oh. You're a skeleton too. Never mind. Go back to sleep.
+nt_shout|FIR! ROH! DAH!
+nt_sign|Dragons not included. The trees, however, are.
+pc_clavicle|I'm on desk duty. I sit at this desk. Sometimes the desk sits on me.
+pc_coccyx|First day! They gave me a badge, a hat, and a tail. Wait. That's mine.
+pc_femur|I'm a detective. I detect. Right now, I detect that you're standing there.
+pc_fibula|We found the body. It was mine. I'd left it in the break room.
+pc_humerus|They call me Humerus. Because I'm funny. Also, I'm an arm bone.
+pc_marrow|Welcome to Precinct Two Oh Six. Take a number. We only have the one.
+pc_patella|Lieutenant Patella. I'm the kneecap of this department. I keep things bending.
+pc_pelvis|Can't stop! I don't even know what I did!
+pc_radius|I'm tailing a suspect. Don't look. Don't look! You looked.
+pc_scapula|I inspected everything. Twice. Everything is still there. Case closed.
+pc_sternum|I want this case solved by morning. Which morning, I don't know. Any morning.
+pc_tibia|I've never fired my weapon. Mostly because it's a banana.
+pc_ulna|I think somebody is following me. It's probably nothing. It's probably Radius.
+pc_vertebra|Hot pursuit! I've been chasing him round this desk since Tuesday!
+pk_balloon|Balloons! Hold on tight. I let go of one once and floated for a week.
+pk_brawn|Ring the bell, win a prize! I hit it once. My arm went higher than the puck.
+pk_churro|Churros! Long, crunchy and covered in sugar. That's also my dating profile.
+pk_confetti|Honk honk! I'm a clown! My nose is the only part of my face left.
+pk_cotton|Cotton candy! It's mostly air. Like me. Mostly gaps.
+pk_dizzy|Whee! I've been on this ride for six hours. I can't feel my bones.
+pk_dunk|Dunk the skeleton! Go on! I can't drown. I just get soggy.
+pk_fortune|I see your future. Hmm. It has trees in it. Lots and lots of trees.
+pk_fudge|Has anyone seen my kid? About this tall. Skeletal. Sticky.
+pk_gallop|Giddy up! My horse doesn't go anywhere, but it does it with style.
+pk_gears|Hop on the big wheel! Best view in the park. Of the other skeletons.
+pk_ghoul|Ride the ghost train, if you dare. The ghosts are my cousins. Say hi.
+pk_gumdrop|I've had nine candy apples. I'm not hungry. I just like the noise.
+pk_hoop|Toss a ring over a bottle! Nobody's won since nineteen sixty. That's the fun.
+pk_jester|Watch me juggle! Three skulls! Wait. Whose skulls are these?
+pk_licorice|The ghost train isn't scary. I definitely didn't scream. That was my knees.
+pk_lollipop|Race you to the carousel! Last one there is a pile of bones!
+pk_loop|I've been on this wheel since opening day. It goes round. So do I.
+pk_marshmallow|I'm toasting marshmallows! Ah. That one was me. Ow.
+pk_nougat|I won a goldfish! It's a skeleton fish. Very low maintenance.
+pk_popcorn|Fresh popcorn! It pops right out between my ribs. Don't ask.
+pk_pretzel|I tied myself in a pretzel once. Took three days to untie.
+pk_shriek|The drop tower! Up. Up. Up. Then, for a moment, everything comes apart.
+pk_slushy|Blue raspberry slushy! Fair warning, you'll see it again. Through my ribs.
+pk_sprinkle|Mum! Mum! Can we go on the ghost train? Can we? Can we?
+pk_sundae|Ice cream! I get brain freeze. Well. Skull freeze. There's no brain.
+pk_taffy|Salt water taffy! It sticks to your teeth. Good thing I've got plenty.
+pk_ticket|Tickets! One ticket per ride. Two if you're a skeleton. We come apart.
+pk_toffee|I lost my ticket. And my left foot. The ticket's more important.
+pk_whirly|Teacups! Spin it as fast as you like. Just aim away from me.
+pl_bonk|Bonk! A coin! Bonk! Another coin! Your head will feel this tomorrow.
+pl_bonny|I built all these floating platforms. Don't ask how they float. I don't know either.
+pl_coins|Every block has a coin in it. Who keeps putting coins in blocks? That's what I want to know.
+pl_flag|Course clear! You win absolutely nothing. Congratulations!
+propose_1|Mustard. Will you be my neighbour?
+propose_2|I'm already your neighbour.
+propose_3|Then will you be my BEST neighbour?
+propose_4|Yes! Yes! A thousand times, yes!
+px_brindle|In my day, monsters just wanted a chat. Nowadays monsters also just want a chat.
+px_chest|You open the chest. Inside, there's a smaller chest. Inside that, a note. It says: nice try.
+px_fizz|The inn has one bed. It's a very popular bed.
+px_lumen|Evening, traveller. I keep the lighthouse. There's no sea. But you can never be too careful.
+px_nib|If you stand still long enough, the music changes. It doesn't. I've checked.
+px_pebble|Welcome to the shop! Everything costs one gold. We don't take gold.
+px_rattleton|Halt! I am Sir Rattleton, knight of the cardboard order! My armour is water resistant. Mostly.
+px_save|The sparkle twinkles. Your bones feel very sturdy. Progress saved. Spiritually.
+pz_basil|Pizza's up! Extra cheese, extra pine needles. House special.
+pz_candle|It's my birthday! I'm three hundred! I don't look a day over two hundred and ninety!
+pz_frosting|Can we see the animatronics? Mum says they only bite at night.
+pz_gary|Night shift? I did that. Five nights. On the sixth night I got very, very relaxed.
+pz_mop|I mop every night. Every morning there are footprints. Big, rooty footprints.
+pz_pepper|Welcome to Pine Pete's! Would you like to try our new tree fold pizza? It's a pizza. In a tree.
+pz_tokens|I've been trying to win the big bear for sixty years. I'm so close.
+pz_voicemail|Hello? Hello, hello! Welcome to your first night at Pine Pete's Pizza Palace. I used to work this shift. Now I'm a skeleton. Unrelated! Probably. Anyway. The trees get a bit restless at night. They like to wander. Pete comes down the west side. Holly comes down the east. Sprucey, who knows. If one of them shows up at your door, shut it. Don't leave it shut all night, though. The power is on a budget. Check the cameras. Check the lights. And whatever you do, don't let Pete in. He'll want to give you a hug. A very, very pointy hug. Okay! Good luck! Have a pizza!
+quest_1|Halt! None shall pass!
+quest_2|Everyone shall pass. It's a path.
+quest_3|Then. Some shall pass?
+quest_4|Most shall pass. Let's say most.
+quest_5|Agreed! Onward!
+rb_black|Black skeleton. I'm the one hiding in your closet. Boo.
+rb_blue|I've got the blues. Nobody to dance with.
+rb_brown|Brown skeleton. I'm not hungry. I've got no stomach for it.
+rb_giant|I'm not fat. I'm big-boned.
+rb_glow|I glow in the dark. Someone turn off the lights. Please?
+rb_gold|Gold skeleton. Worth my weight in gold. I weigh nothing!
+rb_green|Feeling a little green. Too many pine needles.
+rb_indigo|Indigo? Nobody even knows what colour that is.
+rb_orange|Knock knock. Orange you glad I'm just bones?
+rb_pink|Stop it, I'm ticklish! Tickled pink, and I haven't even got skin.
+rb_rainbow|I'm every colour! I just couldn't decide.
+rb_silver|Silver skeleton. I came second in the skeleton contest.
+rb_teal|Ooooh. I'm the teal skeleton. Teal death do us part.
+rb_tiny|Hi! I'm just a little skele-tiny!
+rb_violet|Sorry. I'm a shrinking violet. I go to pieces.
+rb_yellow|I'm not yellow. I just haven't got the guts.
+res_coral|I work out every single day. Look at these bones. All bone. No muscle. Still proud.
+res_cream|I tripped over the rug. Again. Could somebody... pick me up? All of me?
+res_lavender|Five more minutes. I've only been asleep for two hundred years.
+res_mint|I just moved in! I haven't even unpacked my spare ribs.
+res_navy|Shh! I'm hiding from my landlord. I owe him a skull.
+res_olive|Breaking news! Local skeleton loses his temper. Also his arm. More at eleven.
+res_peach|I'm practising for the town dance. My partner is a broom. He's very quiet.
+res_plum|I keep eating, but nothing ever stays down. Or in.
+res_rust|Welcome to the snack shack! Today's special is soup. It goes right through you.
+res_sky|I'm writing a song! It's called Ribcage Rock. It's mostly xylophone.
+skel_SK1|Skeleton crew, reporting for duty!
+skel_SK10|Green skeleton. Also, ha.
+skel_SK11|I'd run, but I don't have the guts.
+skel_SK12|Thank you! We'll be here all century!
+skel_SK2|I've got a funny bone. It's all of them.
+skel_SK3|I've got no body to dance with.
+skel_SK4|I'm falling apart! ... ... I'm fine.
+skel_SK5|I'd help, but I don't have the stomach for it.
+skel_SK6|This next song is spine-tingling!
+skel_SK7|Why didn't the skeleton go to the party? No body to go with! Ha ha ha!
+skel_SK8|I've been on hold since nineteen ninety-six.
+skel_SK9|Can somebody give me a hand?
+skeleton_red|Red skeleton. Ha!
+skeleton_white|A skeleton.
+sp_coach|Hit the boost pads. Bounce on the springs. Grab the rings. That's it. That's the whole sport.
+sp_dash|Gotta go! Gotta go! I don't know where. I've never known where. Gotta go!
+sp_tired|I've run this course nine thousand times. I'm not tired. Skeletons don't get tired. I'm lying down for fun.
+squabble_1|You took my femur!
+squabble_2|It's MY femur!
+squabble_3|Then whose femur am I standing on?
+squabble_4|Mine. Sorry.
+squabble_5|Bone buddies! Hug it out!
+town_finale_1|Welcome to Bonetown!
+town_finale_2|Population: us!
+traffic_green|Green means go!
+traffic_red|And red means... red skeleton. Ha!
+traffic_yellow|Yellow means slow down.
+upsy_1|Pick me up! Pick me up!
+upsy_2|Upsy daisy!
+upsy_3|Wheeeeee!
+upsy_4|Oof. You're heavier than you look.
+upsy_5|I'm big boned too!
+wan_amber|Lovely day for a walk. I left my legs on, just in case.
+wan_bubblegum|Shopping day! I'm buying a new skull. This one's a bit hollow.
+wan_cocoa|I jog every morning. Lose weight? I haven't got any to lose!
+wan_crimson|You can't catch me! I'm not even running from anything!
+wan_denim|Ooh, a visitor! We don't get many living ones.
+wan_ivory|Hello, neighbour! Have you met everyone? Everyone's bones.
+wan_lime|Out for my evening stroll. Want to come? I'm very slow. And very dead.
+wan_magenta|Can't stop! I'm late for a very important... nothing! Bye!
+wan_neon|Wheee! Running is the best! I never get out of breath. No lungs!
+wan_turquoise|Tag! You're it! ...Oh. You're not playing. That's fine.
+xs_apricot|Can't talk! Training for the skeleton marathon! It's all downhill from here!
+xs_aqua|Wind me up and watch me go! Clickety clack!
+xs_ash|I'm wrapping myself as a present. Nobody ever wants to unwrap a skeleton.
+xs_bark|Shh! Did you hear that? That was the tree. Or my knees.
+xs_blush|Is it true the trees in the cellar are awake? Ooh, spooky! Count me out!
+xs_bronze|Third place in the skeleton contest. Bronze. Story of my life. Well. Afterlife.
+xs_burgundy|The generator's broken. I've been pedalling for a hundred years. Hello!
+xs_butter|I'm lying in the sun, working on my tan. It's not working.
+xs_caramel|Don't mind me. I'm just falling apart. It happens.
+xs_charcoal|Don't look away from them! I looked away once. Now I'm a skeleton.
+xs_chartreuse|I glow. It's not a gift. It's the fuses. Don't touch the fuses.
+xs_cherry|Boo! Sorry. Force of habit. It's the Bone Yard.
+xs_copper|I came here for the bone broth. Turns out I was the bone broth.
+xs_fern|I water the plants. The plants water me back. With their eyes.
+xs_frost|Welcome to Fir Warning! Doors that way. Trees everywhere. Good luck!
+xs_fuchsia|I'm the ghost of Christmas past. Mostly past. Very, very past.
+xs_holly|Hi! I'm the welcome committee. And the goodbye committee, if the trees get you.
+xs_honey|Picnic time! I brought sandwiches. They go right through me, but I love the taste.
+xs_jade|I'm meditating. I've been very still for a very long time. I'm good at it.
+xs_lemon|I'm a jack in the box! Well, a skeleton in the box. Same spring.
+xs_lilac|Lovely evening. Have you been down to the root cellar? Don't.
+xs_maroon|I live here. The rent's cheap, and the neighbours are dead quiet.
+xs_mauve|This is the tool library. Borrow anything except the axe. The tree has the axe.
+xs_midnight|It's always midnight down here. That's why they named me Midnight. Also my mum.
+xs_mocha|Coffee break. I drink it and it goes straight through. Mostly onto the floor.
+xs_moss|Welcome to the night shift. The trees down here bite. Clock in!
+xs_orchid|Chestnuts roasting by the fire. Not me. I'm not roasting. I'm chilling.
+xs_periwinkle|Santa never comes down this chimney. I think it's because of me.
+xs_pewter|I lost my head in the sawmill once. Found it. Still a bit loose.
+xs_pistachio|Just walking my invisible dog. He's a very good boy. Mostly bones.
+xs_rose|The ribbon tickles! It goes right between my ribs!
+xs_saffron|Gift wrap inspector, reporting for duty! This one's a sock. Again.
+xs_sage|I've been building the same toy for three hundred years. Still missing one screw.
+xs_salmon|I swim upstream every single day. Well. I walk. Upstream is that way.
+xs_sapphire|Quality control! I tested every single toy. I broke every single toy.
+xs_seafoam|Need a hand? How about a head? Here. Hold this.
+xs_slate|Somebody wrapped me in a box with air holes. Very thoughtful. I don't breathe.
+xs_steel|I run the sawmill. Keep your arms inside the ride. I don't have that problem.
+xs_tangerine|Knock knock. It's me, inside the present. Please let me out.
+xs_wine|Count us! The foreman says the number of us is the code. I always lose count. Of me.
