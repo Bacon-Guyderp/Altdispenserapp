@@ -129,11 +129,12 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    var start = All<FirHuntButton>(A).First(b => b.action == 1);
-    Sim.Press(A, start); Sim.Run(0.5f); A.player.pos = new Vector3(0f, 0.05f, -1f);
-    Cam(new Vector3(-2.5f, 1.7f, -32.5f), new Vector3(-8f, 1.7f, -32.5f), 1.2f);   // 0: the west wall's two plates
-    Cam(new Vector3(2.5f, 1.7f, -32.5f), new Vector3(8f, 1.7f, -32.5f), 1.2f);     // 1: the east wall's two plates
-    Cam(new Vector3(2.7f, 1.8f, -39.6f), new Vector3(2.7f, 1.8f, -42f), 1.2f);     // 2: the keypad and the order strip
+    Cam(new Vector3(158f, 1.8f, 21.5f), new Vector3(158f, 1.5f, 30f), 1.2f);        // 0: the front desk
+    Cam(new Vector3(158f, 2.2f, 29f), new Vector3(158f, 1.0f, 44f), 1.2f);          // 1: the bullpen
+    Cam(new Vector3(146f, 1.8f, 34f), new Vector3(140f, 1.2f, 34f), 1.2f);          // 2: the line-up
+    Cam(new Vector3(147.2f, 1.7f, 48.5f), new Vector3(143f, 1.2f, 51f), 1.2f);      // 3: the interrogation room
+    Cam(new Vector3(158f, 1.8f, 47f), new Vector3(158f, 1.8f, 56f), 1.2f);          // 4: the briefing
+    Cam(new Vector3(165f, 1.8f, 30f), new Vector3(171f, 1.0f, 33f), 1.2f);          // 5: the hot pursuit
   }
 
   static void MapTour() {

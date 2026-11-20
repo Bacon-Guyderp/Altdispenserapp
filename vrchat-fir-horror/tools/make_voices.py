@@ -251,6 +251,43 @@ def park_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# Precinct 206 (deadpan cop comedy): 14 skeleton cops -> Audio/Precinct/pc_<name>.ogg
+COPS = [
+    ("marrow", "mb-us2", 115, 25, 0.88, "Welcome to Precinct Two Oh Six. Take a number. We only have the one."),
+    ("femur", "mb-us2", 120, 30, 0.9, "I'm a detective. I detect. Right now, I detect that you're standing there."),
+    ("tibia", "mb-us3", 125, 45, 0.96, "I've never fired my weapon. Mostly because it's a banana."),
+    ("fibula", "mb-us1", 125, 50, 0.98, "We found the body. It was mine. I'd left it in the break room."),
+    ("patella", "mb-us2", 115, 30, 0.9, "Lieutenant Patella. I'm the kneecap of this department. I keep things bending."),
+    ("sternum", "mb-us2", 105, 15, 0.84, "I want this case solved by morning. Which morning, I don't know. Any morning."),
+    ("clavicle", "mb-us1", 120, 45, 0.96, "I'm on desk duty. I sit at this desk. Sometimes the desk sits on me."),
+    ("coccyx", "mb-us3", 165, 75, 1.14, "First day! They gave me a badge, a hat, and a tail. Wait. That's mine."),
+    ("scapula", "mb-us3", 115, 40, 0.94, "I inspected everything. Twice. Everything is still there. Case closed."),
+    ("humerus", "mb-us1", 135, 55, 1.0, "They call me Humerus. Because I'm funny. Also, I'm an arm bone."),
+    ("radius", "mb-us2", 125, 35, 0.92, "I'm tailing a suspect. Don't look. Don't look! You looked."),
+    ("ulna", "mb-us3", 135, 50, 1.0, "I think somebody is following me. It's probably nothing. It's probably Radius."),
+    ("vertebra", "mb-us3", 175, 65, 1.1, "Hot pursuit! I've been chasing him round this desk since Tuesday!"),
+    ("pelvis", "mb-us1", 180, 70, 1.12, "Can't stop! I don't even know what I did!"),
+]
+
+
+def cop_lines():
+    for name, v, speed, pitch, rate, text in COPS:
+        yield ("Precinct/pc_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
+
+
+def render_only(tmp, lines, folder):
+    """Records just these lines (a new area's voices) into Audio/<folder>."""
+    os.makedirs(os.path.join(OUT, folder), exist_ok=True)
+    for name, voice, speed, pitch, text, filt in lines:
+        wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
+        subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+        out = os.path.join(OUT, name + ".ogg")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
+                        "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
+        print(name, os.path.getsize(out) // 1024, "KB")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -278,7 +315,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -313,6 +350,9 @@ def main():
         if "--combo" in sys.argv:
             make_combo(tmp)
             return
+        if "--precinct" in sys.argv:   # only Precinct 206: the cops and its gags (ids starting Q)
+            render_only(tmp, list(cop_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_Q")], "Precinct")
+            return
         if "--park" in sys.argv:   # only the amusement park: its skeletons and its gags (ids starting P)
             os.makedirs(os.path.join(OUT, "Park"), exist_ok=True)
             todo = list(park_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_P")]
@@ -345,7 +385,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

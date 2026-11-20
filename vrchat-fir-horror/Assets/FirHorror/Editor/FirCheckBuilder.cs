@@ -196,6 +196,7 @@ public static class FirCheckBuilder
         BuildCellar(root);
         BuildStation(lobby, spawn);
         BuildPark(root);
+        BuildPrecinct(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1798,6 +1799,7 @@ public static class FirCheckBuilder
         A("Sky", null, new Color(0.62f, 0.8f, 1f), 1, new Color(0.12f, 0.16f, 0.2f));
         A("Hedge", "needles", new Color(0.45f, 0.8f, 0.4f), 1, Color.black);
         A("Water", null, new Color(0.35f, 0.65f, 1f), 1, new Color(0.1f, 0.22f, 0.35f));
+        A("PoliceBlue", null, new Color(0.08f, 0.14f, 0.35f), 1, Color.black);
         A("Porcelain", null, new Color(0.95f, 0.95f, 0.93f), 1, Color.black);
         A("ToiletWater", null, new Color(0.45f, 0.7f, 0.9f), 1, new Color(0.05f, 0.1f, 0.15f));
     }
@@ -1982,6 +1984,166 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== Precinct 206 (deadpan cop comedy), reached from the Station
+
+    static void CopSkeleton(Transform parent, string who, string hex, int act, Vector3 pos, float yaw, string title)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, who, pos, yaw, 1f, act, hex, "Precinct/pc_" + who.ToLower(), new[] { BoneMat(who, hex) },
+                    pos + new Vector3(0, 2.15f, 0) + face * 0.1f, face, "<color=" + hex + ">" + title + "</color>");
+    }
+
+    /// <summary>A police-blue cap on a skeleton's skull (by name, from the rigs the skeleton builder recorded).</summary>
+    static void CopCap(string who)
+    {
+        if (!rigs.TryGetValue(who, out var r)) return;
+        var skull = r[2];
+        Prim(PrimitiveType.Cylinder, "Cap", skull, new Vector3(0, 0.15f, 0.0f), new Vector3(0.27f, 0.05f, 0.27f), M("PoliceBlue"));
+        Prim(PrimitiveType.Cube, "Peak", skull, new Vector3(0, 0.12f, 0.12f), new Vector3(0.2f, 0.02f, 0.12f), M("Black"));
+        Prim(PrimitiveType.Cube, "Badge", skull, new Vector3(0, 0.17f, 0.13f), new Vector3(0.05f, 0.05f, 0.01f), M("Brass"));
+    }
+
+    static void Desk(Transform g, Vector3 at)
+    {
+        Box(g, "Desk", at + new Vector3(0, 0.38f, 0), new Vector3(1.6f, 0.76f, 0.8f), M("DeskWood"));
+        DPrim(PrimitiveType.Cube, "Monitor", g, at + new Vector3(-0.3f, 0.98f, 0.15f), new Vector3(0.5f, 0.38f, 0.05f), M("Black"));
+        DPrim(PrimitiveType.Cube, "Screen", g, at + new Vector3(-0.3f, 0.98f, 0.12f), new Vector3(0.44f, 0.32f, 0.01f), M("Water"));
+        DPrim(PrimitiveType.Cube, "Papers", g, at + new Vector3(0.4f, 0.78f, -0.05f), new Vector3(0.35f, 0.04f, 0.28f), M("Paper"));
+        DPrim(PrimitiveType.Cylinder, "Mug", g, at + new Vector3(0.65f, 0.83f, 0.2f), new Vector3(0.09f, 0.06f, 0.09f), M("CaneWhite"));
+        DPrim(PrimitiveType.Cube, "Chair", g, at + new Vector3(0, 0.25f, -0.75f), new Vector3(0.5f, 0.5f, 0.5f), M("Black"));
+    }
+
+    static void BuildPrecinct(Transform root)
+    {
+        var g = Group(root, "Precinct 206", Vector3.zero);
+        float x0 = 140f, x1 = 176f, z0 = 20f, z1 = 56f, h = 4.2f, cx = 158f, cz = 38f;
+        Box(g, "Floor", new Vector3(cx, -0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Floor2"));
+        Box(g, "Ceiling", new Vector3(cx, h + 0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Ceiling"));
+        Box(g, "WallW", new Vector3(x0 - 0.1f, h / 2, cz), new Vector3(0.2f, h, 36.4f), M("Wall2"));
+        Box(g, "WallE", new Vector3(x1 + 0.1f, h / 2, cz), new Vector3(0.2f, h, 36.4f), M("Wall2"));
+        Box(g, "WallN", new Vector3(cx, h / 2, z1 + 0.1f), new Vector3(36.4f, h, 0.2f), M("Wall2"));
+        Box(g, "WallS", new Vector3(cx, h / 2, z0 - 0.1f), new Vector3(36.4f, h, 0.2f), M("Wall2"));
+        Trim(g, "Precinct", z1, z0, 36f, h, float.NaN, float.NaN, true);
+        foreach (float lz in new[] { 25f, 33f, 41f, 50f }) foreach (float lx in new[] { 146f, 158f, 170f }) PendantLamp(g, new Vector3(lx, h, lz), 0.7f);
+        var arrive = Marker(g, "Arrive", new Vector3(158f, 0.05f, 21.5f), 0f);
+        StationStop("PRECINCT 206", arrive, g, new Vector3(155.3f, 1.3f, 20.15f), Vector3.forward);
+        Text("PrecinctName", g, new Vector3(158f, 3.5f, 20.05f), Face(Vector3.forward), new Vector2(10f, 0.6f), 0.45f, "<b>POLICE  PRECINCT 206</b>").color = new Color(0.2f, 0.3f, 0.7f);
+        Text("Motto", g, new Vector3(158f, 3.0f, 20.05f), Face(Vector3.forward), new Vector2(10f, 0.35f), 0.17f, "<i>\"To Protect and To Serve. Mostly To Serve. Coffee.\"</i>").color = new Color(0.25f, 0.25f, 0.3f);
+
+        // ---- the front desk
+        Box(g, "FrontDesk", new Vector3(158f, 0.55f, 26f), new Vector3(12f, 1.1f, 0.8f), M("DeskWood"));
+        Text("DeskSign", g, new Vector3(158f, 1.3f, 25.58f), Face(Vector3.back), new Vector2(3f, 0.3f), 0.18f, "<b>FRONT DESK</b>  <size=70%>all complaints to the desk (it doesn't mind)</size>").color = Color.white;
+        DPrim(PrimitiveType.Cube, "Bell", g, new Vector3(156.5f, 1.15f, 25.9f), new Vector3(0.12f, 0.06f, 0.12f), M("Brass"));
+        CopSkeleton(g, "Marrow", "#c0c8d8", 26, new Vector3(158f, 0, 27.2f), 180f, "SGT. MARROW");
+
+        // ---- the bullpen: desks in two rows, an aisle up the middle
+        foreach (float dz in new[] { 33f, 39f }) foreach (float dx in new[] { 145f, 150.5f, 165.5f, 171f }) Desk(g, new Vector3(dx, 0, dz));
+        CopSkeleton(g, "Clavicle", "#9fb4c7", 3, new Vector3(145f, 0, 33.9f), 180f, "OFFICER CLAVICLE");
+        CopSkeleton(g, "Tibia", "#7f9ccf", 27, new Vector3(150.5f, 0, 39.9f), 180f, "OFFICER TIBIA");
+        CopSkeleton(g, "Fibula", "#a7c7e7", 5, new Vector3(165.5f, 0, 33.9f), 180f, "OFFICER FIBULA");
+        CopSkeleton(g, "Humerus", "#5b7db1", 15, new Vector3(171f, 0, 39.9f), 180f, "OFFICER HUMERUS");
+        DPrim(PrimitiveType.Cylinder, "Banana", g, new Vector3(150.9f, 0.82f, 39.1f), new Vector3(0.05f, 0.12f, 0.05f), M("GlowYellow"), Quaternion.Euler(0, 0, 70));
+
+        // ---- the line-up: height lines, and five identical trees
+        for (int k = 0; k <= 8; k++)
+        {
+            float y = 0.3f + k * 0.3f;
+            DPrim(PrimitiveType.Cube, "HeightLine", g, new Vector3(140.02f, y, 34f), new Vector3(0.01f, 0.02f, 11f), M("CaneWhite"));
+            Text("Height", g, new Vector3(140.03f, y + 0.08f, 28.7f), Face(Vector3.right), new Vector2(0.4f, 0.15f), 0.1f, (y * 3.28f).ToString("F0") + " ft").color = Color.white;
+        }
+        for (int k = 0; k < 5; k++)
+        {
+            TreeAt(g, "Suspect " + (k + 1), new Vector3(141.2f, 0, 30f + k * 2f), 90f, 1.9f, false);
+            Text("Number", g, new Vector3(141.75f, 0.45f, 30f + k * 2f), Face(Vector3.right), new Vector2(0.4f, 0.3f), 0.25f, "<b>" + (k + 1) + "</b>").color = Color.white;
+        }
+        Text("LineupSign", g, new Vector3(140.03f, 3.3f, 34f), Face(Vector3.right), new Vector2(6f, 0.4f), 0.25f, "<b>THE LINE-UP</b>  <size=70%>(witnesses: please pick the tree)</size>").color = new Color(1f, 0.85f, 0.4f);
+
+        // ---- the interrogation room (north-west): the suspect is a vending machine
+        Box(g, "IntWallS L", new Vector3(143f, h / 2, 46f), new Vector3(6f, h, 0.2f), M("WallDark"));
+        Box(g, "IntWallS R", new Vector3(149.2f, h / 2, 46f), new Vector3(1.6f, h, 0.2f), M("WallDark"));
+        Box(g, "IntWallS Top", new Vector3(147.2f, 3.5f, 46f), new Vector3(2.4f, 1.4f, 0.2f), M("WallDark"));
+        Box(g, "IntWallE", new Vector3(150f, h / 2, 51f), new Vector3(0.2f, h, 10f), M("WallDark"));
+        Box(g, "OneWayMirror", new Vector3(150.12f, 1.8f, 51f), new Vector3(0.02f, 1.2f, 3f), M("Water"), false);
+        Text("MirrorSign", g, new Vector3(150.15f, 2.65f, 51f), Face(Vector3.right), new Vector2(3f, 0.3f), 0.14f, "ONE-WAY MIRROR <size=70%>(the other way is a wall)</size>").color = Color.white;
+        Box(g, "IntTable", new Vector3(145f, 0.38f, 51f), new Vector3(1.4f, 0.76f, 0.9f), M("Metal"));
+        PendantLamp(g, new Vector3(145f, h, 51f), 1.6f);
+        Box(g, "VendingMachine", new Vector3(143f, 0.9f, 51f), new Vector3(0.9f, 1.8f, 0.8f), M("CaneRed"));
+        DPrim(PrimitiveType.Cube, "VendGlass", g, new Vector3(143.46f, 1.1f, 51f), new Vector3(0.01f, 1.1f, 0.6f), M("Water"));
+        CopSkeleton(g, "Femur", "#4a5a7a", 19, new Vector3(147f, 0, 51f), -90f, "DET. FEMUR");
+        Text("IntSign", g, new Vector3(147.2f, 2.95f, 45.88f), Face(Vector3.back), new Vector2(2.4f, 0.3f), 0.15f, "<b>INTERROGATION</b>").color = Color.white;
+
+        // ---- the chief's office (north-east)
+        Box(g, "ChiefWallS L", new Vector3(167.4f, h / 2, 46f), new Vector3(2.8f, h, 0.2f), M("Wainscot"));
+        Box(g, "ChiefWallS R", new Vector3(173.6f, h / 2, 46f), new Vector3(4.8f, h, 0.2f), M("Wainscot"));
+        Box(g, "ChiefWallS Top", new Vector3(170f, 3.5f, 46f), new Vector3(2.4f, 1.4f, 0.2f), M("Wainscot"));
+        Box(g, "ChiefWallW", new Vector3(166f, h / 2, 51f), new Vector3(0.2f, h, 10f), M("Wainscot"));
+        Box(g, "ChiefDesk", new Vector3(171f, 0.4f, 51.2f), new Vector3(2.2f, 0.8f, 1.0f), M("TrimDark"));
+        DPrim(PrimitiveType.Cube, "Nameplate", g, new Vector3(171f, 0.88f, 50.75f), new Vector3(0.5f, 0.12f, 0.05f), M("Brass"));
+        Text("ChiefSign", g, new Vector3(170f, 2.95f, 45.88f), Face(Vector3.back), new Vector2(2.4f, 0.3f), 0.15f, "<b>CHIEF</b>  <size=70%>(knock first. then wait. then knock again.)</size>").color = Color.white;
+        CopSkeleton(g, "Sternum", "#1f2f5f", 20, new Vector3(171f, 0, 52.4f), 180f, "CAPT. STERNUM");
+
+        // ---- the briefing room (between them): chairs, a whiteboard, a podium
+        Box(g, "Whiteboard", new Vector3(158f, 3.05f, 55.95f), new Vector3(4.6f, 1.3f, 0.04f), M("CaneWhite"), false);
+        Text("Briefing", g, new Vector3(158f, 3.05f, 55.92f), Face(Vector3.back), new Vector2(4.4f, 1.2f), 0.15f,
+             "<color=#202020><b>TODAY'S BRIEFING</b>\n1. The trees are back.\n2. Nobody touch the evidence. It's still warm.\n3. Who keeps drawing a moustache on the suspect? (It's a tree.)</color>");
+        Box(g, "Podium", new Vector3(158f, 0.55f, 53.6f), new Vector3(0.8f, 1.1f, 0.5f), M("TrimDark"));
+        CopSkeleton(g, "Patella", "#6f86b6", 4, new Vector3(158f, 0, 54.6f), 180f, "LT. PATELLA");
+        for (int r = 0; r < 2; r++) for (int k = 0; k < 4; k++)
+            DPrim(PrimitiveType.Cube, "BriefChair", g, new Vector3(154.6f + k * 2.2f, 0.25f, 49.4f + r * 1.6f), new Vector3(0.5f, 0.5f, 0.5f), M("Black"));
+
+        // ---- the evidence locker (east wall) and the holding cell (south-east)
+        for (int k = 0; k < 3; k++)
+        {
+            Box(g, "Shelf", new Vector3(175.6f, 0.5f + k * 0.8f, 40f), new Vector3(0.7f, 0.05f, 7.6f), M("Metal"), false);
+            for (int b = 0; b < 6; b++) DPrim(PrimitiveType.Cube, "EvidenceBox", g, new Vector3(175.6f, 0.75f + k * 0.8f, 36.8f + b * 1.25f), new Vector3(0.5f, 0.4f, 0.6f), M("Cardboard"), Quaternion.Euler(0, b * 9f, 0));
+        }
+        Text("EvidenceSign", g, new Vector3(175.9f, 3.0f, 40f), Face(Vector3.left), new Vector2(5f, 0.35f), 0.2f, "<b>EVIDENCE</b>  <size=70%>(do not eat)</size>").color = new Color(1f, 0.85f, 0.4f);
+        CopSkeleton(g, "Scapula", "#8899aa", 21, new Vector3(174.4f, 0, 37.6f), -90f, "INSP. SCAPULA");
+        for (float bz = 20.25f; bz < 28f; bz += 0.3f) DPrim(PrimitiveType.Cylinder, "Bar", g, new Vector3(168f, 1.4f, bz), new Vector3(0.05f, 1.4f, 0.05f), M("Metal"));
+        for (float bx = 168f; bx < 176f; bx += 0.3f) DPrim(PrimitiveType.Cylinder, "Bar", g, new Vector3(bx, 1.4f, 28f), new Vector3(0.05f, 1.4f, 0.05f), M("Metal"));
+        foreach (var bc in new[] { new { p = new Vector3(168f, 1.4f, 24f), sz = new Vector3(0.1f, 2.8f, 8f) }, new { p = new Vector3(172f, 1.4f, 28f), sz = new Vector3(8f, 2.8f, 0.1f) } })
+        {
+            var bars = new GameObject("CellBars");   // the bars' collider (the bars themselves are thin decorations)
+            bars.transform.SetParent(g, false);
+            bars.transform.localPosition = bc.p;
+            bars.AddComponent<BoxCollider>().size = bc.sz;
+        }
+        Text("CellSign", g, new Vector3(167.9f, 3.0f, 24f), Face(Vector3.left), new Vector2(4f, 0.35f), 0.2f, "<b>HOLDING</b>  <size=70%>(hold it)</size>").color = Color.white;
+        CopSkeleton(g, "Coccyx", "#b0c4de", 23, new Vector3(166.4f, 0, 24f), -90f, "CADET COCCYX");
+
+        // ---- the tail, and the hot pursuit (wanderers)
+        var wg = Group(g, "Wanderers", Vector3.zero);
+        var aisle = new[] { new Vector3(154.5f, 0, 30f), new Vector3(154.5f, 0, 43f), new Vector3(161.5f, 0, 43f), new Vector3(161.5f, 0, 30f) };
+        MakeWanderer(wg, "Ulna", "#7a8fb5", aisle, new[] { 1f, 1f, 1f, 1f }, 0.9f, 2500, "Precinct/pc_ulna", "I think somebody is following me. It's probably nothing. It's probably Radius.");
+        MakeWanderer(wg, "Radius", "#3e5487", aisle, new[] { 1f, 1f, 1f, 1f }, 0.9f, 0, "Precinct/pc_radius", "I'm tailing a suspect. Don't look. Don't look! You looked.");
+        var desk = Enumerable.Range(0, 12).Select(k => new Vector3(171f + Mathf.Cos(k * Mathf.PI / 6f) * 1.75f, 0, 33f + Mathf.Sin(k * Mathf.PI / 6f) * 1.75f)).ToArray();
+        MakeWanderer(wg, "Pelvis", "#c9d6ea", desk, Enumerable.Repeat(2.6f, 12).ToArray(), 1.1f, 1200, "Precinct/pc_pelvis", "Can't stop! I don't even know what I did!");
+        MakeWanderer(wg, "Vertebra", "#2b3f6b", desk, Enumerable.Repeat(2.6f, 12).ToArray(), 1.1f, 0, "Precinct/pc_vertebra", "Hot pursuit! I've been chasing him round this desk since Tuesday!");
+        foreach (var w in new[] { "Marrow", "Clavicle", "Tibia", "Fibula", "Humerus", "Femur", "Sternum", "Patella", "Scapula", "Coccyx" }) CopCap(w);
+
+        // ---- the precinct's gags (Data/precinct_gags.txt)
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/precinct_gags.txt");
+        if (ta == null) report.Add("problem: Data/precinct_gags.txt is missing");
+        else
+        {
+            var gg = Group(g, "Gags", Vector3.zero);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var raw in ta.text.Split('\n'))
+            {
+                var line = raw.TrimEnd('\r');
+                if (line.Trim() == "" || line.StartsWith("#")) continue;
+                var p = line.Split('|');
+                if (p.Length < 10) continue;
+                Gag(gg, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                    p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+                placed++;
+            }
+        }
+        int cops = g.GetComponentsInChildren<FirRainbowSkeleton>(true).Length + g.GetComponentsInChildren<FirWanderer>(true).Length;
+        report.Add("Precinct 206: " + cops + " skeleton cops, " + placed + " gags");
     }
 
     // =================================================================== Boneanza Park (the amusement park), reached from the lobby's Station

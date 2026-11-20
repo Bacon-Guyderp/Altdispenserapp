@@ -1,0 +1,44 @@
+# Fir Warning: Precinct 206 (deadpan cop comedy). Same format as gags.txt, placed exactly where given (world metres).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+# ---------------------------------------------------------------- the south wall, either side of the way in
+Q1|sign|142|0|20.8|0|narrator|No parkour either.|NO PARKING|NO PARKOUR\nEITHER
+Q2|talk|145|0|20.8|0|tree|I'm undercover. As a tree. It's going extremely well.||
+Q3|sign|148|0|20.8|0|narrator|We are on number seven. It has been seven since nineteen eighty seven.|PLEASE TAKE\nA NUMBER|NOW SERVING: 7\n(since 1987)
+Q4|talk|151|0|20.8|0|big|I called for backup. They sent a tree. Twice.||
+Q5|sign|161|0|20.8|0|narrator|Very slow.|SLOW:\nOFFICERS\nAT WORK|VERY\nSLOW
+Q6|waddle|164|0|20.8|0|tiny|Hot pursuit! Very hot! Somebody turn the heating down!||3
+# ---------------------------------------------------------------- the west wall, round the line-up
+Q7|talk|140.8|0|23|90|lady|I called the police about a noise. It was the police. Being noisy.||
+Q8|shiver|140.8|0|26|90|old|It's a cold case. Very cold. Somebody left the freezer open.||
+Q9|sign|140.8|0|42|90|narrator|The good chair is taken.|INTERROGATION\nTHIS WAY|THE GOOD CHAIR\nIS TAKEN
+Q10|peek|140.8|0|44.5|90|tiny|Is this the line-up? I'd like to pick out a suspect. The blue one, please.||
+# ---------------------------------------------------------------- the briefing room's north wall
+Q11|talk|152|0|55.2|180|tree|I've been walking this beat for twenty years. It's mostly a drum.||
+Q12|inflate_tree|154.5|0|55.2|180|big|I was on a stakeout. Mostly the steak.||
+Q13|spin|161.5|0|55.2|180|tree|I spun round to see who was behind me. Nobody. So I spun round again. Still nobody.||
+Q14|sign|164|0|55.2|180|narrator|Help is on its lunch break.|PRESS BUTTON\nFOR HELP|HELP IS\nON LUNCH
+# ---------------------------------------------------------------- the east wall, past the hot pursuit
+Q15|talk|175.2|0|29.5|-90|big|The suspect was armed. Two arms, actually. Very suspicious.||
+Q16|pop_gift|175.2|0|32|-90|tiny|Surprise! I'm the stakeout! You found me!||
+Q17|sign|175.2|0|34.5|-90|narrator|He fixes the computers.|DETECTIVE|DE-TECH-TIVE\n(he fixes the\ncomputers)
+# ---------------------------------------------------------------- frames on the offices' walls
+Q18|frame|142|1.6|45.94|180|narrator|Wanted: a man with one arm. Also wanted: his other arm.|<b>WANTED</b>\n\nMan with one arm\n<size=70%>(also wanted:\nhis other arm)</size>|
+Q19|frame|144.4|1.6|45.94|180|narrator|Officer of the month. Never once late.|OFFICER OF\nTHE MONTH\n\n<b>The Coffee Machine</b>\n<size=60%>(never once late)</size>|
+Q20|frame|173|1.6|45.94|180|narrator|For bravery in the line of fire. It was a barbecue.|<b>FOR BRAVERY</b>\nin the line of fire\n\n<size=60%>(it was a barbecue)</size>|
+Q21|frame|175.2|1.6|45.94|180|narrator|Precinct rules. Number three: don't.|<b>PRECINCT RULES</b>\n1. Don't shoot the messenger\n2. Don't shoot the coffee\n3. Don't|
+Q22|frame|165.94|1.6|50|-90|narrator|All the crime happens right here. In this pin.|<b>CRIME MAP</b>\n\n<size=140%>(one pin)</size>\n<size=60%>all the crime\nhappens here</size>|
+Q23|frame|165.94|1.6|53|-90|narrator|Before. And after. Training budget well spent.|<b>BEFORE / AFTER</b>\n\na donut / a donut\n<size=60%>(training budget\nwell spent)</size>|
+# ---------------------------------------------------------------- the bullpen
+Q24|talk|143.5|0|36|90|old|Back in my day we solved crimes with a hunch and a pencil. Mainly the pencil.||
+Q25|inflate_orn|147.7|0|36|180|tiny|I swallowed the evidence. It was a whistle. Tweet!||
+Q26|shiver|168.3|0|36.5|180|tree|I saw the whole thing. Well, I didn't. I'm a tree. Big eyes, though.||
+Q27|talk|142.8|0|30.8|90|lady|I'd like to report a crime. Somebody stole my identity. Now I don't know who I am.||
+Q28|sign|143.5|0|41.5|90|narrator|Seriously. It's still warm.|EVIDENCE:\nDO NOT TOUCH|SERIOUSLY.\nIT'S STILL WARM.
+Q29|talk|168.5|0|42|180|tree|Freeze! Oh. I'm a Christmas tree. I'm always frozen.||
+# ---------------------------------------------------------------- the rooms
+Q30|talk|141.3|0|54.5|90|big|He won't talk. He's a vending machine. We've tried everything except money.||
+Q31|spin|173.5|0|49|180|tiny|I'm the chief's spinny chair! Wheee! Don't tell the chief!||
+Q32|peek|172|0|23|0|old|I've been in holding for an hour. Nobody told me what I'm holding.||
+Q33|inflate_crate|173.8|0|40|-90|narrator|The evidence locker is completely full. Of evidence that it's full.||
+Q34|pop_crate|151.5|0|48.5|90|big|Found the missing evidence! It was in the box marked missing evidence.||
+Q35|sign|164.5|0|48.5|-90|narrator|Today's briefing has been cancelled. Due to a briefing.|TODAY'S\nBRIEFING|CANCELLED\n(due to a briefing)

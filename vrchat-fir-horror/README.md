@@ -75,6 +75,21 @@ the lobby" button by the park gates. Future far-off areas get Station buttons to
 * **20 gags** (`Data/park_gags.txt`) along the fences, and **7 always-armed jump scares** (5 on the ghost
   train).
 
+## Precinct 206: deadpan cop comedy
+
+Reached from the Station: an original police-station gag area in the spirit of the deadpan spoof films.
+
+* **35 gags** (`Data/precinct_gags.txt`). Signs, frames and talking trees: the "take a number" sign stuck
+  on 7 since 1987, the crime map with one pin, the evidence that's still warm, the officer of the month
+  (the coffee machine)...
+* **The rooms:** a front desk, the bullpen, a line-up of five identical trees, an interrogation room
+  (the suspect is a vending machine), the chief's office, a briefing room, the evidence locker and a
+  holding cell.
+* **14 skeleton cops,** each voiced, in police caps:
+  * Sgt. Marrow at the front desk, Detective Femur grilling the vending machine, and Captain Sternum.
+  * Radius tailing Ulna, who knows he's being tailed.
+  * Vertebra in endless hot pursuit of Pelvis round a desk.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -175,7 +190,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 355
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 382
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route

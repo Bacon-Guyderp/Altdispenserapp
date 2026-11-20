@@ -12,10 +12,11 @@ public static class SimCheck {
   static List<T> All<T>(Sim.Client c) where T : Component { var r = new List<T>(); foreach (var g in c.objects) if (!g.destroyed) foreach (var k in g.comps) if (k is T) r.Add((T)k); return r; }
   static string Plain(string s) { return System.Text.RegularExpressions.Regex.Replace(s ?? "", "<[^>]+>", "").Replace("\n", " | "); }
 
-  public static int Main() {
+  public static int Main(string[] args) {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "hunt") { HuntTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed"); return fail == 0 ? 0 : 1; }
     Console.WriteLine("Built " + A.objects.Count + " objects. Builder log:");
     foreach (var l in Sim.BuildLog) Console.WriteLine("  " + l);
     Sim.Run(2f);
@@ -153,7 +154,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 95, gagOk + " of " + gagN + " gags (53 original + 22 in Bonetown + 20 in the park) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 130, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -236,6 +237,7 @@ public static class SimCheck {
     FacingTests(A);
     CellarTests(A, B);
     ParkTests(A, B);
+    PrecinctTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -376,7 +378,17 @@ public static class SimCheck {
     Check(moved > 2f, "Bob looks away: it comes for him (" + moved.ToString("F1") + " m in 3 s)");
     Check(Flat(St(B).transform.position, St(A).transform.position) < 1.5f, "Bob's client sees it where Alice's (its owner) has it");
     A.player.pos = cp + new Vector3(-1.5f, 0, -1f); A.player.LookAt(St(A).transform.position + Vector3.up * 1.3f);
-    var held = St(A).transform.position; Sim.Run(3f);
+    Sim.Run(0.25f);   // it re-checks who's watching every 0.1 s
+    var held = St(A).transform.position;
+    {
+      Sim.Current = A; Physics.SyncTransforms();
+      var head = A.player.GetTrackingData(VRC.SDKBase.VRCPlayerApi.TrackingDataType.Head); var eye = St(A).transform.position + Vector3.up * 1.3f; RaycastHit hh;
+      var dd = eye - head.position;
+      if (Physics.Raycast(head.position, dd.normalized, out hh, dd.magnitude, 1, QueryTriggerInteraction.Ignore)) Console.WriteLine("    (Alice's view of the tree is blocked by " + hh.collider.name + " at " + hh.point + ")");
+      Console.WriteLine("    (angle " + Vector3.Angle(head.rotation * Vector3.forward, dd).ToString("F1") + ", tree at " + St(A).transform.position + ", Alice at " + A.player.pos + ")");
+      Sim.Current = null;
+    }
+    Sim.Run(3f);
     Check(Flat(St(A).transform.position, held) < 0.05f, "Alice watches it while Bob looks away: it freezes");
     // a toilet to the face
     var toilet = All<FirThrowable>(B).First(t => t.name == "Toilet");
@@ -620,7 +632,7 @@ public static class SimCheck {
     Check(minX < 66f && screams >= 3, "Alice rides the ghost train deep into the shed (x " + minX.ToString("F0") + ") and " + screams + " things jump out at her");
     Sim.With(A, () => cartSeat.station.ExitStation(A.player));
     // the park's people stay on their paths
-    var pw = All<FirWanderer>(A).Where(w => w.transform.position.x > 59f).ToList();
+    var pw = All<FirWanderer>(A).Where(w => w.transform.position.x > 59f && w.transform.position.x < 121f).ToList();
     Check(pw.Count == 8, pw.Count + " wanderers in the park");
     int bad = 0; string what = "";
     var last = pw.Select(w => w.transform.position).ToList();
@@ -639,8 +651,50 @@ public static class SimCheck {
       Sim.Current = null;
     }
     Check(bad == 0, "60 seconds of the park's kids, parents and visitors: all on their paths, clear of rides, stalls and the ghost train" + (bad > 0 ? " | " + bad + " problems, e.g. " + what : ""));
-    var back = All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 59f);
+    var back = All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 59f && t.transform.position.x < 121f);
     Sim.Press(A, back); Sim.Run(0.5f);
     Check(Flat(A.player.pos, new Vector3(0, 0, -2.6f)) < 0.3f, "the park's way back takes Alice home to the lobby");
+  }
+
+  // ======================================================================== Precinct 206
+  static void PrecinctTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Precinct 206");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "PRECINCT 206")); Sim.Run(0.5f);
+    Check(Flat(A.player.pos, new Vector3(158f, 0, 21.5f)) < 0.3f, "the Station sends Alice to the precinct's front door");
+    Check(Sim.BuildLog.Any(l => l.Contains("Precinct 206: 14 skeleton cops, 35 gags")), "14 skeleton cops and 35 deadpan gags");
+    var route = new[] { new Vector3(158f, 0, 22.5f), new Vector3(151.3f, 0, 23.5f), new Vector3(151.3f, 0, 29f), new Vector3(158f, 0, 30f), new Vector3(158f, 0, 44.5f),
+                        new Vector3(147.2f, 0, 44.5f), new Vector3(147.2f, 0, 48f), new Vector3(147.2f, 0, 44.5f), new Vector3(170f, 0, 44.5f), new Vector3(170f, 0, 48.5f) };
+    int blocked = 0;
+    Sim.Current = A; Physics.SyncTransforms();
+    for (int i = 0; i + 1 < route.Length; i++)
+      foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
+        var d = route[i + 1] - route[i]; RaycastHit hit;
+        if (Physics.Raycast(route[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { blocked++; Console.WriteLine("    precinct leg " + i + " blocked by " + hit.collider.name + " at " + hit.point); break; }
+      }
+    Sim.Current = null;
+    Check(blocked == 0, "walked round the front desk, up the bullpen, into the interrogation room and the chief's office");
+    var cw = All<FirWanderer>(A).Where(w => w.transform.position.x > 139f).ToList();
+    Check(cw.Count == 4, cw.Count + " cops on the move: Radius tailing Ulna, and Vertebra in hot pursuit of Pelvis");
+    int bad = 0; string what = ""; float gap = 99f, gapMax = 0f;
+    var radius = cw.First(w => w.name.StartsWith("Radius")); var ulna = cw.First(w => w.name.StartsWith("Ulna"));
+    var last = cw.Select(w => w.transform.position).ToList();
+    for (int k = 0; k < 80; k++) {
+      Sim.Run(0.5f);
+      gap = Mathf.Min(gap, Flat(radius.transform.position, ulna.transform.position)); gapMax = Mathf.Max(gapMax, Flat(radius.transform.position, ulna.transform.position));
+      Sim.Current = A; Physics.SyncTransforms();
+      for (int i = 0; i < cw.Count; i++) {
+        var p = cw[i].transform.position; RaycastHit hit; var d = p - last[i];
+        bool ok = p.x > 140.5f && p.x < 175.5f && p.z > 20.5f && p.z < 55.5f;
+        if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = cw[i].name + " walked through " + hit.collider.name; }
+        if (!ok) { bad++; if (what == "") what = cw[i].name + " at " + p; }
+        last[i] = p;
+      }
+      Sim.Current = null;
+    }
+    Check(bad == 0, "40 seconds of tailing and pursuing: nobody walks through a desk or a wall" + (bad > 0 ? " | " + bad + " problems, e.g. " + what : ""));
+    Check(gap > 1.2f && gapMax < 3.5f, "Radius keeps a suspicious " + gap.ToString("F1") + " to " + gapMax.ToString("F1") + " m behind Ulna");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 139f)); Sim.Run(0.5f);
+    Check(Flat(A.player.pos, new Vector3(0, 0, -2.6f)) < 0.3f, "the precinct's way back goes to the lobby");
   }
 }
