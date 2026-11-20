@@ -324,7 +324,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 504
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 595
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
