@@ -113,6 +113,23 @@ Reached from the Station: an original take on the haunted-pizzeria genre, with C
 **By day:** a dining room, the stage, a party table, an arcade, the counter, the kitchen and Parts &
 Service. There are 7 voiced staff and guests (one of them mops the dining room) and 12 gags.
 
+## Pixel Hollow: a retro pixel-RPG zone
+
+Reached from the Station: an original, gentle pixel-RPG adventure. It has blocky trees, a checkerboard
+path, an inn, a shop and skeleton villagers.
+
+* **Three encounters block the path:** a Shy Pinecone, a Grumbling Stump and a Nervous Lamp.
+  * Each has a battle menu: BONK, CHAT (three things to say each round), SNACK and PARDON.
+  * Say the right things and its FRIENDSHIP fills; then PARDON makes a friend, and it steps aside.
+  * BONK sends you back to the start; PARDON too early doesn't work.
+  * The text types itself out, RPG-style.
+* **A tile gate:** tapping a tile flips it and its neighbours. Light them all to open it.
+* **Each player has their own adventure:** your monsters step aside, and your gate opens, only for you.
+* **Also:** a sparkling save point, a chest (with a smaller chest inside), and 10 gags.
+* **An original skeleton duo at Castle Cardboard:** lanky lighthouse-keeper Captain Lumen (raincoat,
+  knit hat, lantern) and tiny Sir Rattleton (saucepan helmet, cardboard armour, wooden sword). Each
+  has their own line, plus their combo act, *The Quest*.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -206,6 +223,7 @@ python make_unitypackage.py
   * FirWanderer, FirTicker: Bonetown's walkers and the news ticker
   * FirRide, FirSeat, FirTeleport: rides, ride seats and the Station's teleporters
   * FirNight: the pizzeria's night shift
+  * FirEncounter, FirTiles, FirSay: Pixel Hollow's encounters, tile gate and talking props
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -214,7 +232,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 410
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 439
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
@@ -226,3 +244,4 @@ python make_unitypackage.py
   * the Station, every park ride (riding the wheel and the ghost train), and the park's wanderers
   * the precinct, and three pizzeria nights: a sensible guard survives, a careless one doesn't, and the
     power runs out
+  * Pixel Hollow's encounters, tile gate and path, per player

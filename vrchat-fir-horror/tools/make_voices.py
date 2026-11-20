@@ -313,6 +313,34 @@ def pizza_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# Pixel Hollow: the duo, the villagers, the save point and the chest -> Audio/Pixel/px_<name>.ogg
+PIXEL = [
+    ("lumen", "mb-us2", 110, 20, 0.86, "Evening, traveller. I keep the lighthouse. There's no sea. But you can never be too careful."),
+    ("rattleton", "mb-us3", 165, 80, 1.2, "Halt! I am Sir Rattleton, knight of the cardboard order! My armour is water resistant. Mostly."),
+    ("pebble", "mb-us1", 150, 60, 1.04, "Welcome to the shop! Everything costs one gold. We don't take gold."),
+    ("fizz", "mb-us3", 140, 55, 1.0, "The inn has one bed. It's a very popular bed."),
+    ("nib", "mb-us1", 180, 95, 1.3, "If you stand still long enough, the music changes. It doesn't. I've checked."),
+    ("brindle", "mb-us2", 100, 30, 0.88, "In my day, monsters just wanted a chat. Nowadays monsters also just want a chat."),
+    ("save", "mb-us1", 130, 50, 1.0, "The sparkle twinkles. Your bones feel very sturdy. Progress saved. Spiritually."),
+    ("chest", "mb-us1", 130, 50, 1.0, "You open the chest. Inside, there's a smaller chest. Inside that, a note. It says: nice try."),
+]
+SKV.update({"rattleton": ("mb-us3", 165, 80, 1.2), "lumen": ("mb-us2", 110, 20, 0.86)})
+COMBO += [
+    ("quest_1", ["rattleton"], "Halt! None shall pass!"),
+    ("quest_2", ["lumen"], "Everyone shall pass. It's a path."),
+    ("quest_3", ["rattleton"], "Then. Some shall pass?"),
+    ("quest_4", ["lumen"], "Most shall pass. Let's say most."),
+    ("quest_5", ["rattleton", "lumen"], "Agreed! Onward!"),
+]
+
+
+def pixel_lines():
+    for name, v, speed, pitch, rate, text in PIXEL:
+        boost = SKELETON_BOOST if name not in ("save", "chest") else 1.0
+        yield ("Pixel/px_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -340,7 +368,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt", "pixel_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -374,6 +402,13 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--pixel" in sys.argv:   # only Pixel Hollow: its people, its gags (ids starting U), and the duo's combo lines
+            render_only(tmp, list(pixel_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_U")], "Pixel")
+            only = [c for c in COMBO if c[0].startswith("quest_")]
+            saved = COMBO[:]; COMBO[:] = only
+            try: make_combo(tmp)
+            finally: COMBO[:] = saved
             return
         if "--pizza" in sys.argv:   # only the pizzeria: its people, the voicemail, and its gags (ids starting Z)
             render_only(tmp, list(pizza_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_Z")], "Pizza")
@@ -413,7 +448,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

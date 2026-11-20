@@ -1,0 +1,12 @@
+# Fir Warning: Pixel Hollow gags. Same format as gags.txt, placed exactly where given (world metres).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+U1|sign|276|0|22.5|0|narrator|Population: low resolution.|THE PIXEL\nHOLLOW|POPULATION:\nLOW RESOLUTION
+U2|talk|262|0|24|90|tree|I'm an eight bit tree. I used to be sixteen bit. Budget cuts.||
+U3|sign|276|0|41|0|narrator|They mostly want to chat.|DANGER:\nENCOUNTERS\nAHEAD|(they mostly\nwant to chat)
+U4|spin|262|0|33|90|tiny|Random encounter! Just kidding. I'm a tree.||
+U5|peek|298|0|24|-90|tiny|Is it my turn? Is it my turn yet?||
+U6|inflate_orn|298|0|33|-90|tiny|Level up! Level up! Oh. I'm just inflating.||
+U7|talk|262|0|60|90|big|I'm the boss tree. My weakness is being asked nicely.||
+U8|shiver|298|0|60|-90|old|It's always snowing in the pixel woods. In big square flakes.||
+U9|sign|268.5|0|30|90|narrator|Already taken.|INN:\n1 BED|(ALREADY\nTAKEN)
+U10|frame|260.06|1.6|50|90|narrator|Wanted. Someone to fix the music loop.|<b>WANTED</b>\n\nsomeone to fix\nthe music loop|

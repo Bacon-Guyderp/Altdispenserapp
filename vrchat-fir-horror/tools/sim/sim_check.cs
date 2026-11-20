@@ -16,6 +16,7 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "night") { NightTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "hunt") { HuntTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed"); return fail == 0 ? 0 : 1; }
     Console.WriteLine("Built " + A.objects.Count + " objects. Builder log:");
@@ -155,7 +156,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 142, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 152, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -240,6 +241,7 @@ public static class SimCheck {
     ParkTests(A, B);
     PrecinctTests(A, B);
     NightTests(A, B);
+    PixelTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -487,7 +489,7 @@ public static class SimCheck {
     var rsA = All<FirRainbowSkeleton>(A).Where(r => names.Any(n => r.name == n + " Skeleton")).ToList();
     Check(rsA.Count == 14 && rsA.All(r => r.voice.clip != null && r.voice.clip.name.StartsWith(r.name.Split(' ')[0].ToLower() == "scarlet" || r.name.StartsWith("Cobalt") || r.name.StartsWith("Emerald") || r.name.StartsWith("Mustard") ? "band_" : "res_")),
           rsA.Count + " residents and band members, each with its own voice line");
-    var combos = All<FirSkeletonCombo>(A).Where(c => c.combo >= 6).ToList();
+    var combos = All<FirSkeletonCombo>(A).Where(c => c.combo >= 6 && c.transform.position.x < -12f).ToList();
     Check(combos.Count == 4, combos.Count + " Bonetown combo acts: " + string.Join(", ", combos.Select(c => c.title)));
     Check(Sim.BuildLog.Any(l => l.Contains("Bonetown: 10 residents, 4 in the band, 10 wanderers, 4 combo acts, 22 gags")), "the builder placed all of Bonetown");
     var tick = All<FirTicker>(A)[0]; string t0 = tick.text.text; Sim.Run(6.5f);
@@ -782,5 +784,64 @@ public static class SimCheck {
     Check(!N(B).running, "RESET: the pizzeria's quiet again");
     Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 199f)); Sim.Run(0.5f);
     B.player.pos = new Vector3(1, 0.05f, -1f);
+  }
+
+  // ======================================================================== Pixel Hollow
+  static FirHuntButton EB(Sim.Client c, UdonSharpBehaviour owner, int act, int val) { return All<FirHuntButton>(c).First(b => b.action == act && b.value == val && b.hunt != null && b.hunt.program == owner); }
+  static bool Blocked(Sim.Client c, Vector3[] route, out string what) {
+    what = ""; Sim.Current = c; Physics.SyncTransforms();
+    try {
+      for (int i = 0; i + 1 < route.Length; i++)
+        foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
+          var d = route[i + 1] - route[i]; RaycastHit hit;
+          if (Physics.Raycast(route[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { what = hit.collider.name + " at " + hit.point; return true; }
+        }
+      return false;
+    } finally { Sim.Current = null; }
+  }
+
+  static void PixelTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Pixel Hollow");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "PIXEL HOLLOW")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(280f, 0, 22f)) < 0.3f, "the Station sends Alice to Pixel Hollow");
+    Check(Sim.BuildLog.Any(l => l.Contains("Pixel Hollow: 3 encounters, a tile gate, 6 skeletons") && l.Contains("10 gags")), "3 encounters, a tile gate, 6 skeletons, 10 gags, a save point and a chest");
+    var path = new[] { new Vector3(280f, 0, 22.5f), new Vector3(280f, 0, 82f) };
+    string what;
+    Check(Blocked(A, path, out what) && what.StartsWith("Blocker"), "the first monster blocks the path (" + what + ")");
+    var encA = All<FirEncounter>(A).OrderBy(e => e.blocker.transform.position.z).ToList();
+    var encB = All<FirEncounter>(B).OrderBy(e => e.blocker.transform.position.z).ToList();
+    var e1 = encA[0];
+    Sim.Run(2f);
+    Check(Plain(e1.dialog.text).Contains("SHY PINECONE blocks the way"), "its dialog box types out: \"" + Plain(e1.dialog.text) + "\"");
+    Sim.Press(A, EB(A, e1, 24, 0)); Sim.Run(0.3f);
+    Check(!e1.IsFriend(), "PARDON too soon: \"" + Plain(e1.dialog.text).Substring(0, Math.Min(40, Plain(e1.dialog.text).Length)) + "...\"");
+    int wrong = (e1.correct[0] + 1) % 3;
+    Sim.Press(A, EB(A, e1, 22, wrong)); Sim.Run(2f);
+    Check(Plain(e1.meter.text).Contains("FRIENDSHIP") && Plain(e1.optionLabels[0].text) == e1.options[0], "a wrong thing to say doesn't move it on: \"" + Plain(e1.dialog.text) + "\"");
+    Sim.Press(A, EB(A, e1, 22, e1.correct[0])); Sim.Run(0.3f);
+    Sim.Press(A, EB(A, e1, 21, 0)); Sim.Run(0.3f);
+    Check(Plain(e1.optionLabels[0].text) == e1.options[0], "BONK undoes it (back to round one)");
+    foreach (var enc in encA) {
+      for (int r = 0; r < enc.correct.Length; r++) { Sim.Press(A, EB(A, enc, 22, enc.correct[r])); Sim.Run(0.3f); }
+      Sim.Press(A, EB(A, enc, 23, 0)); Sim.Run(0.2f);
+      Sim.Press(A, EB(A, enc, 24, 0)); Sim.Run(0.5f);
+    }
+    Check(encA.All(e => e.IsFriend() && !e.blocker.activeSelf), "Alice says the right things to all three, and PARDONs them: friends, and out of the way");
+    Sim.Run(2f);
+    Check(encA.All(e => Vector3.Distance(e.monster.localPosition, e.blocker.transform.localPosition + e.stepAside - new Vector3(0, 1.5f, 0)) < 0.2f), "...and each one steps aside");
+    Check(encB.All(e => !e.IsFriend() && e.blocker.activeSelf), "Bob's monsters still block his way (each player has their own adventure)");
+    var tiles = All<FirTiles>(A)[0];
+    Check(!tiles.IsSolved() && tiles.gate.activeSelf, "the tile gate starts shut");
+    foreach (int i in new[] { 0, 4, 8 }) { Sim.Press(A, EB(A, tiles, 31, i)); Sim.Step(); }
+    Check(tiles.IsSolved() && !tiles.gate.activeSelf && All<FirTiles>(B)[0].gate.activeSelf, "tapping the right tiles (0, 4, 8) lights them all: Alice's gate opens (Bob's stays shut)");
+    Check(!Blocked(A, path, out what), "with everyone befriended and the gate open, Alice walks the whole path to the castle" + (what != "" ? " | " + what : ""));
+    var says = All<FirSay>(A);
+    foreach (var sy in says) Sim.Press(A, sy);
+    Sim.Run(1f);
+    Check(says.Count == 2 && says.All(sy => Plain(sy.caption.text).Length > 10), "the save point and the chest speak, with captions: \"" + Plain(says[0].caption.text) + "\"");
+    var quest = All<FirSkeletonCombo>(A).FirstOrDefault(c => c.title == "The Quest");
+    Check(quest != null && quest.lines.Length == 5, "Sir Rattleton and Captain Lumen have their act: The Quest");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 259f && t.transform.position.x < 301f)); Sim.Run(0.5f);
   }
 }

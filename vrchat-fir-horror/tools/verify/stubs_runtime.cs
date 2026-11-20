@@ -66,7 +66,7 @@ namespace UnityEngine.AI {
 }
 namespace TMPro {
   public class TextMeshPro : UnityEngine.Renderer { public string text; public UnityEngine.Color color; public UnityEngine.RectTransform rectTransform; public UnityEngine.Material fontSharedMaterial; public TextAlignmentOptions alignment; public bool enableWordWrapping, enableAutoSizing, richText; public float fontSizeMin, fontSizeMax; public FontStyles fontStyle; }
-  public enum TextAlignmentOptions { Center }
+  public enum TextAlignmentOptions { Center, Left, TopLeft, Top, Midline }
   public enum FontStyles { Normal, Bold }
   public class TMP_FontAsset : UnityEngine.Object { public UnityEngine.Material material; }
   public static class TMP_Settings { public static TMP_FontAsset defaultFontAsset; }

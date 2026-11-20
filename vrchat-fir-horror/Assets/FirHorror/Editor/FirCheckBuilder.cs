@@ -198,6 +198,7 @@ public static class FirCheckBuilder
         BuildPark(root);
         BuildPrecinct(root);
         BuildPizzeria(root);
+        BuildPixel(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1800,6 +1801,16 @@ public static class FirCheckBuilder
         A("Sky", null, new Color(0.62f, 0.8f, 1f), 1, new Color(0.12f, 0.16f, 0.2f));
         A("Hedge", "needles", new Color(0.45f, 0.8f, 0.4f), 1, Color.black);
         A("Water", null, new Color(0.35f, 0.65f, 1f), 1, new Color(0.1f, 0.22f, 0.35f));
+        A("PixelGreen", null, new Color(0.35f, 0.75f, 0.3f), 1, Color.black);
+        A("PixelGreenDark", null, new Color(0.25f, 0.6f, 0.25f), 1, Color.black);
+        A("PixelSand", null, new Color(0.93f, 0.82f, 0.55f), 1, Color.black);
+        A("PixelSky", null, new Color(0.45f, 0.6f, 0.95f), 1, new Color(0.08f, 0.1f, 0.18f));
+        A("PixelRoof", null, new Color(0.8f, 0.25f, 0.2f), 1, Color.black);
+        A("PixelRoofBlue", null, new Color(0.25f, 0.4f, 0.85f), 1, Color.black);
+        A("PixelPine", null, new Color(0.55f, 0.35f, 0.2f), 1, Color.black);
+        A("ChatOrange", null, new Color(0.95f, 0.55f, 0.1f), 1, Color.black);
+        A("TileOff", null, new Color(0.15f, 0.15f, 0.25f), 1, Color.black);
+        A("TileOn", null, new Color(0.4f, 1f, 0.6f), 1, new Color(0.2f, 0.6f, 0.3f));
         A("PoliceBlue", null, new Color(0.08f, 0.14f, 0.35f), 1, Color.black);
         A("Porcelain", null, new Color(0.95f, 0.95f, 0.93f), 1, Color.black);
         A("ToiletWater", null, new Color(0.45f, 0.7f, 0.9f), 1, new Color(0.05f, 0.1f, 0.15f));
@@ -1886,7 +1897,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -1985,6 +1996,243 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== Pixel Hollow (a retro pixel-RPG zone), reached from the Station
+
+    static void PixelSkeleton(Transform parent, string who, string hex, int act, Vector3 pos, float yaw, float scale = 1f)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, who, pos, yaw, scale, act, hex, "Pixel/px_" + who.ToLower(), new[] { BoneMat(who, hex) },
+                    pos + new Vector3(0, 2.15f * scale, 0) + face * 0.1f, face);
+    }
+
+    /// <summary>A blocky pixel tree: a brown trunk and stepped green cubes.</summary>
+    static void PixelTree(Transform g, Vector3 at, float s)
+    {
+        DPrim(PrimitiveType.Cube, "PixelTrunk", g, at + new Vector3(0, 0.5f * s, 0), new Vector3(0.4f, 1f, 0.4f) * s, M("Trunk"));
+        for (int k = 0; k < 3; k++)
+            DPrim(PrimitiveType.Cube, "PixelLeaves", g, at + new Vector3(0, (1.2f + k * 0.6f) * s, 0), new Vector3(1.8f - k * 0.5f, 0.6f, 1.8f - k * 0.5f) * s, M(k % 2 == 0 ? "PixelGreen" : "PixelGreenDark"));
+    }
+
+    /// <summary>A pixel-RPG encounter across the path at z: a fence with a gap, the monster in the gap, and the battle menu.</summary>
+    static FirEncounter Encounter(Transform g, string name, float z, string mat, string intro, string[] options, int[] correct, string[] replies,
+                                  string bonk, string snack, string notYet, string spare)
+    {
+        var e = Group(g, "Encounter " + name, Vector3.zero);
+        // the fence (you can't get round)
+        Box(e, "FenceW", new Vector3(269.25f, 0.75f, z), new Vector3(18.5f, 1.5f, 0.3f), M("TrimDark"));
+        Box(e, "FenceE", new Vector3(290.75f, 0.75f, z), new Vector3(18.5f, 1.5f, 0.3f), M("TrimDark"));
+        for (float fx = 260.5f; fx < 300f; fx += 1.5f) if (Mathf.Abs(fx - 280f) > 1.6f) DPrim(PrimitiveType.Cube, "FencePost", e, new Vector3(fx, 0.9f, z), new Vector3(0.2f, 1.8f, 0.35f), M("Trunk"));
+        var blocker = new GameObject("Blocker");
+        blocker.transform.SetParent(e, false);
+        blocker.transform.localPosition = new Vector3(280f, 1.5f, z);
+        blocker.AddComponent<BoxCollider>().size = new Vector3(3f, 3f, 0.6f);
+        // the monster: a chunky, cute, blocky thing with big eyes
+        var mon = Group(e, name, new Vector3(280f, 0, z));
+        Prim(PrimitiveType.Cube, "Body", mon, new Vector3(0, 0.55f, 0), new Vector3(1.1f, 1.1f, 0.9f), M(mat));
+        foreach (float ex in new[] { -0.22f, 0.22f })
+        {
+            Prim(PrimitiveType.Cube, "Eye", mon, new Vector3(ex, 0.75f, -0.46f), new Vector3(0.24f, 0.28f, 0.04f), M("CaneWhite"));
+            Prim(PrimitiveType.Cube, "Pupil", mon, new Vector3(ex, 0.72f, -0.49f), new Vector3(0.11f, 0.14f, 0.02f), M("Black"));
+        }
+        Prim(PrimitiveType.Cube, "Mouth", mon, new Vector3(0, 0.42f, -0.46f), new Vector3(0.3f, 0.06f, 0.03f), M("Black"));
+        // the battle menu: a dialog box over the path, the buttons on a stand to the side
+        Box(e, "DialogBox", new Vector3(280f, 3.0f, z + 0.05f), new Vector3(5.6f, 1.3f, 0.06f), M("Black"), false);
+        var frame = Box(e, "DialogFrame", new Vector3(280f, 3.0f, z + 0.09f), new Vector3(5.8f, 1.5f, 0.02f), M("CaneWhite"), false);
+        var dialog = Text("Dialog", e, new Vector3(280f, 3.0f, z - 0.0f), Face(Vector3.back), new Vector2(5.3f, 1.15f), 0.16f, "");
+        dialog.color = Color.white; dialog.alignment = TextAlignmentOptions.TopLeft;
+        var stand = Group(e, "Menu", new Vector3(284.6f, 1.25f, z - 1.4f));
+        stand.localRotation = Face(Vector3.back);
+        Box(stand, "MenuBoard", new Vector3(0, 0, 0.04f), new Vector3(2.6f, 1.5f, 0.04f), M("Black"), false);
+        var meter = Text("Meter", stand, new Vector3(0, 0.6f, -0.01f), Quaternion.identity, new Vector2(2.4f, 0.2f), 0.12f, "");
+        meter.color = new Color(1f, 0.6f, 0.7f);
+        var labels = new TextMeshPro[3];
+        for (int i = 0; i < 3; i++)
+        {
+            var b = HB(stand, "Chat " + i, new Vector3(0, 0.3f - i * 0.28f, 0f), Vector3.back, new Vector3(2.3f, 0.22f, 0.05f), M("ChatOrange"), 22, i, "Say this", null, 0.09f, true);
+            labels[i] = Text("Option", b.press, new Vector3(0, 0, -0.03f), Quaternion.identity, new Vector2(2.2f, 0.2f), 0.09f, "");
+            labels[i].color = Color.white;
+        }
+        string[] verbs = { "BONK", "SNACK", "PARDON" };
+        int[] acts = { 21, 23, 24 };
+        for (int i = 0; i < 3; i++)
+            HB(stand, verbs[i], new Vector3(-0.8f + i * 0.8f, -0.58f, 0f), Vector3.back, new Vector3(0.7f, 0.22f, 0.05f), M(i == 2 ? "ButtonGold" : "ChatOrange"), acts[i], 0, verbs[i], "<b>" + verbs[i] + "</b>", 0.1f, true);
+        var enc = Add<FirEncounter>(e.gameObject);
+        enc.monsterName = name.ToUpper(); enc.intro = intro; enc.options = options; enc.correct = correct; enc.replies = replies;
+        enc.bonkText = bonk; enc.snackText = snack; enc.notYetText = notYet; enc.spareText = spare;
+        enc.dialog = dialog; enc.optionLabels = labels; enc.meter = meter; enc.blocker = blocker; enc.monster = mon; enc.stepAside = new Vector3(2.4f, 0, 0.4f);
+        enc.sfx = Src(e, new Vector3(280f, 1.5f, z), null, false, 1f, 1f, 12f, false);
+        enc.blipClip = Clip("tree_note"); enc.goodClip = Clip("pickup"); enc.badClip = Clip("wrong"); enc.friendClip = Clip("music_box");
+        return enc;
+    }
+
+    static void BuildPixel(Transform root)
+    {
+        var g = Group(root, "Pixel Hollow", Vector3.zero);
+        int b0 = huntButtons.Count;
+        float h = 10f;
+        Box(g, "Ground", new Vector3(280f, -0.1f, 52f), new Vector3(40f, 0.2f, 64f), M("PixelGreen"));
+        Box(g, "Sky", new Vector3(280f, h + 0.1f, 52f), new Vector3(40f, 0.2f, 64f), M("Sky"));
+        Box(g, "WallW", new Vector3(259.9f, h / 2, 52f), new Vector3(0.2f, h, 64.4f), M("PixelSky"));
+        Box(g, "WallE", new Vector3(300.1f, h / 2, 52f), new Vector3(0.2f, h, 64.4f), M("PixelSky"));
+        Box(g, "WallS", new Vector3(280f, h / 2, 19.9f), new Vector3(40.4f, h, 0.2f), M("PixelSky"));
+        Box(g, "WallN", new Vector3(280f, h / 2, 84.1f), new Vector3(40.4f, h, 0.2f), M("PixelSky"));
+        // checkerboard grass and a sandy path up the middle
+        for (int ix = 0; ix < 10; ix++) for (int iz = 0; iz < 16; iz++)
+            if ((ix + iz) % 2 == 0) DPrim(PrimitiveType.Cube, "Check", g, new Vector3(262f + ix * 4f, 0.004f, 22f + iz * 4f), new Vector3(4f, 0.008f, 4f), M("PixelGreenDark"));
+        Box(g, "Path", new Vector3(280f, 0.01f, 52f), new Vector3(3f, 0.012f, 64f), M("PixelSand"), false);
+        for (int k = 0; k < 7; k++) DPrim(PrimitiveType.Cube, "Cloud", g, new Vector3(264f + k * 5.5f, 8.5f + (k % 3) * 0.4f, 30f + (k * 13) % 50), new Vector3(3f, 0.8f, 1.5f), M("CaneWhite"));
+        foreach (var tp in new[] { new Vector3(264f, 0, 46f), new Vector3(296f, 0, 47f), new Vector3(265f, 0, 56f), new Vector3(295f, 0, 57f), new Vector3(266f, 0, 68f),
+                                   new Vector3(294f, 0, 69f), new Vector3(264f, 0, 77f), new Vector3(296f, 0, 78f), new Vector3(271f, 0, 49f), new Vector3(289f, 0, 50f) })
+            PixelTree(g, tp, 1.4f);
+        var arrive = Marker(g, "Arrive", new Vector3(280f, 0.05f, 22f), 0f);
+        StationStop("PIXEL HOLLOW", arrive, g, new Vector3(277.3f, 1.3f, 20.15f), Vector3.forward);
+        Text("Title", g, new Vector3(280f, 6.5f, 20.05f), Face(Vector3.forward), new Vector2(14f, 1.2f), 0.9f, "<b>PIXEL HOLLOW</b>").color = new Color(1f, 0.9f, 0.3f);
+        Text("Sub", g, new Vector3(280f, 5.6f, 20.05f), Face(Vector3.forward), new Vector2(14f, 0.4f), 0.22f, "a tiny adventure. you don't have to fight anyone. (please don't fight anyone.)").color = Color.white;
+
+        // ---- the village: an inn, a shop, folk, a save point
+        foreach (var hs in new[] { new { x = 266f, title = "INN", col = "PixelRoof" }, new { x = 294f, title = "SHOP", col = "PixelRoofBlue" } })
+        {
+            var hg = Group(g, "House " + hs.title, new Vector3(hs.x, 0, 30f));
+            Box(hg, "Walls", new Vector3(0, 1.5f, 0), new Vector3(5f, 3f, 4f), M("PixelSand"));
+            Box(hg, "Roof", new Vector3(0, 3.4f, 0), new Vector3(5.6f, 0.8f, 4.6f), M(hs.col), false);
+            Box(hg, "Roof2", new Vector3(0, 4.0f, 0), new Vector3(3.6f, 0.6f, 4.6f), M(hs.col), false);
+            DPrim(PrimitiveType.Cube, "Door", hg, new Vector3(hs.x < 280 ? 2.51f : -2.51f, 1.0f, 0), new Vector3(0.02f, 2f, 1.1f), M("TrimDark"));
+            Text("Sign", hg, new Vector3(hs.x < 280 ? 2.53f : -2.53f, 2.5f, 0), Face(hs.x < 280 ? Vector3.right : Vector3.left), new Vector2(2f, 0.4f), 0.3f, "<b>" + hs.title + "</b>").color = new Color(1f, 0.9f, 0.3f);
+        }
+        PixelSkeleton(g, "Fizz", "#ffa726", 28, new Vector3(270f, 0, 27f), 90f);
+        PixelSkeleton(g, "Pebble", "#8d6e63", 20, new Vector3(290f, 0, 27f), -90f);
+        PixelSkeleton(g, "Nib", "#4fc3f7", 23, new Vector3(274.5f, 0, 36f), 90f, 0.65f);
+        PixelSkeleton(g, "Brindle", "#bdbdbd", 26, new Vector3(285.5f, 0, 36f), -90f);
+        var savePt = Group(g, "Save Point", new Vector3(284f, 0, 25.5f));
+        var star = Group(savePt, "Star", new Vector3(0, 1.2f, 0));
+        Prim(PrimitiveType.Cube, "StarA", star, Vector3.zero, new Vector3(0.45f, 0.45f, 0.08f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(0, 0, 45);
+        Prim(PrimitiveType.Cube, "StarB", star, Vector3.zero, new Vector3(0.45f, 0.45f, 0.08f), M("GlowYellow"));
+        savePt.gameObject.AddComponent<BoxCollider>().size = new Vector3(0.8f, 2.4f, 0.8f);
+        savePt.gameObject.GetComponent<BoxCollider>().center = new Vector3(0, 1.2f, 0);
+        var saveCap = Text("SaveCaption", savePt, new Vector3(0, 2.1f, 0), Face(Vector3.back), new Vector2(3.4f, 0.5f), 0.13f, "");
+        saveCap.color = new Color(1f, 1f, 0.75f);
+        var say = Add<FirSay>(savePt.gameObject);
+        say.line = "* The sparkle twinkles. Your bones feel very sturdy.\n* Progress saved. Spiritually."; say.caption = saveCap; say.spin = star;
+        say.voice = Src(savePt, new Vector3(0, 1.2f, 0), Clip("Pixel/px_save"), false, 1f, 1f, 10f, false);
+        SetInteract(say, "Touch the sparkle", 2.5f);
+
+        // ---- three encounters up the path, with the tile gate between the first and second
+        var e1 = Encounter(g, "Shy Pinecone", 44f, "PixelPine", "* It's hiding behind its own scales.",
+            new[] { "Compliment its scales", "Ask about the weather", "Stare silently",
+                    "Ask its name", "Tell a pine joke", "Offer a high five",
+                    "Say goodbye", "Ask to be friends", "Point at a squirrel" },
+            new[] { 0, 1, 1 },
+            new[] { "* PINECONE: ...you think they're nice? I polished them myself.", "* PINECONE: The weather is. Um. Present.", "* PINECONE hides deeper. You both feel awkward.",
+                    "* PINECONE: It's... Pinecone. I'm a pinecone.", "* You: why did the pine go to school? To get a little sappier.\n* PINECONE giggles. A scale falls off. It doesn't mind.", "* PINECONE has no hands. It stares at yours, enviously.",
+                    "* PINECONE: ...you're leaving already?", "* PINECONE: F-friends? Okay. OKAY!", "* PINECONE screams and rolls round in a circle." },
+            "* You bonk the PINECONE. It's covered in spikes. Ow.", "* PINECONE: I'm on a seed diet. I AM the seed diet.",
+            "* PINECONE isn't ready to let you by. It doesn't know you yet.", "* PINECONE rolls aside, blushing (somehow).");
+        var tg = Group(g, "Tile Gate", Vector3.zero);
+        Box(tg, "FenceW", new Vector3(269.25f, 0.75f, 54f), new Vector3(18.5f, 1.5f, 0.3f), M("TrimDark"));
+        Box(tg, "FenceE", new Vector3(290.75f, 0.75f, 54f), new Vector3(18.5f, 1.5f, 0.3f), M("TrimDark"));
+        var gate = Box(tg, "Gate", new Vector3(280f, 1.2f, 54f), new Vector3(3f, 2.4f, 0.25f), M("PixelRoofBlue"));
+        var panel = Group(tg, "Tiles", new Vector3(284.4f, 1.5f, 53.8f));
+        panel.localRotation = Face(Vector3.back);
+        Box(panel, "Backing", new Vector3(0, 0, 0.05f), new Vector3(1.6f, 1.6f, 0.04f), M("Black"), false);
+        var tiles = new MeshRenderer[9];
+        for (int i = 0; i < 9; i++)
+        {
+            var b = HB(panel, "Tile " + i, new Vector3(-0.48f + (i % 3) * 0.48f, 0.48f - (i / 3) * 0.48f, 0f), Vector3.back, new Vector3(0.42f, 0.42f, 0.05f), M("TileOff"), 31, i, "Flip this tile", null, 0.1f, true);
+            tiles[i] = b.press.Find("Visual").GetComponent<MeshRenderer>();
+        }
+        HB(panel, "Start over", new Vector3(0, -0.95f, 0f), Vector3.back, new Vector3(0.8f, 0.2f, 0.05f), M("Button"), 32, 0, "Start the tiles over", "<b>START OVER</b>", 0.08f, true);
+        var tb = Text("TileBoard", tg, new Vector3(280f, 3.0f, 53.84f), Face(Vector3.back), new Vector2(5f, 0.8f), 0.16f, "");
+        tb.color = Color.white;
+        var ft = Add<FirTiles>(tg.gameObject);
+        ft.tiles = tiles; ft.offMat = M("TileOff"); ft.onMat = M("TileOn"); ft.gate = gate; ft.board = tb;
+        ft.startPressed = new[] { 0, 4, 8 };
+        ft.sfx = Src(tg, new Vector3(280f, 1.5f, 54f), null, false, 1f, 1f, 12f, false);
+        ft.flipClip = Clip("switch"); ft.solvedClip = Clip("unlock");
+        var e2 = Encounter(g, "Grumbling Stump", 64f, "Trunk", "* It grumbles about kids these days.",
+            new[] { "Agree kids are terrible", "Ask about the old days", "Sit on it",
+                    "Count its rings", "Say it looks young", "Ask where its top half went",
+                    "Wish it a happy birthday", "Plant a seed next to it", "Ask for directions" },
+            new[] { 1, 0, 1 },
+            new[] { "* STUMP: Don't encourage me.", "* STUMP: Ah, the old days! I was a tree! Tall! Leafy! Then the woodcutter came.", "* STUMP: Oh, sure. Sit on the stump. Everybody does.",
+                    "* You count 312 rings.\n* STUMP: Three hundred and twelve! Somebody finally noticed!", "* STUMP: Flattery. Hmph. ...go on.", "* STUMP: We don't talk about that.",
+                    "* STUMP: It's not my birthday. ...is it?", "* STUMP: A sapling? For me? ...don't look at me, I've got sap in my eye.", "* STUMP: Down the path. Past me. Which you can't. Ha." },
+            "* You bonk the STUMP. It's a stump. It's fine. You're not.", "* STUMP: No teeth. Never had teeth. Thanks, though.",
+            "* STUMP: Not so fast. I don't even know you.", "* STUMP shuffles aside on its roots, grumbling. Fondly.");
+        var e3 = Encounter(g, "Nervous Lamp", 74f, "GlowGhost", "* Its light flickers nervously. It's a ghost. And a lamp.",
+            new[] { "Turn it off and on again", "Tell it it's bright", "Ask if it's haunted",
+                    "Tell a ghost story", "Hum a lullaby", "Shine your own light",
+                    "Ask what scares it", "Say the trees are coming", "Promise to visit" },
+            new[] { 1, 1, 2 },
+            new[] { "* LAMP: AAAH! Don't do that! That's how I got like this!", "* LAMP: Y-you think so? I'm only forty watts.", "* LAMP: I'm a lamp AND a ghost. It's complicated.",
+                    "* LAMP flickers wildly. That made it worse.", "* LAMP's flicker slows down. It hums along. Badly.", "* You don't have a light. You're just pointing.",
+                    "* LAMP: The dark. I'm a lamp. It's a whole thing.", "* LAMP: THE TREES?! *flickers violently*", "* LAMP: You'd... visit? Nobody visits a lamp." },
+            "* You bonk the LAMP. The bulb goes out. Then back on. It's even more nervous now.", "* LAMP: I only eat electricity. And moths. Mostly moths.",
+            "* LAMP is too nervous to move. Help it calm down first.", "* LAMP floats aside, glowing warmly. It'll leave a light on for you.");
+
+        // ---- the castle at the end: the duo, their act, and a chest
+        var cs = Group(g, "Castle", Vector3.zero);
+        Box(cs, "CastleWall", new Vector3(280f, 2.5f, 83.6f), new Vector3(16f, 5f, 0.6f), M("Cardboard"), false);
+        foreach (float tx in new[] { 272.5f, 287.5f }) Box(cs, "Tower", new Vector3(tx, 3.5f, 83.2f), new Vector3(2.2f, 7f, 1.4f), M("Cardboard"), false);
+        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Cube, "Crenel", cs, new Vector3(273.5f + k * 1.9f, 5.25f, 83.6f), new Vector3(0.9f, 0.5f, 0.6f), M("Cardboard"));
+        Text("CastleSign", cs, new Vector3(280f, 4.2f, 83.28f), Face(Vector3.back), new Vector2(8f, 0.6f), 0.4f, "<b>CASTLE CARDBOARD</b>").color = new Color(0.3f, 0.2f, 0.1f);
+        PixelSkeleton(cs, "Rattleton", "#cfd8dc", 20, new Vector3(281.2f, 0, 80f), 180f, 0.7f);
+        PixelSkeleton(cs, "Lumen", "#fff176", 4, new Vector3(278.8f, 0, 80f), 180f, 1.25f);
+        if (rigs.TryGetValue("Rattleton", out var rr))
+        {
+            Prim(PrimitiveType.Cylinder, "Saucepan", rr[2], new Vector3(0, 0.13f, 0), new Vector3(0.26f, 0.08f, 0.26f), M("Metal"));
+            Prim(PrimitiveType.Cube, "PanHandle", rr[2], new Vector3(0.22f, 0.16f, 0), new Vector3(0.22f, 0.03f, 0.04f), M("Black"));
+            Prim(PrimitiveType.Cube, "CardboardArmour", rr[1], new Vector3(0, 0.2f, 0), new Vector3(0.42f, 0.45f, 0.3f), M("Cardboard"));
+            Prim(PrimitiveType.Cube, "WoodenSword", rr[6], new Vector3(0, -0.2f, 0.25f), new Vector3(0.04f, 0.04f, 0.6f), M("DeskWood"));
+        }
+        if (rigs.TryGetValue("Lumen", out var lr))
+        {
+            Prim(PrimitiveType.Cylinder, "KnitHat", lr[2], new Vector3(0, 0.14f, 0), new Vector3(0.24f, 0.09f, 0.24f), M("CaneRed"));
+            Prim(PrimitiveType.Sphere, "Bobble", lr[2], new Vector3(0, 0.25f, 0), Vector3.one * 0.08f, M("CaneWhite"));
+            Prim(PrimitiveType.Cylinder, "Raincoat", lr[1], new Vector3(0, 0.15f, 0), new Vector3(0.42f, 0.3f, 0.32f), M("GlowYellow"));
+            Prim(PrimitiveType.Sphere, "Lantern", lr[6], new Vector3(0, -0.3f, 0.05f), Vector3.one * 0.14f, M("GlowWarm"));
+        }
+        var console = Console(cs, "DuoConsole", new Vector3(285.6f, 1.25f, 77.6f), Vector3.back, "<size=80%>COMBO ACT</size>");
+        ComboAct(console, 0, 6, "The Quest", new[] { "Rattleton", "Lumen" }, new[] { "quest_1", "quest_2", "quest_3", "quest_4", "quest_5" }, new[] { 0, 1, 0, 1, -1 }, 1.6f);
+        var chest = Group(cs, "Chest", new Vector3(275.5f, 0, 79.5f));
+        Box(chest, "Box", new Vector3(0, 0.3f, 0), new Vector3(1.0f, 0.6f, 0.7f), M("TrimDark"));
+        Prim(PrimitiveType.Cube, "Lid", chest, new Vector3(0, 0.65f, 0), new Vector3(1.05f, 0.12f, 0.75f), M("GiftGold"));
+        var chestCap = Text("ChestCaption", chest, new Vector3(0, 1.5f, 0), Face(Vector3.back), new Vector2(3.6f, 0.6f), 0.13f, "");
+        chestCap.color = new Color(1f, 1f, 0.75f);
+        var cSay = Add<FirSay>(chest.gameObject);
+        cSay.line = "* You open the chest. Inside, a smaller chest.\n* Inside that, a note: \"nice try.\""; cSay.caption = chestCap; cSay.showFor = 7f;
+        cSay.voice = Src(chest, new Vector3(0, 0.6f, 0), Clip("Pixel/px_chest"), false, 1f, 1f, 10f, false);
+        SetInteract(cSay, "Open the chest", 2.5f);
+
+        foreach (var b in huntButtons.Skip(b0))
+        {
+            // each button belongs to the nearest encounter, or the tile gate
+            var p = b.transform.position;
+            if (Mathf.Abs(p.z - 53.8f) < 1.5f) b.hunt = UB(ft);
+            else b.hunt = UB(new[] { e1, e2, e3 }.OrderBy(x => Mathf.Abs(x.blocker.transform.position.z - p.z)).First());
+        }
+
+        // ---- the village's gags (Data/pixel_gags.txt)
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/pixel_gags.txt");
+        if (ta == null) report.Add("problem: Data/pixel_gags.txt is missing");
+        else
+        {
+            var gg = Group(g, "Gags", Vector3.zero);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var raw in ta.text.Split('\n'))
+            {
+                var line = raw.TrimEnd('\r');
+                if (line.Trim() == "" || line.StartsWith("#")) continue;
+                var p = line.Split('|');
+                if (p.Length < 10) continue;
+                Gag(gg, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                    p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+                placed++;
+            }
+        }
+        report.Add("Pixel Hollow: 3 encounters, a tile gate, 6 skeletons (the duo has a combo act), " + placed + " gags, a save point and a chest");
     }
 
     // =================================================================== Pine Pete's Pizza Palace (night-shift horror), reached from the Station

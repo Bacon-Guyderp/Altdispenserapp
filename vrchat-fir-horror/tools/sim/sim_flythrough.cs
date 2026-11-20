@@ -129,12 +129,12 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(220f, 1.8f, 22.5f), new Vector3(220f, 1.5f, 42f), 1.2f);       // 0: the dining room and the stage
-    Cam(new Vector3(220f, 1.7f, 39.5f), new Vector3(220f, 1.6f, 44f), 1.2f);       // 1: Pete and friends up close
-    Cam(new Vector3(220f, 1.7f, 53f), new Vector3(220f, 1.4f, 57.5f), 1.2f);       // 2: the office: monitor, clock, cameras
-    Cam(new Vector3(219f, 1.7f, 54.2f), new Vector3(214f, 1.5f, 54.2f), 1.2f);     // 3: the west door and its buttons
-    Cam(new Vector3(205f, 1.7f, 37.5f), new Vector3(203f, 1.2f, 43f), 1.2f);       // 4: parts & service
-    Cam(new Vector3(230f, 1.8f, 24f), new Vector3(238f, 1.4f, 30f), 1.2f);         // 5: the arcade and the counter
+    Cam(new Vector3(280f, 2.2f, 21.5f), new Vector3(280f, 1.5f, 40f), 1.2f);       // 0: the village
+    Cam(new Vector3(280f, 1.7f, 39.5f), new Vector3(280f, 1.8f, 44f), 1.2f);       // 1: the first encounter
+    Cam(new Vector3(282.5f, 1.7f, 40.5f), new Vector3(284.6f, 1.3f, 42.6f), 1.2f); // 2: its battle menu
+    Cam(new Vector3(282f, 1.7f, 50.5f), new Vector3(283.5f, 1.5f, 53.8f), 1.2f);   // 3: the tile gate
+    Cam(new Vector3(280f, 1.8f, 75.5f), new Vector3(280f, 1.8f, 82f), 1.2f);       // 4: the castle and the duo
+    Cam(new Vector3(287f, 1.7f, 28f), new Vector3(284f, 1.3f, 25.5f), 1.2f);       // 5: the save point
   }
 
   static void MapTour() {
