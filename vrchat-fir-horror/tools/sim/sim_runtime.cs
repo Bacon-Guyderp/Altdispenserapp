@@ -537,6 +537,8 @@ public static class Sim {
 
   // Unity serializes empty arrays and empty strings for unassigned public fields
   static void InitSerializedDefaults(Client c) {
+    // object sync remembers where each object started (Respawn sends it back there)
+    foreach (var go in c.objects) foreach (var k in go.comps) { var os = k as VRC.SDK3.Components.VRCObjectSync; if (os != null && !os.homeSet) { os.home = go.transform.position; os.homeSet = true; } }
     foreach (var go in c.objects) foreach (var b in Behaviours(go))
       foreach (var f in b.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance)) {
         if (f.GetValue(b) != null) continue;

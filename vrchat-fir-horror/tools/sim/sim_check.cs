@@ -16,6 +16,7 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "night") { NightTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "hunt") { HuntTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed"); return fail == 0 ? 0 : 1; }
@@ -135,7 +136,7 @@ public static class SimCheck {
     var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
     int gagOk = 0, gagN = 0; var gagBad = new List<string>();
     foreach (var gag in All<FirGag>(B)) {
-      if (gag.scare || gag.bubble == null) continue;   // jump scares (they have no line)
+      if (gag.scare || gag.bubble == null || gag.name.StartsWith("Proctor")) continue;   // jump scares (no line), and PROCTOR's announcements (a voice, nothing moves)
       gagN++;
       Sim.Events.Clear();
       var home0 = gag.target.localPosition; var rot0 = gag.target.localRotation; var sc0 = gag.target.localScale;
@@ -156,7 +157,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 152, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 160, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -242,6 +243,7 @@ public static class SimCheck {
     PrecinctTests(A, B);
     NightTests(A, B);
     PixelTests(A, B);
+    LabTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -843,5 +845,63 @@ public static class SimCheck {
     var quest = All<FirSkeletonCombo>(A).FirstOrDefault(c => c.title == "The Quest");
     Check(quest != null && quest.lines.Length == 5, "Sir Rattleton and Captain Lumen have their act: The Quest");
     Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 259f && t.transform.position.x < 301f)); Sim.Run(0.5f);
+  }
+
+  // ======================================================================== the Test Annex and Blocklands
+  static void LabTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Test Annex");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Events.Clear();
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "TEST ANNEX")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(338f, 0, 22f)) < 0.3f, "the Station sends Alice to the Test Annex");
+    Check(Sim.BuildLog.Any(l => l.Contains("Test Annex: 3 tests, 2 portal pairs")) && Sim.BuildLog.Any(l => l.Contains("8 gags in the Test Annex and Blocklands")), "3 tests, 2 portal pairs, 2 crates, 7 announcements, 8 gags");
+    A.player.pos = new Vector3(338f, 0.05f, 24f); Sim.Run(1f);
+    Check(Sim.Events.Any(e => e.Contains("lb_proctor0")), "walking in, PROCTOR welcomes Alice (voiced, with a caption)");
+    string what;
+    Check(Blocked(A, new[] { new Vector3(338f, 0, 27f), new Vector3(338f, 0, 36f) }, out what), "test 1: the way on is a solid wall (" + what + ")");
+    A.player.pos = new Vector3(330f, 0.05f, 31.2f); Sim.Run(0.3f);
+    Check(Flat(A.player.pos, new Vector3(346f, 0, 35.8f)) < 0.2f, "stepping into the purple portal puts her out of the green one, over the wall");
+    Check(!Blocked(A, new[] { new Vector3(346f, 0, 35.8f), new Vector3(338f, 0, 38.5f), new Vector3(338f, 0, 42f) }, out what), "on through to test 2" + (what != "" ? " | " + what : ""));
+    Check(Blocked(A, new[] { new Vector3(338f, 0, 47f), new Vector3(338f, 0, 52f) }, out what) && what.StartsWith("Door 2"), "test 2's door is shut");
+    var crate1 = All<VRC.SDK3.Components.VRCPickup>(A).First(p => p.name == "Test crate 1").transform;
+    Sim.With(A, () => VRC.SDKBase.Networking.SetOwner(A.player, crate1.gameObject));
+    crate1.position = new Vector3(346f, 0.35f, 45f); Sim.Run(0.5f);
+    var padsA = All<FirPad>(A); var padsB = All<FirPad>(B);
+    Check(padsA[0].IsDown() && padsB[0].IsDown() && !padsA[0].door.activeSelf && !padsB[0].door.activeSelf, "Alice sets the crate on the button: the door opens, for Bob too");
+    crate1.position = new Vector3(340f, 0.35f, 45f); Sim.Run(0.5f);
+    Check(!padsB[0].IsDown() && padsB[0].door.activeSelf, "take it off, and the door shuts again");
+    Sim.Press(A, All<FirHuntButton>(A).First(b => b.action == 51 && b.transform.position.z < 45f)); Sim.Run(0.5f);
+    Check(Vector3.Distance(crate1.position, new Vector3(330f, 0.35f, 44f)) < 0.05f, "RESPAWN CRATE sends it home");
+    crate1.position = new Vector3(346f, 0.35f, 45f); Sim.Run(0.5f);
+    A.player.pos = new Vector3(338f, 0.05f, 52f);
+    A.player.pos = new Vector3(340.5f, 0.05f, 55.5f); Sim.Run(0.3f);
+    Check(Flat(A.player.pos, new Vector3(351.2f, 0, 57.5f)) < 0.2f, "test 3: the portal by the glass takes her to the crate's side");
+    var crate2 = All<VRC.SDK3.Components.VRCPickup>(A).First(p => p.name == "Test crate 2").transform;
+    Sim.With(A, () => VRC.SDKBase.Networking.SetOwner(A.player, crate2.gameObject));
+    Sim.Run(1.5f);   // (a portal waits a moment before it'll take you again)
+    A.player.pos = new Vector3(350f, 0.05f, 57.5f); Sim.Run(0.3f);
+    Check(Flat(A.player.pos, new Vector3(339.3f, 0, 55.5f)) < 0.2f, "...and back again (carrying the crate)");
+    crate2.position = new Vector3(330f, 0.35f, 57f); Sim.Run(0.5f);
+    Check(padsB[1].IsDown() && !padsB[1].door.activeSelf && padsB[1].showWhenDown[0].activeSelf, "the crate on the last button: the final door opens and TESTING COMPLETE lights up (for Bob too)");
+
+    Console.WriteLine("\n== Blocklands");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 319f && t.transform.position.x < 357f && t.transform.position.z < 21f)); Sim.Run(0.3f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "BLOCKLANDS")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(400f, 0, 22f)) < 0.3f, "the Station sends Alice to Blocklands");
+    var va = All<FirVoxel>(A)[0]; var vb = All<FirVoxel>(B)[0];
+    Check(va.blocks.Length == 48 && va.slotSolid.Length == 24, "48 blocks in the quarry, 24 places to build");
+    Func<Sim.Client, int, int, FirHuntButton> VB = (c, act, val) => { var v = All<FirVoxel>(c)[0]; return All<FirHuntButton>(c).First(b => b.action == act && b.value == val && b.hunt != null && b.hunt.program == v); };
+    foreach (int i in new[] { 0, 9, 20 }) { Sim.Press(A, VB(A, 41, i)); Sim.Run(0.2f); }
+    Sim.Run(0.5f);
+    Check(va.Pocket() == 3 && vb.Pocket() == 0 && !va.blocks[9].activeSelf && !vb.blocks[9].activeSelf, "Alice mines 3 blocks: gone for both of them, 3 in her pocket");
+    Check(!va.slotGhost[12].activeSelf && va.slotGhost[0].activeSelf, "no ghost to press in mid-air: the top layer only appears over a built block");
+    Sim.Press(A, VB(A, 42, 0)); Sim.Run(0.3f); Sim.Press(A, VB(A, 42, 12)); Sim.Run(0.5f);
+    Check(va.Pocket() == 1 && vb.slotSolid[0].activeSelf && vb.slotSolid[12].activeSelf && !vb.slotGhost[0].activeSelf, "she builds a block, then one on top of it: Bob sees both");
+    Sim.Press(B, VB(B, 42, 1)); Sim.Run(0.5f);
+    Check(!va.slotSolid[1].activeSelf, "Bob's pocket is empty, so he can't build until he mines");
+    Sim.Press(B, VB(B, 43, 0)); Sim.Run(0.5f);
+    Check(va.blocks.All(b => b.activeSelf) && va.slotSolid.All(b => !b.activeSelf), "RESET WORLD puts every block back");
+    Check(All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("lb_")) == 4, "4 block-headed villagers");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 379f && t.transform.position.x < 421f)); Sim.Run(0.5f);
   }
 }

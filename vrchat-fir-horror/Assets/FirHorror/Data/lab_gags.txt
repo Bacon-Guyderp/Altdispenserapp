@@ -1,0 +1,10 @@
+# Fir Warning: Test Annex and Blocklands gags. Same format as gags.txt, placed exactly where given (world metres).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+X1|sign|322|0|23|90|narrator|They taste purple.|PLEASE DO NOT\nLICK THE\nPORTALS|(they taste\npurple)
+X2|frame|355.94|1.6|24|-90|narrator|Test subject of the month. You. By default.|TEST SUBJECT\nOF THE MONTH\n\n<b>you</b>\n<size=60%>(by default)</size>|
+X3|talk|322|0|26.5|90|tree|I'm the control group. I just stand here. It's going great.||
+X4|spin|354|0|26.5|-90|tiny|Wheee! I fell through a portal into another portal!||
+X5|sign|383|0|23|90|narrator|We know. You will anyway.|NO PUNCHING\nTREES|(we know.\nyou will anyway)
+X6|talk|383|0|50|90|big|I'm a blocky tree. I come in one shape. Square.||
+X7|inflate_crate|417|0|50|-90|narrator|The chest is full of dirt. Sixty four dirt.||
+X8|peek|417|0|24|-90|tiny|Is it night yet? Things come out at night. Mostly me.||

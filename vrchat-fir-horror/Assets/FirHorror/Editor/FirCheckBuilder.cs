@@ -199,6 +199,9 @@ public static class FirCheckBuilder
         BuildPrecinct(root);
         BuildPizzeria(root);
         BuildPixel(root);
+        BuildAnnex(root);
+        BuildBlocklands(root);
+        BuildLabGags(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1801,6 +1804,19 @@ public static class FirCheckBuilder
         A("Sky", null, new Color(0.62f, 0.8f, 1f), 1, new Color(0.12f, 0.16f, 0.2f));
         A("Hedge", "needles", new Color(0.45f, 0.8f, 0.4f), 1, Color.black);
         A("Water", null, new Color(0.35f, 0.65f, 1f), 1, new Color(0.1f, 0.22f, 0.35f));
+        A("LabWhite", null, new Color(0.92f, 0.93f, 0.95f), 1, Color.black);
+        A("LabFloor", "concrete", new Color(0.75f, 0.77f, 0.8f), 1, Color.black);
+        A("LabGrey", null, new Color(0.55f, 0.58f, 0.62f), 1, Color.black);
+        A("PortalPurple", null, new Color(0.7f, 0.3f, 1f), 1, new Color(0.45f, 0.15f, 0.7f));
+        A("PortalGreen", null, new Color(0.3f, 1f, 0.45f), 1, new Color(0.15f, 0.65f, 0.25f));
+        A("PadUp", null, new Color(0.8f, 0.2f, 0.2f), 1, new Color(0.4f, 0.05f, 0.05f));
+        A("PadDown", null, new Color(0.2f, 0.9f, 0.3f), 1, new Color(0.1f, 0.5f, 0.15f));
+        A("Glass", null, new Color(0.7f, 0.85f, 0.95f), 1, new Color(0.15f, 0.2f, 0.25f));
+        A("Dirt", null, new Color(0.5f, 0.33f, 0.2f), 1, Color.black);
+        A("Stone", null, new Color(0.55f, 0.55f, 0.57f), 1, Color.black);
+        A("GrassBlock", null, new Color(0.4f, 0.75f, 0.3f), 1, Color.black);
+        A("OreBlue", null, new Color(0.3f, 0.6f, 1f), 1, new Color(0.1f, 0.25f, 0.5f));
+        A("Ghost", null, new Color(0.6f, 0.85f, 1f), 1, new Color(0.15f, 0.25f, 0.35f));
         A("PixelGreen", null, new Color(0.35f, 0.75f, 0.3f), 1, Color.black);
         A("PixelGreenDark", null, new Color(0.25f, 0.6f, 0.25f), 1, Color.black);
         A("PixelSand", null, new Color(0.93f, 0.82f, 0.55f), 1, Color.black);
@@ -1897,7 +1913,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -1996,6 +2012,254 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== the Test Annex and Blocklands, reached from the Station
+
+    /// <summary>A voice that speaks (with a caption bubble at the speaker) when you walk into its zone.</summary>
+    static void Announce(Transform parent, string name, Vector3 speaker, Vector3 zoneCenter, Vector3 zoneSize, string clip, string line)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = speaker;
+        var dummy = Group(go.transform, "Nothing", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "Speaker", go.transform, Vector3.zero, new Vector3(0.6f, 0.03f, 0.6f), M("Black")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        Prim(PrimitiveType.Sphere, "Eye", go.transform, new Vector3(0, 0, -0.04f), Vector3.one * 0.18f, M("GlowGhost"));
+        var gag = Add<FirGag>(go);
+        var c = Clip(clip);
+        gag.target = dummy; gag.walkIn = true; gag.line = "<b>PROCTOR:</b> " + line;
+        gag.zoneCenter = zoneCenter - speaker; gag.zoneSize = zoneSize;
+        gag.inTime = 0.1f; gag.holdTime = Mathf.Max(1.5f, c != null ? c.length : 3f); gag.outTime = 0.1f;
+        gag.voice = Src(go.transform, Vector3.zero, c, false, 0.3f, 1f, 30f, false);
+        gag.bubble = Bubble(go.transform, new Vector3(0, -0.7f, -0.1f));
+        gag.bubbleObject = gag.bubble.gameObject; gag.bubbleTransform = gag.bubble.transform;
+    }
+
+    static Transform PortalRing(Transform parent, string name, Vector3 pos, float yaw, string mat)
+    {
+        var t = Group(parent, name, pos);
+        t.localRotation = Quaternion.Euler(0, yaw, 0);
+        Prim(PrimitiveType.Cylinder, "Ring", t, new Vector3(0, 1.15f, 0), new Vector3(1.6f, 0.04f, 2.3f), M(mat)).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        var swirl = Group(t, "Swirl", new Vector3(0, 1.15f, 0));
+        Prim(PrimitiveType.Cylinder, "Inner", swirl, Vector3.zero, new Vector3(1.4f, 0.03f, 2.1f), M("Black")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        Prim(PrimitiveType.Cube, "Streak", swirl, new Vector3(0, 0, -0.03f), new Vector3(1.2f, 0.06f, 0.01f), M(mat));
+        Prim(PrimitiveType.Cube, "Streak", swirl, new Vector3(0, 0, -0.03f), new Vector3(0.06f, 1.8f, 0.01f), M(mat));
+        return t;
+    }
+
+    static Transform Crate(Transform parent, string name, Vector3 pos)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        Prim(PrimitiveType.Cube, "Box", go.transform, Vector3.zero, Vector3.one * 0.6f, M("LabGrey"));
+        foreach (var n in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+            Prim(PrimitiveType.Sphere, "Skull", go.transform, n * 0.305f, new Vector3(0.22f, 0.22f, 0.22f) - new Vector3(Mathf.Abs(n.x), 0, Mathf.Abs(n.z)) * 0.2f, M("BoneWhite"));
+        go.layer = 13;
+        foreach (Transform ch in go.GetComponentsInChildren<Transform>(true)) ch.gameObject.layer = 13;
+        go.AddComponent<BoxCollider>().size = Vector3.one * 0.6f;
+        var rb = go.AddComponent<Rigidbody>(); rb.mass = 4f; rb.useGravity = true; rb.isKinematic = false; rb.interpolation = RigidbodyInterpolation.Interpolate;
+        var pick = go.AddComponent<VRCPickup>(); pick.InteractionText = "Pick up the test crate"; pick.AutoHold = VRC.SDKBase.VRC_Pickup.AutoHoldMode.Yes; pick.proximity = 2f;
+        go.AddComponent<VRCObjectSync>();
+        return go.transform;
+    }
+
+    static FirPad Pad(Transform parent, string name, Vector3 pos, Transform[] crates, GameObject door, GameObject[] showWhenDown)
+    {
+        var p = Group(parent, name, pos);
+        Prim(PrimitiveType.Cylinder, "Base", p, new Vector3(0, 0.05f, 0), new Vector3(1.6f, 0.05f, 1.6f), M("LabGrey"));
+        var top = Prim(PrimitiveType.Cylinder, "Light", p, new Vector3(0, 0.11f, 0), new Vector3(1.1f, 0.02f, 1.1f), M("PadUp"));
+        var pad = Add<FirPad>(p.gameObject);
+        pad.crates = crates; pad.crateSync = crates.Select(c => c.GetComponent<VRCObjectSync>()).ToArray();
+        pad.door = door; pad.showWhenDown = showWhenDown ?? new GameObject[0];
+        pad.padLight = top.GetComponent<MeshRenderer>(); pad.upMat = M("PadUp"); pad.downMat = M("PadDown");
+        pad.sfx = Src(p, new Vector3(0, 0.5f, 0), null, false, 1f, 1f, 12f, false);
+        pad.downClip = Clip("unlock"); pad.upClip = Clip("switch");
+        return pad;
+    }
+
+    static void BuildAnnex(Transform root)
+    {
+        var g = Group(root, "Test Annex", Vector3.zero);
+        float h = 6f;
+        Box(g, "Floor", new Vector3(338f, -0.1f, 42f), new Vector3(36f, 0.2f, 44f), M("LabFloor"));
+        Box(g, "Ceiling", new Vector3(338f, h + 0.1f, 42f), new Vector3(36f, 0.2f, 44f), M("LabWhite"));
+        Box(g, "WallW", new Vector3(319.9f, h / 2, 42f), new Vector3(0.2f, h, 44.4f), M("LabWhite"));
+        Box(g, "WallE", new Vector3(356.1f, h / 2, 42f), new Vector3(0.2f, h, 44.4f), M("LabWhite"));
+        Box(g, "WallS", new Vector3(338f, h / 2, 19.9f), new Vector3(36.4f, h, 0.2f), M("LabWhite"));
+        Box(g, "WallN", new Vector3(338f, h / 2, 64.1f), new Vector3(36.4f, h, 0.2f), M("LabWhite"));
+        Action<string, float, bool> Across = (n, z, gap) =>
+        {
+            if (!gap) { Box(g, n, new Vector3(338f, h / 2, z), new Vector3(36f, h, 0.2f), M("LabWhite")); return; }
+            Box(g, n + " W", new Vector3(328f, h / 2, z), new Vector3(16f, h, 0.2f), M("LabWhite"));
+            Box(g, n + " E", new Vector3(348f, h / 2, z), new Vector3(16f, h, 0.2f), M("LabWhite"));
+            Box(g, n + " Top", new Vector3(338f, (2.8f + h) / 2f, z), new Vector3(4f, h - 2.8f, 0.2f), M("LabWhite"));
+        };
+        Across("Wall28", 28f, true); Across("Wall34", 34f, false); Across("Wall40", 40f, true); Across("Wall50", 50f, true); Across("Wall60", 60f, true);
+        foreach (float lz in new[] { 24f, 31f, 37f, 45f, 55f, 62f }) PendantLamp(g, new Vector3(338f, h, lz), 0.8f);
+        var arrive = Marker(g, "Arrive", new Vector3(338f, 0.05f, 22f), 0f);
+        StationStop("TEST ANNEX", arrive, g, new Vector3(335.3f, 1.3f, 20.15f), Vector3.forward);
+        Text("Title", g, new Vector3(338f, 4.6f, 20.05f), Face(Vector3.forward), new Vector2(14f, 0.8f), 0.55f, "<b>BONEWELL TESTING ANNEX</b>").color = new Color(0.2f, 0.25f, 0.35f);
+        Text("Sub", g, new Vector3(338f, 3.9f, 20.05f), Face(Vector3.forward), new Vector2(14f, 0.4f), 0.2f, "three tests. one crate each. zero refunds.").color = new Color(0.35f, 0.4f, 0.5f);
+        Text("T1", g, new Vector3(338f, 3.3f, 28.12f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.3f, "<b>TEST 1</b>").color = new Color(0.2f, 0.25f, 0.35f);
+        Text("T2", g, new Vector3(338f, 3.3f, 40.12f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.3f, "<b>TEST 2</b>").color = new Color(0.2f, 0.25f, 0.35f);
+        Text("T3", g, new Vector3(338f, 3.3f, 50.12f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.3f, "<b>TEST 3</b>").color = new Color(0.2f, 0.25f, 0.35f);
+
+        // test 1: a wall with a locked (fake) door; a portal over it
+        Box(g, "FakeDoor", new Vector3(338f, 1.3f, 33.85f), new Vector3(2.2f, 2.6f, 0.1f), M("Metal"), false);
+        Text("FakeDoorSign", g, new Vector3(338f, 1.6f, 33.79f), Face(Vector3.back), new Vector2(2f, 0.4f), 0.2f, "<b>LOCKED</b>\n<size=70%>(it's a test)</size>").color = new Color(0.9f, 0.2f, 0.2f);
+        var pa = PortalRing(g, "Portal A", new Vector3(330f, 0, 31.2f), 0f, "PortalPurple");
+        var pb = PortalRing(g, "Portal B", new Vector3(346f, 0, 37.0f), 180f, "PortalGreen");
+        var p1 = Add<FirPortal>(g.Find("Portal A").gameObject);
+        p1.a = pa; p1.b = pb; p1.spinA = pa.Find("Swirl"); p1.spinB = pb.Find("Swirl");
+        p1.sfx = Src(pa, new Vector3(0, 1f, 0), Clip("whoosh"), false, 0f, 0.8f, 5f, false);
+
+        // test 2: a crate onto the button opens the door
+        var crate1 = Crate(g, "Test crate 1", new Vector3(330f, 0.35f, 44f));
+        var door2 = Box(g, "Door 2", new Vector3(338f, 1.4f, 50f), new Vector3(4f, 2.8f, 0.15f), M("Metal"));
+        Pad(g, "Button 1", new Vector3(346f, 0, 45f), new[] { crate1 }, door2, null);
+
+        // test 3: the crate's behind glass; a portal goes there
+        Box(g, "Glass", new Vector3(344f, h / 2, 55f), new Vector3(0.1f, h, 10f), M("Glass"));
+        var pc = PortalRing(g, "Portal C", new Vector3(340.5f, 0, 55.5f), -90f, "PortalPurple");
+        var pd = PortalRing(g, "Portal D", new Vector3(350f, 0, 57.5f), 90f, "PortalGreen");
+        var p2 = Add<FirPortal>(pc.gameObject);
+        p2.a = pc; p2.b = pd; p2.spinA = pc.Find("Swirl"); p2.spinB = pd.Find("Swirl");
+        p2.sfx = Src(pc, new Vector3(0, 1f, 0), Clip("whoosh"), false, 0f, 0.8f, 5f, false);
+        var crate2 = Crate(g, "Test crate 2", new Vector3(353f, 0.35f, 53f));
+        var door3 = Box(g, "Door 3", new Vector3(338f, 1.4f, 60f), new Vector3(4f, 2.8f, 0.15f), M("Metal"));
+        var done = Text("TestComplete", g, new Vector3(338f, 3.2f, 63.95f), Face(Vector3.back), new Vector2(8f, 1f), 0.6f, "<b>TESTING COMPLETE</b>\n<size=45%>well done. (this sign is the reward.)</size>");
+        done.color = new Color(0.2f, 0.7f, 0.3f);
+        Pad(g, "Button 2", new Vector3(330f, 0, 57f), new[] { crate2 }, door3, new[] { done.gameObject });
+        int b0 = huntButtons.Count;
+        var respawns = new[] { new { p = new Vector3(334f, 1.3f, 40.15f), pad = "Button 1" }, new { p = new Vector3(334f, 1.3f, 50.15f), pad = "Button 2" } };
+        foreach (var r in respawns)
+        {
+            var b = HB(g, "Respawn crate", r.p, Vector3.forward, new Vector3(0.9f, 0.3f, 0.1f), M("Button"), 51, 0, "Send the crate home", "<b>RESPAWN CRATE</b>", 0.09f, true);
+            b.hunt = UB(g.Find(r.pad).GetComponent<FirPad>());
+        }
+        TeleportButton(g, "Back to the lobby", new Vector3(335f, 1.3f, 63.85f), Vector3.back, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
+
+        // PROCTOR, the announcer
+        var an = Group(g, "Proctor", Vector3.zero);
+        Announce(an, "Proctor 0", new Vector3(341.5f, 3.6f, 27.85f), new Vector3(338f, 1f, 24f), new Vector3(10f, 3f, 5f), "Lab/lb_proctor0", "Welcome to the Bonewell Testing Annex. You have volunteered. Please do not check whether you volunteered.");
+        Announce(an, "Proctor 1", new Vector3(341.5f, 3.6f, 33.85f), new Vector3(338f, 1f, 30.5f), new Vector3(14f, 3f, 4f), "Lab/lb_proctor1", "Test one. The door is locked. The portal is not. Draw your own conclusions.");
+        Announce(an, "Proctor 2", new Vector3(341.5f, 3.6f, 39.85f), new Vector3(341f, 1f, 36.5f), new Vector3(14f, 3f, 4f), "Lab/lb_proctor2", "Excellent. You walked through a hole. Science thanks you.");
+        Announce(an, "Proctor 3", new Vector3(341.5f, 3.6f, 49.85f), new Vector3(338f, 1f, 42f), new Vector3(8f, 3f, 3f), "Lab/lb_proctor3", "Test two. Place the crate on the button. The crate does not mind. We asked.");
+        Announce(an, "Proctor 4", new Vector3(334.5f, 3.6f, 59.85f), new Vector3(338f, 1f, 51.5f), new Vector3(6f, 3f, 2.5f), "Lab/lb_proctor4", "The door is open. Please do not grow attached to the crate. It has already forgotten you.");
+        Announce(an, "Proctor 5", new Vector3(326f, 3.6f, 59.85f), new Vector3(328f, 1f, 55f), new Vector3(8f, 3f, 6f), "Lab/lb_proctor5", "Test three. The crate is on the other side of the glass. So is a portal. Coincidence? Yes.");
+        Announce(an, "Proctor 6", new Vector3(341f, 3.6f, 63.85f), new Vector3(338f, 1f, 62f), new Vector3(6f, 3f, 3f), "Lab/lb_proctor6", "Testing complete. Your reward is the satisfaction of a test completed. And this sign.");
+        report.Add("Test Annex: 3 tests, 2 portal pairs, 2 crates on 2 buttons, 7 announcements");
+    }
+
+    static void CubeHead(string who, string mat)
+    {
+        if (!rigs.TryGetValue(who, out var r)) return;
+        Prim(PrimitiveType.Cube, "CubeHead", r[2], new Vector3(0, 0.05f, 0.02f), Vector3.one * 0.34f, M(mat));
+        foreach (float ex in new[] { -0.07f, 0.07f }) Prim(PrimitiveType.Cube, "CubeEye", r[2], new Vector3(ex, 0.08f, 0.195f), new Vector3(0.06f, 0.06f, 0.01f), M("Black"));
+    }
+
+    static void BuildBlocklands(Transform root)
+    {
+        var g = Group(root, "Blocklands", Vector3.zero);
+        float h = 14f;
+        Box(g, "Grass", new Vector3(400f, -0.1f, 40f), new Vector3(40f, 0.2f, 40f), M("PixelGreen"));
+        Box(g, "Sky", new Vector3(400f, h + 0.1f, 40f), new Vector3(40f, 0.2f, 40f), M("Sky"));
+        Box(g, "WallW", new Vector3(379.9f, h / 2, 40f), new Vector3(0.2f, h, 40.4f), M("PixelSky"));
+        Box(g, "WallE", new Vector3(420.1f, h / 2, 40f), new Vector3(0.2f, h, 40.4f), M("PixelSky"));
+        Box(g, "WallS", new Vector3(400f, h / 2, 19.9f), new Vector3(40.4f, h, 0.2f), M("PixelSky"));
+        Box(g, "WallN", new Vector3(400f, h / 2, 60.1f), new Vector3(40.4f, h, 0.2f), M("PixelSky"));
+        // blocky hills along the back, trees, clouds
+        for (int k = 0; k < 20; k++)
+        {
+            int hh = 1 + (k * 7) % 4;
+            for (int y = 0; y < hh; y++) DPrim(PrimitiveType.Cube, "Hill", g, new Vector3(380.5f + k * 2f, 0.5f + y, 58.5f - (y % 2)), new Vector3(2f, 1f, 2f), M(y == hh - 1 ? "PixelGreen" : "Dirt"));
+        }
+        foreach (var tp in new[] { new Vector3(385f, 0, 28f), new Vector3(415f, 0, 30f), new Vector3(386f, 0, 54f), new Vector3(414f, 0, 54f), new Vector3(400f, 0, 54f) }) PixelTree(g, tp, 1.8f);
+        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cube, "Cloud", g, new Vector3(383f + k * 6.5f, 12.5f, 26f + (k * 11) % 30), new Vector3(4f, 1f, 2f), M("CaneWhite"));
+        var arrive = Marker(g, "Arrive", new Vector3(400f, 0.05f, 22f), 0f);
+        StationStop("BLOCKLANDS", arrive, g, new Vector3(397.3f, 1.3f, 20.15f), Vector3.forward);
+        Text("Title", g, new Vector3(400f, 6f, 20.05f), Face(Vector3.forward), new Vector2(14f, 1.2f), 0.9f, "<b>BLOCKLANDS</b>").color = new Color(0.35f, 0.25f, 0.15f);
+        Text("Sub", g, new Vector3(400f, 5f, 20.05f), Face(Vector3.forward), new Vector2(14f, 0.4f), 0.22f, "press a block in the quarry to mine it. press a ghost block on the plot to build.").color = Color.white;
+
+        var vgo = Group(g, "World", new Vector3(400f, 1f, 30f));
+        var vox = Add<FirVoxel>(vgo.gameObject);
+        int b0 = huntButtons.Count;
+        // the quarry: 8 x 6 blocks, grass on the edge, stone inside, ore here and there
+        var blocks = new List<GameObject>();
+        for (int iz = 0; iz < 6; iz++) for (int ix = 0; ix < 8; ix++)
+        {
+            int i = iz * 8 + ix;
+            bool edge = ix == 0 || ix == 7 || iz == 0 || iz == 5;
+            string mat = (i * 37) % 11 == 3 ? "GlowGold" : (i * 53) % 13 == 5 ? "OreBlue" : edge ? "GrassBlock" : "Stone";
+            var b = HB(g, "Block " + i, new Vector3(390.5f + ix, 0.5f, 34.5f + iz), Vector3.back, Vector3.one, M(mat), 41, i, "Mine this block", null);
+            blocks.Add(b.gameObject);
+        }
+        vox.blocks = blocks.ToArray();
+        Text("QuarrySign", g, new Vector3(394f, 2.2f, 33.9f), Face(Vector3.back), new Vector2(5f, 0.4f), 0.25f, "<b>THE QUARRY</b>  <size=70%>(press to mine)</size>").color = Color.white;
+        // the building plot: 4 x 3, two layers
+        var ghosts = new List<GameObject>(); var solids = new List<GameObject>(); var below = new List<int>();
+        for (int layer = 0; layer < 2; layer++) for (int iz = 0; iz < 3; iz++) for (int ix = 0; ix < 4; ix++)
+        {
+            int j = layer * 12 + iz * 4 + ix;
+            var pos = new Vector3(404.5f + ix, 0.5f + layer, 30.5f + iz);
+            var gb = HB(g, "Ghost " + j, pos, Vector3.back, Vector3.one * 0.96f, null, 42, j, "Build a block here", null);
+            Prim(PrimitiveType.Cube, "Marker", gb.transform, Vector3.zero, Vector3.one * 0.32f, M("Ghost"));   // a small floating cube: "build here"
+            ghosts.Add(gb.gameObject);
+            solids.Add(Box(g, "Built " + j, pos, Vector3.one, M(layer == 0 ? "Dirt" : "Stone")));
+            below.Add(layer == 0 ? -1 : j - 12);
+        }
+        vox.slotGhost = ghosts.ToArray(); vox.slotSolid = solids.ToArray(); vox.slotBelow = below.ToArray();
+        Box(g, "PocketBoard", new Vector3(406f, 3.0f, 29.4f), new Vector3(2.4f, 0.8f, 0.04f), M("Board"), false);
+        vox.pocketText = Text("Pocket", g, new Vector3(406f, 3.0f, 29.37f), Face(Vector3.back), new Vector2(2.3f, 0.7f), 0.18f, "");
+        vox.pocketText.color = Color.white;
+        HB(g, "Reset the world", new Vector3(410.5f, 1.3f, 29.4f), Vector3.back, new Vector3(1.0f, 0.3f, 0.1f), M("Button"), 43, 0, "Put every block back", "<b>RESET WORLD</b>", 0.09f, true);
+        vox.sfx = Src(vgo, Vector3.zero, null, false, 0.5f, 1f, 20f, false);
+        vox.mineClip = Clip("toilet_clunk"); vox.placeClip = Clip("switch"); vox.nopeClip = Clip("wrong");
+        var me = UB(vox);
+        foreach (var b in huntButtons.Skip(b0)) b.hunt = me;
+        // the farm and the sheep
+        for (int k = 0; k < 12; k++) DPrim(PrimitiveType.Cube, "Wheat", g, new Vector3(384f + (k % 4) * 0.8f, 0.35f, 44f + (k / 4) * 0.8f), new Vector3(0.5f, 0.7f, 0.5f), M("GlowYellow"));
+        for (int k = 0; k < 3; k++)
+        {
+            var sp = new Vector3(412f + k * 1.6f, 0, 44.5f + (k % 2) * 1.4f);
+            DPrim(PrimitiveType.Cube, "SheepBody", g, sp + new Vector3(0, 0.55f, 0), new Vector3(0.8f, 0.6f, 1.1f), M("CaneWhite"));
+            DPrim(PrimitiveType.Cube, "SheepHead", g, sp + new Vector3(0, 0.75f, 0.65f), new Vector3(0.45f, 0.45f, 0.4f), M("Trunk"));
+            foreach (float lx in new[] { -0.25f, 0.25f }) foreach (float lz in new[] { -0.35f, 0.35f })
+                DPrim(PrimitiveType.Cube, "SheepLeg", g, sp + new Vector3(lx, 0.13f, lz), new Vector3(0.18f, 0.26f, 0.18f), M("Trunk"));
+        }
+        // the villagers, with block heads
+        var folk = new[] { new { who = "Digby", hex = "#795548", act = 23, p = new Vector3(388.6f, 0, 36.5f), yaw = 90f, head = "Dirt" },
+                           new { who = "Brick", hex = "#d84315", act = 25, p = new Vector3(410.5f, 0, 32f), yaw = -90f, head = "Stone" },
+                           new { who = "Sprout", hex = "#9ccc65", act = 28, p = new Vector3(388.5f, 0, 45f), yaw = 90f, head = "GrassBlock" },
+                           new { who = "Woolly", hex = "#eeeeee", act = 16, p = new Vector3(411.0f, 0, 48.5f), yaw = 180f, head = "CaneWhite" } };
+        foreach (var f in folk)
+        {
+            var face = Quaternion.Euler(0, f.yaw, 0) * Vector3.forward;
+            GagSkeleton(g, f.who, f.p, f.yaw, 1f, f.act, f.hex, "Lab/lb_" + f.who.ToLower(), new[] { BoneMat(f.who, f.hex) }, f.p + new Vector3(0, 2.3f, 0) + face * 0.1f, face);
+            CubeHead(f.who, f.head);
+        }
+        report.Add("Blocklands: " + blocks.Count + " blocks to mine, " + ghosts.Count + " places to build, 4 villagers");
+    }
+
+    static void BuildLabGags(Transform root)
+    {
+        var g = Group(root, "Lab Gags", Vector3.zero);
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/lab_gags.txt");
+        if (ta == null) { report.Add("problem: Data/lab_gags.txt is missing"); return; }
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        foreach (var raw in ta.text.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.Trim() == "" || line.StartsWith("#")) continue;
+            var p = line.Split('|');
+            if (p.Length < 10) continue;
+            Gag(g, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+            placed++;
+        }
+        report.Add(placed + " gags in the Test Annex and Blocklands");
     }
 
     // =================================================================== Pixel Hollow (a retro pixel-RPG zone), reached from the Station

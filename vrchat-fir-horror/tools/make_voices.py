@@ -341,6 +341,30 @@ def pixel_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# The Test Annex's announcer and Blocklands' villagers -> Audio/Lab/lb_<name>.ogg
+LAB = [
+    ("proctor0", "mb-us1", 125, 30, 0.9, "Welcome to the Bonewell Testing Annex. You have volunteered. Please do not check whether you volunteered."),
+    ("proctor1", "mb-us1", 125, 30, 0.9, "Test one. The door is locked. The portal is not. Draw your own conclusions."),
+    ("proctor2", "mb-us1", 125, 30, 0.9, "Excellent. You walked through a hole. Science thanks you."),
+    ("proctor3", "mb-us1", 125, 30, 0.9, "Test two. Place the crate on the button. The crate does not mind. We asked."),
+    ("proctor4", "mb-us1", 125, 30, 0.9, "The door is open. Please do not grow attached to the crate. It has already forgotten you."),
+    ("proctor5", "mb-us1", 125, 30, 0.9, "Test three. The crate is on the other side of the glass. So is a portal. Coincidence? Yes."),
+    ("proctor6", "mb-us1", 125, 30, 0.9, "Testing complete. Your reward is the satisfaction of a test completed. And this sign."),
+    ("digby", "mb-us2", 120, 30, 0.9, "I dig. Then I dig some more. The hole is my friend now."),
+    ("brick", "mb-us3", 140, 50, 1.0, "I built a house out of dirt. It's mostly dirt. And a door. A dirt door."),
+    ("sprout", "mb-us1", 150, 70, 1.08, "Square wheat. Square carrots. I grew a round potato once. Nobody believed me."),
+    ("woolly", "mb-us3", 160, 75, 1.12, "My sheep are cubes. When they jump, they go boing. A square boing."),
+]
+
+
+def lab_lines():
+    for name, v, speed, pitch, rate, text in LAB:
+        boost = 1.0 if name.startswith("proctor") else SKELETON_BOOST
+        filt = (f"asetrate=16000*{rate},aresample=22050,aecho=0.6:0.4:20:0.3,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled" if name.startswith("proctor")
+                else f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled")
+        yield ("Lab/lb_" + name, v, speed, pitch, text, filt)
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -368,7 +392,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt", "pixel_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt", "pixel_gags.txt", "lab_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -402,6 +426,9 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--lab" in sys.argv:   # only the Test Annex and Blocklands: the announcer, the villagers, their gags (ids starting X)
+            render_only(tmp, list(lab_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_X")], "Lab")
             return
         if "--pixel" in sys.argv:   # only Pixel Hollow: its people, its gags (ids starting U), and the duo's combo lines
             render_only(tmp, list(pixel_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_U")], "Pixel")
@@ -448,7 +475,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

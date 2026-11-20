@@ -129,12 +129,12 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(280f, 2.2f, 21.5f), new Vector3(280f, 1.5f, 40f), 1.2f);       // 0: the village
-    Cam(new Vector3(280f, 1.7f, 39.5f), new Vector3(280f, 1.8f, 44f), 1.2f);       // 1: the first encounter
-    Cam(new Vector3(282.5f, 1.7f, 40.5f), new Vector3(284.6f, 1.3f, 42.6f), 1.2f); // 2: its battle menu
-    Cam(new Vector3(282f, 1.7f, 50.5f), new Vector3(283.5f, 1.5f, 53.8f), 1.2f);   // 3: the tile gate
-    Cam(new Vector3(280f, 1.8f, 75.5f), new Vector3(280f, 1.8f, 82f), 1.2f);       // 4: the castle and the duo
-    Cam(new Vector3(287f, 1.7f, 28f), new Vector3(284f, 1.3f, 25.5f), 1.2f);       // 5: the save point
+    Cam(new Vector3(338f, 1.8f, 29f), new Vector3(334f, 1.4f, 33f), 1.2f);         // 0: test 1: the wall and the purple portal
+    Cam(new Vector3(338f, 1.8f, 41f), new Vector3(344f, 1.0f, 46f), 1.2f);         // 1: test 2: crate and button
+    Cam(new Vector3(334f, 1.8f, 51f), new Vector3(348f, 1.4f, 56f), 1.2f);         // 2: test 3: the glass and the portals
+    Cam(new Vector3(394f, 2.4f, 27f), new Vector3(394f, 0.5f, 37f), 1.2f);         // 3: the quarry
+    Cam(new Vector3(402f, 2.2f, 26.5f), new Vector3(406f, 0.8f, 31.5f), 1.2f);     // 4: the building plot
+    Cam(new Vector3(400f, 2.4f, 38f), new Vector3(412f, 1.0f, 46f), 1.2f);         // 5: villagers and sheep
   }
 
   static void MapTour() {

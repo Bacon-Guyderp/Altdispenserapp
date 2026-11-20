@@ -130,6 +130,26 @@ path, an inn, a shop and skeleton villagers.
   knit hat, lantern) and tiny Sir Rattleton (saucepan helmet, cardboard armour, wooden sword). Each
   has their own line, plus their combo act, *The Quest*.
 
+## The Test Annex and Blocklands
+
+Two more Station destinations, both original takes on their genres.
+
+**The Bonewell Testing Annex** is a white-panelled test lab. PROCTOR, a deadpan announcer, speaks
+(voiced, captioned) as you enter each test.
+* **Test 1:** the door is a locked fake; step into the purple portal and out of the green one, over the wall.
+* **Test 2:** carry the test crate onto the floor button to open the door.
+* **Test 3:** the crate is behind glass. Take a portal to it, carry it back through, and put it on the
+  button. TESTING COMPLETE lights up (the sign is the reward).
+* **Shared crates:** they use object sync, so everyone sees the buttons and doors the same. A RESPAWN
+  CRATE button sends them home.
+
+**Blocklands** is a blocky voxel meadow.
+* **Mining:** press blocks in the quarry to mine them; ore glows.
+* **Building:** press the floating ghost markers on the plot to build with what's in your pocket. The
+  second layer needs a block underneath.
+* **Shared world:** the world is synced for everyone; your pocket is your own. RESET WORLD puts it all back.
+* **Also:** cube-headed skeleton villagers, blocky sheep, square wheat, and 8 gags across the two areas.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -224,6 +244,7 @@ python make_unitypackage.py
   * FirRide, FirSeat, FirTeleport: rides, ride seats and the Station's teleporters
   * FirNight: the pizzeria's night shift
   * FirEncounter, FirTiles, FirSay: Pixel Hollow's encounters, tile gate and talking props
+  * FirPortal, FirPad, FirVoxel: the Test Annex's portals and buttons, and Blocklands
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -232,7 +253,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 439
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 468
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
@@ -245,3 +266,4 @@ python make_unitypackage.py
   * the precinct, and three pizzeria nights: a sensible guard survives, a careless one doesn't, and the
     power runs out
   * Pixel Hollow's encounters, tile gate and path, per player
+  * the Test Annex's portals, crates, buttons and doors, and mining and building in Blocklands
