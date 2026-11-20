@@ -16,6 +16,7 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -158,7 +159,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 165, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 175, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -246,6 +247,7 @@ public static class SimCheck {
     PixelTests(A, B);
     LabTests(A, B);
     NorthTests(A, B);
+    MysteryTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -604,7 +606,8 @@ public static class SimCheck {
     Check(Flat(A.player.pos, new Vector3(90f, 0, 23.5f)) < 0.3f, "the lobby's Station sends Alice to the park gates");
     Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
           Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
-    var ridesA = All<FirRide>(A).Where(r => r.transform.position.x > 59f && r.transform.position.x < 121f || r.name == "Ghost Train").ToList(); var ridesB = All<FirRide>(B).Where(r => r.transform.position.x > 59f && r.transform.position.x < 121f || r.name == "Ghost Train").ToList();
+    var parkRides = new[] { "Big Wheel", "Carousel", "Teacups", "Drop Tower", "Ghost Train" };
+    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name)).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name)).ToList();
     Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
     var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
     var w0 = wheel.rotor.rotation; Sim.Run(2f);
@@ -840,7 +843,7 @@ public static class SimCheck {
     foreach (int i in new[] { 0, 4, 8 }) { Sim.Press(A, EB(A, tiles, 31, i)); Sim.Step(); }
     Check(tiles.IsSolved() && !tiles.gate.activeSelf && All<FirTiles>(B)[0].gate.activeSelf, "tapping the right tiles (0, 4, 8) lights them all: Alice's gate opens (Bob's stays shut)");
     Check(!Blocked(A, path, out what), "with everyone befriended and the gate open, Alice walks the whole path to the castle" + (what != "" ? " | " + what : ""));
-    var says = All<FirSay>(A);
+    var says = All<FirSay>(A).Where(x => x.transform.position.x > 259f && x.transform.position.x < 301f).ToList();
     foreach (var sy in says) Sim.Press(A, sy);
     Sim.Run(1f);
     Check(says.Count == 2 && says.All(sy => Plain(sy.caption.text).Length > 10), "the save point and the chest speak, with captions: \"" + Plain(says[0].caption.text) + "\"");
@@ -934,5 +937,38 @@ public static class SimCheck {
     Sim.With(A, () => seat.station.ExitStation(A.player));
     Check(All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("nt_")) == 5, "5 voiced skeletons: the passenger, three guards and the shopkeeper in the bucket");
     Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 439f && t.transform.position.x < 477f)); Sim.Run(0.5f);
+  }
+
+  // ======================================================================== the Mystery Hut
+  static void MysteryTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Mystery Hut");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "THE MYSTERY HUT")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(520f, 0, 22f)) < 0.3f, "the Station sends Alice to the Mystery Hut");
+    Check(Sim.BuildLog.Any(l => l.Contains("The Mystery Hut: 8 exhibits, 4 cipher signs")), "8 exhibits, 4 cipher signs, a secret room, 5 skeletons, a gnome and a lake monster");
+    // decode the signs the way a player would: every letter back three
+    var signs = All<TMPro.TextMeshPro>(A).Where(t => t.name == "Cipher").Select(t => Plain(t.text)).OrderBy(x => x).ToList();
+    Func<string, string> Back3 = x => new string(x.Select(ch => ch >= 'A' && ch <= 'Z' ? (char)('A' + (ch - 'A' + 23) % 26) : ch).ToArray());
+    var words = new Dictionary<string, char> { { "ZERO", '0' }, { "ONE", '1' }, { "TWO", '2' }, { "THREE", '3' }, { "FOUR", '4' }, { "FIVE", '5' }, { "SIX", '6' }, { "SEVEN", '7' }, { "EIGHT", '8' }, { "NINE", '9' } };
+    string decoded = "", plain = "";
+    foreach (var sg in signs) { var msg = Back3(sg.Split('|').Last().Trim()); plain += msg + " / "; decoded += words[msg.Split(' ').Last()]; }
+    var lockA = All<FirCodeLock>(A)[0]; var lockB = All<FirCodeLock>(B)[0];
+    Check(decoded == lockA.code, "the 4 signs decode to \"" + plain.TrimEnd(' ', '/') + "\": code " + decoded);
+    string what;
+    var toRoom = new[] { new Vector3(520f, 0, 22.5f), new Vector3(520f, 0, 33f), new Vector3(520f, 0, 38.3f), new Vector3(518.4f, 0, 42.5f), new Vector3(520f, 0, 44.6f), new Vector3(520f, 0, 49f) };
+    Check(Blocked(A, toRoom, out what) && what.StartsWith("Case"), "inside, past the pit: the bookcase blocks the way (" + what + ")");
+    Func<Sim.Client, int, FirHuntButton> K = (c, v) => { var l = All<FirCodeLock>(c)[0]; return All<FirHuntButton>(c).First(b => b.action == 61 && b.value == v && b.hunt != null && b.hunt.program == l); };
+    foreach (int d in new[] { 1, 2, 3, 4, 11 }) { Sim.Press(A, K(A, d)); Sim.Step(); }
+    Check(!lockA.IsOpen(), "a wrong code (1234) does nothing");
+    foreach (char ch in lockA.code) { Sim.Press(A, K(A, ch - '0')); Sim.Step(); }
+    Sim.Press(A, K(A, 11)); Sim.Run(0.3f);
+    Check(lockA.IsOpen() && !lockA.door.activeSelf && lockB.door.activeSelf, "the decoded code swings the bookcase open (for Alice; Bob still has to crack it)");
+    Check(!Blocked(A, toRoom, out what), "...into the secret room" + (what != "" ? " | " + what : ""));
+    var says = All<FirSay>(A).Where(x => x.transform.position.x > 499f && x.transform.position.x < 541f).ToList();
+    foreach (var sy in says) Sim.Press(A, sy);
+    Sim.Run(1f);
+    Check(says.Count == 2 && says.All(sy => Plain(sy.caption.text).Length > 10), "the journal and the weirdness detector speak: \"" + Plain(says.First(x => x.name == "Weirdness Detector").caption.text) + "\"");
+    Check(All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("my_")) == 5, "5 voiced skeletons: the owner, the cashier, a tourist and his kid, and a lumberjack");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 499f && t.transform.position.x < 541f)); Sim.Run(0.5f);
   }
 }

@@ -168,6 +168,26 @@ wording.
   * a wheel-of-cheese avalanche
   * a horse that decides the cliff is a road
 
+## The Mystery Hut: a roadside tourist trap in the woods
+
+A Station destination: an original take on the small-town-mystery genre, set at night among trees
+that are (literally) watching.
+
+* **The exhibits,** each voiced and captioned by the owner's recorded tour:
+  * a six-legged squirrel (two legs taped on), Bigfoot's toenail, and a rock that looks like a rock
+  * a "genuine unicorn" (a goat with a cone), and the mirror of truth
+  * a shrinking tree, a head in a jar, and a bottomless pit you can drop a pebble into
+* **The secret:**
+  * 4 signs in the woods are written in a letter-shift code, and a decoder board in the hut explains
+    how to read them.
+  * Decoded, they give the keypad code by the bookcase, which swings open (per player).
+  * Behind it is a secret room: a journal, a weirdness detector, floating books, and furniture on the
+    ceiling.
+* **The people:** owner Marrowby (bowler hat, cane), Pip at the gift shop (everything is a mug), a
+  tourist and his kid ("Dad, it's a goat"), and a lumberjack.
+* **Outside:** a garden gnome that pops out of a bush, and a lake monster that is very obviously a
+  cardboard cutout.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -263,6 +283,7 @@ python make_unitypackage.py
   * FirNight: the pizzeria's night shift
   * FirEncounter, FirTiles, FirSay: Pixel Hollow's encounters, tile gate and talking props
   * FirPortal, FirPad, FirVoxel: the Test Annex's portals and buttons, and Blocklands
+  * FirCodeLock: the Mystery Hut's secret keypad
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -271,7 +292,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 485
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 504
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route

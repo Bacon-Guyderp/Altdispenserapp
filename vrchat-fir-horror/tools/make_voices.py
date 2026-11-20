@@ -387,6 +387,35 @@ def north_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * (1.0 if narr else SKELETON_BOOST):.3f},alimiter=limit=0.95:level=disabled")
 
 
+# The Mystery Hut -> Audio/Mystery/my_<name>.ogg (Marrowby's recorded tour reads the exhibits)
+MYSTERY = [
+    ("marrowby", "mb-us2", 140, 35, 0.94, "Welcome to the Mystery Hut! Every exhibit is one hundred percent genuine. Some percent. A percent."),
+    ("pip", "mb-us1", 110, 45, 0.96, "Gift shop's open. Everything is a mug. Even the T-shirts are mugs."),
+    ("dad", "mb-us2", 130, 40, 0.95, "I came for the mysteries. I've paid forty dollars to see a rock. It's a good rock."),
+    ("kid", "mb-us1", 180, 95, 1.3, "Dad, is the unicorn a goat? Dad. Dad. It's a goat, Dad."),
+    ("lumberjack", "mb-us3", 120, 30, 0.9, "I chop trees for a living. Around here, the trees chop back. I've stopped."),
+    ("squirrel", "mb-us2", 140, 35, 0.94, "Behold! The six legged squirrel! Please ignore the tape."),
+    ("toenail", "mb-us2", 140, 35, 0.94, "Bigfoot's toenail! He wants it back. He can't have it."),
+    ("rock", "mb-us2", 140, 35, 0.94, "A rock that looks exactly like a rock. Uncanny."),
+    ("unicorn", "mb-us2", 140, 35, 0.94, "The genuine unicorn! Do not look at the tape. Do not ask about the goat."),
+    ("pit", "mb-us2", 140, 35, 0.94, "The bottomless pit. Drop something in. Still falling. Still falling. That'll be one dollar."),
+    ("mirror", "mb-us2", 140, 35, 0.94, "The mirror of truth! It shows you as you truly are. A person who paid to look at a mirror."),
+    ("shrink", "mb-us2", 140, 35, 0.94, "The incredible shrinking tree! Please don't ask it about its feelings."),
+    ("jar", "mb-us3", 150, 55, 1.02, "Get me out of this jar. Also, the gift shop is that way."),
+    ("gnome", "mb-us3", 175, 85, 1.25, "You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye."),
+    ("lake", "mb-us1", 130, 50, 1.0, "The lake monster! It's a cardboard cutout. Or is it? It is."),
+    ("journal", "mb-us1", 120, 45, 0.98, "Day one. The trees are watching me. Day two. The trees are still watching me. Day three. I have started watching the trees back. It is a stalemate."),
+    ("detector", "mb-us3", 160, 60, 1.1, "Beep. Beep. Weirdness level: yes."),
+]
+
+
+def mystery_lines():
+    for name, v, speed, pitch, rate, text in MYSTERY:
+        boost = SKELETON_BOOST if name in ("marrowby", "pip", "dad", "kid", "lumberjack", "jar") else 1.0
+        yield ("Mystery/my_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * boost:.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -449,6 +478,9 @@ def main():
         if "--combo" in sys.argv:
             make_combo(tmp)
             return
+        if "--mystery" in sys.argv:   # only the Mystery Hut
+            render_only(tmp, list(mystery_lines()), "Mystery")
+            return
         if "--north" in sys.argv:   # only the Cold North
             render_only(tmp, list(north_lines()), "North")
             return
@@ -500,7 +532,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

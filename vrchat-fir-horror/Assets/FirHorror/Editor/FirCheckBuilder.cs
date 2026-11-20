@@ -203,6 +203,7 @@ public static class FirCheckBuilder
         BuildBlocklands(root);
         BuildLabGags(root);
         BuildNorth(root);
+        BuildMystery(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1805,6 +1806,7 @@ public static class FirCheckBuilder
         A("Sky", null, new Color(0.62f, 0.8f, 1f), 1, new Color(0.12f, 0.16f, 0.2f));
         A("Hedge", "needles", new Color(0.45f, 0.8f, 0.4f), 1, Color.black);
         A("Water", null, new Color(0.35f, 0.65f, 1f), 1, new Color(0.1f, 0.22f, 0.35f));
+        A("NightSky", null, new Color(0.12f, 0.15f, 0.3f), 1, new Color(0.03f, 0.04f, 0.1f));
         A("LabWhite", null, new Color(0.92f, 0.93f, 0.95f), 1, Color.black);
         A("LabFloor", "concrete", new Color(0.75f, 0.77f, 0.8f), 1, Color.black);
         A("LabGrey", null, new Color(0.55f, 0.58f, 0.62f), 1, Color.black);
@@ -1914,7 +1916,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel", "FirCodeLock" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -2013,6 +2015,221 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== The Mystery Hut (a roadside tourist trap in the woods), reached from the Station
+
+    static FirGag Exhibit(Transform parent, string id, Vector3 pos, float yaw, string title, string clip, string line)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        var gag = MovingGag(parent, "Exhibit " + id, pos, new Vector3(0, 0.9f, 0), new Vector3(1.0f, 1.8f, 1.0f), "Mystery/my_" + clip, line, new Vector3(0, 2.4f, 0));
+        gag.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        Box(gag.transform, "Plinth", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.9f), M("Curtain"), false);
+        Text("Plaque", gag.transform, new Vector3(0, 0.6f, 0.46f), Face(Vector3.forward), new Vector2(0.85f, 0.3f), 0.07f, "<b>" + title + "</b>").color = new Color(1f, 0.85f, 0.4f);
+        return gag;
+    }
+
+    static void BuildMystery(Transform root)
+    {
+        var g = Group(root, "The Mystery Hut", Vector3.zero);
+        float h = 12f;
+        Box(g, "ForestFloor", new Vector3(520f, -0.1f, 42f), new Vector3(40f, 0.2f, 44f), M("PixelGreenDark"));
+        Box(g, "Sky", new Vector3(520f, h + 0.1f, 42f), new Vector3(40f, 0.2f, 44f), M("NightSky"));
+        foreach (var w in new[] { new { p = new Vector3(499.9f, h / 2, 42f), s = new Vector3(0.2f, h, 44.4f) }, new { p = new Vector3(540.1f, h / 2, 42f), s = new Vector3(0.2f, h, 44.4f) },
+                                  new { p = new Vector3(520f, h / 2, 19.9f), s = new Vector3(40.4f, h, 0.2f) }, new { p = new Vector3(520f, h / 2, 64.1f), s = new Vector3(40.4f, h, 0.2f) } })
+            Box(g, "Wall", w.p, w.s, M("NightSky"));
+        Box(g, "Path", new Vector3(520f, 0.005f, 28f), new Vector3(2.4f, 0.01f, 12f), M("Dirt"), false);
+        // the woods (the trees are watching), a pond
+        var trees = new[] { new Vector3(503f, 0, 24f), new Vector3(507f, 0, 33f), new Vector3(502.5f, 0, 41f), new Vector3(504f, 0, 60f), new Vector3(511f, 0, 58f), new Vector3(518f, 0, 61f),
+                            new Vector3(527f, 0, 60f), new Vector3(536f, 0, 61f), new Vector3(537.5f, 0, 42f), new Vector3(533f, 0, 25f), new Vector3(538f, 0, 34f), new Vector3(513f, 0, 23.5f) };
+        foreach (var tp in trees) TreeAt(g, "Watching tree", tp, Mathf.Atan2(520f - tp.x, 40f - tp.z) * Mathf.Rad2Deg, 3.2f, false);
+        Prim(PrimitiveType.Cylinder, "Pond", g, new Vector3(507.5f, 0.02f, 48f), new Vector3(6f, 0.02f, 5f), M("Water"));
+        var arrive = Marker(g, "Arrive", new Vector3(520f, 0.05f, 22f), 0f);
+        StationStop("THE MYSTERY HUT", arrive, g, new Vector3(517.3f, 1.3f, 20.15f), Vector3.forward);
+
+        // ---- the hut
+        var hut = Group(g, "Hut", Vector3.zero);
+        float hh = 3.6f;
+        Box(hut, "Floor", new Vector3(520f, 0.02f, 40f), new Vector3(16f, 0.04f, 12f), M("Floor2"), false);
+        Box(hut, "WallW", new Vector3(512f, hh / 2, 40f), new Vector3(0.2f, hh, 12f), M("Wainscot"));
+        Box(hut, "WallE", new Vector3(528f, hh / 2, 40f), new Vector3(0.2f, hh, 12f), M("Wainscot"));
+        Box(hut, "WallS L", new Vector3(515.4f, hh / 2, 34f), new Vector3(6.8f, hh, 0.2f), M("Wainscot"));
+        Box(hut, "WallS R", new Vector3(524.6f, hh / 2, 34f), new Vector3(6.8f, hh, 0.2f), M("Wainscot"));
+        Box(hut, "WallS Top", new Vector3(520f, 3.2f, 34f), new Vector3(2.4f, 0.8f, 0.2f), M("Wainscot"));
+        Box(hut, "WallN L", new Vector3(515.4f, hh / 2, 46f), new Vector3(6.8f, hh, 0.2f), M("Wainscot"));
+        Box(hut, "WallN R", new Vector3(524.6f, hh / 2, 46f), new Vector3(6.8f, hh, 0.2f), M("Wainscot"));
+        Box(hut, "WallN Top", new Vector3(520f, 3.2f, 46f), new Vector3(2.4f, 0.8f, 0.2f), M("Wainscot"));
+        Box(hut, "Roof", new Vector3(520f, hh + 0.15f, 40f), new Vector3(17f, 0.3f, 13f), M("TrimDark"));
+        Box(hut, "RoofSign", new Vector3(520f, 4.6f, 33.9f), new Vector3(8f, 1.6f, 0.1f), M("TrimDark"), false);
+        Text("HutName", hut, new Vector3(520f, 4.7f, 33.84f), Face(Vector3.back), new Vector2(7.6f, 1.2f), 0.8f, "<b>MYSTERY HUT</b>").color = new Color(1f, 0.85f, 0.2f);
+        Text("HutSub", hut, new Vector3(520f, 4.05f, 33.84f), Face(Vector3.back), new Vector2(7.6f, 0.3f), 0.17f, "wonders of the woods!  genuine!  (some percent)").color = Color.white;
+        PendantLamp(hut, new Vector3(516f, hh, 40f), 0.6f); PendantLamp(hut, new Vector3(524f, hh, 40f), 0.6f);
+        // the exhibits
+        var sq = Exhibit(hut, "Squirrel", new Vector3(513.2f, 0, 36.6f), 90f, "THE SIX-LEGGED SQUIRREL", "squirrel", "Behold! The six-legged squirrel! Please ignore the tape.");
+        var sqp = Group(sq.transform, "Squirrel", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Cube, "Body", sqp, new Vector3(0, 0.15f, 0), new Vector3(0.18f, 0.18f, 0.35f), M("Trunk"));
+        Prim(PrimitiveType.Cube, "Tail", sqp, new Vector3(0, 0.3f, -0.2f), new Vector3(0.12f, 0.3f, 0.1f), M("Trunk"));
+        for (int k = 0; k < 6; k++) Prim(PrimitiveType.Cube, "Leg", sqp, new Vector3(k % 2 == 0 ? -0.08f : 0.08f, 0.04f, -0.12f + (k / 2) * 0.12f), new Vector3(0.03f, 0.1f, 0.03f), M("Trunk"));
+        Prim(PrimitiveType.Cube, "Tape", sqp, new Vector3(0, 0.08f, 0.0f), new Vector3(0.2f, 0.03f, 0.05f), M("CaneWhite"));
+        sq.target = sqp; sq.wobble = 15f;
+        var tn = Exhibit(hut, "Toenail", new Vector3(513.2f, 0, 39.8f), 90f, "BIGFOOT'S TOENAIL", "toenail", "Bigfoot's toenail! He wants it back. He can't have it.");
+        var tnp = Group(tn.transform, "Toenail", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Cube, "Nail", tnp, new Vector3(0, 0.12f, 0), new Vector3(0.6f, 0.08f, 0.45f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(10, 0, 0);
+        tn.target = tnp; tn.spin = 60f;
+        var rk = Exhibit(hut, "Rock", new Vector3(513.2f, 0, 43f), 90f, "A ROCK THAT LOOKS LIKE A ROCK", "rock", "A rock that looks exactly like a rock. Uncanny.");
+        var rkp = Group(rk.transform, "Rock", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Sphere, "Rock", rkp, new Vector3(0, 0.18f, 0), new Vector3(0.45f, 0.35f, 0.4f), M("Stone"));
+        rk.target = rkp; rk.spin = 90f;
+        var un = Exhibit(hut, "Unicorn", new Vector3(526.8f, 0, 36.6f), -90f, "THE GENUINE UNICORN", "unicorn", "The genuine unicorn! Do not look at the tape. Do not ask about the goat.");
+        var unp = Group(un.transform, "Goat", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Cube, "Body", unp, new Vector3(0, 0.3f, 0), new Vector3(0.3f, 0.3f, 0.6f), M("CaneWhite"));
+        Prim(PrimitiveType.Cube, "Head", unp, new Vector3(0, 0.5f, 0.35f), new Vector3(0.2f, 0.22f, 0.25f), M("CaneWhite"));
+        Prim(PrimitiveType.Cylinder, "Horn", unp, new Vector3(0, 0.7f, 0.38f), new Vector3(0.05f, 0.12f, 0.05f), M("GlowYellow"));
+        Prim(PrimitiveType.Cube, "Tape", unp, new Vector3(0, 0.62f, 0.38f), new Vector3(0.12f, 0.03f, 0.12f), M("Paper"));
+        un.target = unp; un.bob = 0.08f; un.moveBy = new Vector3(0, 0, 0.0f);
+        var mr = Exhibit(hut, "Mirror", new Vector3(526.8f, 0, 39.8f), -90f, "THE MIRROR OF TRUTH", "mirror", "The mirror of truth! It shows you as you truly are: a person who paid to look at a mirror.");
+        var mrp = Group(mr.transform, "Mirror", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Cube, "Frame", mrp, new Vector3(0, 0.5f, 0), new Vector3(0.7f, 1.0f, 0.06f), M("Brass"));
+        Prim(PrimitiveType.Cube, "Glass", mrp, new Vector3(0, 0.5f, 0.035f), new Vector3(0.6f, 0.9f, 0.01f), M("Water"));
+        mr.target = mrp; mr.wobble = 4f;
+        var sk = Exhibit(hut, "Shrink", new Vector3(526.8f, 0, 43f), -90f, "THE SHRINKING TREE", "shrink", "The incredible shrinking tree! Please don't ask it about its feelings.");
+        var skp = Group(sk.transform, "Tree", new Vector3(0, 0.9f, 0));
+        Transform skm; TreeModel(skp, 1.1f, false, out skm);
+        sk.target = skp; sk.scaleBy = 0.25f; sk.mouth = skm;
+        var jr = Exhibit(hut, "Jar", new Vector3(515f, 0, 45.2f), 180f, "HEAD IN A JAR", "jar", "Get me out of this jar. Also, the gift shop is that way.");
+        var jrp = Group(jr.transform, "Jar", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Cylinder, "Glass", jrp, new Vector3(0, 0.25f, 0), new Vector3(0.4f, 0.25f, 0.4f), M("Water"));
+        Prim(PrimitiveType.Sphere, "Skull", jrp, new Vector3(0, 0.25f, 0), new Vector3(0.24f, 0.24f, 0.26f), M("BoneWhite"));
+        jr.target = jrp; jr.wobble = 8f;
+        // the bottomless pit (in the floor), with a pebble that falls forever
+        Prim(PrimitiveType.Cylinder, "Pit", hut, new Vector3(520f, 0.05f, 40.5f), new Vector3(1.6f, 0.01f, 1.6f), M("Black"));
+        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Cylinder, "Rail", hut, new Vector3(520f + Mathf.Cos(k * Mathf.PI / 4f) * 1.0f, 0.45f, 40.5f + Mathf.Sin(k * Mathf.PI / 4f) * 1.0f), new Vector3(0.05f, 0.45f, 0.05f), M("Brass"));
+        var pit = MovingGag(hut, "Exhibit Pit", new Vector3(521.7f, 0, 39.3f), new Vector3(0, 0.6f, 0), new Vector3(0.6f, 1.2f, 0.3f), "Mystery/my_pit", "The bottomless pit. Drop something in. ...still falling. ...still falling. That'll be one dollar.", new Vector3(0, 2.2f, 0));
+        Box(pit.transform, "SignPost", new Vector3(0, 0.5f, 0), new Vector3(0.06f, 1f, 0.06f), M("DeskWood"), false);
+        Text("PitSign", pit.transform, new Vector3(0, 1.05f, -0.05f), Face(Vector3.back), new Vector2(0.9f, 0.3f), 0.08f, "<b>THE BOTTOMLESS PIT</b>\n<size=70%>press to drop a pebble</size>").color = Color.white;
+        var pebble = Group(pit.transform, "Pebble", new Vector3(-1.7f, 0.6f, 1.2f));
+        Prim(PrimitiveType.Sphere, "Stone", pebble, Vector3.zero, Vector3.one * 0.08f, M("Stone"));
+        pit.target = pebble; pit.hideWhenIdle = true; pit.moveBy = new Vector3(0, -6f, 0); pit.inTime = 2.5f; pit.outTime = 0.1f;
+        // the gift shop, the decoder board
+        Box(hut, "GiftCounter", new Vector3(525.6f, 0.55f, 35.6f), new Vector3(0.8f, 1.1f, 2.4f), M("TrimDark"));
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Cylinder, "Mug", hut, new Vector3(525.6f, 1.2f, 34.7f + k * 0.45f), new Vector3(0.14f, 0.1f, 0.14f), M(k % 2 == 0 ? "CaneRed" : "GiftBlue"));
+        Box(hut, "DecoderBoard", new Vector3(515.4f, 2.0f, 34.12f), new Vector3(5.2f, 1.6f, 0.03f), M("Board"), false);
+        Text("Decoder", hut, new Vector3(515.4f, 2.0f, 34.16f), Face(Vector3.forward), new Vector2(5f, 1.5f), 0.12f,
+             "<b>A CODE IN THE WOODS?</b>\nThe signs out there are written in a shift code: every letter has moved three steps along the alphabet. Move each one back.\n" +
+             "<color=#ffd060>written:</color>  D E F G H I J K L M N O P Q R S T U V W X Y Z A B C\n<color=#70ff90>means:  </color>  A B C D E F G H I J K L M N O P Q R S T U V W X Y Z").color = Color.white;
+        // the secret door: a bookcase in the north wall, and a keypad nobody mentions
+        var bookcase = Group(hut, "Bookcase", new Vector3(520f, 0, 46f));
+        Box(bookcase, "Case", new Vector3(0, 1.4f, 0), new Vector3(2.4f, 2.8f, 0.3f), M("TrimDark"));
+        for (int s2 = 0; s2 < 4; s2++) for (int b = 0; b < 8; b++)
+            Prim(PrimitiveType.Cube, "Book", bookcase, new Vector3(-0.95f + b * 0.27f, 0.35f + s2 * 0.65f, -0.16f), new Vector3(0.2f, 0.45f, 0.05f), M("Book" + (1 + (b + s2) % 3)));
+        var lockGo = Group(hut, "Keypad", new Vector3(522.2f, 1.35f, 45.86f));
+        lockGo.localRotation = Face(Vector3.back);
+        Box(lockGo, "Backing", new Vector3(0, 0.05f, 0.03f), new Vector3(0.7f, 1.05f, 0.03f), M("Board"), false);
+        var disp = Text("Display", lockGo, new Vector3(0, 0.45f, -0.01f), Quaternion.identity, new Vector2(0.6f, 0.14f), 0.1f, "");
+        disp.color = new Color(0.5f, 1f, 0.6f);
+        Text("KeypadNote", lockGo, new Vector3(0, -0.6f, -0.01f), Quaternion.identity, new Vector2(0.9f, 0.14f), 0.06f, "(keypad? what keypad?)").color = new Color(0.7f, 0.7f, 0.7f);
+        var cl = Add<FirCodeLock>(lockGo.gameObject);
+        cl.code = "6142"; cl.door = bookcase.gameObject; cl.display = disp;
+        cl.sfx = Src(lockGo, Vector3.zero, null, false, 1f, 1f, 10f, false);
+        cl.keyClip = Clip("switch"); cl.openClip = Clip("creak"); cl.wrongClip = Clip("wrong");
+        string[] keys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK" };
+        int[] vals = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 11 };
+        for (int i = 0; i < 12; i++)
+        {
+            var kb = HB(lockGo, "Key " + keys[i], new Vector3(-0.2f + (i % 3) * 0.2f, 0.22f - (i / 3) * 0.2f, 0f), Vector3.back, new Vector3(0.16f, 0.16f, 0.05f), M(i == 11 ? "ButtonGold" : "Button"), 61, vals[i], "Press " + keys[i], "<b>" + keys[i] + "</b>", 0.08f, true);
+            kb.hunt = UB(cl);
+        }
+        // the secret room
+        var sr = Group(g, "Secret Room", Vector3.zero);
+        Box(sr, "Floor", new Vector3(520f, 0.02f, 49.2f), new Vector3(10f, 0.04f, 6.4f), M("Floor2"), false);
+        Box(sr, "WallW", new Vector3(515f, 1.7f, 49.2f), new Vector3(0.2f, 3.4f, 6.4f), M("WallDark"));
+        Box(sr, "WallE", new Vector3(525f, 1.7f, 49.2f), new Vector3(0.2f, 3.4f, 6.4f), M("WallDark"));
+        Box(sr, "WallN", new Vector3(520f, 1.7f, 52.4f), new Vector3(10.2f, 3.4f, 0.2f), M("WallDark"));
+        Box(sr, "Ceiling", new Vector3(520f, 3.5f, 49.2f), new Vector3(10.2f, 0.2f, 6.6f), M("WallDark"));
+        // furniture on the ceiling (gravity is optional in here)
+        Box(sr, "UpsideTable", new Vector3(517.5f, 3.0f, 50.5f), new Vector3(1.2f, 0.06f, 0.8f), M("DeskWood"), false);
+        foreach (float lx in new[] { -0.5f, 0.5f }) Box(sr, "TableLeg", new Vector3(517.5f + lx, 3.2f, 50.5f), new Vector3(0.06f, 0.4f, 0.06f), M("DeskWood"), false);
+        Box(sr, "UpsideChair", new Vector3(519.2f, 3.15f, 50.5f), new Vector3(0.45f, 0.5f, 0.45f), M("Curtain"), false);
+        Text("Gravity", sr, new Vector3(520f, 2.2f, 52.28f), Face(Vector3.back), new Vector2(5f, 0.3f), 0.14f, "gravity in this room is a suggestion").color = new Color(0.7f, 1f, 0.7f);
+        var floaty = Group(sr, "Floating books", Vector3.zero);
+        var books = new List<Transform>();
+        for (int k = 0; k < 5; k++)
+        {
+            var bk = Group(floaty, "Book " + k, new Vector3(521.5f + (k % 3) * 0.7f, 1.4f + (k % 2) * 0.5f, 48.2f + k * 0.5f));
+            Prim(PrimitiveType.Cube, "Cover", bk, Vector3.zero, new Vector3(0.3f, 0.06f, 0.4f), M("Book" + (1 + k % 3))).transform.localRotation = Quaternion.Euler(k * 20f, k * 40f, 0);
+            books.Add(bk);
+        }
+        var fr = Add<FirRide>(floaty.gameObject);
+        fr.kind = 0; fr.bobbers = books.ToArray(); fr.bobHeight = 0.25f; fr.bobSpeed = 1.3f;
+        foreach (var it in new[] { new { name = "Journal", p = new Vector3(518f, 0, 51.6f), clip = "journal", line = "\"Day one. The trees are watching me. Day two. The trees are still watching me. Day three. I have started watching the trees back. It is a stalemate.\"" },
+                                   new { name = "Weirdness Detector", p = new Vector3(522.5f, 0, 51.6f), clip = "detector", line = "BEEP. BEEP. Weirdness level: yes." } })
+        {
+            var go = Group(sr, it.name, it.p);
+            Box(go, "Pedestal", new Vector3(0, 0.5f, 0), new Vector3(0.6f, 1.0f, 0.6f), M("TrimDark"));
+            if (it.name == "Journal") Prim(PrimitiveType.Cube, "Book", go, new Vector3(0, 1.05f, 0), new Vector3(0.35f, 0.08f, 0.45f), M("Curtain"));
+            else { Prim(PrimitiveType.Cube, "Box", go, new Vector3(0, 1.15f, 0), new Vector3(0.35f, 0.25f, 0.25f), M("Metal")); Prim(PrimitiveType.Sphere, "Light", go, new Vector3(0, 1.35f, 0), Vector3.one * 0.1f, M("GlowRedEye")); }
+            go.gameObject.AddComponent<BoxCollider>().size = new Vector3(0.7f, 1.4f, 0.7f);
+            go.gameObject.GetComponent<BoxCollider>().center = new Vector3(0, 0.7f, 0);
+            var cap = Text("Caption", go, new Vector3(0, 2.0f, 0), Face(Vector3.back), new Vector2(3.2f, 0.6f), 0.1f, "");
+            cap.color = new Color(1f, 1f, 0.75f);
+            var say = Add<FirSay>(go.gameObject);
+            say.line = it.line; say.caption = cap; say.showFor = it.name == "Journal" ? 12f : 5f;
+            say.voice = Src(go, new Vector3(0, 1.1f, 0), Clip("Mystery/my_" + it.clip), false, 1f, 1f, 10f, false);
+            SetInteract(say, it.name == "Journal" ? "Read the journal" : "Switch on the detector", 2.5f);
+        }
+
+        // ---- the people
+        var folk = new[] { new { who = "Marrowby", hex = "#c9a227", act = 26, p = new Vector3(517.2f, 0, 36.4f), yaw = 180f, clip = "marrowby" },
+                           new { who = "Pip", hex = "#80cbc4", act = 3, p = new Vector3(526.6f, 0, 35.6f), yaw = -90f, clip = "pip" },
+                           new { who = "Dad", hex = "#bcaaa4", act = 5, p = new Vector3(523.6f, 0, 31.4f), yaw = 180f, clip = "dad" },
+                           new { who = "Junior", hex = "#ffcc80", act = 16, p = new Vector3(522.4f, 0, 31.0f), yaw = 180f, clip = "kid" },
+                           new { who = "Lumberjack", hex = "#a1887f", act = 10, p = new Vector3(510f, 0, 30f), yaw = 90f, clip = "lumberjack" } };
+        foreach (var f in folk)
+        {
+            var face = Quaternion.Euler(0, f.yaw, 0) * Vector3.forward;
+            GagSkeleton(g, f.who, f.p, f.yaw, f.who == "Junior" ? 0.65f : 1f, f.act, f.hex, "Mystery/my_" + f.clip, new[] { BoneMat(f.who, f.hex) },
+                        f.p + new Vector3(0, f.who == "Junior" ? 1.5f : 2.25f, 0) + face * 0.1f, face);
+        }
+        if (rigs.TryGetValue("Marrowby", out var mb))
+        {
+            Prim(PrimitiveType.Cylinder, "Bowler", mb[2], new Vector3(0, 0.15f, 0), new Vector3(0.24f, 0.08f, 0.24f), M("Black"));
+            Prim(PrimitiveType.Cylinder, "Brim", mb[2], new Vector3(0, 0.08f, 0), new Vector3(0.36f, 0.01f, 0.36f), M("Black"));
+            Prim(PrimitiveType.Cylinder, "Cane", mb[6], new Vector3(0, -0.45f, 0.05f), new Vector3(0.04f, 0.45f, 0.04f), M("Black"));
+        }
+        if (rigs.TryGetValue("Pip", out var pp)) Prim(PrimitiveType.Cylinder, "Cap", pp[2], new Vector3(0, 0.13f, 0), new Vector3(0.26f, 0.06f, 0.26f), M("GiftGreen"));
+        if (rigs.TryGetValue("Dad", out var dd)) Prim(PrimitiveType.Cube, "Camera", dd[1], new Vector3(0, 0.15f, 0.15f), new Vector3(0.18f, 0.12f, 0.08f), M("Black"));
+        if (rigs.TryGetValue("Lumberjack", out var lj)) Prim(PrimitiveType.Cube, "Plaid", lj[1], new Vector3(0, 0.28f, 0.01f), new Vector3(0.32f, 0.34f, 0.2f), M("CaneRed"));
+
+        // ---- the woods: cipher signs, a gnome in a bush, a lake monster
+        var cipher = new[] { new { p = new Vector3(505f, 0, 27.5f), yaw = 90f, t = "1 OF 4\nWKH ILUVW GLJLW LV VLA" },
+                             new { p = new Vector3(535.5f, 0, 29.5f), yaw = -90f, t = "2 OF 4\nVHFRQG: RQH" },
+                             new { p = new Vector3(504.5f, 0, 55.5f), yaw = 90f, t = "3 OF 4\nWKLUG: IRXU" },
+                             new { p = new Vector3(535.5f, 0, 54.5f), yaw = -90f, t = "4 OF 4\nIRXUWK: WZR" } };
+        foreach (var c in cipher)
+        {
+            var cg = Group(g, "Cipher sign", c.p);
+            cg.localRotation = Quaternion.Euler(0, c.yaw, 0);
+            Box(cg, "Post", new Vector3(0, 0.7f, 0), new Vector3(0.1f, 1.4f, 0.1f), M("Trunk"));
+            Box(cg, "Board", new Vector3(0, 1.5f, 0), new Vector3(1.6f, 0.7f, 0.06f), M("DeskWood"), false);
+            Text("Cipher", cg, new Vector3(0, 1.5f, 0.035f), Face(Vector3.forward), new Vector2(1.5f, 0.6f), 0.13f, "<b>" + c.t + "</b>").color = new Color(0.15f, 0.1f, 0.05f);
+        }
+        var gn = MovingGag(g, "The Gnome", new Vector3(532.5f, 0, 47f), new Vector3(0, 0.6f, 0), new Vector3(1.4f, 1.2f, 1.4f), "Mystery/my_gnome", "You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye.", new Vector3(0, 2f, 0));
+        gn.transform.localRotation = Quaternion.Euler(0, -90, 0);
+        foreach (var bp in new[] { new Vector3(-0.4f, 0.4f, 0), new Vector3(0.4f, 0.45f, 0.1f), new Vector3(0, 0.6f, -0.3f) }) Prim(PrimitiveType.Sphere, "Bush", gn.transform, bp, Vector3.one * 0.9f, M("Hedge"));
+        var gnome = Group(gn.transform, "Gnome", new Vector3(0, 0.2f, 0.45f));
+        Prim(PrimitiveType.Cube, "Body", gnome, new Vector3(0, 0.15f, 0), new Vector3(0.2f, 0.3f, 0.2f), M("GiftBlue"));
+        Prim(PrimitiveType.Sphere, "Face", gnome, new Vector3(0, 0.37f, 0.02f), Vector3.one * 0.16f, M("PixelSand"));
+        Prim(PrimitiveType.Cube, "Beard", gnome, new Vector3(0, 0.3f, 0.08f), new Vector3(0.14f, 0.12f, 0.04f), M("CaneWhite"));
+        Prim(PrimitiveType.Cylinder, "Hat", gnome, new Vector3(0, 0.52f, 0), new Vector3(0.18f, 0.12f, 0.18f), M("CaneRed"));
+        gn.target = gnome; gn.hideWhenIdle = true; gn.moveBy = new Vector3(0, 0.55f, 0.1f); gn.wobble = 8f;
+        var lk = MovingGag(g, "The Lake Monster", new Vector3(507.5f, 0, 48f), new Vector3(0, 0.3f, 2.8f), new Vector3(2f, 0.6f, 0.6f), "Mystery/my_lake", "The lake monster! It's a cardboard cutout. Or is it? (It is.)", new Vector3(0, 3.6f, 0));
+        var monster = Group(lk.transform, "Cutout", new Vector3(0, -2.2f, 0));
+        Prim(PrimitiveType.Cube, "Neck", monster, new Vector3(0, 1.2f, 0), new Vector3(0.6f, 2.4f, 0.04f), M("Cardboard"));
+        Prim(PrimitiveType.Cube, "Head", monster, new Vector3(0.35f, 2.5f, 0), new Vector3(1.0f, 0.5f, 0.04f), M("Cardboard"));
+        Prim(PrimitiveType.Sphere, "Eye", monster, new Vector3(0.6f, 2.6f, 0.03f), Vector3.one * 0.12f, M("GlowRedEye"));
+        Prim(PrimitiveType.Cube, "Stick", monster, new Vector3(0, 0.6f, -0.05f), new Vector3(0.06f, 1.2f, 0.06f), M("DeskWood"));
+        lk.target = monster; lk.moveBy = new Vector3(0, 2.2f, 0); lk.wobble = 5f; lk.inTime = 1.2f; lk.outTime = 1.0f;
+        report.Add("The Mystery Hut: 8 exhibits, 4 cipher signs (code 6142), a secret room, 5 voiced skeletons, a gnome and a lake monster");
     }
 
     // =================================================================== The Cold North (meme parodies), reached from the Station
