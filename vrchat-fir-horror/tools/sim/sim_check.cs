@@ -16,6 +16,7 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "night") { NightTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -157,7 +158,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 160, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 165, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -244,6 +245,7 @@ public static class SimCheck {
     NightTests(A, B);
     PixelTests(A, B);
     LabTests(A, B);
+    NorthTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -602,7 +604,7 @@ public static class SimCheck {
     Check(Flat(A.player.pos, new Vector3(90f, 0, 23.5f)) < 0.3f, "the lobby's Station sends Alice to the park gates");
     Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
           Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
-    var ridesA = All<FirRide>(A); var ridesB = All<FirRide>(B);
+    var ridesA = All<FirRide>(A).Where(r => r.transform.position.x > 59f && r.transform.position.x < 121f || r.name == "Ghost Train").ToList(); var ridesB = All<FirRide>(B).Where(r => r.transform.position.x > 59f && r.transform.position.x < 121f || r.name == "Ghost Train").ToList();
     Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
     var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
     var w0 = wheel.rotor.rotation; Sim.Run(2f);
@@ -903,5 +905,34 @@ public static class SimCheck {
     Check(va.blocks.All(b => b.activeSelf) && va.slotSolid.All(b => !b.activeSelf), "RESET WORLD puts every block back");
     Check(All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("lb_")) == 4, "4 block-headed villagers");
     Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 379f && t.transform.position.x < 421f)); Sim.Run(0.5f);
+  }
+
+  // ======================================================================== the Cold North
+  static void NorthTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Cold North");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "THE COLD NORTH")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(447f, 0, 21.8f)) < 0.3f, "the Station sends Alice to the Cold North");
+    Func<string, FirGag> G = n => All<FirGag>(A).First(x => x.name == n);
+    var tests = new[] {
+      new { n = "The Shout", what = "the tree flies off", ok = (Func<FirGag, Vector3, bool>)((x, home) => Vector3.Distance(x.target.position, home) > 8f) },
+      new { n = "The Giant", what = "the skeleton is launched into the sky", ok = (Func<FirGag, Vector3, bool>)((x, home) => x.target.position.y - home.y > 15f) },
+      new { n = "The Cheese", what = "the cheese wheels roll down the mountain", ok = (Func<FirGag, Vector3, bool>)((x, home) => home.z - x.target.position.z > 5f) },
+      new { n = "The Horse", what = "the horse walks up the cliff", ok = (Func<FirGag, Vector3, bool>)((x, home) => x.target.position.y - home.y > 5f) } };
+    foreach (var tc in tests) {
+      var gag = G(tc.n); var home = gag.target.position; Sim.Events.Clear();
+      Sim.Press(A, gag);
+      bool did = false, cap = false;
+      for (int f = 0; f < 80; f++) { Sim.Step(); if (tc.ok(gag, home)) did = true; if (gag.bubbleObject.activeSelf && gag.bubble.text == gag.line) cap = true; }
+      bool voiced = Sim.Events.Any(e => e.Contains(gag.voice.clip.name));
+      for (int f = 0; f < 200 && Vector3.Distance(gag.target.position, home) > 0.01f; f++) Sim.Step();
+      Check(did && cap && voiced && Vector3.Distance(gag.target.position, home) < 0.01f, tc.n + ": " + tc.what + " (voiced, captioned), then it's all put back");
+    }
+    var seat = All<FirSeat>(A).First(x => x.name.StartsWith("Cart seat") && x.transform.position.x > 439f);
+    Sim.Press(A, seat); Sim.Step(); var p0 = A.player.pos; Sim.Run(10f);
+    Check(Sim.Seated(A.player) && Flat(A.player.pos, p0) > 8f, "Alice rides the cart round the road (" + Flat(A.player.pos, p0).ToString("F0") + " m in 10 s), with the passenger who has some news");
+    Sim.With(A, () => seat.station.ExitStation(A.player));
+    Check(All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("nt_")) == 5, "5 voiced skeletons: the passenger, three guards and the shopkeeper in the bucket");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 439f && t.transform.position.x < 477f)); Sim.Run(0.5f);
   }
 }

@@ -129,12 +129,14 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(338f, 1.8f, 29f), new Vector3(334f, 1.4f, 33f), 1.2f);         // 0: test 1: the wall and the purple portal
-    Cam(new Vector3(338f, 1.8f, 41f), new Vector3(344f, 1.0f, 46f), 1.2f);         // 1: test 2: crate and button
-    Cam(new Vector3(334f, 1.8f, 51f), new Vector3(348f, 1.4f, 56f), 1.2f);         // 2: test 3: the glass and the portals
-    Cam(new Vector3(394f, 2.4f, 27f), new Vector3(394f, 0.5f, 37f), 1.2f);         // 3: the quarry
-    Cam(new Vector3(402f, 2.2f, 26.5f), new Vector3(406f, 0.8f, 31.5f), 1.2f);     // 4: the building plot
-    Cam(new Vector3(400f, 2.4f, 38f), new Vector3(412f, 1.0f, 46f), 1.2f);         // 5: villagers and sheep
+    Cam(new Vector3(458f, 2.4f, 22f), new Vector3(458f, 3f, 50f), 1.2f);            // 0: the Cold North from the road
+    var giant = All<FirGag>(A).First(x => x.name == "The Giant"); Sim.Press(A, giant);
+    Cam(new Vector3(458f, 2.0f, 28f), new Vector3(463f, 6f, 32f), 1.2f);            // 1: the giant's launch
+    var shout = All<FirGag>(A).First(x => x.name == "The Shout"); Sim.Press(A, shout);
+    Cam(new Vector3(451f, 1.8f, 27f), new Vector3(458f, 2f, 32f), 1.2f);            // 2: the shout
+    Cam(new Vector3(447f, 2.0f, 42f), new Vector3(447f, 2f, 50f), 1.2f);            // 3: the cheese ledge
+    Cam(new Vector3(455f, 1.8f, 41f), new Vector3(458f, 1.4f, 45f), 1.2f);          // 4: the bucket shop
+    Cam(new Vector3(450f, 1.8f, 25.5f), new Vector3(450f, 1.6f, 21.6f), 1.2f);      // 5: the knee guard
   }
 
   static void MapTour() {

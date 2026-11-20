@@ -202,6 +202,7 @@ public static class FirCheckBuilder
         BuildAnnex(root);
         BuildBlocklands(root);
         BuildLabGags(root);
+        BuildNorth(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -2012,6 +2013,134 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== The Cold North (meme parodies), reached from the Station
+
+    /// <summary>A gag whose prop (built under the returned object by the caller) moves, turns and comes back, with a voiced, captioned line.</summary>
+    static FirGag MovingGag(Transform parent, string name, Vector3 pos, Vector3 colCenter, Vector3 colSize, string clip, string line, Vector3 bubblePos)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        var col = go.AddComponent<BoxCollider>(); col.center = colCenter; col.size = colSize;
+        var gag = Add<FirGag>(go);
+        var c = Clip(clip);
+        gag.line = line;
+        gag.voice = Src(go.transform, colCenter, c, false, 1f, 1f, 25f, false);
+        gag.holdTime = Mathf.Max(1.5f, c != null ? c.length : 2f);
+        gag.bubble = Bubble(go.transform, bubblePos);
+        gag.bubbleObject = gag.bubble.gameObject; gag.bubbleTransform = gag.bubble.transform;
+        return gag;
+    }
+
+    static void NorthSkeleton(Transform parent, string who, string hex, int act, Vector3 pos, float yaw, string clip, string hat)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, who, pos, yaw, 1f, act, hex, "North/nt_" + clip, new[] { BoneMat(who, hex) }, pos + new Vector3(0, 2.25f, 0) + face * 0.1f, face);
+        if (!rigs.TryGetValue(who, out var r)) return;
+        if (hat == "helmet")
+        {
+            Prim(PrimitiveType.Sphere, "Helmet", r[2], new Vector3(0, 0.1f, 0), new Vector3(0.3f, 0.2f, 0.3f), M("Metal"));
+            foreach (float hx in new[] { -0.17f, 0.17f }) Prim(PrimitiveType.Cylinder, "Horn", r[2], new Vector3(hx, 0.17f, 0), new Vector3(0.05f, 0.1f, 0.05f), M("CaneWhite")).transform.localRotation = Quaternion.Euler(0, 0, hx > 0 ? -35 : 35);
+        }
+        else if (hat == "bucket")
+            Prim(PrimitiveType.Cylinder, "Bucket", r[2], new Vector3(0, 0.02f, 0.01f), new Vector3(0.3f, 0.16f, 0.3f), M("Metal"));
+        else if (hat == "hood")
+            Prim(PrimitiveType.Sphere, "Hood", r[2], new Vector3(0, 0.06f, -0.03f), new Vector3(0.3f, 0.28f, 0.3f), M("Trunk"));
+    }
+
+    static void BuildNorth(Transform root)
+    {
+        var g = Group(root, "The Cold North", Vector3.zero);
+        float h = 16f;
+        Box(g, "Snow", new Vector3(458f, -0.1f, 40f), new Vector3(36f, 0.2f, 40f), M("Snow"));
+        Box(g, "Sky", new Vector3(458f, h + 0.1f, 40f), new Vector3(36f, 0.2f, 40f), M("Sky"));
+        foreach (var w in new[] { new { p = new Vector3(439.9f, h / 2, 40f), s = new Vector3(0.2f, h, 40.4f) }, new { p = new Vector3(476.1f, h / 2, 40f), s = new Vector3(0.2f, h, 40.4f) },
+                                  new { p = new Vector3(458f, h / 2, 19.9f), s = new Vector3(36.4f, h, 0.2f) }, new { p = new Vector3(458f, h / 2, 60.1f), s = new Vector3(36.4f, h, 0.2f) } })
+            Box(g, "Wall", w.p, w.s, M("PixelSky"));
+        // the mountain along the north, with a snowy top; the ledge the cheese sits on
+        for (int k = 0; k < 6; k++)
+        {
+            float mx = 443f + k * 6f, mh = 7f + (k * 5) % 6;
+            Box(g, "Mountain", new Vector3(mx, mh / 2f, 55.5f), new Vector3(6.2f, mh, 9f), M("Stone"));
+            Box(g, "Snowcap", new Vector3(mx, mh + 0.3f, 55.5f), new Vector3(5f, 0.6f, 7f), M("Snow"), false);
+        }
+        Box(g, "Ledge", new Vector3(447f, 1.5f, 50.5f), new Vector3(4f, 3f, 1.4f), M("Stone"));
+        // the road loop, and pine trees along it
+        foreach (var r in new[] { new { p = new Vector3(458f, 0.005f, 24f), s = new Vector3(30f, 0.01f, 2.4f) }, new { p = new Vector3(458f, 0.005f, 40f), s = new Vector3(30f, 0.01f, 2.4f) },
+                                  new { p = new Vector3(444f, 0.005f, 32f), s = new Vector3(2.4f, 0.01f, 18.4f) }, new { p = new Vector3(472f, 0.005f, 32f), s = new Vector3(2.4f, 0.01f, 18.4f) } })
+            Box(g, "Road", r.p, r.s, M("Dirt"), false);
+        foreach (var tp in new[] { new Vector3(441.5f, 0, 30f), new Vector3(441.5f, 0, 38f), new Vector3(474.8f, 0, 26f), new Vector3(474.8f, 0, 44f), new Vector3(452f, 0, 46.5f) })
+            TreeAt(g, "Pine", tp, (tp.x * 37f + tp.z * 11f) % 360f, 2.6f, false);
+        var arrive = Marker(g, "Arrive", new Vector3(447f, 0.05f, 21.8f), 0f);
+        StationStop("THE COLD NORTH", arrive, g, new Vector3(442.6f, 1.3f, 20.15f), Vector3.forward);
+        Text("Title", g, new Vector3(458f, 7f, 20.05f), Face(Vector3.forward), new Vector2(14f, 1.1f), 0.8f, "<b>THE COLD NORTH</b>").color = new Color(0.85f, 0.9f, 1f);
+        Text("Sub", g, new Vector3(458f, 6.1f, 20.05f), Face(Vector3.forward), new Vector2(14f, 0.4f), 0.22f, "the land of cold roads, cheese wheels and knees that have seen things").color = Color.white;
+
+        // ---- the cart: round the road, with a passenger who has some news
+        var cartRide = Group(g, "Cart Ride", Vector3.zero);
+        var route = new[] { new Vector3(444f, 0, 24f), new Vector3(472f, 0, 24f), new Vector3(472f, 0, 40f), new Vector3(444f, 0, 40f) };
+        var cart = Group(cartRide, "Cart", route[0]);
+        Box(cart, "Bed", new Vector3(0, 0.6f, 0), new Vector3(1.6f, 0.2f, 2.6f), M("DeskWood"), false);
+        foreach (float sx in new[] { -0.8f, 0.8f }) Box(cart, "Side", new Vector3(sx, 0.85f, 0), new Vector3(0.08f, 0.4f, 2.6f), M("DeskWood"), false);
+        foreach (float wx in new[] { -0.85f, 0.85f }) foreach (float wz in new[] { -0.9f, 0.9f })
+            Prim(PrimitiveType.Cylinder, "Wheel", cart, new Vector3(wx, 0.4f, wz), new Vector3(0.8f, 0.05f, 0.8f), M("Trunk")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        var cartExit = Marker(cartRide, "Cart exit", new Vector3(447f, 0.05f, 22.2f), 0f);
+        RideSeat(cart, "Cart seat 0", new Vector3(-0.4f, 0.7f, 0.6f), 180f, cartExit);
+        RideSeat(cart, "Cart seat 1", new Vector3(0.4f, 0.7f, 0.6f), 180f, cartExit);
+        NorthSkeleton(cart, "Passenger", "#a1887f", 3, new Vector3(0, 0.7f, -0.7f), 0f, "passenger", "hood");
+        var cr = Add<FirRide>(cartRide.gameObject);
+        cr.kind = 1; cr.carts = new[] { cart }; cr.route = route; cr.pace = new[] { 1f, 1f, 1f, 1f }; cr.speed = 1.2f;
+
+        // ---- the guards, the bucket shopkeeper
+        NorthSkeleton(g, "Kneecap", "#b0bec5", 5, new Vector3(450f, 0, 21.6f), 0f, "guard1", "helmet");
+        NorthSkeleton(g, "Rollguard", "#90a4ae", 20, new Vector3(466f, 0, 21.6f), 0f, "guard2", "helmet");
+        NorthSkeleton(g, "Snoot", "#cfd8dc", 26, new Vector3(474.6f, 0, 33f), -90f, "guard3", "helmet");
+        var stall = Stall(g, "GENERAL GOODS", new Vector3(458f, 0, 44.5f), 180f, "Stone", "Snow");
+        NorthSkeleton(stall, "Bucket", "#8d6e63", 29, new Vector3(0, 0, -0.3f), 0f, "bucket", "bucket");
+
+        // ---- the shout: a tree goes flying
+        var shout = MovingGag(g, "The Shout", new Vector3(451f, 0, 32f), new Vector3(0, 0.95f, 0), new Vector3(0.7f, 1.9f, 0.6f), "North/nt_shout", "<b>FIR! ROH! DAH!</b>", new Vector3(0, 2.5f, 0));
+        var shouter = Group(shout.transform, "Shouter", Vector3.zero);
+        shouter.localRotation = Quaternion.Euler(0, 90, 0);
+        SkeletonRig(shouter, "Rig", BoneMat("Shouty", "#ffccbc"));
+        var flying = Group(shout.transform, "Flying tree", new Vector3(4f, 0, 0));
+        Transform fm; TreeModel(flying, 2.4f, false, out fm);
+        shout.target = flying; shout.moveBy = new Vector3(16f, 7f, 0); shout.rotateBy = new Vector3(0, 0, -300f);
+        shout.inTime = 0.5f; shout.holdTime = 2.0f; shout.outTime = 1.2f;
+        // ---- the giant: a skeleton goes into orbit
+        var giantGag = MovingGag(g, "The Giant", new Vector3(464f, 0, 32f), new Vector3(0, 2.2f, 0), new Vector3(1.6f, 4.4f, 1.2f), "North/nt_launch", "Wheeeeeeee! I can see my house from here!", new Vector3(-1.5f, 3.2f, 0));
+        Box(giantGag.transform, "GiantLegs", new Vector3(0, 1.2f, 0), new Vector3(1.2f, 2.4f, 0.8f), M("Trunk"), false);
+        Box(giantGag.transform, "GiantBody", new Vector3(0, 3.1f, 0), new Vector3(1.6f, 1.6f, 1.0f), M("Stone"), false);
+        Box(giantGag.transform, "GiantHead", new Vector3(0, 4.25f, 0), new Vector3(0.8f, 0.7f, 0.8f), M("PixelSand"), false);
+        Box(giantGag.transform, "GiantClub", new Vector3(-1.1f, 2.6f, 0.3f), new Vector3(0.35f, 2.2f, 0.35f), M("Trunk"), false);
+        var flyer = Group(giantGag.transform, "Flying skeleton", new Vector3(-2.2f, 0, 0));
+        flyer.localRotation = Quaternion.Euler(0, 90, 0);
+        SkeletonRig(flyer, "Rig", BoneMat("Launched", "#fff9c4"));
+        giantGag.target = flyer; giantGag.moveBy = new Vector3(-2f, 24f, 0); giantGag.rotateBy = new Vector3(720f, 0, 0);
+        giantGag.inTime = 0.6f; giantGag.holdTime = 2.5f; giantGag.outTime = 1.0f;
+        // ---- the cheese
+        var cheese = MovingGag(g, "The Cheese", new Vector3(447f, 3f, 50.2f), new Vector3(0, 0.3f, 0), new Vector3(3.6f, 0.8f, 1.2f), "North/nt_cheese", "And the cheese wheels roll down the mountain. As is tradition.", new Vector3(0, 1.8f, -1.5f));
+        var wheels = Group(cheese.transform, "Wheels", Vector3.zero);
+        for (int k = 0; k < 6; k++)
+            Prim(PrimitiveType.Cylinder, "CheeseWheel", wheels, new Vector3(-1.4f + k * 0.56f, 0.25f, 0), new Vector3(0.5f, 0.12f, 0.5f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        cheese.target = wheels; cheese.moveBy = new Vector3(0, -2.75f, -10f); cheese.rotateBy = new Vector3(-900f, 0, 0);
+        cheese.inTime = 1.6f; cheese.outTime = 0.6f;
+        // ---- the horse that climbs the cliff
+        var horseGag = MovingGag(g, "The Horse", new Vector3(470f, 0, 49.4f), new Vector3(0, 0.8f, 0), new Vector3(0.8f, 1.6f, 1.6f), "North/nt_horse", "The horse has decided that the mountain is a road. Nobody can stop the horse.", new Vector3(0, 2.6f, -1.2f));
+        var horse = Group(horseGag.transform, "Horse", Vector3.zero);
+        Prim(PrimitiveType.Cube, "Body", horse, new Vector3(0, 1.0f, 0), new Vector3(0.5f, 0.6f, 1.4f), M("Trunk"));
+        Prim(PrimitiveType.Cube, "Neck", horse, new Vector3(0, 1.45f, 0.6f), new Vector3(0.3f, 0.7f, 0.3f), M("Trunk")).transform.localRotation = Quaternion.Euler(25, 0, 0);
+        Prim(PrimitiveType.Cube, "Head", horse, new Vector3(0, 1.8f, 0.85f), new Vector3(0.28f, 0.3f, 0.55f), M("Trunk"));
+        foreach (float lx in new[] { -0.17f, 0.17f }) foreach (float lz in new[] { -0.5f, 0.5f })
+            Prim(PrimitiveType.Cube, "Leg", horse, new Vector3(lx, 0.35f, lz), new Vector3(0.12f, 0.7f, 0.12f), M("Trunk"));
+        horseGag.target = horse; horseGag.moveBy = new Vector3(0, 9f, 0.4f); horseGag.rotateBy = new Vector3(-85f, 0, 0); horseGag.bob = 0.12f;
+        horseGag.inTime = 3.0f; horseGag.outTime = 2.0f;
+        // ---- a sign
+        var gg = Group(g, "Gags", Vector3.zero);
+        Gag(gg, "N1", "sign", new Vector3(442.2f, 0, 33f), 90f, "Dragons not included. The trees, however, are.", "NORTHERN ROAD\n<size=70%>dragons not included</size>", "(the trees,\nhowever, are)");
+        report.Add("The Cold North: a cart ride, 5 voiced skeletons, the shout, the giant, the cheese, the horse and a sign");
     }
 
     // =================================================================== the Test Annex and Blocklands, reached from the Station

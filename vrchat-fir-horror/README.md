@@ -150,6 +150,24 @@ Two more Station destinations, both original takes on their genres.
 * **Shared world:** the world is synced for everyone; your pocket is your own. RESET WORLD puts it all back.
 * **Also:** cube-headed skeleton villagers, blocky sheep, square wheat, and 8 gags across the two areas.
 
+## The Cold North: meme parodies
+
+A small snowy Station destination of affectionate parodies of famous open-world RPG memes, all in new
+wording.
+
+* **The cart:** ride it round the road. The passenger says: "Hey. You. You're finally awake. Oh. You're
+  a skeleton too. Never mind."
+* **The guards** wear horned helmets:
+  * "I used to wander like you. Then I took a pine cone to the knee."
+  * "Let me guess. Someone stole your pine roll."
+  * A Bone District snob.
+* **The shopkeeper** has a bucket on his head and can't see you.
+* **The gags:**
+  * a skeleton shouts *FIR! ROH! DAH!* and a tree flies off
+  * a giant swats a skeleton into orbit
+  * a wheel-of-cheese avalanche
+  * a horse that decides the cliff is a road
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -253,7 +271,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 468
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 485
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route

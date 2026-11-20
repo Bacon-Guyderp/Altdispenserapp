@@ -365,6 +365,28 @@ def lab_lines():
         yield ("Lab/lb_" + name, v, speed, pitch, text, filt)
 
 
+# The Cold North (meme parodies) -> Audio/North/nt_<name>.ogg
+NORTH = [
+    ("passenger", "mb-us2", 130, 35, 0.92, "Hey. You. You're finally awake. Oh. You're a skeleton too. Never mind. Go back to sleep."),
+    ("guard1", "mb-us2", 115, 25, 0.88, "I used to wander like you. Then I took a pine cone to the knee."),
+    ("guard2", "mb-us3", 120, 35, 0.92, "Let me guess. Someone stole your pine roll."),
+    ("guard3", "mb-us1", 135, 55, 1.0, "Do you get to the Bone District very often? Oh, what am I saying. Of course you don't."),
+    ("bucket", "mb-us3", 125, 45, 0.96, "Hm? Who's there? I can't see a thing. Take whatever you like. I mean. Don't."),
+    ("shout", "mb-us2", 95, 10, 0.8, "FIR! ROH! DAH!"),
+    ("launch", "mb-us3", 190, 95, 1.35, "Wheeeeeeee! I can see my house from here!"),
+    ("cheese", "mb-us1", 130, 50, 1.0, "And the cheese wheels roll down the mountain. As is tradition."),
+    ("horse", "mb-us1", 130, 50, 1.0, "The horse has decided that the mountain is a road. Nobody can stop the horse."),
+    ("sign", "mb-us1", 130, 50, 1.0, "Dragons not included. The trees, however, are."),
+]
+
+
+def north_lines():
+    for name, v, speed, pitch, rate, text in NORTH:
+        narr = name in ("cheese", "horse", "sign")
+        yield ("North/nt_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * (1.0 if narr else SKELETON_BOOST):.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -427,6 +449,9 @@ def main():
         if "--combo" in sys.argv:
             make_combo(tmp)
             return
+        if "--north" in sys.argv:   # only the Cold North
+            render_only(tmp, list(north_lines()), "North")
+            return
         if "--lab" in sys.argv:   # only the Test Annex and Blocklands: the announcer, the villagers, their gags (ids starting X)
             render_only(tmp, list(lab_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_X")], "Lab")
             return
@@ -475,7 +500,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
