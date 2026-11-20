@@ -43,14 +43,14 @@ public static class SimCheck {
       Sim.Events.Clear();
       var jawRest = rs.pivots[9].localRotation;
       Sim.Press(A, rs);
-      float maxJaw = 0f, maxDrop = 0f; var skullHome = rs.meshes[2].position;
+      float maxJaw = 0f, maxDrop = 0f; var skullHome = rs.meshes[2].position; var skullLocal = rs.transform.InverseTransformPoint(rs.meshes[2].position);
       for (int f = 0; f < 60; f++) { Sim.Step(); maxJaw = Mathf.Max(maxJaw, Quaternion.Angle(jawRest, rs.pivots[9].localRotation)); maxDrop = Mathf.Max(maxDrop, skullHome.y - rs.meshes[2].position.y); }
       bool spoke = Sim.Events.Any(e => e.Contains("sound:") && e.Contains(rs.voice.clip.name));
       Check((bool)rf.GetValue(rs) && spoke && maxJaw > 10f, Plain(rs.colourName) + " skeleton: routine running, said its line (" + rs.voice.clip.name + "), jaw moved " + maxJaw.ToString("F0") + " degrees");
       if (rs.act == 6) Check(maxDrop > 1.0f, "  violet went to pieces (its skull fell " + maxDrop.ToString("F2") + " m)");
       for (int f = 0; f < 600 && (bool)rf.GetValue(rs); f++) Sim.Step();
       Sim.Run(0.5f);
-      Check(!(bool)rf.GetValue(rs) && Quaternion.Angle(jawRest, rs.pivots[9].localRotation) < 0.5f && Vector3.Distance(rs.meshes[2].position, skullHome) < 0.01f, "  ...and back to standing");
+      Check(!(bool)rf.GetValue(rs) && Quaternion.Angle(jawRest, rs.pivots[9].localRotation) < 0.5f && Vector3.Distance(rs.transform.InverseTransformPoint(rs.meshes[2].position), skullLocal) < 0.01f, "  ...and back to standing");
     }
     Console.WriteLine("\n== Combination acts (Bob presses each one)");
     var cf = typeof(FirSkeletonCombo).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -132,7 +132,7 @@ public static class SimCheck {
     var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
     int gagOk = 0, gagN = 0; var gagBad = new List<string>();
     foreach (var gag in All<FirGag>(B)) {
-      if (gag.scare) continue;
+      if (gag.scare || gag.bubble == null) continue;   // jump scares (they have no line)
       gagN++;
       Sim.Events.Clear();
       var home0 = gag.target.localPosition; var rot0 = gag.target.localRotation; var sc0 = gag.target.localScale;
@@ -153,7 +153,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 75, gagOk + " of " + gagN + " gags (53 original + 22 in Bonetown) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 95, gagOk + " of " + gagN + " gags (53 original + 22 in Bonetown + 20 in the park) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -235,6 +235,7 @@ public static class SimCheck {
     TownTests(A, B);
     FacingTests(A);
     CellarTests(A, B);
+    ParkTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -417,14 +418,17 @@ public static class SimCheck {
   // ======================================================================== Bonetown, the expansion
   static void TownTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== Bonetown: the wanderers");
-    var wa = All<FirWanderer>(A); var wb = All<FirWanderer>(B);
+    var wa = All<FirWanderer>(A).Where(w => w.transform.position.x < -12f).ToList(); var wb = All<FirWanderer>(B).Where(w => w.transform.position.x < -12f).ToList();
     Check(wa.Count == 14, wa.Count + " wanderers live in Bonetown");
     Sim.Run(1f);
     var p0 = wa.Select(w => w.transform.position).ToList();
     var leg0 = wa.Select(w => w.pivots[7].localRotation).ToList();
-    float maxLeg = 0f;
-    for (int f = 0; f < 60; f++) { Sim.Step(); for (int i = 0; i < wa.Count; i++) maxLeg = Mathf.Max(maxLeg, Quaternion.Angle(leg0[i], wa[i].pivots[7].localRotation)); }
-    var speeds = wa.Select((w, i) => Flat(w.transform.position, p0[i]) / (60f * Time.deltaTime)).ToList();
+    float maxLeg = 0f; var walked = new float[wa.Count]; var prev = p0.ToList();
+    for (int f = 0; f < 60; f++) {
+      Sim.Step();
+      for (int i = 0; i < wa.Count; i++) { maxLeg = Mathf.Max(maxLeg, Quaternion.Angle(leg0[i], wa[i].pivots[7].localRotation)); walked[i] += Flat(wa[i].transform.position, prev[i]); prev[i] = wa[i].transform.position; }
+    }
+    var speeds = wa.Select((w, i) => walked[i] / (60f * Time.deltaTime)).ToList();
     Check(speeds.All(v => v > 0.4f) && maxLeg > 15f, "they all walk (0.4+ m/s), legs swinging (" + maxLeg.ToString("F0") + " degrees): " + string.Join(", ", wa.Select((w, i) => w.name.Split(' ')[0] + " " + speeds[i].ToString("F1"))));
     Check(wa.Zip(wb, (x, y) => Flat(x.transform.position, y.transform.position)).All(d => d < 0.05f), "Alice and Bob see every wanderer in the same place (no syncing: it's the server clock)");
     var cocoa = wa.First(w => w.name.StartsWith("Cocoa")); var lime = wa.First(w => w.name.StartsWith("Lime"));
@@ -569,5 +573,74 @@ public static class SimCheck {
     Sim.Press(A, Btn2(A, 2, 0)); Sim.Run(1f);
     Check(!H2(B).running && DoorsMatch2(B, 0, false), "RESET: the cellar is open and lit again");
     A.player.pos = new Vector3(0, 0.05f, -1f); B.player.pos = new Vector3(1, 0.05f, -1f);
+  }
+
+  // ======================================================================== Boneanza Park: the Station, the rides, the park's people
+  static void ParkTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Boneanza Park");
+    var go = All<FirTeleport>(A).First(t => t.name == "BONEANZA PARK");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, go); Sim.Run(0.5f);
+    Check(Flat(A.player.pos, new Vector3(90f, 0, 23.5f)) < 0.3f, "the lobby's Station sends Alice to the park gates");
+    Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
+          Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
+    var ridesA = All<FirRide>(A); var ridesB = All<FirRide>(B);
+    Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
+    var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
+    var w0 = wheel.rotor.rotation; Sim.Run(2f);
+    float turned = Quaternion.Angle(w0, wheel.rotor.rotation);
+    Check(turned > 10f && turned < 14f && Quaternion.Angle(wheel.rotor.rotation, wheelB.rotor.rotation) < 0.5f, "the big wheel turns (" + turned.ToString("F1") + " degrees in 2 s), in step for Alice and Bob");
+    Check(wheel.upright.All(u => Quaternion.Angle(u.rotation, Quaternion.identity) < 1f), "...and its gondolas stay level");
+    foreach (var r in ridesA.Where(r => r.kind == 0 && r != wheel)) {
+      var q = r.rotor.rotation; Sim.Run(1f);
+      Check(Quaternion.Angle(q, r.rotor.rotation) > 5f && (r.bobbers.Length == 0 || r.bobbers.Any(b => Mathf.Abs(b.localPosition.y - 0.6f) > 0.05f)) && (r.spinners.Length == 0 || r.spinners.Length == 4), r.name + " turns" + (r.bobbers.Length > 0 ? ", horses bobbing" : "") + (r.spinners.Length > 0 ? ", cups spinning" : ""));
+    }
+    // ride the big wheel
+    var seats = All<FirSeat>(A).Where(x => x.name.StartsWith("Wheel seat")).ToList();
+    var low = seats.OrderBy(x => x.transform.position.y).First();
+    Sim.Press(A, low);
+    Check(Sim.Seated(A.player), "Alice sits in the lowest gondola (" + low.name + ")");
+    float y0 = A.player.pos.y; Sim.Run(15f);
+    var lowB = All<FirSeat>(B).First(x => x.name == low.name);
+    Check(A.player.pos.y > y0 + 3f && Vector3.Distance(A.player.pos, low.transform.position) < 0.05f && Vector3.Distance(lowB.transform.position, A.player.pos) < 0.3f,
+          "15 s later she's " + (A.player.pos.y - y0).ToString("F1") + " m up, carried by the wheel; Bob sees her seat in the same place");
+    Sim.With(A, () => low.station.ExitStation(A.player));
+    A.player.pos = new Vector3(90f, 0.05f, 30f);
+    // the drop tower
+    var drop = ridesA.First(r => r.kind == 2);
+    float hi = 0f, lo = 99f; Sim.Events.Clear();
+    for (int f = 0; f < 22 * 20; f++) { Sim.Step(); float y = drop.rotor.localPosition.y; hi = Mathf.Max(hi, y); lo = Mathf.Min(lo, y); }
+    Check(hi > 12f && lo < 0.5f && Sim.Events.Any(e => e.Contains("scream1")), "the drop tower climbs to " + hi.ToString("F1") + " m, drops (with a scream) and rests at the bottom");
+    // the ghost train
+    var cartSeat = All<FirSeat>(A).First(x => x.name.StartsWith("Cart seat"));
+    Sim.Press(A, cartSeat); Sim.Events.Clear();
+    float minX = 999f;
+    for (int f = 0; f < 45 * 20; f++) { Sim.Step(); minX = Mathf.Min(minX, A.player.pos.x); }
+    int screams = Sim.Events.Count(e => e.StartsWith("Alice sound") && e.Contains("scream"));
+    Check(minX < 66f && screams >= 3, "Alice rides the ghost train deep into the shed (x " + minX.ToString("F0") + ") and " + screams + " things jump out at her");
+    Sim.With(A, () => cartSeat.station.ExitStation(A.player));
+    // the park's people stay on their paths
+    var pw = All<FirWanderer>(A).Where(w => w.transform.position.x > 59f).ToList();
+    Check(pw.Count == 8, pw.Count + " wanderers in the park");
+    int bad = 0; string what = "";
+    var last = pw.Select(w => w.transform.position).ToList();
+    for (int k = 0; k < 120; k++) {
+      Sim.Run(0.5f);
+      Sim.Current = A; Physics.SyncTransforms();
+      for (int i = 0; i < pw.Count; i++) {
+        var p = pw[i].transform.position;
+        bool ok = p.x > 60.6f && p.x < 119.4f && p.z > 20.6f && p.z < 79.4f && Flat(p, new Vector3(92f, 0, 50f)) > 4.4f && Flat(p, new Vector3(104f, 0, 64f)) > 4.9f
+                  && Flat(p, new Vector3(108f, 0, 36f)) > 2.2f && !(p.x > 61.5f && p.x < 80.5f && p.z > 25.5f && p.z < 42.5f);
+        RaycastHit hit; var d = p - last[i];
+        if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = pw[i].name + " walked through " + hit.collider.name; }
+        if (!ok) { bad++; if (what == "") what = pw[i].name + " at " + p; }
+        last[i] = p;
+      }
+      Sim.Current = null;
+    }
+    Check(bad == 0, "60 seconds of the park's kids, parents and visitors: all on their paths, clear of rides, stalls and the ghost train" + (bad > 0 ? " | " + bad + " problems, e.g. " + what : ""));
+    var back = All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 59f);
+    Sim.Press(A, back); Sim.Run(0.5f);
+    Check(Flat(A.player.pos, new Vector3(0, 0, -2.6f)) < 0.3f, "the park's way back takes Alice home to the lobby");
   }
 }

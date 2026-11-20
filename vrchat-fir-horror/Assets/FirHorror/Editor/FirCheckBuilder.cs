@@ -194,6 +194,8 @@ public static class FirCheckBuilder
         BuildHunt(root, lobby, spawn);
         BuildTown(root);
         BuildCellar(root);
+        BuildStation(lobby, spawn);
+        BuildPark(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1881,7 +1883,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -1980,6 +1982,403 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== Boneanza Park (the amusement park), reached from the lobby's Station
+
+    static Transform stationBoard;      // the lobby's Station: one button per far-away area
+    static int stationSlots;
+    static Transform lobbyArrive;
+
+    /// <summary>The Station: a board in the lobby with a teleport button for each far-off area (and its way back).</summary>
+    static void BuildStation(Transform lobby, Transform spawn)
+    {
+        lobbyArrive = spawn;
+        stationSlots = 0;
+        var g = Group(lobby, "Station", new Vector3(-6.2f, 0, -1.0f));
+        g.localRotation = Face(Vector3.right);
+        Box(g, "Post", new Vector3(0, 0.6f, 0.05f), new Vector3(0.1f, 1.2f, 0.1f), M("Black"), false);
+        Box(g, "Board", new Vector3(0, 1.75f, 0.05f), new Vector3(2.0f, 1.5f, 0.06f), M("Board"));
+        Text("Title", g, new Vector3(0, 2.35f, -0.01f), Quaternion.identity, new Vector2(1.9f, 0.3f), 0.2f, "<b>THE STATION</b>").color = new Color(1f, 0.85f, 0.4f);
+        Text("Sub", g, new Vector3(0, 2.12f, -0.01f), Quaternion.identity, new Vector2(1.9f, 0.2f), 0.09f, "press to go; each place has a way back").color = new Color(0.8f, 0.8f, 0.8f);
+        stationBoard = g;
+    }
+
+    /// <summary>Adds a destination to the Station, and a way back to the lobby at the destination.</summary>
+    static void StationStop(string title, Transform arrive, Transform backParent, Vector3 backPos, Vector3 backNormal)
+    {
+        int i = stationSlots++;
+        var b = TeleportButton(stationBoard, title, new Vector3(-0.48f + (i % 2) * 0.96f, 1.85f - (i / 2) * 0.3f, -0.03f), Vector3.back, arrive, new Vector3(0.88f, 0.24f, 0.06f));
+        TeleportButton(backParent, "Back to the lobby", backPos, backNormal, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
+    }
+
+    static FirTeleport TeleportButton(Transform parent, string title, Vector3 pos, Vector3 normal, Transform dest, Vector3 size)
+    {
+        var go = new GameObject(title);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Face(normal);
+        go.AddComponent<BoxCollider>().size = size;
+        Prim(PrimitiveType.Cube, "Visual", go.transform, Vector3.zero, size, M("ButtonGold"));
+        Text("Label", go.transform, new Vector3(0, 0, -size.z / 2 - 0.003f), Quaternion.identity, new Vector2(size.x * 0.95f, size.y * 0.9f), size.y * 0.42f, "<b>" + title + "</b>").color = new Color(0.15f, 0.1f, 0.05f);
+        var t = Add<FirTeleport>(go);
+        t.destination = dest;
+        t.sfx = Src(go.transform, Vector3.zero, Clip("whoosh"), false, 0f, 0.8f, 5f, false);
+        SetInteract(t, "Go: " + title, 3f);
+        return t;
+    }
+
+    /// <summary>A ride seat: a VRCStation the ride carries (press to sit, jump to get off, landing at `exit`).</summary>
+    static GameObject RideSeat(Transform parent, string name, Vector3 pos, float yaw, Transform exit)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = pos;
+        go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+        var col = go.AddComponent<BoxCollider>(); col.center = new Vector3(0, 0.45f, 0); col.size = new Vector3(0.7f, 0.9f, 0.7f);
+        var st = go.AddComponent<VRC.SDK3.Components.VRCStation>();
+        st.PlayerMobility = VRC.SDKBase.VRCStation.Mobility.ImmobilizeForVehicle;
+        st.disableStationExit = false;
+        st.canUseStationFromStation = false;
+        st.stationEnterPlayerLocation = go.transform;
+        st.stationExitPlayerLocation = exit;
+        var seat = Add<FirSeat>(go);
+        seat.station = st;
+        SetInteract(seat, "Ride (jump to get off)", 2.5f);
+        rideSeats++;
+        return go;
+    }
+    static int rideSeats;
+
+    static void ParkSkeleton(Transform parent, string who, string hex, int act, Vector3 pos, float yaw, float scale = 1f)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, who, pos, yaw, scale, act, hex, "Park/pk_" + who.ToLower(), new[] { BoneMat(who, hex) },
+                    pos + new Vector3(0, 2.15f * scale, 0) + face * 0.1f, face);
+    }
+
+    /// <summary>A jump scare that is always armed (a tree bursts out screaming as you pass, or ride past).</summary>
+    static void ParkScare(Transform parent, string name, Vector3 at, float yaw, float reach, string clip, float zoneW = 2.6f)
+    {
+        var g = Group(parent, name, at);
+        g.localRotation = Quaternion.Euler(0, yaw, 0);
+        var tree = Group(g, "Tree", Vector3.zero);
+        Transform mouth;
+        TreeModel(tree, 2.3f, false, out mouth);
+        foreach (var r in tree.GetComponentsInChildren<MeshRenderer>(true)) if (r.name.StartsWith("Pupil")) r.sharedMaterial = M("GlowRedEye");
+        var sg = Add<FirGag>(g.gameObject);
+        sg.target = tree; sg.hideWhenIdle = true; sg.walkIn = true; sg.scare = false;
+        sg.zoneCenter = new Vector3(0, 1f, reach); sg.zoneSize = new Vector3(zoneW, 2.6f, zoneW);
+        sg.moveBy = new Vector3(0, 0, Mathf.Min(1.2f, reach - 0.6f)); sg.scaleBy = 1.15f; sg.wobble = 6f;
+        sg.inTime = 0.12f; sg.holdTime = 1.0f; sg.outTime = 0.45f;
+        sg.sfx = Src(tree, new Vector3(0, 1.6f, 0.3f), Clip(clip), false, 1f, 1f, 16f, false);
+        sg.mouth = mouth; sg.line = "";
+        parkScares++;
+    }
+    static int parkScares;
+
+    /// <summary>A stall: a counter facing yaw, posts, a striped awning and a name; returns the stall's group.</summary>
+    static Transform Stall(Transform parent, string title, Vector3 pos, float yaw, string stripeA, string stripeB)
+    {
+        var g = Group(parent, "Stall " + title, pos);
+        g.localRotation = Quaternion.Euler(0, yaw, 0);
+        Box(g, "Counter", new Vector3(0, 0.5f, 0.6f), new Vector3(2.4f, 1.0f, 0.6f), M("DeskWood"));
+        foreach (float px in new[] { -1.15f, 1.15f })
+        {
+            Box(g, "Post", new Vector3(px, 1.4f, 0.85f), new Vector3(0.08f, 2.8f, 0.08f), M("CaneWhite"), false);
+            Box(g, "Post", new Vector3(px, 1.4f, -0.9f), new Vector3(0.08f, 2.8f, 0.08f), M("CaneWhite"), false);
+        }
+        for (int k = 0; k < 6; k++)
+            DPrim(PrimitiveType.Cube, "Awning", g, new Vector3(-1.05f + k * 0.42f, 2.75f, 0f), new Vector3(0.42f, 0.06f, 2.1f), M(k % 2 == 0 ? stripeA : stripeB), Quaternion.Euler(-12f, 0, 0));
+        Text("Name", g, new Vector3(0, 2.45f, 0.93f), Face(Vector3.forward), new Vector2(2.3f, 0.35f), 0.2f, "<b>" + title + "</b>").color = new Color(1f, 0.9f, 0.4f);
+        return g;
+    }
+
+    static void BuildPark(Transform root)
+    {
+        rideSeats = 0; parkScares = 0;
+        var g = Group(root, "Boneanza Park", Vector3.zero);
+        float x0 = 60f, x1 = 120f, z0 = 20f, z1 = 80f, h = 22f, cx = 90f, cz = 50f;
+        Box(g, "Grass", new Vector3(cx, -0.1f, cz), new Vector3(60f, 0.2f, 60f), M("Grass"));
+        Box(g, "Sky", new Vector3(cx, h + 0.1f, cz), new Vector3(60f, 0.2f, 60f), M("Sky"));
+        Box(g, "WallW", new Vector3(x0 - 0.1f, h / 2, cz), new Vector3(0.2f, h, 60.4f), M("Sky"));
+        Box(g, "WallE", new Vector3(x1 + 0.1f, h / 2, cz), new Vector3(0.2f, h, 60.4f), M("Sky"));
+        Box(g, "WallN", new Vector3(cx, h / 2, z1 + 0.1f), new Vector3(60.4f, h, 0.2f), M("Sky"));
+        Box(g, "WallS", new Vector3(cx, h / 2, z0 - 0.1f), new Vector3(60.4f, h, 0.2f), M("Sky"));
+        // a striped fence round the edge, and paths
+        for (float fx = x0 + 0.5f; fx < x1; fx += 1f)
+        {
+            DPrim(PrimitiveType.Cube, "Fence", g, new Vector3(fx, 0.5f, z0 + 0.2f), new Vector3(0.5f, 1.0f, 0.06f), M(((int)fx) % 2 == 0 ? "CaneRed" : "CaneWhite"));
+            DPrim(PrimitiveType.Cube, "Fence", g, new Vector3(fx, 0.5f, z1 - 0.2f), new Vector3(0.5f, 1.0f, 0.06f), M(((int)fx) % 2 == 0 ? "CaneRed" : "CaneWhite"));
+        }
+        Box(g, "MainPath", new Vector3(90f, 0.005f, 40f), new Vector3(3f, 0.01f, 36f), M("Concrete"), false);
+        Box(g, "CrossPath", new Vector3(90f, 0.005f, 58f), new Vector3(56f, 0.01f, 3f), M("Concrete"), false);
+        Box(g, "LowerPath", new Vector3(92f, 0.005f, 28f), new Vector3(52f, 0.01f, 3f), M("Concrete"), false);
+        // the gate arch (inside the south fence) with the park's name
+        foreach (float gx in new[] { 86.5f, 93.5f }) Box(g, "GatePost", new Vector3(gx, 3f, 21.2f), new Vector3(0.5f, 6f, 0.5f), M("CaneRed"));
+        Box(g, "GateTop", new Vector3(90f, 6.3f, 21.2f), new Vector3(7.6f, 0.8f, 0.4f), M("GiftGold"));
+        Text("ParkName", g, new Vector3(90f, 6.3f, 21.42f), Face(Vector3.forward), new Vector2(7.2f, 0.7f), 0.55f, "<b>BONEANZA PARK</b>").color = new Color(0.8f, 0.05f, 0.1f);
+        Text("ParkSub", g, new Vector3(90f, 5.4f, 21.45f), Face(Vector3.forward), new Vector2(7f, 0.4f), 0.2f, "rides! games! snacks that go right through you!").color = new Color(0.2f, 0.15f, 0.3f);
+        for (int k = 0; k < 18; k++)
+            GameObjectUtility.SetStaticEditorFlags(Prim(PrimitiveType.Sphere, "GateBulb", g, new Vector3(86.6f + k * 0.4f, 6.8f, 21.45f), Vector3.one * 0.12f, Bulb(k % 2 == 0 ? "BulbWarm" : "BulbRed")), StaticEditorFlags.BatchingStatic);
+        var arrive = Marker(g, "Arrive", new Vector3(90f, 0.05f, 23.5f), 0f);
+        StationStop("BONEANZA PARK", arrive, g, new Vector3(88.0f, 1.3f, 20.15f), Vector3.forward);
+
+        // ---- the big wheel (rotor turns about z; gondolas stay level)
+        var fw = Group(g, "Big Wheel", Vector3.zero);
+        var hub = new Vector3(75f, 9.5f, 64f);
+        foreach (float lz in new[] { -1.4f, 1.4f })
+            foreach (float lx in new[] { -4f, 4f })
+            {
+                var foot = new Vector3(hub.x + lx, 0, hub.z + lz);
+                var mid = (foot + hub) / 2f; var d = hub - foot;
+                DPrim(PrimitiveType.Cylinder, "Leg", fw, mid, new Vector3(0.3f, d.magnitude / 2f, 0.3f), M("Metal"), Quaternion.FromToRotation(Vector3.up, d.normalized));
+            }
+        var wheel = Group(fw, "Rotor", hub);
+        for (int k = 0; k < 8; k++)
+        {
+            float a = k * 45f;
+            DPrim(PrimitiveType.Cylinder, "Spoke", wheel, Quaternion.Euler(0, 0, a) * new Vector3(0, 3.75f, 0), new Vector3(0.15f, 3.75f, 0.15f), M("CaneWhite"), Quaternion.Euler(0, 0, a));
+        }
+        for (int k = 0; k < 32; k++)
+        {
+            float a = k * 360f / 32f;
+            Prim(PrimitiveType.Cube, "Rim", wheel, Quaternion.Euler(0, 0, a) * new Vector3(0, 7.5f, 0), new Vector3(1.5f, 0.18f, 0.18f), M(k % 2 == 0 ? "CaneRed" : "GiftGold")).transform.localRotation = Quaternion.Euler(0, 0, a);
+            Prim(PrimitiveType.Sphere, "RimBulb", wheel, Quaternion.Euler(0, 0, a) * new Vector3(0, 7.7f, 0), Vector3.one * 0.15f, Bulb(k % 3 == 0 ? "BulbRed" : k % 3 == 1 ? "BulbGold" : "BulbBlue"));
+        }
+        Prim(PrimitiveType.Cylinder, "Hub", wheel, Vector3.zero, new Vector3(1.2f, 0.4f, 1.2f), M("GiftGold")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        var wheelExit = Marker(fw, "Wheel exit", new Vector3(75f, 0.05f, 61.5f), 180f);
+        var gondolas = new List<Transform>();
+        string[] gcol = { "CaneRed", "GiftBlue", "GiftGreen", "GiftGold" };
+        for (int k = 0; k < 8; k++)
+        {
+            var gp = Group(wheel, "Gondola " + k, Quaternion.Euler(0, 0, k * 45f) * new Vector3(0, -7.5f, 0));
+            Box(gp, "Floor", new Vector3(0, -1.5f, 0), new Vector3(1.4f, 0.1f, 1.2f), M(gcol[k % 4]), false);
+            Box(gp, "Roof", new Vector3(0, -0.05f, 0), new Vector3(1.5f, 0.1f, 1.3f), M(gcol[k % 4]), false);
+            foreach (float px in new[] { -0.65f, 0.65f }) foreach (float pz in new[] { -0.55f, 0.55f })
+                Box(gp, "Post", new Vector3(px, -0.75f, pz), new Vector3(0.06f, 1.4f, 0.06f), M("Metal"), false);
+            DPrim(PrimitiveType.Cylinder, "Hanger", gp, new Vector3(0, 0.1f, 0), new Vector3(0.08f, 0.15f, 0.08f), M("Metal"));
+            RideSeat(gp, "Wheel seat " + k, new Vector3(0, -1.45f, 0.2f), 180f, wheelExit);
+            gondolas.Add(gp);
+        }
+        var loopRider = gondolas[4];
+        ParkSkeleton(loopRider, "Loop", "#ff6ad5", 18, new Vector3(0, -1.45f, -0.25f), 180f, 0.7f);
+        var fr = Add<FirRide>(fw.gameObject);
+        fr.kind = 0; fr.rotor = wheel; fr.axis = Vector3.forward; fr.degPerSec = 6f; fr.upright = gondolas.ToArray();
+        Text("WheelSign", g, new Vector3(75f, 2.6f, 60.2f), Face(Vector3.back), new Vector2(4f, 0.4f), 0.28f, "<b>THE BIG WHEEL</b>").color = new Color(1f, 0.9f, 0.4f);
+        ParkSkeleton(g, "Gears", "#b0b8c0", 20, new Vector3(79.5f, 0, 59.5f), 180f);
+
+        // ---- the carousel
+        var car = Group(g, "Carousel", new Vector3(104f, 0, 64f));
+        DPrim(PrimitiveType.Cylinder, "Pole", car, new Vector3(0, 2.5f, 0), new Vector3(0.5f, 2.5f, 0.5f), M("GiftGold"));
+        var spin = Group(car, "Rotor", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "Platform", spin, new Vector3(0, 0.15f, 0), new Vector3(9f, 0.15f, 9f), M("DeskWood"));
+        Prim(PrimitiveType.Cylinder, "Canopy", spin, new Vector3(0, 4.6f, 0), new Vector3(9.4f, 0.3f, 9.4f), M("CaneRed"));
+        Prim(PrimitiveType.Cylinder, "Top", spin, new Vector3(0, 5.2f, 0), new Vector3(5f, 0.35f, 5f), M("CaneWhite"));
+        var carExit = Marker(car, "Carousel exit", new Vector3(0, 0.05f, -5.4f), 180f);
+        var horses = new List<Transform>();
+        string[] hcol = { "CaneWhite", "GiftGold", "Book1", "GiftBlue" };
+        for (int k = 0; k < 8; k++)
+        {
+            float a = k * 45f * Mathf.Deg2Rad;
+            var hp = Group(spin, "Horse " + k, new Vector3(Mathf.Cos(a) * 3.4f, 0.6f, Mathf.Sin(a) * 3.4f));
+            hp.localRotation = Quaternion.Euler(0, -k * 45f, 0);
+            DPrim(PrimitiveType.Cylinder, "HorsePole", spin, hp.localPosition + new Vector3(0, 1.8f, 0), new Vector3(0.06f, 2.0f, 0.06f), M("GiftGold"));
+            Prim(PrimitiveType.Cube, "Body", hp, new Vector3(0, 0.5f, 0), new Vector3(0.35f, 0.4f, 1.0f), M(hcol[k % 4]));
+            Prim(PrimitiveType.Cube, "Neck", hp, new Vector3(0, 0.85f, 0.45f), new Vector3(0.22f, 0.5f, 0.22f), M(hcol[k % 4])).transform.localRotation = Quaternion.Euler(25, 0, 0);
+            Prim(PrimitiveType.Cube, "Head", hp, new Vector3(0, 1.1f, 0.65f), new Vector3(0.22f, 0.25f, 0.45f), M(hcol[k % 4]));
+            foreach (float lx in new[] { -0.12f, 0.12f }) foreach (float lz in new[] { -0.35f, 0.35f })
+                Prim(PrimitiveType.Cube, "Leg", hp, new Vector3(lx, 0.15f, lz), new Vector3(0.07f, 0.4f, 0.07f), M(hcol[k % 4])).transform.localRotation = Quaternion.Euler(lz * 60f, 0, 0);
+            if (k != 2) RideSeat(hp, "Horse seat " + k, new Vector3(0, 0.55f, -0.1f), 0f, carExit);
+            horses.Add(hp);
+        }
+        ParkSkeleton(horses[2], "Gallop", "#9b6bff", 31, new Vector3(0, 0.6f, -0.1f), 0f, 0.75f);
+        var cr = Add<FirRide>(car.gameObject);
+        cr.kind = 0; cr.rotor = spin; cr.axis = Vector3.up; cr.degPerSec = 18f; cr.bobbers = horses.ToArray(); cr.bobHeight = 0.25f; cr.bobSpeed = 1.6f;
+
+        // ---- the teacups
+        var tc = Group(g, "Teacups", new Vector3(92f, 0, 50f));
+        var plat = Group(tc, "Rotor", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "Platform", plat, new Vector3(0, 0.08f, 0), new Vector3(8f, 0.08f, 8f), M("CaneWhite"));
+        var tcExit = Marker(tc, "Teacups exit", new Vector3(0, 0.05f, -4.6f), 180f);
+        var cups = new List<Transform>();
+        string[] ccol = { "GiftBlue", "BonePink", "GiftGreen", "GiftGold" };
+        for (int k = 0; k < 4; k++)
+        {
+            float a = (k * 90f + 45f) * Mathf.Deg2Rad;
+            var cp = Group(plat, "Cup " + k, new Vector3(Mathf.Cos(a) * 2.3f, 0.15f, Mathf.Sin(a) * 2.3f));
+            Prim(PrimitiveType.Cylinder, "Cup", cp, new Vector3(0, 0.35f, 0), new Vector3(1.6f, 0.35f, 1.6f), M(ccol[k]));
+            Prim(PrimitiveType.Cylinder, "Saucer", cp, new Vector3(0, 0.03f, 0), new Vector3(2.0f, 0.03f, 2.0f), M("CaneWhite"));
+            Prim(PrimitiveType.Cube, "Handle", cp, new Vector3(0.85f, 0.45f, 0), new Vector3(0.12f, 0.35f, 0.08f), M(ccol[k]));
+            if (k != 1) RideSeat(cp, "Cup seat " + k, new Vector3(0, 0.2f, 0), 0f, tcExit);
+            cups.Add(cp);
+        }
+        ParkSkeleton(cups[1], "Dizzy", "#7fffd4", 24, new Vector3(0, 0.2f, 0), 0f, 0.7f);
+        var tr = Add<FirRide>(tc.gameObject);
+        tr.kind = 0; tr.rotor = plat; tr.axis = Vector3.up; tr.degPerSec = 12f; tr.spinners = cups.ToArray(); tr.spinnerDegPerSec = 70f;
+        ParkSkeleton(g, "Whirly", "#ff9f43", 29, new Vector3(92f, 0, 43.2f), 0f);
+
+        // ---- the drop tower
+        var dt = Group(g, "Drop Tower", new Vector3(108f, 0, 36f));
+        DPrim(PrimitiveType.Cylinder, "Mast", dt, new Vector3(0, 9.5f, 0), new Vector3(1.0f, 9.5f, 1.0f), M("CaneRed"));
+        DPrim(PrimitiveType.Cylinder, "Cap", dt, new Vector3(0, 19.2f, 0), new Vector3(1.6f, 0.3f, 1.6f), M("GiftGold"));
+        Text("DropSign", dt, new Vector3(0, 17.5f, -0.52f), Face(Vector3.back), new Vector2(2.4f, 0.5f), 0.4f, "<b>DROP</b>").color = Color.white;
+        var ring = Group(dt, "Ring", new Vector3(0, 0.3f, 0));
+        Prim(PrimitiveType.Cylinder, "RingDisc", ring, new Vector3(0, 0.2f, 0), new Vector3(3.6f, 0.08f, 3.6f), M("Metal"));
+        var dtExit = Marker(dt, "Drop exit", new Vector3(0, 0.05f, -3.0f), 180f);
+        for (int k = 0; k < 4; k++)
+        {
+            float a = k * 90f;
+            var seatPos = Quaternion.Euler(0, a, 0) * new Vector3(0, 0.25f, 1.45f);
+            Prim(PrimitiveType.Cube, "SeatBack", ring, seatPos + Quaternion.Euler(0, a, 0) * new Vector3(0, 0.6f, -0.25f), new Vector3(0.6f, 1.0f, 0.1f), M("Black")).transform.localRotation = Quaternion.Euler(0, a, 0);
+            RideSeat(ring, "Drop seat " + k, seatPos, a, dtExit);
+        }
+        var dr = Add<FirRide>(dt.gameObject);
+        dr.kind = 2; dr.rotor = ring; dr.dropHeight = 12.5f; dr.upTime = 9f; dr.holdTime = 2.5f; dr.dropTime = 1.4f; dr.restTime = 8f;
+        dr.sfx = Src(ring, new Vector3(0, 1.5f, 0), Clip("scream1"), false, 1f, 1f, 40f, false);
+        ParkSkeleton(g, "Shriek", "#ff3b3b", 23, new Vector3(110.5f, 0, 33f), -90f);
+
+        // ---- the ghost train: a dark shed, two carts on a loop through it, and things that jump out
+        var gt = Group(g, "Ghost Train", Vector3.zero);
+        Box(gt, "WallW", new Vector3(62f, 2.5f, 34f), new Vector3(0.3f, 5f, 16f), M("Black"));
+        Box(gt, "WallN", new Vector3(71f, 2.5f, 42f), new Vector3(18f, 5f, 0.3f), M("Black"));
+        Box(gt, "WallS", new Vector3(71f, 2.5f, 26f), new Vector3(18f, 5f, 0.3f), M("Black"));
+        Box(gt, "WallE S", new Vector3(80f, 2.5f, 26.5f), new Vector3(0.3f, 5f, 1.0f), M("Black"));
+        Box(gt, "WallE M", new Vector3(80f, 2.5f, 33f), new Vector3(0.3f, 5f, 8f), M("Black"));
+        Box(gt, "WallE N", new Vector3(80f, 2.5f, 40.5f), new Vector3(0.3f, 5f, 3f), M("Black"));
+        Box(gt, "WallE TopS", new Vector3(80f, 3.75f, 28f), new Vector3(0.3f, 2.5f, 2f), M("Black"));
+        Box(gt, "WallE TopN", new Vector3(80f, 3.75f, 38f), new Vector3(0.3f, 2.5f, 2f), M("Black"));
+        Box(gt, "Roof", new Vector3(71f, 5.1f, 34f), new Vector3(18.4f, 0.2f, 16.4f), M("Black"));
+        Text("GhostSign", gt, new Vector3(80.2f, 4.0f, 33f), Face(Vector3.right), new Vector2(7f, 0.9f), 0.7f, "<b>GHOST TRAIN</b>").color = new Color(0.5f, 1f, 0.6f);
+        Text("GhostSub", gt, new Vector3(80.2f, 3.2f, 33f), Face(Vector3.right), new Vector2(7f, 0.4f), 0.2f, "sit in a cart. keep your arms inside. we can't promise the same for them.").color = Color.white;
+        foreach (float ez in new[] { 31f, 35f })
+        {
+            Prim(PrimitiveType.Sphere, "Eye", gt, new Vector3(80.2f, 2.4f, ez), Vector3.one * 0.4f, M("GlowRedEye"));
+        }
+        Box(gt, "Platform", new Vector3(85f, 0.15f, 33f), new Vector3(2f, 0.3f, 8f), M("DeskWood"));
+        var route = new[] { new Vector3(83f, 0, 30f), new Vector3(83f, 0, 36f), new Vector3(83f, 0, 38f), new Vector3(78f, 0, 38f), new Vector3(66f, 0, 39f),
+                            new Vector3(64f, 0, 35f), new Vector3(75f, 0, 33.5f), new Vector3(66f, 0, 30f), new Vector3(64f, 0, 27.6f), new Vector3(78f, 0, 28f), new Vector3(83f, 0, 28f) };
+        var pace = new[] { 0.35f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f };
+        var gtExit = Marker(gt, "Ghost exit", new Vector3(85f, 0.35f, 33f), 90f);
+        var carts = new List<Transform>();
+        for (int c = 0; c < 2; c++)
+        {
+            var cart = Group(gt, "Cart " + c, route[0]);
+            Box(cart, "Body", new Vector3(0, 0.35f, 0), new Vector3(1.2f, 0.6f, 1.8f), M("CaneRed"), false);
+            Prim(PrimitiveType.Sphere, "Skull", cart, new Vector3(0, 0.75f, 0.85f), new Vector3(0.4f, 0.38f, 0.42f), M("BoneWhite"));
+            foreach (float sx in new[] { -0.08f, 0.08f }) Prim(PrimitiveType.Sphere, "Socket", cart, new Vector3(sx, 0.8f, 1.04f), Vector3.one * 0.1f, M("GlowRedEye"));
+            RideSeat(cart, "Cart seat " + c, new Vector3(0, 0.3f, -0.2f), 0f, gtExit);
+            carts.Add(cart);
+        }
+        var gr = Add<FirRide>(gt.gameObject);
+        gr.kind = 1; gr.carts = carts.ToArray(); gr.route = route; gr.pace = pace; gr.speed = 2.0f;
+        var sc = Group(gt, "Scares", Vector3.zero);
+        ParkScare(sc, "Ghost scare 1", new Vector3(70f, 0, 41.3f), 180f, 2.5f, "scream1", 2.4f);
+        ParkScare(sc, "Ghost scare 2", new Vector3(62.8f, 0, 35f), 90f, 1.6f, "scream2", 2.4f);
+        ParkScare(sc, "Ghost scare 3", new Vector3(75f, 0, 31.0f), 0f, 2.4f, "scream3", 2.4f);
+        ParkScare(sc, "Ghost scare 4", new Vector3(64f, 0, 26.6f), 0f, 1.0f, "scream1", 2.4f);
+        ParkScare(sc, "Ghost scare 5", new Vector3(78f, 0, 30.2f), 180f, 2.2f, "scream2", 2.4f);
+        ParkScare(sc, "Fortune scare", new Vector3(96.6f, 0, 79.2f), 180f, 3f, "scream3");
+        ParkScare(sc, "Hedge scare", new Vector3(114.8f, 0, 40f), -90f, 3f, "scream1");
+        ParkSkeleton(g, "Ghoul", "#2f4f4f", 19, new Vector3(84.6f, 0, 40.5f), 90f);
+
+        // ---- snack stalls (east row, facing west) and game booths (west row, facing east)
+        var foods = new[] { new { who = "Taffy", hex = "#ff9ecb", act = 28, title = "SALT WATER TAFFY" }, new { who = "Popcorn", hex = "#fff6c0", act = 16, title = "POPCORN" },
+                            new { who = "Cotton", hex = "#b8e2ff", act = 18, title = "COTTON CANDY" }, new { who = "Churro", hex = "#c8803c", act = 27, title = "CHURROS" },
+                            new { who = "Pretzel", hex = "#a0622d", act = 3, title = "PRETZELS" }, new { who = "Sundae", hex = "#fff0f5", act = 8, title = "ICE CREAM" },
+                            new { who = "Slushy", hex = "#3d7dff", act = 29, title = "SLUSHIES" } };
+        for (int i = 0; i < foods.Length; i++)
+        {
+            var f = foods[i];
+            var st = Stall(g, f.title, new Vector3(116.4f, 0, 30f + i * 4.5f), -90f, i % 2 == 0 ? "CaneRed" : "GiftBlue", "CaneWhite");
+            ParkSkeleton(st, f.who, f.hex, f.act, new Vector3(0, 0, -0.3f), 0f);
+        }
+        var games = new[] { new { who = "Hoop", hex = "#ffd23f", act = 30, title = "RING TOSS" }, new { who = "Brawn", hex = "#8b0000", act = 10, title = "TEST YOUR STRENGTH" },
+                            new { who = "Dunk", hex = "#4fc3f7", act = 32, title = "DUNK THE SKELETON" } };
+        for (int i = 0; i < games.Length; i++)
+        {
+            var f = games[i];
+            var st = Stall(g, f.title, new Vector3(63.6f, 0, 46f + i * 4.5f), 90f, "GiftGreen", "GiftGold");
+            ParkSkeleton(st, f.who, f.hex, f.act, new Vector3(0, i == 2 ? 0.6f : 0f, -0.3f), 0f);
+            if (i == 0) for (int b = 0; b < 6; b++) DPrim(PrimitiveType.Cylinder, "Bottle", st, new Vector3(-0.9f + b * 0.36f, 1.15f, 0.6f), new Vector3(0.1f, 0.15f, 0.1f), M("GiftGreen"));
+            if (i == 1) { DPrim(PrimitiveType.Cylinder, "Striker", st, new Vector3(0.9f, 1.6f, -0.6f), new Vector3(0.12f, 1.6f, 0.12f), M("CaneRed")); DPrim(PrimitiveType.Sphere, "Bell", st, new Vector3(0.9f, 3.25f, -0.6f), Vector3.one * 0.3f, M("GiftGold")); }
+            if (i == 2) DPrim(PrimitiveType.Cylinder, "Tank", st, new Vector3(0, 0.3f, -0.3f), new Vector3(1.2f, 0.3f, 1.2f), M("Water"));
+        }
+        // the ticket booth, the fortune teller, the juggler, the clown and the balloon seller
+        var tb = Stall(g, "TICKETS", new Vector3(84.5f, 0, 24.5f), 0f, "CaneRed", "GiftGold");
+        ParkSkeleton(tb, "Ticket", "#ffcc00", 20, new Vector3(0, 0, -0.3f), 0f);
+        var tent = Group(g, "Fortune Tent", new Vector3(100f, 0, 76.5f));
+        Prim(PrimitiveType.Cylinder, "Tent", tent, new Vector3(0, 1.3f, 0.4f), new Vector3(3.0f, 1.3f, 2.6f), M("Curtain"));
+        Prim(PrimitiveType.Cylinder, "Peak", tent, new Vector3(0, 2.8f, 0.4f), new Vector3(2.2f, 0.3f, 2.0f), M("GiftGold"));
+        DPrim(PrimitiveType.Sphere, "CrystalBall", tent, new Vector3(0, 1.0f, -1.3f), Vector3.one * 0.35f, M("GlowGhost"));
+        Box(tent, "Table", new Vector3(0, 0.4f, -1.3f), new Vector3(0.9f, 0.8f, 0.6f), M("Curtain"));
+        Text("TentSign", tent, new Vector3(0, 2.75f, -1.0f), Face(Vector3.back), new Vector2(3f, 0.35f), 0.22f, "<b>MADAME FORTUNE</b>").color = new Color(1f, 0.85f, 0.4f);
+        ParkSkeleton(tent, "Fortune", "#6a0dad", 26, new Vector3(0, 0, -0.75f), 0f);
+        DPrim(PrimitiveType.Cylinder, "JugglerStage", g, new Vector3(90f, 0.2f, 74.5f), new Vector3(2.4f, 0.2f, 2.4f), M("CaneRed"));
+        ParkSkeleton(g, "Jester", "#ff4500", 25, new Vector3(90f, 0.4f, 74.5f), 180f);
+        ParkSkeleton(g, "Confetti", "#ff1493", 21, new Vector3(96f, 0, 40f), -90f);
+        ParkSkeleton(g, "Balloon", "#00ced1", 22, new Vector3(84f, 0, 47f), 90f);
+        for (int b = 0; b < 7; b++)
+        {
+            var bp = new Vector3(84f + Mathf.Sin(b * 2.1f) * 0.5f, 3.0f + (b % 3) * 0.35f, 47f + Mathf.Cos(b * 2.1f) * 0.5f);
+            DPrim(PrimitiveType.Sphere, "Balloon", g, bp, new Vector3(0.45f, 0.55f, 0.45f), M(new[] { "CaneRed", "GiftBlue", "GiftGreen", "GiftGold", "BonePink" }[b % 5]));
+            var str = (new Vector3(84.4f, 1.3f, 47f) + bp) / 2f; var sd = bp - new Vector3(84.4f, 1.3f, 47f);
+            DPrim(PrimitiveType.Cylinder, "String", g, str, new Vector3(0.01f, sd.magnitude / 2f, 0.01f), M("CaneWhite"), Quaternion.FromToRotation(Vector3.up, sd.normalized));
+        }
+
+        // ---- the park's wanderers: kids running between rides, their parent, and visitors
+        var wg = Group(g, "Wanderers", Vector3.zero);
+        var main = new[] { new Vector3(86f, 0, 28.5f), new Vector3(86f, 0, 58f), new Vector3(98f, 0, 58f), new Vector3(98f, 0, 28.5f) };
+        var tring = Enumerable.Range(0, 16).Select(k => new Vector3(92f + Mathf.Cos(k * Mathf.PI / 8f) * 5.6f, 0, 50f + Mathf.Sin(k * Mathf.PI / 8f) * 5.6f)).ToArray();
+        var pw = new[] {
+            new { who = "Sprinkle", hex = "#ffb6c1", route = tring, pace = Enumerable.Repeat(2.6f, 16).ToArray(), speed = 1.1f, head = 0 },
+            new { who = "Lollipop", hex = "#ff6347", route = tring, pace = Enumerable.Repeat(2.6f, 16).ToArray(), speed = 1.1f, head = 1600 },
+            new { who = "Fudge", hex = "#5c3317", route = tring, pace = Enumerable.Repeat(1.8f, 16).ToArray(), speed = 1.1f, head = 6000 },
+            new { who = "Gumdrop", hex = "#7cfc00", route = new[] { new Vector3(112f, 0, 30f), new Vector3(112f, 0, 57f) }, pace = new[] { 1f, 1f }, speed = 0.9f, head = 0 },
+            new { who = "Toffee", hex = "#d2a679", route = new[] { new Vector3(84f, 0, 70.3f), new Vector3(117f, 0, 70.3f) }, pace = new[] { 1f, 1f }, speed = 0.9f, head = 7000 },
+            new { who = "Licorice", hex = "#1c1c1c", route = new[] { new Vector3(69f, 0, 58f), new Vector3(81f, 0, 58f) }, pace = new[] { 1f, 2.4f }, speed = 1.0f, head = 3000 },
+            new { who = "Nougat", hex = "#f5deb3", route = new[] { new Vector3(88f, 0, 25.5f), new Vector3(95f, 0, 25.5f), new Vector3(95f, 0, 31f), new Vector3(88f, 0, 31f) }, pace = new[] { 1f, 1f, 1f, 1f }, speed = 0.8f, head = 0 },
+            new { who = "Marshmallow", hex = "#fffafa", route = main, pace = new[] { 1f, 1f, 1f, 1f }, speed = 1.0f, head = 11000 } };
+        foreach (var w in pw)
+            MakeWanderer(wg, w.who, w.hex, w.route, w.pace, w.speed, w.head, "Park/pk_" + w.who.ToLower(), ParkLine(w.who));
+
+        // ---- the park's gags (Data/park_gags.txt)
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/park_gags.txt");
+        if (ta == null) report.Add("problem: Data/park_gags.txt is missing");
+        else
+        {
+            var gg = Group(g, "Gags", Vector3.zero);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var raw in ta.text.Split('\n'))
+            {
+                var line = raw.TrimEnd('\r');
+                if (line.Trim() == "" || line.StartsWith("#")) continue;
+                var p = line.Split('|');
+                if (p.Length < 10) continue;
+                Gag(gg, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                    p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+                placed++;
+            }
+        }
+        int skeletons = g.GetComponentsInChildren<FirRainbowSkeleton>(true).Length + g.GetComponentsInChildren<FirWanderer>(true).Length;
+        report.Add("Boneanza Park: 5 working rides (" + rideSeats + " seats), " + skeletons + " skeletons, " + placed + " gags, " + parkScares + " jump scares");
+    }
+
+    static string ParkLine(string who)
+    {
+        switch (who)
+        {
+            case "Sprinkle": return "Mum! Mum! Can we go on the ghost train? Can we? Can we?";
+            case "Gumdrop": return "I've had nine candy apples. I'm not hungry. I just like the noise.";
+            case "Lollipop": return "Race you to the carousel! Last one there is a pile of bones!";
+            case "Fudge": return "Has anyone seen my kid? About this tall. Skeletal. Sticky.";
+            case "Toffee": return "I lost my ticket. And my left foot. The ticket's more important.";
+            case "Licorice": return "The ghost train isn't scary. I definitely didn't scream. That was my knees.";
+            case "Nougat": return "I won a goldfish! It's a skeleton fish. Very low maintenance.";
+            case "Marshmallow": return "I'm toasting marshmallows! Ah. That one was me. Ow.";
+        }
+        return "";
     }
 
     // =================================================================== the Root Cellar (horror expansion), east of the lobby

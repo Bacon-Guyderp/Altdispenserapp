@@ -337,7 +337,21 @@ namespace VRC.SDKBase {
   public static class Utilities { public static bool IsValid(object o) { return o != null; } }
   public class VRC_Pickup : MonoBehaviour { public string InteractionText, UseText; public float proximity, ThrowVelocityBoostScale; public AutoHoldMode AutoHold; public enum AutoHoldMode { AutoDetect, Yes, No } public bool IsHeld; public void Drop() { IsHeld = false; Sim.Log("pickup", go.name + " dropped"); } }
 }
+namespace VRC.SDKBase {
+  /// A seat: the player who uses it is carried along with it (on their own client; everyone sees them there).
+  public class VRCStation : UnityEngine.MonoBehaviour {
+    public enum Mobility { Mobile, Immobilize, ImmobilizeForVehicle }
+    public Mobility PlayerMobility; public bool canUseStationFromStation, disableStationExit, seated = true;
+    public UnityEngine.Transform stationEnterPlayerLocation, stationExitPlayerLocation;
+    public void UseStation(VRCPlayerApi p) {
+      if (!p.isLocal) { Sim.Fail("UseStation called for a remote player (VRChat ignores this)"); return; }
+      Sim.Seat(p, this); Sim.Log("station", p.displayName + " sat in " + go.name);
+    }
+    public void ExitStation(VRCPlayerApi p) { Sim.Unseat(p); }
+  }
+}
 namespace VRC.SDK3.Components {
+  public class VRCStation : VRC.SDKBase.VRCStation { }
   public class VRCPickup : VRC.SDKBase.VRC_Pickup { }
   public class VRCSceneDescriptor : VRC.SDKBase.VRC_SceneDescriptor { }
   public class VRCObjectSync : UnityEngine.MonoBehaviour {
@@ -419,6 +433,19 @@ public static class Sim {
   public static readonly List<string> Events = new List<string>();
   public static bool Verbose;
   public static Action OnStep;
+  static readonly Dictionary<VRC.SDKBase.VRCPlayerApi, int> seats = new Dictionary<VRC.SDKBase.VRCPlayerApi, int>();
+  public static void Seat(VRC.SDKBase.VRCPlayerApi p, VRC.SDKBase.VRCStation st) { seats[p] = st.gameObject.netId; }
+  public static void Unseat(VRC.SDKBase.VRCPlayerApi p) { seats.Remove(p); }
+  public static bool Seated(VRC.SDKBase.VRCPlayerApi p) { return seats.ContainsKey(p); }
+  static void CarrySeated() {
+    foreach (var kv in new List<KeyValuePair<VRC.SDKBase.VRCPlayerApi, int>>(seats)) {
+      var c = Clients.Find(x => x.player == kv.Key); if (c == null) { seats.Remove(kv.Key); continue; }
+      var go = c.objects[kv.Value]; VRC.SDKBase.VRCStation st = null;
+      foreach (var k in go.comps) if (k is VRC.SDKBase.VRCStation) st = (VRC.SDKBase.VRCStation)k;
+      var at = st != null && st.stationEnterPlayerLocation != null ? st.stationEnterPlayerLocation : go.transform;
+      kv.Key.pos = at.position;
+    }
+  }
 
   public static void Fail(string m) { string s = "[" + (Current != null ? Current.player.displayName : "-") + " t=" + UnityEngine.Time.time.ToString("F2") + "] " + m; Failures.Add(s); Console.WriteLine("    !! " + s); }
   public static void Log(string kind, string m) { string s = (Current != null ? Current.player.displayName : "-") + " " + kind + ": " + m; Events.Add(s); if (Verbose) Console.WriteLine("      " + s); }
@@ -545,6 +572,7 @@ public static class Sim {
       var src = oc.objects[go.netId];
       foreach (var c in Clients) if (c != oc) { c.objects[go.netId].transform.position = src.transform.position; }
     }
+    CarrySeated();
     if (OnStep != null) OnStep();
     UnityEngine.Time.time += UnityEngine.Time.deltaTime; UnityEngine.Time.frameCount++;
   }

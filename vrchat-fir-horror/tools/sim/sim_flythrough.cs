@@ -129,14 +129,12 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(3f, 1.7f, 1f), new Vector3(7f, 1.6f, -2f), 1.2f);              // 0: the lobby's east doorway
-    Cam(new Vector3(17f, 1.7f, -6f), new Vector3(24f, 1.6f, 2f), 1.2f);            // 1: the potting shed
-    var start = All<FirHuntButton>(A).Where(b => b.action == 1).ToList()[1];
-    Sim.Press(A, start); Sim.Run(0.5f); A.player.pos = new Vector3(22f, 0.05f, -2f);
-    Cam(new Vector3(22f, 1.7f, -10f), new Vector3(22f, 1.3f, -24f), 1.2f);         // 2: the greenhouse (game on)
-    Cam(new Vector3(22f, 1.8f, -28f), new Vector3(22f, 1.2f, -42f), 1.2f);         // 3: the sawmill
-    Cam(new Vector3(19f, 1.7f, -84f), new Vector3(18f, 1.2f, -95f), 1.2f);         // 4: the woodchipper
-    Cam(new Vector3(0f, 1.6f, -10.5f), new Vector3(-6f, 1.2f, -12f), 1.2f);        // 5: new skeletons in the Gift Wrap Hall
+    Cam(new Vector3(-3.5f, 1.7f, -1.0f), new Vector3(-6.2f, 1.6f, -1.0f), 1.2f);   // 0: the lobby's Station
+    Cam(new Vector3(90f, 2.2f, 24f), new Vector3(90f, 4f, 60f), 1.2f);             // 1: the park from the gate
+    Cam(new Vector3(75f, 2.0f, 50f), new Vector3(75f, 8f, 64f), 1.2f);             // 2: the big wheel
+    Cam(new Vector3(98f, 2.5f, 54f), new Vector3(104f, 1.5f, 64f), 1.2f);          // 3: the carousel
+    Cam(new Vector3(90f, 2.0f, 33f), new Vector3(80f, 2.0f, 33f), 1.2f);           // 4: the ghost train
+    Cam(new Vector3(104f, 2.0f, 42f), new Vector3(116f, 1.5f, 40f), 1.2f);         // 5: stalls and the drop tower
   }
 
   static void MapTour() {

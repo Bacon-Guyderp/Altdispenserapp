@@ -54,6 +54,27 @@ harder game, separate from the first (both can even run at once).
 * **The lights fail:** for a moment every so often.
 * **Also:** 10 more jump scares, 10 toilets, and 12 skeletons on the night shift.
 
+## Boneanza Park: the amusement park
+
+The **Station** board in the lobby (by the west wall) teleports you to the park, and there's a "Back to
+the lobby" button by the park gates. Future far-off areas get Station buttons too.
+
+* **5 working rides:** you sit in a seat (a VRChat station) and get carried along; jump to get off.
+  * the big wheel (its gondolas stay level)
+  * the carousel (horses bob)
+  * the spinning teacups
+  * a drop tower that climbs, hangs and drops, with a scream
+  * a ghost train whose carts loop through a pitch-black shed full of things that jump out
+* **In step for everyone:** the rides move by the server clock, like Bonetown's wanderers, so every player
+  sees the same thing.
+* **30 skeletons, each voiced:**
+  * snack vendors, game booths (ring toss, test your strength, dunk the skeleton) and a ticket seller
+  * a fortune teller, a juggler, a clown and a balloon seller
+  * ride operators, plus riders on the wheel, the carousel and the teacups
+  * 8 wanderers: kids racing round the teacups, their parent chasing them, and visitors
+* **20 gags** (`Data/park_gags.txt`) along the fences, and **7 always-armed jump scares** (5 on the ghost
+  train).
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -145,6 +166,7 @@ python make_unitypackage.py
   * FirGag, FirSkeletonGag, FirCloset, FirRainbowSkeleton, FirSkeletonCombo: the gags
   * FirShare: shares pressed gags with everyone
   * FirWanderer, FirTicker: Bonetown's walkers and the news ticker
+  * FirRide, FirSeat, FirTeleport: rides, ride seats and the Station's teleporters
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -153,7 +175,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 297
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 355
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
@@ -162,3 +184,4 @@ python make_unitypackage.py
   * the tree freezing when watched, hunting, catching and being stunned by a thrown toilet
   * Bonetown's wanderers staying in step on every client, keeping to their paths, and stopping to chat
   * a full Root Cellar playthrough, its second tree and flickering lights, and every new skeleton and move
+  * the Station, every park ride (riding the wheel and the ghost train), and the park's wanderers

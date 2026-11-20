@@ -210,6 +210,47 @@ def extra_lines():
                f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
 
 
+# Boneanza Park (the amusement park): 30 skeletons -> Audio/Park/pk_<name>.ogg
+PARK = [
+    ("taffy", "mb-us1", 150, 65, 1.06, "Salt water taffy! It sticks to your teeth. Good thing I've got plenty."),
+    ("popcorn", "mb-us3", 165, 60, 1.08, "Fresh popcorn! It pops right out between my ribs. Don't ask."),
+    ("cotton", "mb-us1", 160, 85, 1.16, "Cotton candy! It's mostly air. Like me. Mostly gaps."),
+    ("churro", "mb-us2", 135, 40, 0.95, "Churros! Long, crunchy and covered in sugar. That's also my dating profile."),
+    ("pretzel", "mb-us3", 120, 45, 0.96, "I tied myself in a pretzel once. Took three days to untie."),
+    ("sundae", "mb-us1", 140, 70, 1.08, "Ice cream! I get brain freeze. Well. Skull freeze. There's no brain."),
+    ("slushy", "mb-us3", 170, 70, 1.1, "Blue raspberry slushy! Fair warning, you'll see it again. Through my ribs."),
+    ("ticket", "mb-us2", 125, 35, 0.92, "Tickets! One ticket per ride. Two if you're a skeleton. We come apart."),
+    ("jester", "mb-us3", 175, 75, 1.14, "Watch me juggle! Three skulls! Wait. Whose skulls are these?"),
+    ("confetti", "mb-us1", 180, 85, 1.2, "Honk honk! I'm a clown! My nose is the only part of my face left."),
+    ("balloon", "mb-us1", 145, 75, 1.1, "Balloons! Hold on tight. I let go of one once and floated for a week."),
+    ("fortune", "mb-us2", 95, 30, 0.88, "I see your future. Hmm. It has trees in it. Lots and lots of trees."),
+    ("brawn", "mb-us2", 130, 15, 0.82, "Ring the bell, win a prize! I hit it once. My arm went higher than the puck."),
+    ("hoop", "mb-us3", 155, 55, 1.04, "Toss a ring over a bottle! Nobody's won since nineteen sixty. That's the fun."),
+    ("dunk", "mb-us2", 140, 45, 0.98, "Dunk the skeleton! Go on! I can't drown. I just get soggy."),
+    ("gears", "mb-us2", 120, 30, 0.9, "Hop on the big wheel! Best view in the park. Of the other skeletons."),
+    ("whirly", "mb-us3", 170, 70, 1.12, "Teacups! Spin it as fast as you like. Just aim away from me."),
+    ("dizzy", "mb-us1", 150, 80, 1.15, "Whee! I've been on this ride for six hours. I can't feel my bones."),
+    ("loop", "mb-us3", 130, 50, 1.0, "I've been on this wheel since opening day. It goes round. So do I."),
+    ("gallop", "mb-us1", 165, 70, 1.1, "Giddy up! My horse doesn't go anywhere, but it does it with style."),
+    ("ghoul", "mb-us2", 100, 10, 0.82, "Ride the ghost train, if you dare. The ghosts are my cousins. Say hi."),
+    ("shriek", "mb-us3", 160, 65, 1.08, "The drop tower! Up. Up. Up. Then, for a moment, everything comes apart."),
+    ("sprinkle", "mb-us1", 185, 95, 1.3, "Mum! Mum! Can we go on the ghost train? Can we? Can we?"),
+    ("gumdrop", "mb-us3", 160, 85, 1.25, "I've had nine candy apples. I'm not hungry. I just like the noise."),
+    ("lollipop", "mb-us1", 185, 90, 1.28, "Race you to the carousel! Last one there is a pile of bones!"),
+    ("fudge", "mb-us2", 140, 40, 0.96, "Has anyone seen my kid? About this tall. Skeletal. Sticky."),
+    ("toffee", "mb-us3", 130, 50, 1.0, "I lost my ticket. And my left foot. The ticket's more important."),
+    ("licorice", "mb-us3", 165, 80, 1.2, "The ghost train isn't scary. I definitely didn't scream. That was my knees."),
+    ("nougat", "mb-us1", 150, 75, 1.12, "I won a goldfish! It's a skeleton fish. Very low maintenance."),
+    ("marshmallow", "mb-us1", 140, 70, 1.08, "I'm toasting marshmallows! Ah. That one was me. Ow."),
+]
+
+
+def park_lines():
+    for name, v, speed, pitch, rate, text in PARK:
+        yield ("Park/pk_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -237,7 +278,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -267,9 +308,21 @@ def main():
     only_rainbow = "--rainbow" in sys.argv
     os.makedirs(os.path.join(OUT, "Town"), exist_ok=True)
     os.makedirs(os.path.join(OUT, "Extra"), exist_ok=True)
+    os.makedirs(os.path.join(OUT, "Park"), exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--park" in sys.argv:   # only the amusement park: its skeletons and its gags (ids starting P)
+            os.makedirs(os.path.join(OUT, "Park"), exist_ok=True)
+            todo = list(park_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_P")]
+            for name, voice, speed, pitch, text, filt in todo:
+                wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
+                subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+                out = os.path.join(OUT, name + ".ogg")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
+                                "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
+                print(name, os.path.getsize(out) // 1024, "KB")
             return
         if "--extra" in sys.argv:   # only the 40 new skeletons
             os.makedirs(os.path.join(OUT, "Extra"), exist_ok=True)
@@ -292,7 +345,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

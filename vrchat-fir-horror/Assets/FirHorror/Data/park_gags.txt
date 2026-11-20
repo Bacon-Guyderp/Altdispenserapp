@@ -1,0 +1,24 @@
+# Fir Warning: Boneanza Park gags. Same format as gags.txt, placed exactly where given (world metres).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+# ---------------------------------------------------------------- along the south fence
+P1|sign|64|0|22.8|0|narrator|You must be this tall to ride. And have a body.|YOU MUST BE\nTHIS TALL\nTO RIDE|...AND HAVE\nA BODY
+P2|pop_gift|67|0|22.8|0|tiny|Prize! You won me! No returns.||
+P3|spin|70|0|22.8|0|tree|I'm the cheapest ride in the park. Free, and you don't even have to get on.||
+P4|talk|73|0|22.8|0|big|I guess your weight! You weigh... more than a skeleton.||
+P5|inflate_orn|76|0|22.8|0|tiny|I'm a water balloon. Please don't throw me. Please.||
+P6|shiver|79|0|22.8|0|old|Some fun fair. Freezing! And the candy floss is all needles.||
+P7|waddle|97|0|22.8|0|tiny|Wait! I'm not tall enough! Let me on anyway!||3
+P8|peek|100.2|0|22.8|0|tiny|Is the ghost train over? Can I come out now?||
+P9|inflate_tree|103.4|0|22.8|0|big|Too many corn dogs!||
+P10|talk|106.6|0|22.8|0|lady|I was the ring toss prize for forty years. Nobody ever won me.||
+P11|pop_crate|109.8|0|22.8|0|big|Lost and found! Mostly found bones.||
+P12|sign|113|0|22.8|0|narrator|Side effects include loose bones.|WARNING:\nRIDES MAY CAUSE\nDIZZINESS|AND LOOSE\nBONES
+# ---------------------------------------------------------------- along the north fence
+P13|frame|64|1.6|77.94|180|narrator|Longest ride on the big wheel: Loop. Still going.|PARK RECORD\n\nLongest ride on\nthe big wheel:\n<b>LOOP</b>\n<size=60%>(still going)</size>|
+P14|spin|68|0|77.2|180|tiny|Tilt-a-tree! Tilt-a-tree! Tilt-a-tree!||
+P15|talk|72|0|77.2|180|tree|The fun house mirror made me look like a bush. Thanks a lot.||
+P16|inflate_crate|76|0|77.2|180|narrator|The prize crate is full of stuffed skeletons. Very realistic.||
+P17|shiver|80|0|77.2|180|tree|Did somebody say drop tower? I'm not going on the drop tower.||
+P18|sign|84|0|77.2|180|narrator|There is no fire. Only trees.|FIRE EXIT|(there is no fire.\nonly trees)
+P19|peek|110|0|77.2|180|old|Psst. The ghost train is cheaper on Tuesdays. Same ghosts.||
+P20|pop_gift|114|0|77.2|180|tiny|Surprise! I'm the grand prize. You should have picked the goldfish.||
