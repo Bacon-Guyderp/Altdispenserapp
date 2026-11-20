@@ -3178,19 +3178,29 @@ public static class FirCheckBuilder
 
         // ---- room 1, Rainbow Hall: 4 glowing numbers, a keypad
         var digitSpots = new[] {
-            new { p = new Vector3(-7.95f, 3.7f, -30.5f), n = Vector3.right, c = new Color(1f, 0.19f, 0.19f) },
-            new { p = new Vector3(-2.6f, 0.15f, -37.07f), n = Vector3.forward, c = new Color(1f, 0.88f, 0.19f) },
-            new { p = new Vector3(7.95f, 0.7f, -35.0f), n = Vector3.left, c = new Color(0.25f, 1f, 0.31f) },
-            new { p = new Vector3(6.6f, 4.3f, -26.15f), n = Vector3.back, c = new Color(0.25f, 0.5f, 1f) } };
+            // easy to spot: at eye height on the side walls, two per side, big, on dark plates
+            new { p = new Vector3(-7.93f, 1.8f, -30.5f), n = Vector3.right, c = new Color(1f, 0.19f, 0.19f) },
+            new { p = new Vector3(-7.93f, 1.8f, -34.5f), n = Vector3.right, c = new Color(1f, 0.88f, 0.19f) },
+            new { p = new Vector3(7.93f, 1.8f, -30.5f), n = Vector3.left, c = new Color(0.25f, 1f, 0.31f) },
+            new { p = new Vector3(7.93f, 1.8f, -34.5f), n = Vector3.left, c = new Color(0.25f, 0.5f, 1f) } };
+        string[] digitName = { "RED", "YELLOW", "GREEN", "BLUE" };
         hunt.rainbowDigits = new TextMeshPro[4];
         for (int k = 0; k < 4; k++)
         {
-            var t = Text("GlowDigit " + k, map, digitSpots[k].p, Face(digitSpots[k].n), new Vector2(0.6f, 0.6f), k == 1 ? 0.24f : 0.5f, "?");
+            var plate = Group(map, "DigitPlate " + k, digitSpots[k].p);
+            plate.localRotation = Face(digitSpots[k].n);
+            Box(plate, "Plate", new Vector3(0, 0, 0.02f), new Vector3(0.9f, 1.05f, 0.02f), M("Board"), false);
+            Text("Colour", plate, new Vector3(0, -0.38f, 0f), Quaternion.identity, new Vector2(0.85f, 0.2f), 0.13f, "<b>" + digitName[k] + "</b>").color = digitSpots[k].c;
+            var t = Text("GlowDigit " + k, plate, new Vector3(0, 0.08f, 0f), Quaternion.identity, new Vector2(0.8f, 0.75f), 0.7f, "?");
             t.color = digitSpots[k].c;
             hunt.rainbowDigits[k] = t;
-            huntOnly.Add(t.gameObject);
+            huntOnly.Add(plate.gameObject);
         }
         hunt.rainbowDisplay = Keypad(map, "Rainbow keypad", new Vector3(2.7f, 1.35f, -41.86f), Vector3.forward, 1);
+        // the order, spelled out over the keypad
+        Box(map, "OrderStrip", new Vector3(2.7f, 2.35f, -41.88f), new Vector3(1.9f, 0.32f, 0.02f), M("Board"), false);
+        Text("Order", map, new Vector3(2.7f, 2.35f, -41.86f), Face(Vector3.forward), new Vector2(1.85f, 0.28f), 0.15f,
+             "<b><color=#ff3030>RED</color> > <color=#ffe030>YELLOW</color> > <color=#40ff50>GREEN</color> > <color=#4080ff>BLUE</color></b>").color = Color.white;
 
         // ---- room 2, Toy Workshop: notes give the order, the toy lock on the exit wall
         hunt.toyNames = new[] { "STAR", "BELL", "SOCK", "DRUM", "BONE" };
@@ -3304,7 +3314,7 @@ public static class FirCheckBuilder
         hunt.boardTitles = new[] { "THE POWER IS OUT", "LIGHTS OUT, RAINBOW", "THE TOY LOCK", "DECORATE THE TREE", "THE STAGE DOOR", "THE FURNACE" };
         hunt.boardTasks = new[] {
             "Find the 5 batteries hidden in the hall, then press the power box by the exit.",
-            "The rainbow hid 4 glowing numbers in here. Type them on the exit keypad in rainbow order:\n<color=#ff3030>red</color>, <color=#ffe030>yellow</color>, <color=#40ff50>green</color>, <color=#4080ff>blue</color>.",
+            "4 glowing numbers are on the side walls (two each side). Type them on the exit keypad in this order:\n<color=#ff3030>red</color>, <color=#ffe030>yellow</color>, <color=#40ff50>green</color>, <color=#4080ff>blue</color>.",
             "The elves left 4 numbered notes. Press the toys on the exit panel in their order. A wrong toy starts you over.",
             "Find the 4 ornaments, then hang them on the bare tree by the far wall.",
             "Read the stage manager's memo, then type the code on the keypad by the exit (east side).",
