@@ -288,6 +288,31 @@ def render_only(tmp, lines, folder):
         print(name, os.path.getsize(out) // 1024, "KB")
 
 
+# Pine Pete's Pizza Palace: staff and guests -> Audio/Pizza/pz_<name>.ogg, and the last night guard's voicemail
+PIZZA = [
+    ("basil", "mb-us2", 140, 40, 0.95, "Pizza's up! Extra cheese, extra pine needles. House special."),
+    ("pepper", "mb-us1", 160, 70, 1.08, "Welcome to Pine Pete's! Would you like to try our new tree fold pizza? It's a pizza. In a tree."),
+    ("mop", "mb-us3", 115, 40, 0.94, "I mop every night. Every morning there are footprints. Big, rooty footprints."),
+    ("candle", "mb-us3", 175, 90, 1.3, "It's my birthday! I'm three hundred! I don't look a day over two hundred and ninety!"),
+    ("frosting", "mb-us1", 180, 95, 1.32, "Can we see the animatronics? Mum says they only bite at night."),
+    ("gary", "mb-us2", 120, 35, 0.92, "Night shift? I did that. Five nights. On the sixth night I got very, very relaxed."),
+    ("tokens", "mb-us3", 140, 50, 1.0, "I've been trying to win the big bear for sixty years. I'm so close."),
+    ("voicemail", "mb-us2", 135, 35, 0.92,
+     "Hello? Hello, hello! Welcome to your first night at Pine Pete's Pizza Palace. I used to work this shift. "
+     "Now I'm a skeleton. Unrelated! Probably. Anyway. The trees get a bit restless at night. They like to wander. "
+     "Pete comes down the west side. Holly comes down the east. Sprucey, who knows. "
+     "If one of them shows up at your door, shut it. Don't leave it shut all night, though. The power is on a budget. "
+     "Check the cameras. Check the lights. And whatever you do, don't let Pete in. He'll want to give you a hug. "
+     "A very, very pointy hug. Okay! Good luck! Have a pizza!"),
+]
+
+
+def pizza_lines():
+    for name, v, speed, pitch, rate, text in PIZZA:
+        yield ("Pizza/pz_" + name, v, speed, pitch, text,
+               f"asetrate=16000*{rate},aresample=22050,aecho=0.8:0.5:35:0.15,volume={1.8 * SKELETON_BOOST:.3f},alimiter=limit=0.95:level=disabled")
+
+
 def make_combo(tmp):
     """Each combo line; a line with several voices is rendered once per voice and mixed, slightly staggered."""
     os.makedirs(os.path.join(OUT, "Combo"), exist_ok=True)
@@ -315,7 +340,7 @@ def rainbow_lines():
 
 
 def gag_lines():
-    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt"):
+    for fname in ("gags.txt", "town_gags.txt", "park_gags.txt", "precinct_gags.txt", "pizza_gags.txt"):
       path = os.path.join(os.path.dirname(OUT), "Data", fname)
       for line in open(path, encoding="utf-8"):
         if not line.strip() or line.startswith("#"):
@@ -349,6 +374,9 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         if "--combo" in sys.argv:
             make_combo(tmp)
+            return
+        if "--pizza" in sys.argv:   # only the pizzeria: its people, the voicemail, and its gags (ids starting Z)
+            render_only(tmp, list(pizza_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_Z")], "Pizza")
             return
         if "--precinct" in sys.argv:   # only Precinct 206: the cops and its gags (ids starting Q)
             render_only(tmp, list(cop_lines()) + [g for g in gag_lines() if g[0].startswith("Gags/gag_Q")], "Precinct")
@@ -385,7 +413,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)

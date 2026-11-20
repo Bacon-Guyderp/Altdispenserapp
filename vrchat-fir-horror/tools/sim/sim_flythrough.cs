@@ -129,12 +129,12 @@ public static class SimFly {
 
   /// A walk through the map: into each room, pressing a few things on the way.
   static void Stills() {
-    Cam(new Vector3(158f, 1.8f, 21.5f), new Vector3(158f, 1.5f, 30f), 1.2f);        // 0: the front desk
-    Cam(new Vector3(158f, 2.2f, 29f), new Vector3(158f, 1.0f, 44f), 1.2f);          // 1: the bullpen
-    Cam(new Vector3(146f, 1.8f, 34f), new Vector3(140f, 1.2f, 34f), 1.2f);          // 2: the line-up
-    Cam(new Vector3(147.2f, 1.7f, 48.5f), new Vector3(143f, 1.2f, 51f), 1.2f);      // 3: the interrogation room
-    Cam(new Vector3(158f, 1.8f, 47f), new Vector3(158f, 1.8f, 56f), 1.2f);          // 4: the briefing
-    Cam(new Vector3(165f, 1.8f, 30f), new Vector3(171f, 1.0f, 33f), 1.2f);          // 5: the hot pursuit
+    Cam(new Vector3(220f, 1.8f, 22.5f), new Vector3(220f, 1.5f, 42f), 1.2f);       // 0: the dining room and the stage
+    Cam(new Vector3(220f, 1.7f, 39.5f), new Vector3(220f, 1.6f, 44f), 1.2f);       // 1: Pete and friends up close
+    Cam(new Vector3(220f, 1.7f, 53f), new Vector3(220f, 1.4f, 57.5f), 1.2f);       // 2: the office: monitor, clock, cameras
+    Cam(new Vector3(219f, 1.7f, 54.2f), new Vector3(214f, 1.5f, 54.2f), 1.2f);     // 3: the west door and its buttons
+    Cam(new Vector3(205f, 1.7f, 37.5f), new Vector3(203f, 1.2f, 43f), 1.2f);       // 4: parts & service
+    Cam(new Vector3(230f, 1.8f, 24f), new Vector3(238f, 1.4f, 30f), 1.2f);         // 5: the arcade and the counter
   }
 
   static void MapTour() {

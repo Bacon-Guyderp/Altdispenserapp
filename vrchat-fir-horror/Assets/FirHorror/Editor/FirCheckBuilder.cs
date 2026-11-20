@@ -197,6 +197,7 @@ public static class FirCheckBuilder
         BuildStation(lobby, spawn);
         BuildPark(root);
         BuildPrecinct(root);
+        BuildPizzeria(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1885,7 +1886,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -1984,6 +1985,221 @@ public static class FirCheckBuilder
             if (all.Length == 1) u = all[0];
         }
         return u;
+    }
+
+    // =================================================================== Pine Pete's Pizza Palace (night-shift horror), reached from the Station
+
+    static readonly string[] VoicemailLines = {
+        "Hello? Hello, hello! Welcome to your first night at Pine Pete's Pizza Palace.",
+        "I used to work this shift. Now I'm a skeleton. Unrelated! Probably.",
+        "Anyway. The trees get a bit restless at night. They like to wander.",
+        "Pete comes down the west side. Holly comes down the east. Sprucey, who knows.",
+        "If one of them shows up at your door, shut it. Don't leave it shut all night, though. The power is on a budget.",
+        "Check the cameras. Check the lights. And whatever you do, don't let Pete in.",
+        "He'll want to give you a hug. A very, very pointy hug.",
+        "Okay! Good luck! Have a pizza!" };
+
+    static void PizzaSkeleton(Transform parent, string who, string hex, int act, Vector3 pos, float yaw)
+    {
+        var face = Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        GagSkeleton(parent, who, pos, yaw, 1f, act, hex, "Pizza/pz_" + who.ToLower(), new[] { BoneMat(who, hex) }, pos + new Vector3(0, 2.15f, 0) + face * 0.1f, face);
+    }
+
+    /// <summary>An animatronic tree mascot: the jagged fir with glowing red eyes, and its costume bits.</summary>
+    static Transform Animatronic(Transform parent, string name, float height, string costume)
+    {
+        var root = Group(parent, name, Vector3.zero);
+        Transform mouth;
+        var head = TreeModel(root, height, false, out mouth);
+        foreach (var r in root.GetComponentsInChildren<MeshRenderer>(true)) if (r.name.StartsWith("Pupil")) r.sharedMaterial = M("GlowRedEye");
+        float top = height * 0.98f;
+        if (costume == "chef")
+        {
+            Prim(PrimitiveType.Cylinder, "ChefHat", root, new Vector3(0, top + 0.12f, 0), new Vector3(0.45f, 0.2f, 0.45f), M("CaneWhite"));
+            Prim(PrimitiveType.Sphere, "ChefPuff", root, new Vector3(0, top + 0.38f, 0), new Vector3(0.6f, 0.35f, 0.6f), M("CaneWhite"));
+            Prim(PrimitiveType.Cylinder, "Pizza", root, new Vector3(0.45f, height * 0.45f, 0.35f), new Vector3(0.6f, 0.02f, 0.6f), M("GlowOrange")).transform.localRotation = Quaternion.Euler(70, 0, 0);
+        }
+        else if (costume == "bow")
+        {
+            foreach (float bx in new[] { -0.14f, 0.14f }) Prim(PrimitiveType.Sphere, "Bow", root, new Vector3(bx, top - 0.05f, 0.1f), new Vector3(0.26f, 0.18f, 0.1f), M("CaneRed"));
+            Prim(PrimitiveType.Sphere, "Knot", root, new Vector3(0, top - 0.05f, 0.12f), Vector3.one * 0.1f, M("CaneRed"));
+            Prim(PrimitiveType.Cylinder, "Microphone", root, new Vector3(-0.4f, height * 0.45f, 0.35f), new Vector3(0.06f, 0.2f, 0.06f), M("Black"));
+        }
+        else
+        {
+            Prim(PrimitiveType.Cylinder, "Drum", root, new Vector3(0, height * 0.32f, 0.4f), new Vector3(0.5f, 0.18f, 0.5f), M("GiftBlue")).transform.localRotation = Quaternion.Euler(80, 0, 0);
+        }
+        return root;
+    }
+
+    static Transform BigFace(Transform parent, string costume)
+    {
+        var f = ScareFace(parent);
+        if (costume == "chef") Prim(PrimitiveType.Cylinder, "ChefHat", f, new Vector3(0, 0.95f, 0.35f), new Vector3(0.9f, 0.3f, 0.9f), M("CaneWhite"));
+        if (costume == "bow") foreach (float bx in new[] { -0.3f, 0.3f }) Prim(PrimitiveType.Sphere, "Bow", f, new Vector3(bx, 0.85f, 0.2f), new Vector3(0.5f, 0.35f, 0.15f), M("CaneRed"));
+        if (costume == "drum") Prim(PrimitiveType.Cylinder, "Drum", f, new Vector3(0, -0.8f, 0.1f), new Vector3(0.9f, 0.25f, 0.9f), M("GiftBlue")).transform.localRotation = Quaternion.Euler(80, 0, 0);
+        return f;
+    }
+
+    static void BuildPizzeria(Transform root)
+    {
+        var g = Group(root, "Pine Petes", Vector3.zero);
+        float h = 4f;
+        int b0 = huntButtons.Count;
+        // ---- the shell: x 200-240, z 20-60
+        Box(g, "Floor", new Vector3(220f, -0.1f, 40f), new Vector3(40f, 0.2f, 40f), M("Floor"));
+        Box(g, "Ceiling", new Vector3(220f, h + 0.1f, 40f), new Vector3(40f, 0.2f, 40f), M("Ceiling"));
+        Box(g, "WallW", new Vector3(199.9f, h / 2, 40f), new Vector3(0.2f, h, 40.4f), M("WallDark"));
+        Box(g, "WallE", new Vector3(240.1f, h / 2, 40f), new Vector3(0.2f, h, 40.4f), M("WallDark"));
+        Box(g, "WallS", new Vector3(220f, h / 2, 19.9f), new Vector3(40.4f, h, 0.2f), M("WallDark"));
+        Box(g, "WallN", new Vector3(220f, h / 2, 60.1f), new Vector3(40.4f, h, 0.2f), M("WallDark"));
+        var arrive = Marker(g, "Arrive", new Vector3(220f, 0.05f, 22f), 0f);
+        StationStop("PINE PETE'S PIZZA", arrive, g, new Vector3(217.3f, 1.3f, 20.15f), Vector3.forward);
+        Text("Name", g, new Vector3(220f, 3.4f, 20.05f), Face(Vector3.forward), new Vector2(12f, 0.7f), 0.5f, "<b>PINE PETE'S PIZZA PALACE</b>").color = new Color(1f, 0.6f, 0.1f);
+        Text("Sub", g, new Vector3(220f, 2.85f, 20.05f), Face(Vector3.forward), new Vector2(12f, 0.35f), 0.18f, "where the fun never stops (we tried. it won't stop.)").color = new Color(0.9f, 0.9f, 0.9f);
+        // walls of the back: the stage's back wall, the parts room, the kitchen, the halls and the office
+        Action<string, float, float, float, float> WallX = (n, x, za, zb, t) => Box(g, n, new Vector3(x, h / 2, (za + zb) / 2f), new Vector3(t, h, Mathf.Abs(zb - za)), M("WallDark"));
+        Action<string, float, float, float, float> WallZ = (n, z, xa, xb, t) => Box(g, n, new Vector3((xa + xb) / 2f, h / 2, z), new Vector3(Mathf.Abs(xb - xa), h, t), M("WallDark"));
+        WallZ("StageBack", 45f, 210f, 230f, 0.2f);
+        WallX("PartsE", 210f, 36f, 45f, 0.2f);  WallZ("PartsS L", 36f, 200f, 204f, 0.2f); WallZ("PartsS R", 36f, 206.4f, 210f, 0.2f);
+        WallZ("PartsN L", 45f, 200f, 203.7f, 0.2f); WallZ("PartsN R", 45f, 206.3f, 210f, 0.2f);
+        WallX("KitchenW", 230f, 36f, 45f, 0.2f); WallZ("KitchenS L", 36f, 230f, 233.6f, 0.2f); WallZ("KitchenS R", 36f, 236f, 240f, 0.2f);
+        WallZ("KitchenN L", 45f, 230f, 233.7f, 0.2f); WallZ("KitchenN R", 45f, 236.3f, 240f, 0.2f);
+        WallX("WestHallW", 203.7f, 45f, 55.5f, 0.2f); WallX("WestHallE", 206.3f, 45f, 52.9f, 0.2f);
+        WallZ("WestHallN", 55.5f, 203.7f, 216f, 0.2f); WallZ("WestHallS", 52.9f, 206.3f, 216f, 0.2f);
+        WallX("EastHallE", 236.3f, 45f, 55.5f, 0.2f); WallX("EastHallW", 233.7f, 45f, 52.9f, 0.2f);
+        WallZ("EastHallN", 55.5f, 224f, 236.3f, 0.2f); WallZ("EastHallS", 52.9f, 224f, 233.7f, 0.2f);
+        WallZ("OfficeS", 51f, 216f, 224f, 0.2f); WallZ("OfficeN", 58f, 216f, 224f, 0.2f);
+        WallX("OfficeW S", 216f, 51f, 53f, 0.2f); WallX("OfficeW N", 216f, 55.4f, 58f, 0.2f);
+        WallX("OfficeE S", 224f, 51f, 53f, 0.2f); WallX("OfficeE N", 224f, 55.4f, 58f, 0.2f);
+        foreach (float dx in new[] { 216f, 224f }) Box(g, "OfficeDoorTop", new Vector3(dx, 3.3f, 54.2f), new Vector3(0.2f, 1.4f, 2.4f), M("WallDark"));
+        Text("HallSignW", g, new Vector3(205f, 3.2f, 45.12f), Face(Vector3.back), new Vector2(2.4f, 0.3f), 0.16f, "<b>STAFF ONLY</b>").color = new Color(1f, 0.3f, 0.3f);
+        Text("HallSignE", g, new Vector3(235f, 3.2f, 45.12f), Face(Vector3.back), new Vector2(2.4f, 0.3f), 0.16f, "<b>STAFF ONLY</b>").color = new Color(1f, 0.3f, 0.3f);
+
+        // ---- the stage, the dining room, the arcade, the counter, the party table
+        Box(g, "Stage", new Vector3(220f, 0.25f, 43.5f), new Vector3(16f, 0.5f, 3f), M("Stage"));
+        Box(g, "Curtain", new Vector3(220f, 2.2f, 44.85f), new Vector3(16f, 3.4f, 0.1f), M("Curtain"), false);
+        Text("StageSign", g, new Vector3(220f, 3.7f, 44.78f), Face(Vector3.back), new Vector2(10f, 0.45f), 0.32f, "<b>PINE PETE & FRIENDS!</b>").color = new Color(1f, 0.85f, 0.3f);
+        for (float fx = 212.5f; fx <= 227.6f; fx += 0.5f)
+            GameObjectUtility.SetStaticEditorFlags(Prim(PrimitiveType.Sphere, "StageBulb", g, new Vector3(fx, 0.52f, 42.02f), Vector3.one * 0.08f, Bulb(((int)(fx * 2)) % 2 == 0 ? "BulbWarm" : "BulbRed")), StaticEditorFlags.BatchingStatic);
+        foreach (float tz in new[] { 26.6f, 29.4f }) foreach (float tx in new[] { 213f, 217f, 223f, 227f })
+        {
+            Box(g, "Table", new Vector3(tx, 0.38f, tz), new Vector3(1.6f, 0.76f, 1.0f), M("CaneWhite"));
+            DPrim(PrimitiveType.Cylinder, "Pizza", g, new Vector3(tx, 0.78f, tz), new Vector3(0.55f, 0.015f, 0.55f), M("GlowOrange"));
+            DPrim(PrimitiveType.Cylinder, "PartyHat", g, new Vector3(tx + 0.5f, 0.9f, tz + 0.2f), new Vector3(0.12f, 0.12f, 0.12f), M(tx < 220 ? "GiftBlue" : "CaneRed"));
+        }
+        Box(g, "PartyTable", new Vector3(220f, 0.38f, 38.6f), new Vector3(1.8f, 0.76f, 1.0f), M("GiftGold"));
+        DPrim(PrimitiveType.Cylinder, "Cake", g, new Vector3(220f, 0.9f, 38.6f), new Vector3(0.5f, 0.14f, 0.5f), M("BonePink"));
+        Box(g, "Counter", new Vector3(226f, 0.55f, 24.5f), new Vector3(4f, 1.1f, 0.8f), M("CaneRed"));
+        for (int k = 0; k < 5; k++)
+        {
+            Box(g, "Arcade", new Vector3(239.2f, 0.9f, 24.8f + k * 1.9f), new Vector3(0.9f, 1.8f, 0.9f), M(k % 2 == 0 ? "GiftBlue" : "BoneViolet"));
+            DPrim(PrimitiveType.Cube, "ArcadeScreen", g, new Vector3(238.74f, 1.3f, 24.8f + k * 1.9f), new Vector3(0.01f, 0.45f, 0.6f), M("Water"));
+        }
+        Box(g, "PartsTable", new Vector3(203f, 0.45f, 40f), new Vector3(2f, 0.9f, 1f), M("Metal"));
+        for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Sphere, "SpareHead", g, new Vector3(202.3f + k * 0.45f, 1.05f, 40f), Vector3.one * 0.3f, M("ScareGreen"));
+        Text("PartsSign", g, new Vector3(205f, 3.1f, 36.12f), Face(Vector3.back), new Vector2(3f, 0.35f), 0.18f, "<b>PARTS & SERVICE</b>").color = Color.white;
+        Box(g, "KitchenCounter", new Vector3(239.2f, 0.45f, 43.0f), new Vector3(1.0f, 0.9f, 3f), M("Metal"));
+        Box(g, "Oven", new Vector3(239.2f, 0.8f, 39.0f), new Vector3(1.0f, 1.6f, 1.6f), M("Black"));
+        DPrim(PrimitiveType.Cube, "OvenGlow", g, new Vector3(238.68f, 0.7f, 39.0f), new Vector3(0.01f, 0.5f, 1.0f), M("GlowOrange"));
+        Text("KitchenSign", g, new Vector3(235f, 3.1f, 36.12f), Face(Vector3.back), new Vector2(3f, 0.35f), 0.18f, "<b>KITCHEN</b>").color = Color.white;
+        foreach (float lx in new[] { 208f, 220f, 232f }) foreach (float lz in new[] { 25f, 32f }) PendantLamp(g, new Vector3(lx, h, lz), 0.7f);
+
+        // ---- the people (day staff and guests)
+        PizzaSkeleton(g, "Basil", "#7cb342", 28, new Vector3(238.0f, 0, 43.0f), -90f);
+        PizzaSkeleton(g, "Pepper", "#e53935", 20, new Vector3(226f, 0, 25.6f), 180f);
+        PizzaSkeleton(g, "Candle", "#fff59d", 23, new Vector3(218.6f, 0, 38.6f), 90f);
+        PizzaSkeleton(g, "Frosting", "#f8bbd0", 16, new Vector3(221.4f, 0, 38.6f), -90f);
+        PizzaSkeleton(g, "Gary", "#90a4ae", 21, new Vector3(201.6f, 0, 43.4f), 90f);
+        PizzaSkeleton(g, "Tokens", "#ffd54f", 27, new Vector3(237.4f, 0, 35.0f), -90f);
+        var wg = Group(g, "Wanderers", Vector3.zero);
+        MakeWanderer(wg, "Mop", "#4dd0e1", new[] { new Vector3(208f, 0, 24f), new Vector3(208f, 0, 32f), new Vector3(232f, 0, 32f), new Vector3(232f, 0, 24f) },
+                     new[] { 1f, 1f, 1f, 1f }, 0.6f, 0, "Pizza/pz_mop", "I mop every night. Every morning there are footprints. Big, rooty footprints.");
+
+        // ---- the night: the office, its doors, lights, cameras and power
+        var nightGo = Group(g, "Night", new Vector3(220f, 1.5f, 54.5f));
+        var night = Add<FirNight>(nightGo.gameObject);
+        night.officeMin = new Vector3(216f, -1f, 51f); night.officeMax = new Vector3(224f, 5f, 58f);
+        night.petePerHour = new[] { 3, 5, 7, 9, 11, 13 };
+        night.hollyPerHour = new[] { 2, 4, 6, 8, 10, 12 };
+        night.sprucePerHour = new[] { 0, 3, 5, 7, 9, 11 };
+        night.pete = Animatronic(g, "Pine Pete", 2.4f, "chef");
+        night.holly = Animatronic(g, "Holly", 2.2f, "bow");
+        night.sprucey = Animatronic(g, "Sprucey", 1.6f, "drum");
+        Func<string, Vector3[], float[], Transform[]> Spots = (n, ps, ys) => ps.Select((p, i) => Marker(g, n + " " + i, p, ys[i])).ToArray();
+        night.peteSpots = Spots("Pete spot", new[] { new Vector3(216f, 0.5f, 43.5f), new Vector3(214f, 0, 33.5f), new Vector3(204.5f, 0, 41.5f), new Vector3(205f, 0, 49f), new Vector3(214.9f, 0, 54.2f) }, new[] { 180f, 0f, 0f, 0f, 90f });
+        night.hollySpots = Spots("Holly spot", new[] { new Vector3(224f, 0.5f, 43.5f), new Vector3(226f, 0, 33.5f), new Vector3(235.5f, 0, 41.5f), new Vector3(235f, 0, 49f), new Vector3(225.1f, 0, 54.2f) }, new[] { 180f, 0f, 0f, 0f, -90f });
+        night.spruceSpotsW = Spots("Sprucey west", new[] { new Vector3(220f, 0.5f, 43.5f), new Vector3(220f, 0, 32.5f), new Vector3(207.5f, 0, 38.5f), new Vector3(205f, 0, 51.5f), new Vector3(214.7f, 0, 53.4f) }, new[] { 180f, 0f, 0f, 0f, 90f });
+        night.spruceSpotsE = Spots("Sprucey east", new[] { new Vector3(220f, 0.5f, 43.5f), new Vector3(220f, 0, 32.5f), new Vector3(232.5f, 0, 38.5f), new Vector3(235f, 0, 51.5f), new Vector3(225.3f, 0, 53.4f) }, new[] { 180f, 0f, 0f, 0f, -90f });
+        night.camNames = new[] { "SHOW STAGE", "DINING ROOM", "PARTS & SERVICE", "KITCHEN", "WEST HALL", "EAST HALL" };
+        // doors (slide up into the ceiling when open), the dark in each doorway, the door lights
+        foreach (int side in new[] { 0, 1 })
+        {
+            float dx = side == 0 ? 216f : 224f, sgn = side == 0 ? -1f : 1f;
+            var panel = Box(g, side == 0 ? "DoorL" : "DoorR", new Vector3(dx, 1.3f, 54.2f), new Vector3(0.15f, 2.6f, 2.4f), M("Metal"));
+            Prim(PrimitiveType.Cube, "Stripes", panel.transform, new Vector3(0, -0.3f, 0), new Vector3(1.05f, 0.08f, 1.02f), M("GlowYellow"));
+            var shadow = Prim(PrimitiveType.Cube, side == 0 ? "ShadowL" : "ShadowR", g, new Vector3(dx + sgn * 0.9f, 1.3f, 54.2f), new Vector3(1.5f, 2.6f, 2.35f), M("Black"));
+            var lamp = Prim(PrimitiveType.Sphere, side == 0 ? "LampL" : "LampR", g, new Vector3(dx + sgn * 0.9f, 2.7f, 54.2f), Vector3.one * 0.3f, M("GlowWarm"));
+            if (side == 0) { night.doorPanelL = panel.transform; night.shadowL = shadow; night.lampL = lamp; }
+            else { night.doorPanelR = panel.transform; night.shadowR = shadow; night.lampR = lamp; }
+            var nrm = side == 0 ? Vector3.right : Vector3.left;
+            HB(g, side == 0 ? "Door L button" : "Door R button", new Vector3(dx - sgn * 0.12f, 1.5f, 52.3f), nrm, new Vector3(0.45f, 0.3f, 0.1f), M("CaneRed"), 7, side, "Door", "<b>DOOR</b>", 0.1f, true);
+            HB(g, side == 0 ? "Light L button" : "Light R button", new Vector3(dx - sgn * 0.12f, 1.0f, 52.3f), nrm, new Vector3(0.45f, 0.3f, 0.1f), M("ButtonGold"), 8, side, "Light", "<b>LIGHT</b>", 0.1f, true);
+        }
+        // the desk, the monitor and its camera buttons, the clock, the power, the phone
+        Box(g, "Desk", new Vector3(220f, 0.4f, 56.6f), new Vector3(3.2f, 0.8f, 1.2f), M("TrimDark"));
+        Box(g, "Monitor", new Vector3(220f, 1.45f, 57.3f), new Vector3(1.6f, 1.0f, 0.1f), M("Black"));
+        night.monitorText = Text("MonitorText", g, new Vector3(220f, 1.5f, 57.24f), Face(Vector3.back), new Vector2(1.45f, 0.8f), 0.11f, "");
+        night.monitorText.color = new Color(0.6f, 1f, 0.6f);
+        for (int c = 1; c <= 6; c++)
+            HB(g, "Cam " + c, new Vector3(218.6f + (c - 1) * 0.42f, 0.98f, 55.97f), Vector3.back, new Vector3(0.36f, 0.3f, 0.06f), M("Button"), 9, c, "Camera " + c, "<b>CAM\n" + c + "</b>", 0.09f, true);
+        Box(g, "ClockBoard", new Vector3(220f, 3.0f, 57.88f), new Vector3(4.6f, 1.2f, 0.04f), M("Board"), false);
+        night.clockText = Text("Clock", g, new Vector3(218.3f, 3.1f, 57.84f), Face(Vector3.back), new Vector2(1.4f, 0.6f), 0.45f, "");
+        night.clockText.color = Color.white;
+        night.powerText = Text("Power", g, new Vector3(221.6f, 3.05f, 57.84f), Face(Vector3.back), new Vector2(1.8f, 0.8f), 0.2f, "");
+        night.powerText.color = new Color(0.6f, 1f, 0.6f);
+        Box(g, "StatusBoard", new Vector3(220f, 2.4f, 51.12f), new Vector3(4.4f, 1.0f, 0.04f), M("Board"), false);
+        night.statusText = Text("Status", g, new Vector3(220f, 2.4f, 51.16f), Face(Vector3.forward), new Vector2(4.2f, 0.9f), 0.15f, "");
+        night.statusText.color = Color.white;
+        HB(g, "START", new Vector3(218.7f, 1.4f, 51.2f), Vector3.forward, new Vector3(0.9f, 0.35f, 0.1f), M("ButtonGold"), 1, 0, "Start the night shift", "<b>START</b>", 0.2f, true);
+        HB(g, "RESET", new Vector3(221.3f, 1.4f, 51.2f), Vector3.forward, new Vector3(0.7f, 0.3f, 0.1f), M("Button"), 2, 0, "End the night", "<b>RESET</b>", 0.13f, true);
+        var phoneGo = HB(g, "Phone", new Vector3(221.25f, 0.98f, 55.97f), Vector3.back, new Vector3(0.5f, 0.3f, 0.06f), M("CaneRed"), 10, 0, "Play the voicemail", "<b>VOICE\nMAIL (1)</b>", 0.08f, true);
+        night.phone = Src(phoneGo.transform, Vector3.zero, Clip("Pizza/pz_voicemail"), false, 0.6f, 1f, 8f, false);
+        night.captionText = Text("Captions", g, new Vector3(220f, 2.2f, 57.84f), Face(Vector3.back), new Vector2(4.4f, 0.4f), 0.12f, "");
+        night.captionText.color = new Color(1f, 1f, 0.75f);
+        // the voicemail's captions, timed by how much each line has to say
+        float total = night.phone.clip != null ? night.phone.clip.length : 45f, chars = VoicemailLines.Sum(l => l.Length), at = 0.3f;
+        var times = new List<float>();
+        foreach (var l in VoicemailLines) { times.Add(at); at += (total - 0.6f) * l.Length / chars; }
+        night.phoneCaptions = VoicemailLines; night.phoneCaptionAt = times.ToArray();
+        night.sfx = Src(nightGo, Vector3.zero, null, false, 0f, 1f, 6f, false);
+        night.doorClip = Clip("door_bang"); night.lightClip = Clip("static"); night.chimeClip = Clip("music_box"); night.screamClip = Clip("scream2");
+        night.stepClip = Clip("servo"); night.powerOutClip = Clip("tree_sing_wrong"); night.knockClip = Clip("creak"); night.startClip = Clip("phone");
+        night.scareFaces = new[] { BigFace(nightGo, "chef"), BigFace(nightGo, "bow"), BigFace(nightGo, "drum") };
+        var me = UB(night);
+        foreach (var b in huntButtons.Skip(b0)) b.hunt = me;
+        Text("OfficeSign", g, new Vector3(220f, 3.5f, 51.12f), Face(Vector3.forward), new Vector2(4f, 0.4f), 0.22f, "<b>SECURITY</b>").color = new Color(1f, 0.3f, 0.3f);
+
+        // ---- the pizzeria's gags (Data/pizza_gags.txt)
+        int placed = 0;
+        var ta = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/pizza_gags.txt");
+        if (ta == null) report.Add("problem: Data/pizza_gags.txt is missing");
+        else
+        {
+            var gg = Group(g, "Gags", Vector3.zero);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var raw in ta.text.Split('\n'))
+            {
+                var line = raw.TrimEnd('\r');
+                if (line.Trim() == "" || line.StartsWith("#")) continue;
+                var p = line.Split('|');
+                if (p.Length < 10) continue;
+                Gag(gg, p[0], p[1], new Vector3(float.Parse(p[2], inv), float.Parse(p[3], inv), float.Parse(p[4], inv)), float.Parse(p[5], inv),
+                    p[7], p[8].Replace("\\n", "\n"), p[9].Replace("\\n", "\n"));
+                placed++;
+            }
+        }
+        report.Add("Pine Pete's Pizza Palace: 3 animatronics, " + (huntButtons.Count - b0) + " office controls, 7 staff and guests, " + placed + " gags, a " + total.ToString("F0") + " s voicemail");
     }
 
     // =================================================================== Precinct 206 (deadpan cop comedy), reached from the Station

@@ -90,6 +90,29 @@ Reached from the Station: an original police-station gag area in the spirit of t
   * Radius tailing Ulna, who knows he's being tailed.
   * Vertebra in endless hot pursuit of Pelvis round a desk.
 
+## Pine Pete's Pizza Palace: the night shift
+
+Reached from the Station: an original take on the haunted-pizzeria genre, with Christmas-tree mascots.
+
+**The night.** Press START in the security office (at the back, through either staff hall).
+* **The goal:** survive from 12 AM to 6 AM, about 4.5 minutes.
+* **The animatronics:** three of them creep from the stage toward your doors, room by room, and you can
+  see them in the building.
+  * Pine Pete (chef hat) comes down the west side.
+  * Holly (bow) comes down the east.
+  * Sprucey (drum) picks a side.
+* **Doors:** close a door when one is in it, and it goes back to the stage. Leave it open and it gets you.
+* **Lights:** a door light shows who's there.
+* **Cameras:** the 6 camera buttons show who's where on the monitor.
+* **Power:** doors and lights drain it. Keep both doors shut and it runs out after about 3.5 minutes; then
+  the doors open, the lights die, and Pete comes.
+* **The jump scare:** only players inside the office see the face when someone's caught.
+* **The voicemail:** the office phone plays a 48-second message from the last night guard (he's a
+  skeleton now; unrelated, probably), with captions.
+
+**By day:** a dining room, the stage, a party table, an arcade, the counter, the kitchen and Parts &
+Service. There are 7 voiced staff and guests (one of them mops the dining room) and 12 gags.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -182,6 +205,7 @@ python make_unitypackage.py
   * FirShare: shares pressed gags with everyone
   * FirWanderer, FirTicker: Bonetown's walkers and the news ticker
   * FirRide, FirSeat, FirTeleport: rides, ride seats and the Station's teleporters
+  * FirNight: the pizzeria's night shift
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.
@@ -190,7 +214,7 @@ python make_unitypackage.py
 
 * `bash tools/verify/check_code.sh` compiles every script and the builder against stubs, lints for
   TextMeshPro members Udon doesn't expose, and checks the shaders.
-* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 382
+* `bash tools/sim/run_check.sh` builds the world inside a VRChat/UdonSharp simulator and runs 410
   checks with several players. It covers:
   * every systems-check test, gag, routine, combo and skeleton
   * walking the whole route
@@ -200,3 +224,5 @@ python make_unitypackage.py
   * Bonetown's wanderers staying in step on every client, keeping to their paths, and stopping to chat
   * a full Root Cellar playthrough, its second tree and flickering lights, and every new skeleton and move
   * the Station, every park ride (riding the wheel and the ghost train), and the park's wanderers
+  * the precinct, and three pizzeria nights: a sensible guard survives, a careless one doesn't, and the
+    power runs out

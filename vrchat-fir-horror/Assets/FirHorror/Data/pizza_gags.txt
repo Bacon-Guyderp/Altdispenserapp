@@ -1,0 +1,14 @@
+# Fir Warning: Pine Pete's Pizza Palace gags. Same format as gags.txt, placed exactly where given (world metres).
+# id | kind | x | y | z | yaw | voice | spoken line | sign front / frame text | sign back / waddle distance
+Z1|sign|203|0|20.8|0|narrator|Now with thirty percent fewer needles.|PINE PETE'S\nPIZZA PALACE|NOW WITH 30%\nFEWER NEEDLES
+Z2|talk|206|0|20.8|0|tree|I'm the delivery tree. Thirty minutes or it's free. It's always free. I'm a tree.||
+Z3|pop_gift|209|0|20.8|0|tiny|Happy birthday! I'm the cake! Please don't cut me!||
+Z4|spin|212|0|20.8|0|tree|I'm the ball pit lifeguard! Wheee!||
+Z5|inflate_orn|230|0|20.8|0|tiny|I ate the whole party platter. And the platter.||
+Z7|sign|233|0|20.8|0|narrator|Survival not guaranteed.|BIRTHDAY\nPARTIES!|(survival not\nguaranteed)
+Z8|shiver|236|0|20.8|0|old|They keep it very cold in here. For the pizzas. And the... other things.||
+Z9|peek|200.8|0|24|90|tiny|Is it closing time yet? That's when the fun starts. For them.||
+Z10|talk|200.8|0|27|90|lady|I came for the pizza. I stayed because the doors locked.||
+Z12|pop_crate|200.8|0|30|90|big|Spare parts! Nobody's missing any. Yet.||
+Z6|frame|200.06|1.6|34.6|90|narrator|Rule one: don't. Rule two: also don't.|<b>STAFF RULES</b>\n1. don't\n2. also don't\n3. don't go in\nthe back|
+Z11|frame|239.94|1.6|22.5|-90|narrator|Lost and found. One arm, two ears, and a whole tree.|<b>LOST & FOUND</b>\n\n- one arm\n- two ears\n- a whole tree|

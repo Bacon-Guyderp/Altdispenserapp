@@ -16,6 +16,7 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    if (args.Length > 0 && args[0] == "night") { NightTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "hunt") { HuntTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed"); return fail == 0 ? 0 : 1; }
     Console.WriteLine("Built " + A.objects.Count + " objects. Builder log:");
     foreach (var l in Sim.BuildLog) Console.WriteLine("  " + l);
@@ -154,7 +155,7 @@ public static class SimCheck {
       bool reset = !(bool)gf.GetValue(gag) && Vector3.Distance(home0, gag.target.localPosition) < 0.001f && !gag.bubble.gameObject.activeSelf;
       if (wasRunning && spoke && bubbled && moved > 1f && reset) gagOk++; else gagBad.Add(gag.name + (spoke ? "" : " (silent)") + (bubbled ? "" : " (no bubble)") + (moved > 1f ? "" : " (didn't move)") + (reset ? "" : " (didn't reset)"));
     }
-    Check(gagOk == gagN && gagN == 130, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 142, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 20 park + 35 precinct + 12 pizzeria) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -238,6 +239,7 @@ public static class SimCheck {
     CellarTests(A, B);
     ParkTests(A, B);
     PrecinctTests(A, B);
+    NightTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -674,7 +676,7 @@ public static class SimCheck {
       }
     Sim.Current = null;
     Check(blocked == 0, "walked round the front desk, up the bullpen, into the interrogation room and the chief's office");
-    var cw = All<FirWanderer>(A).Where(w => w.transform.position.x > 139f).ToList();
+    var cw = All<FirWanderer>(A).Where(w => w.transform.position.x > 139f && w.transform.position.x < 177f).ToList();
     Check(cw.Count == 4, cw.Count + " cops on the move: Radius tailing Ulna, and Vertebra in hot pursuit of Pelvis");
     int bad = 0; string what = ""; float gap = 99f, gapMax = 0f;
     var radius = cw.First(w => w.name.StartsWith("Radius")); var ulna = cw.First(w => w.name.StartsWith("Ulna"));
@@ -694,7 +696,91 @@ public static class SimCheck {
     }
     Check(bad == 0, "40 seconds of tailing and pursuing: nobody walks through a desk or a wall" + (bad > 0 ? " | " + bad + " problems, e.g. " + what : ""));
     Check(gap > 1.2f && gapMax < 3.5f, "Radius keeps a suspicious " + gap.ToString("F1") + " to " + gapMax.ToString("F1") + " m behind Ulna");
-    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 139f)); Sim.Run(0.5f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 139f && t.transform.position.x < 177f)); Sim.Run(0.5f);
     Check(Flat(A.player.pos, new Vector3(0, 0, -2.6f)) < 0.3f, "the precinct's way back goes to the lobby");
+  }
+
+  // ======================================================================== Pine Pete's Pizza Palace: the night shift
+  static FirNight N(Sim.Client c) { return All<FirNight>(c)[0]; }
+  static FirHuntButton NB(Sim.Client c, int act, int val) { var n = N(c); return All<FirHuntButton>(c).First(b => b.action == act && b.value == val && b.hunt != null && b.hunt.program == n); }
+
+  static void NightTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Pine Pete's Pizza Palace");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "PINE PETE'S PIZZA")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(220f, 0, 22f)) < 0.3f, "the Station sends Alice to the pizzeria");
+    Check(Sim.BuildLog.Any(l => l.Contains("Pine Pete's Pizza Palace: 3 animatronics") && l.Contains("12 gags")), Sim.BuildLog.Where(l => l.Contains("Pine Pete's")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no pizzeria");
+    var route = new[] { new Vector3(220f, 0, 22.5f), new Vector3(220f, 0, 34f), new Vector3(216.5f, 0, 35f), new Vector3(216.5f, 0, 41.3f), new Vector3(216.5f, 0, 35f), new Vector3(205.2f, 0, 35f),
+                        new Vector3(205.2f, 0, 44f), new Vector3(205.2f, 0, 54.2f), new Vector3(220f, 0, 54.2f), new Vector3(235f, 0, 54.2f), new Vector3(235f, 0, 44f), new Vector3(234.8f, 0, 35f) };
+    int blocked = 0;
+    Sim.Current = A; Physics.SyncTransforms();
+    for (int i = 0; i + 1 < route.Length; i++)
+      foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
+        var d = route[i + 1] - route[i]; RaycastHit hit;
+        if (Physics.Raycast(route[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { blocked++; Console.WriteLine("    pizzeria leg " + i + " blocked by " + hit.collider.name + " at " + hit.point); break; }
+      }
+    Sim.Current = null;
+    Check(blocked == 0, "walked from the front door past the stage, through the parts room and the west hall, through the office and back down the east side");
+
+    // the guards go to the office; a shorter night for the test
+    var office = new Vector3(219.2f, 0.05f, 54.3f);
+    A.player.pos = office; B.player.pos = office + new Vector3(1.4f, 0, 0);
+    foreach (var c in new[] { A, B }) N(c).hourSeconds = 20f;
+    Sim.Run(1f);
+    Check(!N(A).running && Plain(N(A).statusText.text).Contains("NIGHT SHIFT"), "the office board waits for START");
+    Sim.Press(B, NB(B, 10, 0)); Sim.Events.Clear(); Sim.Run(3f);
+    Check(N(B).phone.isPlaying && Plain(N(B).captionText.text).Contains("Hello"), "the voicemail plays, with captions: \"" + Plain(N(B).captionText.text) + "\"");
+
+    Console.WriteLine("\n== Night 1: a sensible guard");
+    Sim.Press(A, NB(A, 1, 0)); Sim.Run(1f);
+    Check(N(A).running && N(B).running && Plain(N(B).clockText.text).Contains("12 AM") && N(B).power == 1000 - 1 * 1 || N(B).power > 980, "the night starts for both: 12 AM, power " + (N(B).power / 10) + "%");
+    int sentBack = 0, maxPos = 0, camSeen = 0; int lastP = 0, lastH = 0, lastS = 0;
+    for (int k = 0; k < 125 * 4 && N(A).outcome == 0; k++) {
+      Sim.Run(0.25f);
+      var n = N(A);
+      bool west = n.posPete == 4 || (n.posSprucey == 4 && n.sideSprucey == 0), east = n.posHolly == 4 || (n.posSprucey == 4 && n.sideSprucey == 1);
+      if (west != n.doorL) { Sim.Press(A, NB(A, 7, 0)); Sim.Step(); }
+      if (east != n.doorR) { Sim.Press(A, NB(A, 7, 1)); Sim.Step(); }
+      if ((lastP == 4 && n.posPete == 0) || (lastH == 4 && n.posHolly == 0) || (lastS == 4 && n.posSprucey == 0)) sentBack++;
+      lastP = n.posPete; lastH = n.posHolly; lastS = n.posSprucey;
+      maxPos = Mathf.Max(maxPos, Mathf.Max(n.posPete, Mathf.Max(n.posHolly, n.posSprucey)));
+      var nb = N(B);
+      if (camSeen == 0 && nb.posPete >= 1 && nb.posPete <= 3) {   // Bob checks his own copy's idea of where Pete is
+        int cam = nb.posPete == 1 ? 2 : nb.posPete == 2 ? 3 : 5;
+        Sim.Press(B, NB(B, 9, cam)); Sim.Step();
+        if (Plain(N(B).monitorText.text).Contains("PINE PETE")) camSeen = 1;
+      }
+    }
+    Check(camSeen == 1, "Bob's cameras show Pine Pete where he is");
+    Sim.Run(1.5f);
+    Check(N(A).outcome == 9 && N(B).outcome == 9 && N(A).power > 0, "6 AM: they survived (power left: " + (N(A).power / 10) + "%; outcome " + N(A).outcome + "/" + N(B).outcome + ", hour " + N(A).Hour() + ")");
+    Check(maxPos == 4 && sentBack >= 1, "the trees made it to the doors, and were sent back " + sentBack + " times by a shut door");
+    Check(Plain(N(B).statusText.text).Contains("SURVIVED") && Sim.Events.Any(e => e.Contains("music_box")), "the 6 AM chime, and the board says so");
+
+    Console.WriteLine("\n== Night 2: nobody touches anything");
+    B.player.pos = new Vector3(220f, 0.05f, 30f);   // Bob wanders off to the dining room
+    Sim.Press(A, NB(A, 1, 0)); Sim.Run(0.5f);
+    bool aFace = false, bFace = false;
+    for (int k = 0; k < 125 * 20 && N(A).outcome == 0; k++) Sim.Step();
+    for (int k = 0; k < 40; k++) { Sim.Step(); aFace |= N(A).scareFaces.Any(f => f.gameObject.activeSelf); bFace |= N(B).scareFaces.Any(f => f.gameObject.activeSelf); }
+    int got = N(A).outcome;
+    Check(got >= 1 && got <= 3 && N(B).outcome == got, (got == 1 ? "Pine Pete" : got == 2 ? "Holly" : got == 3 ? "Sprucey" : "nobody (" + got + ")") + " gets in through an open door before 6 AM");
+    Check(aFace && !bFace, "Alice, in the office, gets the face; Bob, out in the dining room, only hears it");
+    Sim.Run(2f);
+
+    Console.WriteLine("\n== Night 3: both doors shut all night");
+    foreach (var c in new[] { A, B }) N(c).hourSeconds = 45f;
+    B.player.pos = office + new Vector3(1.4f, 0, 0);
+    Sim.Press(A, NB(A, 1, 0)); Sim.Run(0.5f);
+    Sim.Press(A, NB(A, 7, 0)); Sim.Step(); Sim.Press(A, NB(A, 7, 1)); Sim.Run(1f);
+    Check(N(B).doorL && N(B).doorR, "both doors shut (Bob sees them shut)");
+    float outAt = -1f; float t0 = Time.time;
+    for (int k = 0; k < 260 * 20 && N(A).outcome == 0; k++) { Sim.Step(); if (outAt < 0 && N(A).power == 0) outAt = Time.time - t0; }
+    Check(outAt > 0 && outAt < 230f && !N(B).doorL && !N(B).doorR, "the power runs out after " + outAt.ToString("F0") + " s, and the doors fly open");
+    Check(N(A).outcome == 1, "...and in the dark, Pine Pete comes for them (" + N(A).outcome + ")");
+    Sim.Press(A, NB(A, 2, 0)); Sim.Run(1f);
+    Check(!N(B).running, "RESET: the pizzeria's quiet again");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 199f)); Sim.Run(0.5f);
+    B.player.pos = new Vector3(1, 0.05f, -1f);
   }
 }
