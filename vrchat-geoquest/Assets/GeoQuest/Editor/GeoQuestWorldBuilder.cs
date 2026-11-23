@@ -270,6 +270,8 @@ public class GeoQuestWorldBuilder : EditorWindow
         Button(">", mapRoot, Bp(-0.34f), bs, cBtn, fontMat, map, nameof(MapBoard.PanRight));
         Button("^", mapRoot, Bp(-0.16f), bs, cBtn, fontMat, map, nameof(MapBoard.PanUp));
         Button("v", mapRoot, Bp(0.02f), bs, cBtn, fontMat, map, nameof(MapBoard.PanDown));
+        Button("Boards", mapRoot, Bp(-0.75f, -0.26f), new Vector3(0.4f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleBoards));
+        mgr.boardObjects = new[] { status.transform.parent.gameObject, score.transform.parent.gameObject, info.transform.parent.gameObject };
         Button("Units: km / miles", mapRoot, Bp(-0.25f, -0.26f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleUnits));
         Button("Fix laser aim", mapRoot, Bp(-0.25f, -0.13f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, map, nameof(MapBoard.StartCalibration));
         var calib = new GameObject("AimTarget");

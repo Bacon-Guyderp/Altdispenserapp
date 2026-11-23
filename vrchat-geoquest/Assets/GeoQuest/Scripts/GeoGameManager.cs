@@ -19,6 +19,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private const int MAX_ROUNDS = 10;
     private const string BEST_KEY = "geoquest.best";
     private const string UNITS_KEY = "geoquest.miles";
+    private const string BOARDS_KEY = "geoquest.boardsHidden";
 
     [Header("Location table (written by GeoQuest > Build World)")]
     public VRCUrl[] urls;
@@ -38,6 +39,8 @@ public class GeoGameManager : UdonSharpBehaviour
     [Tooltip("128x1 readable texture: pixel i is white when county i is in play. The map shader greys out the rest.")]
     public Texture2D selectionTexture;
     public GeoCountyMenu countyMenu;
+    [Tooltip("Status, score and info boards: the Boards button hides/shows them for the local player.")]
+    public GameObject[] boardObjects;
     [HideInInspector] public bool ready;   // counts are built; other scripts wait for this
     [HideInInspector] public string notice = "";
 
@@ -98,7 +101,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private int _recentHead;
     private int[] _cntPano, _cntFlat;      // places per county
     private int _nCounties;
-    private bool _miles;
+    private bool _miles, _boardsHidden;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
     private int[] _pool;
     private int _poolSize, _poolGame = -1, _poolRound = -1;
@@ -355,6 +358,21 @@ public class GeoGameManager : UdonSharpBehaviour
     }
 
     /// <summary>Units button: km or miles. Your own choice, remembered between visits.</summary>
+    /// <summary>Boards button: hide or show the text boards for you only. Remembered between visits.</summary>
+    public void ToggleBoards()
+    {
+        _boardsHidden = !_boardsHidden;
+        PlayerData.SetBool(BOARDS_KEY, _boardsHidden);
+        ApplyBoards();
+    }
+
+    private void ApplyBoards()
+    {
+        if (boardObjects == null) return;
+        for (int i = 0; i < boardObjects.Length; i++)
+            if (boardObjects[i] != null) boardObjects[i].SetActive(!_boardsHidden);
+    }
+
     public void ToggleUnits()
     {
         _miles = !_miles;
@@ -365,8 +383,9 @@ public class GeoGameManager : UdonSharpBehaviour
     public override void OnPlayerRestored(VRCPlayerApi player)
     {
         if (player == null || !player.isLocal) return;
-        bool mi;
+        bool mi, hidden;
         if (PlayerData.TryGetBool(player, UNITS_KEY, out mi)) _miles = mi;
+        if (PlayerData.TryGetBool(player, BOARDS_KEY, out hidden)) { _boardsHidden = hidden; ApplyBoards(); }
         UpdateTexts();
     }
 

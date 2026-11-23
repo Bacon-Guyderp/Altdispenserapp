@@ -101,6 +101,10 @@ town and the distance to its boundary, for example "2.1 mi from Kenly". The **Un
 under the map switches every distance between km and miles. It's each player's own choice and is
 remembered between visits.
 
+## Hiding the boards
+The **Boards** button under the map hides or shows the status, score and info boards so they
+don't block the photo. It's each player's own setting and is remembered between visits.
+
 ## If the VR laser is off
 Controllers differ in which way they report "forward". Press **Fix laser aim** under the map,
 point your controller at the red dot the way that feels natural, and pull the trigger. The laser
