@@ -30,7 +30,8 @@ public class GeoGameManager : UdonSharpBehaviour
     public string[] credits;
     public int[] kinds;                 // 0 = 360° panorama, 1 = flat photo
     public int[] locCounty;             // county index of each place (-1 = none)
-    public float[] townKm;              // 0 = inside the town named in titles[], >0 = km to it, <0 = titles[] is a full label
+    public float[] townKm;
+    public int[] locCat;                // 0 highway, 1 town, 2 country road, 3 middle of nowhere, -1 unknown              // 0 = inside the town named in titles[], >0 = km to it, <0 = titles[] is a full label
 
     [Header("County picker (written by Build World)")]
     public string[] countyNames;
@@ -39,6 +40,9 @@ public class GeoGameManager : UdonSharpBehaviour
     [Tooltip("128x1 readable texture: pixel i is white when county i is in play. The map shader greys out the rest.")]
     public Texture2D selectionTexture;
     public GeoCountyMenu countyMenu;
+    public GeoCategoryMenu categoryMenu;
+    public const int CATEGORIES = 4;
+    [HideInInspector] public string[] categoryNames = { "Interstates & highways", "Towns & cities", "Country roads", "Middle of nowhere" };
     [Tooltip("Status, score and info boards: the Boards button hides/shows them for the local player.")]
     public GameObject[] boardObjects;
     [HideInInspector] public bool ready;   // counts are built; other scripts wait for this
@@ -80,6 +84,7 @@ public class GeoGameManager : UdonSharpBehaviour
     [UdonSynced] public int deadline;
     [UdonSynced] public int photoMode;   // 0 = mixed, 1 = 360° only, 2 = flat only
     [UdonSynced] public int[] countyMask = { -1, -1, -1, -1 };   // bit i = county i is in play
+    [UdonSynced] public int categoryMask = 15;                    // bit k = category k is in play
     [UdonSynced] public int[] roundLocations = new int[MAX_ROUNDS];
 
     private int[] _roundOptions = { 3, 5, 10 };
@@ -99,7 +104,9 @@ public class GeoGameManager : UdonSharpBehaviour
     private int _panoCount, _flatCount;
     private string _lastError = "";
     private int _recentHead;
-    private int[] _cntPano, _cntFlat;      // places per county
+    private int[] _countyCount;            // places per county for the current photo type + categories
+    private int[] _catCount = new int[4];  // places per category for the current photo type + counties
+    private int _inPlay, _sigMode = -1, _sigCat = -1, _sigC0, _sigC1, _sigC2, _sigC3;
     private int _nCounties;
     private bool _miles, _boardsHidden;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
@@ -117,15 +124,7 @@ public class GeoGameManager : UdonSharpBehaviour
             else _panoCount++;
         }
         _nCounties = countyNames == null ? 0 : countyNames.Length;
-        _cntPano = new int[_nCounties + 1];
-        _cntFlat = new int[_nCounties + 1];
-        for (int i = 0; i < n; i++)
-        {
-            int c = CountyOf(i);
-            if (c < 0) c = _nCounties;   // last slot: places outside any county outline
-            if (IsFlat(i)) _cntFlat[c]++;
-            else _cntPano[c]++;
-        }
+        _countyCount = new int[_nCounties + 1];
         if (photoScreen != null) photoScreen.gameObject.SetActive(false);
         ready = true;
         if (_nCounties == 0) Debug.LogWarning("[GeoQuest] No county data in this build: run GeoQuest > One-Click Setup again.");
@@ -207,18 +206,78 @@ public class GeoGameManager : UdonSharpBehaviour
     public int PlacesIn(int c)
     {
         if (!ready || c < 0 || c > _nCounties) return 0;
-        if (photoMode == 1) return _cntPano[c];
-        if (photoMode == 2) return _cntFlat[c];
-        return _cntPano[c] + _cntFlat[c];
+        Recount();
+        return _countyCount[c];
+    }
+
+    public int PlacesInCategory(int k)
+    {
+        if (!ready || k < 0 || k >= CATEGORIES) return 0;
+        Recount();
+        return _catCount[k];
+    }
+
+    /// <summary>Re-tally places only when the photo type, counties or categories changed.</summary>
+    private void Recount()
+    {
+        if (photoMode == _sigMode && categoryMask == _sigCat && countyMask[0] == _sigC0 && countyMask[1] == _sigC1 &&
+            countyMask[2] == _sigC2 && countyMask[3] == _sigC3) return;
+        _sigMode = photoMode; _sigCat = categoryMask;
+        _sigC0 = countyMask[0]; _sigC1 = countyMask[1]; _sigC2 = countyMask[2]; _sigC3 = countyMask[3];
+        for (int c = 0; c <= _nCounties; c++) _countyCount[c] = 0;
+        for (int k = 0; k < CATEGORIES; k++) _catCount[k] = 0;
+        _inPlay = 0;
+        bool allCounties = AllCountiesOn();
+        int n = urls == null ? 0 : urls.Length;
+        for (int i = 0; i < n; i++)
+        {
+            if (photoMode == 1 && IsFlat(i)) continue;
+            if (photoMode == 2 && !IsFlat(i)) continue;
+            int c = CountyOf(i);
+            bool countyOk = c < 0 ? allCounties : CountyOn(c);
+            int k = CategoryOf(i);
+            bool catOk = CategoryOn(k);
+            if (catOk) _countyCount[c < 0 ? _nCounties : c]++;
+            if (countyOk && k >= 0) _catCount[k]++;
+            if (countyOk && catOk) _inPlay++;
+        }
+    }
+
+    private int CategoryOf(int loc) { return (locCat != null && loc < locCat.Length) ? locCat[loc] : -1; }
+
+    public bool CategoryOn(int k) { return k < 0 || (categoryMask & (1 << k)) != 0; }
+
+    public void ToggleCategory(int k)
+    {
+        if (!CanPickCounty() || k < 0 || k >= CATEGORIES) return;
+        TakeOwner();
+        categoryMask ^= 1 << k;
+        Commit();
+    }
+
+    public void AllCategories()
+    {
+        if (!CanPickCounty()) return;
+        TakeOwner();
+        categoryMask = 15;
+        Commit();
+    }
+
+    private string CategoryChoice()
+    {
+        if ((categoryMask & 15) == 15) return "All";
+        if ((categoryMask & 15) == 0) return "<color=#ff8080>none</color>";
+        string s = "";
+        for (int k = 0; k < CATEGORIES; k++) if (CategoryOn(k)) s += (s == "" ? "" : ", ") + categoryNames[k];
+        return s;
     }
 
     /// <summary>How many places the current county + photo-type choice leaves.</summary>
     private int PlacesInPlay()
     {
-        int k = 0;
-        for (int c = 0; c < _nCounties; c++) if (CountyOn(c)) k += PlacesIn(c);
-        if (AllCountiesOn()) k += PlacesIn(_nCounties);
-        return k;
+        if (!ready) return 0;
+        Recount();
+        return _inPlay;
     }
 
     private void PaintSelection()
@@ -236,6 +295,7 @@ public class GeoGameManager : UdonSharpBehaviour
     {
         if (photoMode == 1 && IsFlat(loc)) return false;
         if (photoMode == 2 && !IsFlat(loc)) return false;
+        if (!CategoryOn(CategoryOf(loc))) return false;
         int c = CountyOf(loc);
         return c < 0 ? AllCountiesOn() : CountyOn(c);
     }
@@ -552,6 +612,7 @@ public class GeoGameManager : UdonSharpBehaviour
         PaintSelection();
         if (phase == PHASE_GUESS || phase == PHASE_REVEAL) notice = "";
         if (countyMenu != null) countyMenu.Refresh();
+        if (categoryMenu != null) categoryMenu.Refresh();
         bool newStage = phase != _seenPhase || round != _seenRound;
         int loc = CurrentLocation();
 
@@ -764,8 +825,9 @@ public class GeoGameManager : UdonSharpBehaviour
             string head = phase == PHASE_OVER ? "<b>Game over!</b>" : "<b>" + gameTitle + "</b>";
             int inPlay = PlacesInPlay();
             string places = inPlay > 0 ? inPlay.ToString("N0") + " places"
-                : "<color=#ff8080>0 places: pick more counties or change Photo type</color>";
-            return head + "\nCounties: " + CountyChoice() + "  |  Photos: " + ModeName() + "\n" + places +
+                : "<color=#ff8080>0 places: pick more counties or categories, or change Photo type</color>";
+            return head + "\nCounties: " + CountyChoice() + "  |  Photos: " + ModeName() +
+                   "\nCategories: " + CategoryChoice() + "\n" + places +
                    "\nRounds: " + totalRounds + "  |  Timer: " + (roundSeconds == 0 ? "off" : roundSeconds + "s") +
                    "  |  Units: " + (_miles ? "miles" : "km") + "  |  Best: " + GetBest().ToString("N0");
         }
@@ -831,6 +893,8 @@ public class GeoGameManager : UdonSharpBehaviour
         {
             string s = "<b>" + PlaceName(loc) + "</b>";
             if (countries[loc] != "") s += "\n" + countries[loc];
+            int cat = CategoryOf(loc);
+            if (cat >= 0) s += "  <size=75%>(" + categoryNames[cat] + ")</size>";
             if (g != null && g.HasGuess(gameId, round, loc))
                 s += "\nYou were " + FormatKm(g.distanceKm) + " away: <b>+" + g.roundScore.ToString("N0") + "</b>";
             else s += "\nYou didn't guess: +0";
