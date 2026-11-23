@@ -293,9 +293,9 @@ public class GeoQuestWorldBuilder : EditorWindow
         // ---- county sub-menu: A-Z pages of 20, opened by the Counties button
         var menuRoot = new GameObject("CountyMenu").transform;
         menuRoot.SetParent(root.transform, false);
-        var menuPos = new Vector3(2.35f, 1.35f, 0.1f);
-        menuRoot.localPosition = menuPos;
-        menuRoot.localRotation = Quaternion.LookRotation(new Vector3(menuPos.x, 0, menuPos.z + 0.7f));
+        // Straight ahead, above the map table (the flat-photo screen is hidden in the lobby).
+        menuRoot.localPosition = new Vector3(0, 2.55f, 1.6f);
+        menuRoot.localRotation = Quaternion.LookRotation(new Vector3(0, 0, 1f));
         var menu = menuRoot.gameObject.AddComponent<GeoCountyMenu>();
         Setup(menu);
         var panel = new GameObject("Panel").transform;
