@@ -33,12 +33,26 @@ public class GeoCountyMenu : UdonSharpBehaviour
 
     public void ToggleOpen()
     {
-        if (panel == null) return;
-        panel.SetActive(!panel.activeSelf && game != null && game.CanPickCounty());
+        if (panel == null || game == null) { Debug.LogWarning("[GeoQuest] county menu isn't wired up: run One-Click Setup again."); return; }
+        string why = game.CountyMenuBlocker();
+        if (why != "")
+        {
+            panel.SetActive(false);
+            game.ShowNotice(why);
+            Debug.LogWarning("[GeoQuest] county menu: " + why);
+            return;
+        }
+        bool open = !panel.activeSelf;
+        panel.SetActive(open);
+        game.ShowNotice(open ? "Pick counties on the menu above the map. Press <b>Close</b> when done." : "");
         Refresh();
     }
 
-    public void Close() { if (panel != null) panel.SetActive(false); }
+    public void Close()
+    {
+        if (panel != null) panel.SetActive(false);
+        if (game != null) game.ShowNotice("");
+    }
 
     public void NextPage() { _page = (_page + 1) % Pages(); Refresh(); }
     public void PrevPage() { _page = (_page + Pages() - 1) % Pages(); Refresh(); }
@@ -75,8 +89,8 @@ public class GeoCountyMenu : UdonSharpBehaviour
     /// <summary>Redraw the current page. The game calls this whenever the choice changes.</summary>
     public void Refresh()
     {
-        if (game == null || rowLabels == null) return;
-        if (panel != null && panel.activeSelf && !game.CanPickCounty()) panel.SetActive(false);  // a game started
+        if (game == null || rowLabels == null || !game.ready) return;   // the game sets itself up first
+        if (panel != null && panel.activeSelf && !game.CanPickCounty()) Close();  // a game started
         int n = Count();
         if (_page >= Pages()) _page = 0;
         int first = _page * PerPage;

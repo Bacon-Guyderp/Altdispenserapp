@@ -38,6 +38,8 @@ public class GeoGameManager : UdonSharpBehaviour
     [Tooltip("128x1 readable texture: pixel i is white when county i is in play. The map shader greys out the rest.")]
     public Texture2D selectionTexture;
     public GeoCountyMenu countyMenu;
+    [HideInInspector] public bool ready;   // counts are built; other scripts wait for this
+    [HideInInspector] public string notice = "";
 
     [Header("Scene")]
     public Material panoramaMaterial;
@@ -122,6 +124,8 @@ public class GeoGameManager : UdonSharpBehaviour
             else _cntPano[c]++;
         }
         if (photoScreen != null) photoScreen.gameObject.SetActive(false);
+        ready = true;
+        if (_nCounties == 0) Debug.LogWarning("[GeoQuest] No county data in this build: run GeoQuest > One-Click Setup again.");
         ApplyState();
     }
 
@@ -157,7 +161,18 @@ public class GeoGameManager : UdonSharpBehaviour
         return v < _nCounties ? v : -1;
     }
 
-    public bool CanPickCounty() { return (phase == PHASE_LOBBY || phase == PHASE_OVER) && _nCounties > 0; }
+    public bool CanPickCounty() { return ready && (phase == PHASE_LOBBY || phase == PHASE_OVER) && _nCounties > 0; }
+
+    /// <summary>Why the county menu can't open right now ("" if it can).</summary>
+    public string CountyMenuBlocker()
+    {
+        if (!ready) return "Still loading, try again in a second.";
+        if (_nCounties == 0) return "<color=#ff8080>No county data in this build.</color> Run GeoQuest > One-Click Setup in Unity and rebuild.";
+        if (phase != PHASE_LOBBY && phase != PHASE_OVER) return "Counties can be changed between games.";
+        return "";
+    }
+
+    public void ShowNotice(string s) { notice = s; UpdateTexts(); }
 
     /// <summary>Lobby: switch one county on or off (from the county menu).</summary>
     public void ToggleCounty(int c)
@@ -188,6 +203,7 @@ public class GeoGameManager : UdonSharpBehaviour
 
     public int PlacesIn(int c)
     {
+        if (!ready || c < 0 || c > _nCounties) return 0;
         if (photoMode == 1) return _cntPano[c];
         if (photoMode == 2) return _cntFlat[c];
         return _cntPano[c] + _cntFlat[c];
@@ -515,6 +531,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (g != null) _seenGame = gameId;
 
         PaintSelection();
+        if (phase == PHASE_GUESS || phase == PHASE_REVEAL) notice = "";
         if (countyMenu != null) countyMenu.Refresh();
         bool newStage = phase != _seenPhase || round != _seenRound;
         int loc = CurrentLocation();
@@ -789,6 +806,7 @@ public class GeoGameManager : UdonSharpBehaviour
             if (map != null && map.hasPin) return "Pin placed. Press <b>GUESS</b> to lock it in.";
             return "";
         }
+        if (notice != "") return notice;
         if (CanPickCounty()) return "Press <b>Counties</b> under the map to choose which counties are in play.";
         if (phase == PHASE_REVEAL && loc >= 0)
         {
