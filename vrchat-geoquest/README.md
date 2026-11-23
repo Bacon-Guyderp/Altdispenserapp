@@ -101,6 +101,17 @@ town and the distance to its boundary, for example "2.1 mi from Kenly". The **Un
 under the map switches every distance between km and miles. It's each player's own choice and is
 remembered between visits.
 
+## Categories
+In the lobby, **Categories** opens a menu of four kinds of place. Switch any of them on or off,
+and the choice combines with counties and Photo type:
+* **Interstates & highways**: on an interstate or US highway (US Census TIGER/Line roads).
+* **Towns & cities**: inside a city, town, village or named community's limits.
+* **Country roads**: outside any town and off the main highways.
+* **Middle of nowhere**: like country roads, but at least 8 km (5 mi) from the nearest town.
+
+`tools/annotate_categories.py` assigns these. Use `--road-types IUS` to also count numbered NC
+routes as highways.
+
 ## Hiding the boards
 The **Boards** button under the map hides or shows the status, score and info boards so they
 don't block the photo. It's each player's own setting and is remembered between visits.

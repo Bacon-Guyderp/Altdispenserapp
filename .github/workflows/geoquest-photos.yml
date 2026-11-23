@@ -80,6 +80,8 @@ jobs:
         run: python balance_counties.py --max-per-county 200
       - name: Name each place's real town (US Census town boundaries)
         run: python annotate_towns.py
+      - name: Sort places into categories (highways, towns, country roads, middle of nowhere)
+        run: python annotate_categories.py
       - name: Download + resize photos
         env:
           MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}

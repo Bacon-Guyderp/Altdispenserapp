@@ -24,7 +24,7 @@ public class GeoQuestWorldBuilder : EditorWindow
     const string Root = "Assets/GeoQuest";
     const string Gen = Root + "/Generated";
 
-    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source, kind, town; public float town_km = -1f; }
+    [Serializable] class Loc { public int id; public float lat, lon; public string title, country, iso, author, license, page, src, file, source, kind, town, cat; public float town_km = -1f; }
     [Serializable] class Bounds { public float min_lon = -84.7f, max_lon = -75.1f, min_lat = 33.25f, max_lat = 37.15f; }
     [Serializable] class LocFile { public string region; public Bounds bounds; public float score_km; public Loc[] locations; }
 
@@ -215,7 +215,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         var quad = Prim(PrimitiveType.Quad, "Map", mapRoot, Vector3.zero, new Vector3(W, H, 1), mapMat, false);
         var mapCol = quad.AddComponent<BoxCollider>();
         mapCol.size = new Vector3(1, 1, 0.02f);
-        Prim(PrimitiveType.Cube, "Frame", mapRoot, new Vector3(0, -0.2f, 0.025f), new Vector3(W + 0.08f, H + 0.6f, 0.03f), cFrame, false);
+        Prim(PrimitiveType.Cube, "Frame", mapRoot, new Vector3(0, -0.28f, 0.025f), new Vector3(W + 0.08f, H + 0.76f, 0.03f), cFrame, false);
         Prim(PrimitiveType.Cylinder, "Leg", root.transform, new Vector3(0, 0.45f, 0.95f), new Vector3(0.08f, 0.45f, 0.08f), cFrame, false);
         var pinRoot = new GameObject("Pins").transform;
         pinRoot.SetParent(mapRoot, false);
@@ -337,6 +337,42 @@ public class GeoQuestWorldBuilder : EditorWindow
         menu.offMaterial = cRowOff;
         mgr.countyMenu = menu;
         var countiesBtn = Button("Counties", mapRoot, Bp(0.585f, -0.26f), new Vector3(0.63f, 0.1f, 0.05f), cGo, fontMat, menu, nameof(GeoCountyMenu.ToggleOpen));
+
+        // ---- categories menu (same spot as the county menu; opening one closes the other)
+        var catRoot = new GameObject("CategoryMenu").transform;
+        catRoot.SetParent(root.transform, false);
+        catRoot.localPosition = menuRoot.localPosition;
+        catRoot.localRotation = menuRoot.localRotation;
+        var catMenu = catRoot.gameObject.AddComponent<GeoCategoryMenu>();
+        Setup(catMenu);
+        var catPanel = new GameObject("Panel").transform;
+        catPanel.SetParent(catRoot, false);
+        Prim(PrimitiveType.Quad, "Background", catPanel, new Vector3(0, 0, 0.02f), new Vector3(1.2f, 1.0f, 1), cBoard, false);
+        var catTitle = Text("Title", catPanel, new Vector3(0, 0.38f, 0), new Vector2(1.1f, 0.13f), 0.65f, fontMat, "CATEGORIES");
+        var catLabels = new TextMeshPro[4];
+        var catVisuals = new Renderer[4];
+        for (int k = 0; k < 4; k++)
+        {
+            var row = Button("Category " + k, catPanel, new Vector3(0, 0.2f - k * 0.13f, -0.03f), new Vector3(1.05f, 0.11f, 0.04f), cRowOn, fontMat, catMenu, "Row" + k);
+            var rowUdon = Backing(row.GetComponent<GeoButton>());
+            if (rowUdon != null) rowUdon.interactText = "On / off";
+            catVisuals[k] = row.transform.Find("Visual").GetComponent<Renderer>();
+            catLabels[k] = row.GetComponentInChildren<TextMeshPro>();
+        }
+        Button("All", catPanel, new Vector3(-0.27f, -0.38f, -0.03f), new Vector3(0.4f, 0.11f, 0.04f), cGo, fontMat, catMenu, nameof(GeoCategoryMenu.All));
+        Button("Close", catPanel, new Vector3(0.27f, -0.38f, -0.03f), new Vector3(0.4f, 0.11f, 0.04f), cBtn, fontMat, catMenu, nameof(GeoCategoryMenu.Close));
+        catMenu.game = mgr;
+        catMenu.panel = catPanel.gameObject;
+        catMenu.countyMenu = menu;
+        catMenu.titleText = catTitle;
+        catMenu.rowLabels = catLabels;
+        catMenu.rowVisuals = catVisuals;
+        catMenu.onMaterial = cRowOn;
+        catMenu.offMaterial = cRowOff;
+        menu.categoryMenu = catMenu;
+        mgr.categoryMenu = catMenu;
+        mgr.categoryNames = new[] { "Interstates & highways", "Towns & cities", "Country roads", "Middle of nowhere" };
+        var categoriesBtn = Button("Categories", mapRoot, Bp(0.585f, -0.39f), new Vector3(0.63f, 0.1f, 0.05f), cGo, fontMat, catMenu, nameof(GeoCategoryMenu.ToggleOpen));
         var nextBtn = Button("Next round", mapRoot, Bp(0.42f), big, cGo, fontMat, mgr, nameof(GeoGameManager.NextRound));
         var lobbyBtn = Button("Quit to lobby", mapRoot, Bp(0.75f), big, cWarn, fontMat, mgr, nameof(GeoGameManager.BackToLobby));
 
@@ -451,7 +487,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.statusText = status;
         mgr.scoreboardText = score;
         mgr.infoText = info;
-        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn, countiesBtn };
+        mgr.lobbyObjects = new[] { startBtn, roundsBtn, timerBtn, modeBtn, countiesBtn, categoriesBtn };
         mgr.photoScreen = screen.transform;
         mgr.screenMaterial = screenMat;
         mgr.screenHeight = 5.4f;
@@ -467,6 +503,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.credits = new string[locs.Length];
         mgr.kinds = new int[locs.Length];
         mgr.townKm = new float[locs.Length];
+        mgr.locCat = new int[locs.Length];
         string baseUrl = imageBaseUrl.Trim();
         if (!baseUrl.EndsWith("/")) baseUrl += "/";
         for (int i = 0; i < locs.Length; i++)
@@ -478,6 +515,7 @@ public class GeoQuestWorldBuilder : EditorWindow
             bool hasTown = !string.IsNullOrEmpty(l.town) && l.town_km >= 0f;
             mgr.titles[i] = hasTown ? l.town : (l.title ?? "");
             mgr.townKm[i] = hasTown ? l.town_km : -1f;
+            mgr.locCat[i] = l.cat == "highway" ? 0 : l.cat == "town" ? 1 : l.cat == "country" ? 2 : l.cat == "remote" ? 3 : -1;
             mgr.countries[i] = l.country ?? "";
             mgr.kinds[i] = l.kind == "flat" ? 1 : 0;
             mgr.credits[i] = (l.author ?? "Unknown") + " (" + l.license + "), " + (string.IsNullOrEmpty(l.source) ? "Wikimedia Commons" : l.source);
@@ -925,7 +963,7 @@ public class GeoQuestWorldBuilder : EditorWindow
     // ------------------------------------------------------------------ UdonSharp glue (reflection keeps this working across U# versions)
 
     static readonly string[] Scripts = { "GeoGameManager", "MapBoard", "PlayerGuess", "GeoButton",
-                                         "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV", "GeoCountyMenu" };
+                                         "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV", "GeoCountyMenu", "GeoCategoryMenu" };
 
     static bool EnsureProgramAssets()
     {

@@ -18,6 +18,7 @@ public class GeoCountyMenu : UdonSharpBehaviour
     public Renderer[] rowVisuals;
     public GameObject[] rowObjects;
     public Material onMaterial, offMaterial;
+    public GeoCategoryMenu categoryMenu;   // closed when this opens (they share a spot)
 
     private int _page;
     private const int PerPage = 20;
@@ -43,6 +44,7 @@ public class GeoCountyMenu : UdonSharpBehaviour
             return;
         }
         bool open = !panel.activeSelf;
+        if (open && categoryMenu != null) categoryMenu.Close();
         panel.SetActive(open);
         game.ShowNotice(open ? "Pick counties on the menu above the map. Press <b>Close</b> when done." : "");
         Refresh();
