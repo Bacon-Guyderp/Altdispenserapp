@@ -44,6 +44,15 @@ bn_train|All aboard the old steam train! Watch out for train robbers! They're ac
 bonetones_1|Doo wop, doo wop, doo wop.
 bonetones_2|We're the Bone Tones!
 bonetones_3|Shoo be doo wah. Oooooh!
+cb_convict|Twenty years of digging with a spoon. Freedom at last! ...Wait. Why is it so cozy in here?
+cb_cooking|Channel seven, the cooking show. Today we're making a getaway.
+cb_cowboy|Channel four. Cowboys! Yee haw! Bang, bang! ...I'm getting very tired.
+cb_dance|Channel nine, the late night dance party! Faster! Faster! Please, change the channel.
+cb_news|Channel two, the news. A prisoner has escaped. Nobody knows where. Especially not this newsreader.
+cb_plaque|Cellbound. Nineteen fifty five. Directed by Tex Avery and Michael Lah, for M G M. A convict tunnels out of prison, and comes up inside the warden's television set.
+cb_spoon|The spoon. Worn down from years of digging. Now it's a very, very small spoon.
+cb_warden|Escaped? Nonsense. Nobody gets out of my prison. Now, where's the remote?
+cb_wife|Ooh, the picture's so clear tonight! It's almost like he's really in there.
 cf_1|Corn flakes. The only breakfast that's scared of milk.
 cf_2|I'd tell you a corn flake joke, but it's a bit corny. And flaky. And soggy by the end.
 cf_3|What do you call a corn flake that won't stay in the bowl? A cereal escapist.

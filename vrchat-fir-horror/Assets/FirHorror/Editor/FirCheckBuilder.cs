@@ -226,6 +226,7 @@ public static class FirCheckBuilder
         BuildBoone(root);
         BuildDachshunds(root);
         BuildExtremeChristmas(root);
+        BuildCellbound(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1973,7 +1974,7 @@ public static class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel", "FirCodeLock", "FirBoost", "FirResident", "FirInkTurf" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel", "FirCodeLock", "FirBoost", "FirResident", "FirInkTurf", "FirChannels" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
@@ -3415,6 +3416,118 @@ public static class FirCheckBuilder
         ComboAct(console, 0, 9, "The Twelve Bones of Christmas", new[] { "Santa Bones", "Jingle", "Dasher Bones", "Snowbones" },
                  new[] { "xmas_1", "xmas_2", "xmas_3", "xmas_4", "xmas_5" }, new[] { 0, 1, 2, 3, -1 }, 3f);
         report.Add("Extremely Christmas: an enormous tree, a train round it you can ride, Santa's throne, the workshop, a sleigh and reindeer, a snowman, cocoa, a gingerbread house, ten giant candy canes, 120 wall lights, snow, a carol; 4 gags");
+    }
+
+    // =================================================================== the Cellbound room (a tribute to the 1955 cartoon by Tex Avery and Michael Lah)
+
+    static void Stripes(Transform torso)
+    {
+        for (int k = 0; k < 5; k++) Prim(PrimitiveType.Cube, "Stripe", torso, new Vector3(0, -0.05f + k * 0.11f, 0), new Vector3(0.42f, 0.055f, 0.3f), M(k % 2 == 0 ? "Black" : "CaneWhite"));
+    }
+
+    static void Pose(Transform[] r, int i, float x, float y, float z) { r[i].localRotation = r[i].localRotation * Quaternion.Euler(x, y, z); }
+
+    static void BuildCellbound(Transform root)
+    {
+        var g = AreaShell(root, "Cellbound", 2050f, 2090f, 20f, 50f, 5f, "Concrete", "WallDark", "Ceiling",
+                          "CELLBOUND (1955)", new Color(0.95f, 0.85f, 0.5f), "a tribute room to the cartoon by Tex Avery and Michael Lah: the long way out of prison", "CELLBOUND (1955)");
+        // the plaque at the door
+        var pl = Group(g, "The plaque", new Vector3(2064f, 0, 23.5f));
+        Box(pl, "Stand", new Vector3(0, 0.6f, 0), new Vector3(1.4f, 1.2f, 0.2f), M("DeskWood"));
+        Box(pl, "Brass", new Vector3(0, 1.05f, -0.11f), new Vector3(1.3f, 0.7f, 0.02f), M("Brass"), false);
+        Text("PlaqueText", pl, new Vector3(0, 1.05f, -0.125f), Face(Vector3.back), new Vector2(1.2f, 0.65f), 0.07f,
+             "<b>CELLBOUND</b> (MGM, 1955)\ndirected by Tex Avery and Michael Lah\n\na convict spends years tunnelling out of prison\n...and comes up inside the warden's television set\n\n<size=80%>(press to hear more)</size>").color = new Color(0.2f, 0.12f, 0.05f);
+        pl.gameObject.AddComponent<BoxCollider>().size = new Vector3(1.4f, 1.6f, 0.4f);
+        pl.gameObject.GetComponent<BoxCollider>().center = new Vector3(0, 0.8f, 0);
+        var pcap = Text("Caption", pl, new Vector3(0, 2.0f, -0.12f), Face(Vector3.back), new Vector2(3f, 0.6f), 0.11f, "");
+        pcap.color = Color.white;
+        var ps = Add<FirSay>(pl.gameObject);
+        ps.line = CaptionFor("cb_plaque"); ps.caption = pcap;
+        ps.voice = Src(pl, new Vector3(0, 1f, 0), Clip("Cell/cb_plaque"), false, 1f, 1f, 10f, false);
+        SetInteract(ps, "Read the plaque", 2.5f);
+        // the cell block (west): a cell with its door left open, the convict, a hole, the spoon
+        Box(g, "CellFloor", new Vector3(2057f, 0.005f, 42f), new Vector3(10f, 0.01f, 12f), M("Stone"), false);
+        for (int k = 0; k < 21; k++)
+        {
+            float bx = 2052f + k * 0.5f;
+            if (bx > 2059.6f && bx < 2061.4f) continue;   // the open door
+            Box(g, "Bar", new Vector3(bx, 1.5f, 36f), new Vector3(0.06f, 3f, 0.06f), M("Metal"));
+        }
+        Box(g, "BarTop", new Vector3(2057f, 3f, 36f), new Vector3(10f, 0.1f, 0.1f), M("Metal"), false);
+        var door = Group(g, "Cell door", new Vector3(2059.6f, 0, 36f));
+        door.localRotation = Quaternion.Euler(0, -70f, 0);
+        for (int k = 0; k < 4; k++) Prim(PrimitiveType.Cube, "DoorBar", door, new Vector3(0.2f + k * 0.45f, 1.5f, 0), new Vector3(0.06f, 3f, 0.06f), M("Metal"));
+        Box(g, "CellWallE", new Vector3(2062f, 1.5f, 42f), new Vector3(0.2f, 3f, 12f), M("BrickWall"));
+        Box(g, "CellWallTop", new Vector3(2057f, 4f, 36f), new Vector3(10f, 2f, 0.2f), M("BrickWall"), false);
+        Box(g, "Bunk", new Vector3(2053f, 0.45f, 45f), new Vector3(1.2f, 0.15f, 2.4f), M("DeskWood"));
+        DPrim(PrimitiveType.Cylinder, "Hole", g, new Vector3(2057f, 0.012f, 44f), new Vector3(1.4f, 0.01f, 1.4f), M("Black"));
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Sphere, "Dirt", g, new Vector3(2055.4f + (k % 3) * 0.3f, 0.15f, 45.5f + (k / 3) * 0.4f), new Vector3(0.8f, 0.4f, 0.7f), M("Dirt"));
+        Text("Tally", g, new Vector3(2052.1f, 1.8f, 41f), Face(Vector3.right), new Vector2(3f, 1f), 0.16f, "IIII IIII IIII IIII IIII IIII IIII IIII\nIIII IIII IIII IIII IIII IIII IIII IIII\nIIII IIII IIII (days dug)").color = new Color(0.85f, 0.85f, 0.85f);
+        Folk(g, "Convict 4711", "#e0e0e0", 18, new Vector3(2057.8f, 0, 42.5f), 210f, "Cell/cb_convict");
+        if (rigs.TryGetValue("Convict 4711", out var cv)) { Stripes(cv[1]); Prim(PrimitiveType.Cube, "Spoon", cv[6], new Vector3(0, -0.3f, 0.05f), new Vector3(0.03f, 0.2f, 0.03f), M("Metal")); }
+        DPrim(PrimitiveType.Sphere, "IronBall", g, new Vector3(2058.6f, 0.2f, 43.4f), Vector3.one * 0.4f, M("Black"));
+        var spoon = Gg(g, "The spoon", new Vector3(2055f, 0, 38f), 0f, "Cell/cb_spoon", 1f, 1.4f);
+        Box(spoon.transform, "Shelf", new Vector3(0, 0.45f, 0), new Vector3(0.6f, 0.9f, 0.6f), M("Black"), false);
+        var sp = Group(spoon.transform, "Spoon", new Vector3(0, 1.1f, 0));
+        Prim(PrimitiveType.Cube, "Handle", sp, Vector3.zero, new Vector3(0.03f, 0.18f, 0.02f), M("Metal"));
+        Prim(PrimitiveType.Sphere, "Bowl", sp, new Vector3(0, 0.11f, 0), new Vector3(0.05f, 0.06f, 0.02f), M("Metal"));
+        spoon.target = sp; spoon.spin = 180f; spoon.moveBy = new Vector3(0, 0.15f, 0);
+        // the tunnel: crawl in at the hole, come out behind the warden's TV
+        var tun = Group(g, "The tunnel", Vector3.zero);
+        for (int k = 0; k < 12; k++) DPrim(PrimitiveType.Cube, "Tunnel", tun, new Vector3(2057f + k * 2f, 0.008f, 44f + k * 0.2f), new Vector3(2.1f, 0.01f, 0.7f), M("Dirt"));
+        var behindTv = Marker(g, "Behind the TV", new Vector3(2080.5f, 0.05f, 46.5f), 180f);
+        TeleportButton(g, "Crawl into the tunnel", new Vector3(2057f, 0.5f, 42.9f), Vector3.back, behindTv, new Vector3(0.9f, 0.3f, 0.08f));
+        // the warden's living room (east)
+        Box(g, "Partition", new Vector3(2066f, 2.5f, 39f), new Vector3(0.2f, 5f, 22f), M("Wall"));
+        Box(g, "Wallpaper", new Vector3(2078f, 2.5f, 49.85f), new Vector3(24f, 5f, 0.1f), M("Wall"), false);
+        Box(g, "Carpet", new Vector3(2078f, 0.006f, 40f), new Vector3(14f, 0.01f, 12f), M("Rug"), false);
+        Box(g, "Couch", new Vector3(2078f, 0.25f, 34f), new Vector3(3.4f, 0.5f, 1f), M("Seat"));
+        Box(g, "CouchBack", new Vector3(2078f, 0.7f, 33.4f), new Vector3(3.4f, 0.9f, 0.2f), M("Seat"), false);
+        Box(g, "Armchair", new Vector3(2072f, 0.25f, 38f), new Vector3(1.1f, 0.5f, 1.1f), M("Curtain"));
+        PendantLamp(g, new Vector3(2078f, 5f, 40f), 1.2f);
+        Folk(g, "The Warden", "#90a4ae", 20, new Vector3(2072.5f, 0, 40f), 135f, "Cell/cb_warden");
+        if (rigs.TryGetValue("The Warden", out var wd)) Prim(PrimitiveType.Cylinder, "Cap", wd[2], new Vector3(0, 0.14f, 0.02f), new Vector3(0.28f, 0.06f, 0.28f), M("PoliceBlue"));
+        Folk(g, "Mrs Warden", "#f48fb1", 4, new Vector3(2080f, 0, 35.5f), 0f, "Cell/cb_wife");
+        // the TV: a big wooden set; press the remote to change the channel
+        var tv = Group(g, "The TV", new Vector3(2078f, 0, 46f));
+        Box(tv, "Cabinet", new Vector3(0, 0.9f, 0), new Vector3(2.4f, 1.8f, 1.4f), M("DoorWood"));
+        Box(tv, "Bezel", new Vector3(0, 1.1f, -0.71f), new Vector3(1.8f, 1.3f, 0.02f), M("Black"), false);
+        foreach (float kx in new[] { 0.95f, 1.1f }) DPrim(PrimitiveType.Cylinder, "Knob", tv, new Vector3(kx - 0.05f, 0.4f, -0.72f), new Vector3(0.1f, 0.02f, 0.1f), M("Brass"), Quaternion.Euler(90, 0, 0));
+        DPrim(PrimitiveType.Cylinder, "Antenna", tv, new Vector3(-0.3f, 2.2f, 0), new Vector3(0.02f, 0.45f, 0.02f), M("Metal"), Quaternion.Euler(0, 0, 25));
+        DPrim(PrimitiveType.Cylinder, "Antenna", tv, new Vector3(0.3f, 2.2f, 0), new Vector3(0.02f, 0.45f, 0.02f), M("Metal"), Quaternion.Euler(0, 0, -25));
+        var snow = Group(tv, "Static", new Vector3(0, 1.1f, -0.72f));
+        Prim(PrimitiveType.Cube, "Snow", snow, Vector3.zero, new Vector3(1.6f, 1.1f, 0.01f), M("Mist"));
+        var screen = Group(tv, "Screen", new Vector3(0, 0.55f, -0.6f));
+        string[] chName = { "News", "Cowboys", "Cooking", "Dance" };
+        string[] chClip = { "cb_news", "cb_cowboy", "cb_cooking", "cb_dance" };
+        var chans = new GameObject[4]; var chLines = new AudioSource[4]; var chCaps = new string[4];
+        for (int c = 0; c < 4; c++)
+        {
+            var ch = Group(screen, "Channel " + chName[c], Vector3.zero);
+            Prim(PrimitiveType.Cube, "Backdrop", ch, new Vector3(0, 0.55f, -0.11f), new Vector3(1.6f, 1.1f, 0.01f), M(new[] { "InkBlue", "PixelSand", "CaneWhite", "GemPurple" }[c]));
+            var r = Mini(ch, "Convict on " + chName[c], new Vector3(0, -0.05f, 0.1f), 180f, 0.55f, "#e0e0e0");
+            Stripes(r[1]);
+            if (c == 0) { Prim(PrimitiveType.Cube, "Desk", ch, new Vector3(0, 0.2f, -0.2f), new Vector3(1f, 0.4f, 0.1f), M("DeskWood")); Pose(r, 3, -60, 0, 0); Pose(r, 4, -60, 0, 0); Prim(PrimitiveType.Cube, "Paper", r[6], new Vector3(0, -0.28f, 0.1f), new Vector3(0.25f, 0.18f, 0.01f), M("Paper")); }
+            if (c == 1) { Prim(PrimitiveType.Cylinder, "Hat", r[2], new Vector3(0, 0.15f, 0), new Vector3(0.5f, 0.03f, 0.5f), M("Trunk")); Pose(r, 4, -90, 0, 0); Pose(r, 3, 0, 0, -40); Pose(r, 7, -20, 0, 0); }
+            if (c == 2) { Prim(PrimitiveType.Cylinder, "ChefHat", r[2], new Vector3(0, 0.2f, 0), new Vector3(0.25f, 0.2f, 0.25f), M("CaneWhite")); Prim(PrimitiveType.Cylinder, "Pot", ch, new Vector3(0, 0.3f, -0.2f), new Vector3(0.4f, 0.2f, 0.4f), M("Metal")); Pose(r, 4, -70, 0, 0); Pose(r, 6, -40, 0, 0); }
+            if (c == 3) { Pose(r, 3, -160, 0, 0); Pose(r, 4, -160, 0, 0); Pose(r, 7, -40, 0, 0); Pose(r, 1, 0, 0, 12); }
+            chans[c] = ch.gameObject;
+            chLines[c] = Src(tv, new Vector3(0, 1.1f, -0.8f), Clip("Cell/" + chClip[c]), false, 1f, 1f, 14f, false);
+            chCaps[c] = CaptionFor(chClip[c]);
+        }
+        Box(g, "SideTable", new Vector3(2074f, 0.35f, 42f), new Vector3(0.6f, 0.7f, 0.6f), M("DeskWood"));
+        var remote = Group(g, "The remote", new Vector3(2074f, 0.72f, 42f));
+        Prim(PrimitiveType.Cube, "Remote", remote, new Vector3(0, 0.03f, 0), new Vector3(0.12f, 0.05f, 0.3f), M("Black"));
+        Prim(PrimitiveType.Cube, "Button", remote, new Vector3(0, 0.06f, 0.08f), new Vector3(0.05f, 0.02f, 0.05f), M("GlowRed"));
+        remote.gameObject.AddComponent<BoxCollider>().size = new Vector3(0.5f, 0.3f, 0.6f);
+        Text("RemoteSign", g, new Vector3(2074f, 1.1f, 41.69f), Face(Vector3.back), new Vector2(1f, 0.2f), 0.07f, "<b>REMOTE</b> (press)").color = Color.white;
+        var fc = Add<FirChannels>(remote.gameObject);
+        fc.channels = chans; fc.lines = chLines; fc.captions = chCaps; fc.staticScreen = snow.gameObject;
+        fc.caption = Text("TVCaption", g, new Vector3(2078f, 2.4f, 45.25f), Face(Vector3.back), new Vector2(3.2f, 0.5f), 0.12f, "");
+        fc.caption.color = Color.white;
+        fc.click = Src(remote, Vector3.zero, Clip("switch"), false, 1f, 1f, 6f, false);
+        SetInteract(fc, "Change the channel", 2.5f);
+        report.Add("Cellbound (1955): a tribute room with a plaque, the cell (open door, spoon, tally marks, the hole), a tunnel to crawl through, and the warden's living room with a TV the convict is hiding in (4 channels); 3 voiced skeletons and 1 gag");
     }
 
     // =================================================================== the later Station areas: shared helpers

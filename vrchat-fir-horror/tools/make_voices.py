@@ -617,6 +617,15 @@ AREAS2 = [
     ("Xmas/xm_lights", "mb-us2", 140, 40, 1.0, "narr", 'You turned on the lights! All forty thousand of them! Somewhere, the power company is crying.'),
     ("Xmas/xm_present", "mb-us2", 140, 40, 1.0, "narr", "You opened a present! It's another present! Inside that, another present! It's presents all the way down."),
     ("Xmas/xm_tree", "mb-us2", 140, 40, 1.0, "narr", "The tree is so big, it has its own weather. It's snowing on the angel."),
+    ("Cell/cb_convict", "mb-us2", 125, 30, 0.9, "skel", "Twenty years of digging with a spoon. Freedom at last! ...Wait. Why is it so cozy in here?"),
+    ("Cell/cb_warden", "mb-us2", 110, 15, 0.84, "skel", "Escaped? Nonsense. Nobody gets out of my prison. Now, where's the remote?"),
+    ("Cell/cb_wife", "mb-us1", 150, 70, 1.08, "skel", "Ooh, the picture's so clear tonight! It's almost like he's really in there."),
+    ("Cell/cb_plaque", "mb-us2", 135, 40, 1.0, "narr", "Cellbound. Nineteen fifty five. Directed by Tex Avery and Michael Lah, for M G M. A convict tunnels out of prison, and comes up inside the warden's television set."),
+    ("Cell/cb_spoon", "mb-us2", 140, 40, 1.0, "narr", "The spoon. Worn down from years of digging. Now it's a very, very small spoon."),
+    ("Cell/cb_news", "mb-us3", 150, 45, 1.0, "radio", "Channel two, the news. A prisoner has escaped. Nobody knows where. Especially not this newsreader."),
+    ("Cell/cb_cowboy", "mb-us3", 160, 50, 1.05, "radio", "Channel four. Cowboys! Yee haw! Bang, bang! ...I'm getting very tired."),
+    ("Cell/cb_cooking", "mb-us3", 150, 55, 1.05, "radio", "Channel seven, the cooking show. Today we're making a getaway."),
+    ("Cell/cb_dance", "mb-us3", 175, 60, 1.1, "radio", "Channel nine, the late night dance party! Faster! Faster! Please, change the channel."),
 ]
 SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
 COMBO += [

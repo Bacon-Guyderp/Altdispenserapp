@@ -241,6 +241,14 @@ More original takes on favourite genres, plus two real places. Each has voiced, 
   the workshop, a sleigh and reindeer, a snowman, cocoa, a gingerbread house, giant candy canes, far too
   many lights (and a switch for more), presents all the way down, snow, and a carol on the console.
 
+## Cellbound (1955): a tribute room
+
+A room dedicated to the MGM cartoon by Tex Avery and Michael Lah, built from original skeleton scenes
+(no frames or artwork from the film). A plaque reads out what the film is. The cell has its door left open,
+tally marks, a hole and the spoon that dug it. Crawl into the tunnel and you come out behind the warden's
+TV, in his living room, where the escaped convict is hiding inside the set. Press the remote and he has to
+act out whatever is on: the news, a cowboy show, a cooking show and a dance party (per player).
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -352,6 +360,7 @@ python make_unitypackage.py
   * FirBoost: the Speed Zone's boost pads, springs and rings
   * FirResident: the Marrow Arms residents' daily routines
   * FirInkTurf: the Ink Plaza's turf
+  * FirChannels: the Cellbound room's TV
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.

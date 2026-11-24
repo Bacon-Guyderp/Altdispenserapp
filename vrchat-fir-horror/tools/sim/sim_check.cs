@@ -20,6 +20,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "apart") { ApartTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "batch2") { Batch2Tests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "cell") { CellTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -232,6 +233,7 @@ public static class SimCheck {
     LaterTests(A, B);
     ApartTests(A, B);
     Batch2Tests(A, B);
+    CellTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -960,6 +962,43 @@ public static class SimCheck {
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
   }
 
+  static void CellTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Cellbound (1955)");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "CELLBOUND (1955)")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2070f, 0, 22f)) < 0.3f, "the Station sends Alice to the Cellbound room");
+    Check(Sim.BuildLog.Any(l => l.Contains("Cellbound (1955): a tribute room")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Cellbound")) ?? "no Cellbound in the build log"));
+    var plaque = All<FirSay>(A).First(x => x.name == "The plaque");
+    Sim.Press(A, plaque); Sim.Run(1f);
+    Check(Plain(plaque.caption.text).Contains("Tex Avery and Michael Lah"), "the plaque: \"" + Plain(plaque.caption.text) + "\"");
+    string what;
+    Check(!Blocked(A, new[] { new Vector3(2064f, 0, 30f), new Vector3(2060.5f, 0, 34f), new Vector3(2060.5f, 0, 40f) }, out what), "the cell door is open: walk in" + (what != "" ? " | " + what : ""));
+    A.player.pos = new Vector3(2057f, 0.05f, 41.5f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Crawl into the tunnel")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2080.5f, 0, 46.5f)) < 0.3f, "the tunnel comes out behind the warden's TV");
+    var tvA = All<FirChannels>(A)[0]; var tvB = All<FirChannels>(B)[0];
+    Check(tvA.staticScreen.activeSelf && tvA.channels.All(c => !c.activeSelf), "the TV starts on static");
+    var seen = new List<string>();
+    for (int k = 0; k < 4; k++) {
+      Sim.Events.Clear();
+      Sim.Press(A, tvA); Sim.Run(0.6f);
+      int c = tvA.Channel();
+      bool ok = tvA.channels[c].activeSelf && !tvA.staticScreen.activeSelf && tvA.channels.Count(x => x.activeSelf) == 1 && Sim.Events.Any(e => e.Contains("sound:") && e.Contains(tvA.lines[c].clip.name)) && Plain(tvA.caption.text).Length > 20;
+      seen.Add((ok ? "" : "BAD ") + tvA.channels[c].name);
+    }
+    Check(seen.All(x => !x.StartsWith("BAD")) && seen.Distinct().Count() == 4, "the remote flicks through 4 channels, the convict acting out each: " + string.Join(", ", seen));
+    Sim.Press(A, tvA); Sim.Run(0.6f);
+    Check(tvA.Channel() == 0 && tvB.staticScreen.activeSelf, "...then round again (and Bob's TV is his own: still static)");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("cb_") && r.caption.Length > 5);
+    Check(voiced == 3, voiced + " voiced, captioned skeletons: the convict, the warden and his wife");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2045f && g.transform.position.x < 2095f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 1, gagOk + " of " + gagN + " gags (the spoon)" + string.Concat(gagBad.Select(x => " | " + x)));
+    A.player.pos = new Vector3(2070f, 0.05f, 22f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 2045f)); Sim.Run(1f);
+    Check(Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "...and back to the lobby");
+  }
+
   static void Batch2Tests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The second batch of Station stops");
     var stops = new[] { new { t = "CRYSTAL COVE", x = 1055f }, new { t = "CRITTER MEADOW", x = 1125f }, new { t = "THE SHADOW BELOW", x = 1180f }, new { t = "INK PLAZA", x = 1310f },
@@ -1051,7 +1090,7 @@ public static class SimCheck {
     Check(carol != null && carol.lines.Length == 5 && carol.lineText.All(t => t.Length > 5), "the carol is on the console, captioned");
     // every new gag
     int gagN; var gagBad = new List<string>();
-    int gagOk = RunGags(B, g => g.transform.position.x > 1020f, out gagN, gagBad);
+    int gagOk = RunGags(B, g => g.transform.position.x > 1020f && g.transform.position.x < 2040f, out gagN, gagBad);
     Check(gagOk == gagN && gagN == 31, gagOk + " of " + gagN + " new gags played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
   }
 
