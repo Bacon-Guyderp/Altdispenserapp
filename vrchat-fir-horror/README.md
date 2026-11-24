@@ -361,6 +361,27 @@ It's an original take on the life-sim genre, and none of it is scary.
 * **Captions everywhere:** every voiced skeleton shows what it says under its name while it talks, and
   combo acts show each line on their button (`Data/captions.txt`, written by `make_voices.py --captions`).
 
+## The expansion
+
+Every Station area has a new wing through a doorway in its far wall (and a shortcut button beside its
+entrance; inside each wing, buttons go back to the entrance and the lobby). Each wing has 3 new voiced,
+captioned people and 3 new voiced gags, and many have something to collect. 42 wings in all
+(`Editor/FirExpansion*.cs`, voices in `tools/make_voices.py` AREAS3, `Audio/More`):
+
+The Grand Ballroom (Inn) · Loop Canyon (Speed Zone) · Cloud Kingdom (Platform World) · The Outer Banks (North
+Carolina) · Backstage (Digital Circus) · The Writers' Room (Skits) · The Cereal Aisle (Corn Flakes) · The Moon
+Temple (Crystal Cove) · Critter Cave · The School Library (Shadow Below) · Ink Tower Stage · The Reactor Core
+(Dread Depths) · The Sunken Shrine (Hero's Glade) · The Great Hive (Honeycomb Hollow) · The Dragon Hatchery ·
+The Training Room (Hero Tower) · The Rooftops (Gloom City) · The Boardwalk Arcade (Myrtle Beach) · The Mountain
+Trail (Boone) · The Dog Park (Dachshunds) · The Toy Workshop (Extremely Christmas) · The Warden's Office
+(Cellbound) · The Fan Art Gallery, The Pool Party, The Road Trip (the fan rooms; unofficial tributes, fans and
+crew only) · The Whisper Room (Scream Room) · The Rocket Garage (Inventors' Backyard) · The Cafeteria (Notebook
+School) · The Kelp Forest (Seabed Town) · The Storm's Edge (Battle Island) · Containment Wing B (Site Bone, three
+new anomalies) · The Invention Shed (Garage) · The Wave Pool and Lazy River (Water Park) · Behind the Scenes
+(Chris and Tripp; crew and a fan) · The Midway (Boneanza Park) · Evidence and Interrogation (Precinct 206) ·
+The Kitchen (Pine Pete's) · The Old Ruins (Pixel Hollow) · The Observation Deck (Test Annex) · The Mines
+(Blocklands) · The Mead Hall (the Cold North, through a tunnel in the mountain) · The Deep Woods (Mystery Hut).
+
 ## The remaster
 
 Everything except the talking trees' models and the voices has been remastered:

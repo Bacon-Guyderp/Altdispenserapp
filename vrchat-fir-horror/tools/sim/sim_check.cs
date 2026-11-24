@@ -1029,7 +1029,7 @@ public static class SimCheck {
       bool inside = !Blocked(A, new[] { new Vector3(dx, 0, zw + 2.2f), new Vector3(dx, 0, zw + 5f) }, out what2);
       var home = All<FirTeleport>(A).FirstOrDefault(t => t.name == "Back to the entrance" && Mathf.Abs(t.transform.position.z - (zw + 0.35f)) < 0.1f && Mathf.Abs(t.transform.position.x - (cx + 3.4f)) < 0.1f);
       bool back = false;
-      if (home != null) { Sim.Press(A, home); Sim.Run(0.5f); back = Flat(A.player.pos, new Vector3(cx, 0, 22f)) < 0.4f; }
+      if (home != null) { Sim.Press(A, home); Sim.Run(0.5f); back = Flat(A.player.pos, new Vector3(b[5], 0, b[6])) < 0.4f; }
       if (there && door && inside && back) ok++; else bad.Add(wn.n + (there ? "" : " (shortcut missed)") + (door ? "" : " (doorway blocked: " + what + ")") + (inside ? "" : " (blocked inside: " + what2 + ")") + (back ? "" : " (no way back)"));
     }
     Check(ok == wings.Count, ok + " of " + wings.Count + " wings: the shortcut takes you in, the doorway walks back out, and a button takes you back to the entrance" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));

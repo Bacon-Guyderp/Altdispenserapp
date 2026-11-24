@@ -70,7 +70,7 @@ public static partial class FirCheckBuilder
         TeleportButton(ag, "To " + title, new Vector3(cx + 2.7f, 1.3f, 20.15f), Vector3.forward, arrive, new Vector3(1.6f, 0.3f, 0.1f));
         TeleportButton(g, "Back to the lobby", new Vector3(cx - 3.4f, 1.3f, zWall + 0.35f), Vector3.forward, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
         if (areaArrive != null) TeleportButton(g, "Back to the entrance", new Vector3(cx + 3.4f, 1.3f, zWall + 0.35f), Vector3.forward, areaArrive, new Vector3(1.2f, 0.3f, 0.1f));
-        wings.Add(new KeyValuePair<string, float[]>(area, new[] { x0, zWall, x1, z2, dx }));
+        wings.Add(new KeyValuePair<string, float[]>(area, new[] { x0, zWall, x1, z2, dx, areaArrive != null ? areaArrive.position.x : cx, areaArrive != null ? areaArrive.position.z : 22f }));
         wingNames.Add(title);
         return g;
     }

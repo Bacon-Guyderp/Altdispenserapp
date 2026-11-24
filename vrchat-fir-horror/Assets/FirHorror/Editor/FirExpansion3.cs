@@ -49,7 +49,7 @@ public static partial class FirCheckBuilder
     {
         float cx = 158f, z = 56f;
         var g = Wing(root, "Precinct 206", 140f, 176f, z, 20f, 4.2f, "Floor2", "Wall2", "Ceiling",
-                     "EVIDENCE AND INTERROGATION", new Color(0.9f, 0.9f, 0.6f), "everything here is evidence. including you. please don't touch yourself.", 166f);
+                     "EVIDENCE AND INTERROGATION", new Color(0.9f, 0.9f, 0.6f), "everything here is evidence. including you. please don't touch anything.", 154f);
         for (int k = 0; k < 4; k++)
         {
             Box(g, "Evidence shelf", V(143f, 1.2f, z + 3f + k * 4.2f), V(1.2f, 2.4f, 3.6f), M("Metal"));
