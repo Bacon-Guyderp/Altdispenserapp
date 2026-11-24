@@ -33,6 +33,7 @@ namespace UnityEngine {
     public GameObject gameObject { get { return go; } }
     public Transform transform { get { return go.transform; } }
     public T GetComponent<T>() where T : class { return go.GetComponent<T>(); }
+    public T GetComponentInParent<T>() where T : class { for (var t = go.transform; t != null; t = t.parent) { var c = t.gameObject.GetComponent<T>(); if (c != null) return c; } return null; }
     public T[] GetComponents<T>() where T : class { var r = new List<T>(); foreach (var c in go.comps) if (c is T) r.Add(c as T); return r.ToArray(); }
     public Component GetComponent(Type t) { foreach (var c in go.comps) if (t.IsInstanceOfType(c)) return c; return null; }
     public T[] GetComponentsInChildren<T>() where T : class { return go.GetComponentsInChildren<T>(false); }

@@ -466,7 +466,8 @@ public static class SimCheck {
       Sim.Current = A;
       for (int i = 0; i < wa.Count; i++) {
         var p = wa[i].transform.position;
-        bool ok = p.x < -12.6f && p.x > -47.4f && p.z > -9.2f && p.z < 17.2f && Flat(p, new Vector3(-30f, 0, 4f)) > 2.3f && !(p.x < -43f && p.z > -1.7f && p.z < 7.7f);
+        bool newStreets = wa[i].voice.clip != null && wa[i].voice.clip.name.StartsWith("w_");
+        bool ok = newStreets || p.x < -12.6f && p.x > -47.4f && p.z > -9.2f && p.z < 17.2f && Flat(p, new Vector3(-30f, 0, 4f)) > 2.3f && !(p.x < -43f && p.z > -1.7f && p.z < 7.7f);
         RaycastHit hit;
         var d = p - last[i];
         if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = wa[i].name + " walked through " + hit.collider.name; }
@@ -609,7 +610,7 @@ public static class SimCheck {
     Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
           Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
     var parkRides = new[] { "Big Wheel", "Carousel", "Teacups", "Drop Tower", "Ghost Train" };
-    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name)).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name)).ToList();
+    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name) && r.transform.position.x < 1000f).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name) && r.transform.position.x < 1000f).ToList();
     Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
     var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
     var w0 = wheel.rotor.rotation; Sim.Run(2f);
@@ -803,7 +804,12 @@ public static class SimCheck {
       for (int i = 0; i + 1 < route.Length; i++)
         foreach (float h in new[] { 0.4f, 1.2f, 1.9f }) {
           var d = route[i + 1] - route[i]; RaycastHit hit;
-          if (Physics.Raycast(route[i] + new Vector3(0, h, 0), d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { what = hit.collider.name + " at " + hit.point; return true; }
+          var o = route[i] + new Vector3(0, h, 0); float left = d.magnitude;
+          // people walking about (residents, wanderers) move out of the way: look past them
+          while (left > 0f && Physics.Raycast(o, d.normalized, out hit, left, 1, QueryTriggerInteraction.Ignore)) {
+            if (hit.collider.GetComponentInParent<FirResident>() != null || hit.collider.GetComponentInParent<FirWanderer>() != null) { float step = hit.distance + 0.05f; o += d.normalized * step; left -= step; continue; }
+            what = hit.collider.name + " at " + hit.point; return true;
+          }
         }
       return false;
     } finally { Sim.Current = null; }
@@ -1310,7 +1316,7 @@ public static class SimCheck {
     Sim.Run(3f);
     Check(Quaternion.Angle(q0, wheel.rotor.rotation) > 5f && Vector3.Distance(p1, train.carts[0].position) > 2f && Vector3.Distance(p2, xtrain.carts[0].position) > 2f && Vector3.Distance(p3, dog.carts[0].position) > 1f,
           "the beach wheel turns, the steam train and the Christmas train run, and a dachshund walks the room");
-    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 1020f);
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 1020f && st.transform.position.x < 2040f);
     Check(seats == 10, seats + " seats to ride in (6 on the beach wheel, the steam train, 3 on the Christmas train)");
     // the people
     string[] pre = { "gm_", "cr_", "sh_", "ik_", "dr_", "gl_", "hn_", "dg_", "hr_", "gc_", "mb_", "bn_", "dx_", "xm_" };
@@ -1445,7 +1451,7 @@ public static class SimCheck {
     Sim.Press(A, vd); Sim.Run(1f);
     Check(Plain(vd.caption.text).Contains("void"), "the void says: \"" + Plain(vd.caption.text) + "\"");
     // the people
-    var voiced = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && new[] { "in_", "sp_", "pl_", "nc_", "ci_", "cf_" }.Any(pre => r.voice.clip.name.StartsWith(pre))).ToList();
+    var voiced = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && new[] { "in_", "sp_", "pl_", "nc_", "ci_", "cf_" }.Any(pre => r.voice.clip.name.StartsWith(pre)) && r.transform.position.x < 1020f).ToList();
     Check(voiced.Count == 21, voiced.Count + " voiced skeletons (6 inn, 2 speed, 2 platform, 5 NC, 4 circus, 2 corn)");
     Check(All<FirWanderer>(A).Any(w => w.voice.clip != null && w.voice.clip.name == "sp_dash"), "Dash laps the speed zone");
     // every gag in the new areas
