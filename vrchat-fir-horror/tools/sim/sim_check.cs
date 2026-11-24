@@ -142,7 +142,7 @@ public static class SimCheck {
     Console.WriteLine("\n== The original gags (Bob)");
     int gagN; var gagBad = new List<string>();
     int gagOk = RunGags(B, g => g.transform.position.x < 555f, out gagN, gagBad);
-    Check(gagOk == gagN && gagN == 178, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 3 apartments + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+    Check(gagOk == gagN && gagN == 186, gagOk + " of " + gagN + " gags (53 original + 22 Bonetown + 5 apartments + 6 bigger-town + 20 park + 35 precinct + 12 pizzeria + 10 pixel + 8 lab + 5 north + 10 mystery) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
 
     Console.WriteLine("\n== The original skeleton routines and the RED SKELETON closet (Bob)");
     var sf = typeof(FirSkeletonGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
