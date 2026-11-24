@@ -612,7 +612,7 @@ public static class SimCheck {
     Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
           Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
     var parkRides = new[] { "Big Wheel", "Carousel", "Teacups", "Drop Tower", "Ghost Train" };
-    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name) && r.rotor.position.x < 1000f).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name) && r.rotor.position.x < 1000f).ToList();
+    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name) && (r.rotor == null || r.rotor.position.x < 1000f)).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name) && (r.rotor == null || r.rotor.position.x < 1000f)).ToList();
     Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
     var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
     var w0 = wheel.rotor.rotation; Sim.Run(2f);
