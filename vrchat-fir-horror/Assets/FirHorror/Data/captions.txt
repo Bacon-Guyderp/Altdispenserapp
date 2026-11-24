@@ -105,6 +105,12 @@ dx_skeleton|I'm a dachshund skeleton. I'm mostly ribs. Long, long ribs.
 dx_stairs|Dachshund versus stairs. The stairs are winning. The stairs always win.
 finale_1|We are the skeleton crew!
 finale_2|Thank you, good night!
+fl_admin|Free admin! You are now the admin of: the start of the room. Have fun!
+fl_costume|I'm not a flamingo. I'm a skeleton in a flamingo costume. Don't tell the flamingos.
+fl_door|It's a door! It opens onto a brick wall. You've been trolled.
+fl_flamingo|Squawk! I'm a flamingo! I stand on one leg because the other leg is a skeleton.
+fl_plaque|A fan room, inspired by Flamingo's videos: chaotic blocky games, a lot of trolling, and a lot of pink. An unofficial tribute. Not affiliated.
+fl_victim|I've pressed the free admin button eleven times. It's never been free admin. I'll press it again. It might be this time.
 g_clock|Bong! Bong! The town hall clock strikes the hour. Every hour is thirteen o'clock here.
 g_cow|Moo. I'm a cow skeleton. Yes, I still make milk. No, you don't want it.
 g_ducks|The ducks are skeletons too. They still quack. Nobody knows how.
@@ -361,6 +367,13 @@ mb_wheel|The big wheel! You can see the whole beach! And a lot of seagulls. The 
 medal_brown|Third! That's bronze, right? Close enough.
 medal_gold|First place!
 medal_silver|Second. Again.
+mk_doora|You chose door A. You chose wisely. You win: a sandwich.
+mk_doorb|You chose door B. You chose poorly. Go back and choose again. You'll choose poorly again.
+mk_fan|I've watched every single video. Twice. I don't sleep. I'm a skeleton. It's very efficient.
+mk_plaque|A fan room, inspired by Markiplier's videos: let's plays, horror game screams, heists, and choose your own adventures. An unofficial tribute. Not affiliated.
+mk_scare|Jump scare! The streamer screamed so hard his jaw came off. It's fine. It clicks back on.
+mk_streamer|Okay. Okay. Nothing is going to jump out. Nothing is going to... AAAAH! I'm fine. I'm fine. My bones left my body for a second.
+mk_vault|The heist was a success! We stole: nothing. The vault was empty. Great teamwork, everyone.
 my_dad|I came for the mysteries. I've paid forty dollars to see a rock. It's a good rock.
 my_detector|Beep. Beep. Weirdness level: yes.
 my_gnome|You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye.
@@ -497,6 +510,15 @@ res_peach|I'm practising for the town dance. My partner is a broom. He's very qu
 res_plum|I keep eating, but nothing ever stays down. Or in.
 res_rust|Welcome to the snack shack! Today's special is soup. It goes right through you.
 res_sky|I'm writing a song! It's called Ribcage Rock. It's mostly xylophone.
+rt_hitch|Anyone heading west? I can pay you. I have a penny. Or exposure. Mostly the penny.
+rt_jar|The donation jar! Every penny helps. This one is mostly buttons. The buttons help too.
+rt_plaque|A fan room, inspired by Ryan Trahan's videos: penny challenges, trading up, and very long road trips. An unofficial tribute. Not affiliated.
+rt_t1|One penny. That's all we've got. Let's trade it for something better.
+rt_t2|Traded the penny for a paperclip. Progress!
+rt_t3|Paperclip, for a pencil. We are moving up in the world.
+rt_t4|Pencil, for a bicycle! Don't ask how. Nobody knows how.
+rt_t5|Bicycle, for a car! It doesn't have an engine. But it's a car!
+rt_vlog|Day one! I've got one penny and a dream. Mostly the penny. Let's see how far it gets us!
 sh_hero|In this world I'm a knight! In the other world I'm a student. The homework follows me here.
 sh_jester|Ho ho! Welcome to the shadow side! Here everything is purple and nothing makes sense! Chaos! Chaos!
 sh_king|I am the Chess King! I can only move one square at a time. It's very frustrating. Bow. Slowly.

@@ -22,6 +22,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "batch2") { Batch2Tests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "cell") { CellTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "bigtown") { BigTownTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "fans") { FanTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -236,6 +237,7 @@ public static class SimCheck {
     Batch2Tests(A, B);
     CellTests(A, B);
     BigTownTests(A, B);
+    FanTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -964,6 +966,40 @@ public static class SimCheck {
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
   }
 
+  static void FanTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The fan rooms");
+    var rooms = new[] { new { t = "MARKIPLIER ROOM", x = 2128f }, new { t = "FLAMINGO ROOM", x = 2178f }, new { t = "RYAN TRAHAN ROOM", x = 2228f } };
+    foreach (var rm in rooms) {
+      A.player.pos = new Vector3(-4f, 0.05f, -1f);
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == rm.t)); Sim.Run(1f);
+      bool there = Flat(A.player.pos, new Vector3(rm.x, 0, 22f)) < 0.3f;
+      var plaque = All<FirSay>(A).First(x => x.name == "The plaque" && Mathf.Abs(x.transform.position.x - rm.x) < 18f);
+      Sim.Press(A, plaque); Sim.Run(1f);
+      bool honest = Plain(plaque.caption.text).Contains("unofficial tribute") && Plain(plaque.caption.text).Contains("Not affiliated");
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && Mathf.Abs(t.transform.position.x - rm.x) < 18f)); Sim.Run(1f);
+      Check(there && honest && Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "the " + rm.t + ": there, its plaque (\"" + Plain(plaque.caption.text).Substring(0, 40) + "...\") and back");
+    }
+    // free admin
+    A.player.pos = new Vector3(2178f, 0.05f, 28.4f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "FREE ADMIN")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2164f, 0, 23f)) < 0.3f, "FREE ADMIN sends you back to the start of the room");
+    // trading up
+    var tr = All<FirChannels>(A).First(c => c.name == "Trade bell"); var trB = All<FirChannels>(B).First(c => c.name == "Trade bell");
+    var got = new List<string>();
+    for (int k = 0; k < 5; k++) {
+      Sim.Events.Clear(); Sim.Press(A, tr); Sim.Run(0.6f);
+      int c = tr.Channel();
+      bool ok = tr.channels[c].activeSelf && tr.channels.Count(x => x.activeSelf) == 1 && Sim.Events.Any(e => e.Contains("sound:") && e.Contains(tr.lines[c].clip.name)) && Plain(tr.caption.text).Length > 15;
+      got.Add((ok ? "" : "BAD ") + tr.channels[c].name);
+    }
+    Check(string.Join(" > ", got) == "Penny > Paperclip > Pencil > Bicycle > Car" && trB.Channel() == -1, "trading up: " + string.Join(" > ", got) + " (Bob's pedestal is his own)");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && (r.voice.clip.name.StartsWith("mk_") || r.voice.clip.name.StartsWith("fl_") || r.voice.clip.name.StartsWith("rt_")) && r.caption.Length > 5);
+    Check(voiced == 6, voiced + " voiced, captioned skeletons (none of them is the creator: they're a streamer, a superfan, a skeleton in a flamingo costume, the free admin victim, a vlogger and a hitchhiker)");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2105f && g.transform.position.x < 2250f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 7, gagOk + " of " + gagN + " gags (the monitor, door A, door B, the vault, the troll door, the dancing flamingo, the jar)" + string.Concat(gagBad.Select(x => " | " + x)));
+  }
+
   static void BigTownTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== Bonetown, bigger");
     Check(Sim.BuildLog.Any(l => l.Contains("Bonetown districts: the town is now 98 x 130 m")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Bonetown districts")) ?? "no districts in the build log"));
@@ -1003,7 +1039,7 @@ public static class SimCheck {
     A.player.pos = new Vector3(2057f, 0.05f, 41.5f);
     Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Crawl into the tunnel")); Sim.Run(1f);
     Check(Flat(A.player.pos, new Vector3(2080.5f, 0, 46.5f)) < 0.3f, "the tunnel comes out behind the warden's TV");
-    var tvA = All<FirChannels>(A)[0]; var tvB = All<FirChannels>(B)[0];
+    var tvA = All<FirChannels>(A).First(c => c.name == "The remote"); var tvB = All<FirChannels>(B).First(c => c.name == "The remote");
     Check(tvA.staticScreen.activeSelf && tvA.channels.All(c => !c.activeSelf), "the TV starts on static");
     var seen = new List<string>();
     for (int k = 0; k < 4; k++) {
