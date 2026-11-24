@@ -249,6 +249,33 @@ tally marks, a hole and the spoon that dug it. Crawl into the tunnel and you com
 TV, in his living room, where the escaped convict is hiding inside the set. Press the remote and he has to
 act out whatever is on: the news, a cowboy show, a cooking show and a dance party (per player).
 
+## Even more rooms
+
+* **Three fan rooms** (unofficial tributes, each with a plaque saying so). Original skeleton gags about the
+  kinds of videos each creator makes: no likenesses, logos or catchphrases, and nobody plays the creator.
+  * **The Markiplier Room:** a let's-play corner with a screaming streamer, a superfan, a jump-scare
+    monitor, door A and door B, and a heist vault.
+  * **The Flamingo Room:** lawn flamingos everywhere, a FREE ADMIN button (it sends you back to the start), a
+    troll door, a dancing flamingo, "the floor is lava" and a blocky obby.
+  * **The Ryan Trahan Room:** a penny you can trade up (paperclip, pencil, bicycle, car), a road-trip map, a
+    vlogger, a hitchhiker and a donation jar.
+* **The Scream Room:** a scream booth and meter, a screaming choir on the console, a screaming goat, a
+  kettle, a rubber chicken, a void to scream into, and a famous painting with more bones.
+* **The Inventors' Backyard:** a rollercoaster in the garden that vanishes the moment Mom pulls in, a big
+  sister, a secret-agent gnome, and a shrink ray next door.
+* **The Notebook School:** a middle school drawn on lined paper, with lockers, the cursed cheese, a gym rope
+  and a basement band.
+* **The Seabed Town:** kelp, bubbles, a jellyfish field, the Crusty Clam burger shack (with a flying burger),
+  a rock house, a glass dome and a starfish.
+* **Battle Island:** a bus flying round on a balloon, a storm that closes in, a chest, a supply drop, ramps,
+  and dancing skeletons.
+* **Site Bone (the SCP room):** a containment facility in the style of collaborative online horror fiction,
+  with brand-new anomalies:
+  * the sock dryer, the polite void, the too-comfortable chair, the duck that knows your name, and a vending
+    machine that only sells spoons
+  * BONE-999, a door that always leads to the lobby
+  * a breach alarm and a records terminal
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -384,7 +411,7 @@ python make_unitypackage.py
   * FirBoost: the Speed Zone's boost pads, springs and rings
   * FirResident: the Marrow Arms residents' daily routines
   * FirInkTurf: the Ink Plaza's turf
-  * FirChannels: the Cellbound room's TV
+  * FirChannels: the Cellbound room's TV (and the trade-up pedestal)
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.

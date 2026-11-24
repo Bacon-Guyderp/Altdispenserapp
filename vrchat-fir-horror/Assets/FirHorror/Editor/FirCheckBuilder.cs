@@ -236,6 +236,7 @@ public static class FirCheckBuilder
         BuildNotebookSchool(root);
         BuildSeabedTown(root);
         BuildBattleIsland(root);
+        BuildContainment(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -3394,6 +3395,97 @@ public static class FirCheckBuilder
         Folk(g, "Newbie Ned", "#bdbdbd", 2, new Vector3(2502f, 0, 30f), 220f, "Four/br_noob");
         Text("Victory", g, new Vector3(2485f, 8f, 69.85f), Face(Vector3.back), new Vector2(16f, 2f), 1.4f, "<b>VICTORY!</b>").color = new Color(1f, 0.85f, 0.2f);
         report.Add("Battle Island: a bus flying round on a balloon, a storm that closes in, a chest, a supply drop, ramps somebody built, a builder, a lost newbie, dancers; 4 gags");
+    }
+
+    // =================================================================== the containment facility (in the style of collaborative online horror fiction; every anomaly is new)
+
+    /// <summary>A glass-fronted containment cell along the north wall, with its designation plate.</summary>
+    static Transform Cell(Transform g, float x, string id, string name, string cls)
+    {
+        var c = Group(g, "Cell " + id, Vector3.zero);
+        Box(c, "CellL", new Vector3(x - 3f, 2f, 51f), new Vector3(0.2f, 4f, 6f), M("LabGrey"));
+        Box(c, "CellR", new Vector3(x + 3f, 2f, 51f), new Vector3(0.2f, 4f, 6f), M("LabGrey"));
+        Box(c, "CellFloor", new Vector3(x, 0.01f, 51f), new Vector3(6f, 0.02f, 6f), M("TileOff"), false);
+        DPrim(PrimitiveType.Cube, "HazardStripe", c, new Vector3(x, 0.02f, 48.1f), new Vector3(6f, 0.02f, 0.2f), M("GlowYellow"));
+        Box(c, "Plate", new Vector3(x - 1.6f, 3.3f, 47.95f), new Vector3(2.4f, 0.8f, 0.05f), M("Black"), false);
+        Text("Designation", c, new Vector3(x - 1.6f, 3.3f, 47.92f), Face(Vector3.back), new Vector2(2.3f, 0.7f), 0.12f, "<b>" + id + "</b>\n" + name + "\n<size=80%>class: " + cls + "</size>").color = new Color(1f, 0.85f, 0.3f);
+        return c;
+    }
+
+    static void BuildContainment(Transform root)
+    {
+        var g = AreaShell(root, "The Containment Facility", 2520f, 2560f, 20f, 56f, 6f, "LabFloor", "LabGrey", "LabWhite",
+                          "SITE BONE: CONTAINMENT", new Color(0.9f, 0.9f, 0.9f), "secure. contain. try not to make eye contact with the duck.", "SCP ROOM");
+        Plaque(g, new Vector3(2548f, 0, 23.5f), "<b>SITE BONE</b>\na containment facility in the style of\ncollaborative online horror fiction\n(every anomaly in here is brand new)\n\n<size=80%>(press to hear more)</size>", "Vault/sp_plaque");
+        // the breach alarm: red lights spin
+        var alarm = Gg(g, "Breach alarm", new Vector3(2524f, 0, 30f), 90f, "Vault/sp_alarm", 1.2f, 2f);
+        Box(alarm.transform, "Panel", new Vector3(0, 1.2f, 0.4f), new Vector3(0.8f, 0.6f, 0.1f), M("Black"), false);
+        Prim(PrimitiveType.Cylinder, "BigRedButton", alarm.transform, new Vector3(0, 1.2f, 0.33f), new Vector3(0.3f, 0.05f, 0.3f), M("GlowRed")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        var beacon = Group(alarm.transform, "Beacons", new Vector3(0, 5.5f, 4f));
+        for (int k = 0; k < 6; k++) Prim(PrimitiveType.Sphere, "Beacon", beacon, new Vector3(Mathf.Cos(k * 1.05f) * 6f, 0, Mathf.Sin(k * 1.05f) * 6f), new Vector3(0.5f, 0.3f, 0.5f), M("GlowRed"));
+        beacon.localScale = Vector3.one;
+        alarm.target = beacon; alarm.hideWhenIdle = true; alarm.spin = 360f; alarm.holdTime = 5f;
+        // the cells
+        Cell(g, 2526f, "BONE-014", "the sock dryer", "hmm");
+        var dryer = Gg(g, "BONE-014", new Vector3(2526f, 0, 51f), 180f, "Vault/sp_sock", 1.4f, 1.4f);
+        Box(dryer.transform, "Dryer", new Vector3(0, 0.5f, 0), new Vector3(1f, 1f, 0.8f), M("Porcelain"), false);
+        var socks = Group(dryer.transform, "Socks", new Vector3(0, 0.5f, 0.6f));
+        for (int k = 0; k < 14; k++) Prim(PrimitiveType.Cube, "Sock", socks, new Vector3(Mathf.Cos(k * 2.1f) * (0.3f + k * 0.06f), -0.4f + (k % 4) * 0.12f, 0.2f + k * 0.08f), new Vector3(0.12f, 0.06f, 0.3f), M(new[] { "GiftRed", "InkBlue", "GlowYellow", "GiftGreen", "BonePink", "CaneWhite" }[k % 6])).transform.localRotation = Quaternion.Euler(0, k * 40f, 0);
+        dryer.target = socks; dryer.hideWhenIdle = true; dryer.scaleBy = 1.6f; dryer.inTime = 1f;
+        Cell(g, 2533f, "BONE-027", "the polite void", "sorry");
+        var box = Gg(g, "BONE-027", new Vector3(2533f, 0, 51f), 180f, "Vault/sp_box", 1.4f, 1.4f);
+        Box(box.transform, "Box", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.9f), M("Cardboard"), false);
+        Box(box.transform, "Dark", new Vector3(0, 0.91f, 0), new Vector3(0.8f, 0.01f, 0.8f), M("Black"), false);
+        var flap = Group(box.transform, "Flap", new Vector3(0, 0.9f, -0.45f));
+        Prim(PrimitiveType.Cube, "Flap", flap, new Vector3(0, 0.01f, 0.45f), new Vector3(0.92f, 0.02f, 0.92f), M("Cardboard"));
+        box.target = flap; box.rotateBy = new Vector3(-120f, 0, 0); box.inTime = 0.8f;
+        Cell(g, 2540f, "BONE-101", "a chair that is slightly too comfortable", "uh-oh");
+        var chair = Gg(g, "BONE-101", new Vector3(2540f, 0, 51f), 180f, "Vault/sp_chair", 1.4f, 1.6f);
+        var ch = Group(chair.transform, "Chair", Vector3.zero);
+        Prim(PrimitiveType.Cube, "Seat", ch, new Vector3(0, 0.45f, 0), new Vector3(1f, 0.5f, 1f), M("Curtain"));
+        Prim(PrimitiveType.Cube, "Back", ch, new Vector3(0, 1.1f, 0.42f), new Vector3(1f, 1f, 0.2f), M("Curtain"));
+        foreach (float ax in new[] { -0.5f, 0.5f }) Prim(PrimitiveType.Cube, "Arm", ch, new Vector3(ax, 0.8f, 0), new Vector3(0.18f, 0.25f, 1f), M("Curtain"));
+        chair.target = ch; chair.scaleBy = 1.15f; chair.bob = 0.04f;
+        Folk(g, "Volunteer 4", "#ff9800", 9, new Vector3(2541.2f, 0, 50f), 200f, "Vault/sp_volunteer");
+        Gear("Volunteer 4", 1, PrimitiveType.Cube, new Vector3(0, 0.15f, 0), new Vector3(0.42f, 0.55f, 0.3f), "InkOrange");
+        Cell(g, 2547f, "BONE-666½", "the rubber duck that knows your name", "watch it");
+        var duck = Gg(g, "BONE-666½", new Vector3(2547f, 0, 51f), 180f, "Vault/sp_duck", 1.2f, 1.4f);
+        Box(duck.transform, "Pedestal", new Vector3(0, 0.5f, 0), new Vector3(0.6f, 1f, 0.6f), M("Black"), false);
+        var dk = Group(duck.transform, "Duck", new Vector3(0, 1f, 0));
+        Prim(PrimitiveType.Sphere, "Body", dk, new Vector3(0, 0.12f, 0), new Vector3(0.3f, 0.22f, 0.35f), M("GlowYellow"));
+        Prim(PrimitiveType.Sphere, "Head", dk, new Vector3(0, 0.3f, -0.1f), Vector3.one * 0.18f, M("GlowYellow"));
+        Prim(PrimitiveType.Cube, "Beak", dk, new Vector3(0, 0.28f, -0.21f), new Vector3(0.1f, 0.03f, 0.08f), M("InkOrange"));
+        foreach (float ex in new[] { -0.05f, 0.05f }) Prim(PrimitiveType.Sphere, "Eye", dk, new Vector3(ex, 0.34f, -0.18f), Vector3.one * 0.035f, M("GlowRedEye"));
+        duck.target = dk; duck.rotateBy = new Vector3(0, 180f, 0); duck.inTime = 1.4f;
+        Cell(g, 2554f, "BONE-310", "the vending machine that only sells spoons", "fine, really");
+        var vend = Gg(g, "BONE-310", new Vector3(2554f, 0, 51f), 180f, "Vault/sp_vend", 1.4f, 2.2f);
+        Box(vend.transform, "Machine", new Vector3(0, 1f, 0.2f), new Vector3(1.2f, 2f, 0.8f), M("HeroRed"), false);
+        Box(vend.transform, "Glass", new Vector3(0, 1.2f, -0.21f), new Vector3(0.9f, 1.3f, 0.02f), M("Glass"), false);
+        for (int k = 0; k < 9; k++) Prim(PrimitiveType.Cube, "Spoon", vend.transform, new Vector3(-0.3f + (k % 3) * 0.3f, 0.75f + (k / 3) * 0.4f, -0.1f), new Vector3(0.04f, 0.2f, 0.02f), M("Metal"));
+        var sp = Group(vend.transform, "The spoon", new Vector3(0, 0.25f, -0.25f));
+        Prim(PrimitiveType.Cube, "Handle", sp, Vector3.zero, new Vector3(0.04f, 0.25f, 0.02f), M("GlowGold"));
+        sp.localRotation = Quaternion.Euler(0, 0, 90);
+        vend.target = sp; vend.moveBy = new Vector3(0, 0, -0.6f); vend.spin = 120f; vend.hideWhenIdle = true;
+        // BONE-999: the door that always leads to the lobby (it's the room's way out)
+        Box(g, "Door999", new Vector3(2559.9f, 1.2f, 34f), new Vector3(0.05f, 2.4f, 1.3f), M("Metal"), false);
+        Text("Door999Plate", g, new Vector3(2559.85f, 2.9f, 34f), Face(Vector3.left), new Vector2(2.4f, 0.6f), 0.13f, "<b>BONE-999</b>\na door that always leads to the lobby\n<size=80%>class: annoying</size>").color = new Color(1f, 0.85f, 0.3f);
+        var door = TeleportButton(g, "BONE-999 (open the door)", new Vector3(2559.8f, 1.2f, 32.9f), Vector3.left, lobbyArrive, new Vector3(0.5f, 0.3f, 0.08f));
+        door.sfx.clip = Clip("Vault/sp_door"); door.sfx.spatialBlend = 0f;
+        // the records terminal, the staff
+        var term = Group(g, "Records terminal", new Vector3(2530f, 0, 36f));
+        Box(term, "Desk", new Vector3(0, 0.45f, 0), new Vector3(1.6f, 0.9f, 0.8f), M("LabGrey"));
+        Box(term, "Screen", new Vector3(0, 1.3f, 0.2f), new Vector3(1f, 0.7f, 0.05f), M("GlowGreen"), false);
+        var tcol = term.gameObject.AddComponent<BoxCollider>(); tcol.size = new Vector3(1.6f, 1.8f, 0.8f); tcol.center = new Vector3(0, 0.9f, 0);
+        var tcap = Text("Caption", term, new Vector3(0, 2.2f, 0.18f), Face(Vector3.back), new Vector2(3.4f, 0.7f), 0.11f, ""); tcap.color = new Color(0.5f, 1f, 0.6f);
+        var ts = Add<FirSay>(term.gameObject); ts.line = "> " + CaptionFor("sp_terminal"); ts.caption = tcap;
+        ts.voice = Src(term, new Vector3(0, 1.3f, 0), Clip("Vault/sp_terminal"), false, 1f, 1f, 10f, false);
+        SetInteract(ts, "Read the records", 2.5f);
+        Folk(g, "Dr Clipboard", "#eceff1", 20, new Vector3(2532.5f, 0, 35f), 160f, "Vault/sp_researcher");
+        Gear("Dr Clipboard", 1, PrimitiveType.Cube, new Vector3(0, 0f, 0), new Vector3(0.48f, 0.9f, 0.34f), "LabWhite");
+        Gear("Dr Clipboard", 6, PrimitiveType.Cube, new Vector3(0, -0.28f, 0.1f), new Vector3(0.22f, 0.3f, 0.02f), "DeskWood");
+        Folk(g, "Guard Sternbone", "#37474f", 11, new Vector3(2556f, 0, 30f), -90f, "Vault/sp_guard");
+        Gear("Guard Sternbone", 2, PrimitiveType.Sphere, new Vector3(0, 0.1f, 0), new Vector3(0.32f, 0.22f, 0.34f), "Black");
+        report.Add("The Containment Facility: five new anomalies in cells (the sock dryer, the polite void, the too-comfortable chair, the duck that knows your name, the spoon vending machine), BONE-999 (a door to the lobby), a breach alarm, a records terminal, staff; 6 gags");
     }
 
     // =================================================================== the second batch of Station stops: helpers

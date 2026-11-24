@@ -581,9 +581,21 @@ skel_SK8|I've been on hold since nineteen ninety-six.
 skel_SK9|Can somebody give me a hand?
 skeleton_red|Red skeleton. Ha!
 skeleton_white|A skeleton.
+sp_alarm|Containment breach. Containment breach. Please remain calm. Calmer than that. That's it.
+sp_box|Oh! Hello. I'm the void. Sorry about the darkness. And the endlessness. Would you like a biscuit? I don't have biscuits. Sorry.
+sp_chair|You sat in the chair. It's too comfortable. You've been sitting here for three days. You don't mind.
 sp_coach|Hit the boost pads. Bounce on the springs. Grab the rings. That's it. That's the whole sport.
 sp_dash|Gotta go! Gotta go! I don't know where. I've never known where. Gotta go!
+sp_door|Anomaly Bone nine nine nine: a door that always leads to the lobby. Researchers are furious.
+sp_duck|I know your name. ...It's on your name tag.
+sp_guard|Nothing gets out of this facility. Except the duck. The duck gets out every Tuesday.
+sp_plaque|A containment facility, in the style of collaborative online horror fiction. Every anomaly in here is brand new. Please do not feed them.
+sp_researcher|We've been studying the sock dryer for eleven years. It has made four million socks. None of them match. We're very close to a breakthrough.
+sp_sock|The dryer door opens. Socks. So many socks. None of them match.
+sp_terminal|Item: Bone fourteen. Class: hmm. Containment: keep the dryer door shut. Description: produces socks. Socks never pair. Do not ask it about the left ones.
 sp_tired|I've run this course nine thousand times. I'm not tired. Skeletons don't get tired. I'm lying down for fun.
+sp_vend|The machine only sells spoons. You pressed for a soda. You got a spoon. It's the best spoon you've ever seen.
+sp_volunteer|I volunteered for testing! Today I'm testing the chair. It's very comfortable. Please come and get me in a week.
 squabble_1|You took my femur!
 squabble_2|It's MY femur!
 squabble_3|Then whose femur am I standing on?

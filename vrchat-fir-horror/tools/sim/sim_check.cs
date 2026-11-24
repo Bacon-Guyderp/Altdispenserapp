@@ -25,6 +25,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "fans") { FanTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "scream") { ScreamTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "four") { FourTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "scp") { ScpTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -242,6 +243,7 @@ public static class SimCheck {
     FanTests(A, B);
     ScreamTests(A, B);
     FourTests(A, B);
+    ScpTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -968,6 +970,25 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void ScpTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The containment facility");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "SCP ROOM")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2540f, 0, 22f)) < 0.3f, "the Station sends Alice to the containment facility");
+    Check(Sim.BuildLog.Any(l => l.Contains("The Containment Facility: five new anomalies")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Containment")) ?? "no facility in the build log"));
+    var term = All<FirSay>(A).First(x => x.name == "Records terminal");
+    Sim.Press(A, term); Sim.Run(1f);
+    Check(Plain(term.caption.text).Contains("Socks never pair"), "the records terminal: \"" + Plain(term.caption.text) + "\"");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("sp_") && r.transform.position.x > 2515f && r.caption.Length > 3);
+    Check(voiced == 3, voiced + " voiced, captioned staff (a researcher, a volunteer, a guard)");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2515f && g.transform.position.x < 2565f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 6, gagOk + " of " + gagN + " anomalies and alarms behave (anomalously)" + string.Concat(gagBad.Select(x => " | " + x)));
+    A.player.pos = new Vector3(2558.5f, 0.05f, 33f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "BONE-999 (open the door)")); Sim.Run(1f);
+    Check(Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "BONE-999 leads, as documented, to the lobby");
   }
 
   static void FourTests(Sim.Client A, Sim.Client B) {

@@ -721,6 +721,18 @@ AREAS2 = [
     ("Four/br_drop", "mb-us2", 140, 40, 1.0, "narr", "Supply drop! It's full of bandages. Skeletons don't bleed. Thanks, though."),
     ("Four/br_noob", "mb-us3", 150, 60, 1.05, "skel", "Where do I land? Where's everyone going? Why am I alone? ...Oh no. Oh no."),
     ("Four/br_plaque", "mb-us2", 135, 40, 1.0, "narr", 'A battle royale island, inspired by the games where a hundred players jump out of a flying bus. Here, everyone is a skeleton.'),
+    ("Vault/sp_plaque", "mb-us2", 135, 40, 1.0, "narr", 'A containment facility, in the style of collaborative online horror fiction. Every anomaly in here is brand new. Please do not feed them.'),
+    ("Vault/sp_alarm", "mb-us2", 150, 40, 1.0, "radio", "Containment breach. Containment breach. Please remain calm. Calmer than that. That's it."),
+    ("Vault/sp_researcher", "mb-us1", 150, 60, 1.05, "skel", "We've been studying the sock dryer for eleven years. It has made four million socks. None of them match. We're very close to a breakthrough."),
+    ("Vault/sp_volunteer", "mb-us3", 150, 50, 1.0, "skel", "I volunteered for testing! Today I'm testing the chair. It's very comfortable. Please come and get me in a week."),
+    ("Vault/sp_guard", "mb-us2", 110, 20, 0.85, "skel", 'Nothing gets out of this facility. Except the duck. The duck gets out every Tuesday.'),
+    ("Vault/sp_terminal", "mb-us2", 130, 30, 0.95, "radio", 'Item: Bone fourteen. Class: hmm. Containment: keep the dryer door shut. Description: produces socks. Socks never pair. Do not ask it about the left ones.'),
+    ("Vault/sp_sock", "mb-us2", 140, 40, 1.0, "narr", 'The dryer door opens. Socks. So many socks. None of them match.'),
+    ("Vault/sp_box", "mb-us1", 110, 55, 0.95, "skel", "Oh! Hello. I'm the void. Sorry about the darkness. And the endlessness. Would you like a biscuit? I don't have biscuits. Sorry."),
+    ("Vault/sp_duck", "mb-us1", 90, 40, 0.9, "glitch", "I know your name. ...It's on your name tag."),
+    ("Vault/sp_vend", "mb-us2", 140, 40, 1.0, "narr", "The machine only sells spoons. You pressed for a soda. You got a spoon. It's the best spoon you've ever seen."),
+    ("Vault/sp_chair", "mb-us2", 140, 40, 1.0, "narr", "You sat in the chair. It's too comfortable. You've been sitting here for three days. You don't mind."),
+    ("Vault/sp_door", "mb-us2", 140, 40, 1.0, "narr", 'Anomaly Bone nine nine nine: a door that always leads to the lobby. Researchers are furious.'),
 ]
 SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
 COMBO += [
