@@ -1041,7 +1041,7 @@ public static class SimCheck {
     wingGags = true;
     int gagOk = RunGags(B, g => true, out gagN, gagBad);
     wingGags = false;
-    Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
+    Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags (3 a wing) move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
     Check(boards >= 3, boards + " wings have something to collect");
   }

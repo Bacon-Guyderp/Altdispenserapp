@@ -30,6 +30,12 @@ public static partial class FirCheckBuilder
         float dx = float.IsNaN(doorX) ? cx : doorX;   // the doorway sits off-centre where the area has something against that wall
         // the old north wall comes down; the new one has a doorway in the middle
         var old = ag.Find("WallN");
+        if (old == null)   // some older areas just call all four walls "Wall": take the one along this edge
+            for (int i = 0; i < ag.childCount; i++)
+            {
+                var c = ag.GetChild(i);
+                if (c.name == "Wall" && Mathf.Abs(c.localPosition.z - (zWall + 0.1f)) < 0.05f) { old = c; break; }
+            }
         Material areaWall = M(wall);
         float areaH = h;
         if (old != null)
@@ -84,6 +90,8 @@ public static partial class FirCheckBuilder
         int before = report.Count;
         WingInn(root); WingSpeed(root); WingPlatforms(root); WingNC(root); WingCircus(root); WingSkits(root);
         WingCorn(root); WingCove(root); WingCritter(root); WingShadow(root); WingInk(root); WingDread(root);
+        BuildExpansions2(root);
+        BuildExpansions3(root);
         report.Add("The expansion: " + wings.Count + " areas have a new wing: " + string.Join(", ", wingNames.ToArray()));
     }
 

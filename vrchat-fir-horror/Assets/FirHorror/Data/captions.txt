@@ -410,6 +410,30 @@ mk_plaque|A fan room, inspired by Markiplier's videos: let's plays, horror game 
 mk_scare|Jump scare! The streamer screamed so hard his jaw came off. It's fine. It clicks back on.
 mk_streamer|Okay. Okay. Nothing is going to jump out. Nothing is going to... AAAAH! I'm fine. I'm fine. My bones left my body for a second.
 mk_vault|The heist was a success! We stole: nothing. The vault was empty. Great teamwork, everyone.
+mo_bat_builder|Wall, ramp, floor, roof! I can build a castle in four seconds! I can't build a sandwich, though. Too many layers.
+mo_bat_drop|A supply drop floats down on a big red balloon. Inside: bandages, a boom box, and one rubber chicken.
+mo_bat_emote|I don't fight. I just dance. Every match, I dance. I've never won. I've never been happier.
+mo_bat_goblin|Loot! Loot! Shiny loot! Mine! All mine! Okay, you can have one. The small one. The not shiny one.
+mo_bat_storm|The storm creeps forward a few more steps. Then it sees you looking, and stops. It's shy.
+mo_bat_wall|A wooden wall pops up out of nowhere. Somebody's building. Somebody's always building.
+mo_blk_boom|The red block hisses, swells up, and... nothing. It's a dud. Everybody breathes out.
+mo_blk_cart|The minecart rattles off down the track, empty, on its way to somewhere very deep.
+mo_blk_miner|Dig, dig, dig. Found coal. Dig, dig, dig. Found gold. Dig, dig, dig. Found another miner. We said hello.
+mo_blk_ore|A chunk of shiny blue ore glints in the torchlight. Diamonds? Better. It's very shiny rock.
+mo_blk_smith|Bring me ore and I'll make you a pickaxe. Bring me more ore and I'll make you a better pickaxe. It's pickaxes all the way down.
+mo_blk_trader|Hmm. Hrrm. I'll trade you one shiny ore for twelve emeralds. Or one emerald for twelve ores. I'm bad at maths.
+mo_bne_banjo|Pull up a log, friend. I'll play you a tune. I only know the one tune. It's a good tune though.
+mo_bne_bear|Roar! I'm a bear! Well. A bear skeleton. Same thing, really. Do you have any sandwiches?
+mo_bne_fire|The campfire flares up. Somebody's marshmallow is now a small torch. That's how they like it up here.
+mo_bne_hiker|I'm walking the whole trail from Georgia to Maine. Two thousand miles. I'm on mile three. I stopped for snacks.
+mo_bne_leaf|One leaf falls all the way down from the top of the ridge. It's the first leaf of autumn. Everybody stops to watch.
+mo_bne_ranger|Leave no trace, take only pictures, and please don't feed the bears. Especially not your sandwiches. They'll never leave.
+mo_cel_cook|Soup again. It's always soup. I used to have a spoon for it. Somebody borrowed my spoon. Years ago.
+mo_cel_guard|Nobody gets out of this prison. Nobody. Well, there was that one fellow with the spoon. But nobody else.
+mo_cel_hole|Hello! Is this the way out? No? Is this the warden's office? Oh no. Excuse me. Wrong hole.
+mo_cel_inmate|I'm doing ninety nine years. I've done ninety eight. Last year's the hardest. The food doesn't help.
+mo_cel_spoon|The spoon. The legendary spoon. It has dug more tunnels than any spoon in history. It's very tired.
+mo_cel_tv|The old TV flickers on all by itself. It's playing a show about a prison. Very on the nose.
 mo_cir_cannon|Ladies and gentlebones! The human cannonball! Fire! Wheee! I'll be back in about a minute!
 mo_cir_exit|The exit door swings open. Behind it: bricks. Just bricks. The door closes, as if nothing happened.
 mo_cir_glitch|Error. Error. This prop has stopped responding. Would you like to wait? Waiting. Waiting. It's fine now.
@@ -428,18 +452,67 @@ mo_crt_boot|I've got a bite! It's big! It's... a boot. Another boot. I'll start 
 mo_crt_caver|Deep down, past the crystals, there's a critter nobody's ever caught. I haven't caught it either. I did catch a cold.
 mo_crt_hiker|I've been hiking this cave for weeks! I've seen bats, I've seen rocks, I've seen rocks that were bats. Bring a torch.
 mo_crt_pebble|A wild Pebblet rolls past! It's not attacking. It just can't stop rolling.
+mo_ctb_blooper|The blooper reel: forty minutes of people laughing, falling over, and saying the wrong line. The best episode yet.
+mo_ctb_boom|The boom mic dips into the shot. Again. Somebody yells cut. Again.
+mo_ctb_camera|Camera one, rolling. Camera two, rolling. Camera three is pointing at the snack table. That's fine. Leave it.
+mo_ctb_clap|Clap! Scene two, take forty one. Everybody's very hopeful about take forty one.
+mo_ctb_director|And action! And cut! And action again! That was perfect, let's do it nineteen more times.
+mo_ctb_fan|I've watched episode one forty times! The diamonds bit is my favourite! I say diamonds to everybody now. Diamonds!
+mo_dox_groomer|Bath time! They hate bath time. I've been splashed so many times I'm completely rinsed. Look how clean my ribs are.
+mo_dox_judge|Agility course! Over the hurdle, through the tunnel, and round the pole. Points off for stopping to sniff. So, all the points.
+mo_dox_launcher|Thunk! The ball launcher fires a tennis ball across the park. Twelve dachshunds give chase. One of them finds it. Three days later.
+mo_dox_tunnel|A dachshund goes into the tunnel. A dachshund comes out of the tunnel. A long time later, the rest of the dachshund comes out.
+mo_dox_walker|I walk twelve dachshunds a day. Their legs are very short. It's less of a walk and more of a slow parade.
+mo_dox_zoomies|Zoomies! A dachshund runs as fast as its little legs will go, round and round and round. Nobody knows why. Least of all the dachshund.
 mo_drd_alarm|Warning. Core temperature rising. Warning. Please evacuate. Or don't. The core has been doing this all week.
 mo_drd_bot|Maintenance unit M zero. Status: sweeping. Status: still sweeping. This floor has been sweeping me back for years.
 mo_drd_doctor|The core is perfectly stable. Ninety nine percent stable. Ninety eight. Please don't touch anything.
 mo_drd_jelly|A glowing jelly floats over to say hello. It wants to give you a hug. Do not accept the hug.
 mo_drd_lift|The cargo lift rattles all the way up to the ceiling with one orange crate. The crate looks thrilled.
 mo_drd_pirate|We came to steal the reactor. Then we saw how heavy it was. Now we just work here. The dental plan is great.
+mo_drg_gems|The gem chest spins open. Shiny! Every dragon loves shiny.
+mo_drg_hatch|Squeak! I hatched! Hello world! Is this the world? It's very sandy! Am I a dragon? I feel like a dragon!
+mo_drg_prof|Fascinating! A dragon egg takes a hundred years to hatch. I've been waiting ninety nine. Any minute now.
+mo_drg_sitter|Every egg in this hatchery is a little dragon waiting to happen. I keep them warm. I knit them tiny scarves.
+mo_drg_sneeze|Somewhere a dragon sneezes. A fireball whooshes across the hatchery. Bless you, says everyone.
+mo_drg_thief|Eggs? What eggs? I don't know anything about eggs. These are very large pockets. Nothing to see.
+mo_flm_dance|A plastic lawn flamingo starts dancing on one leg. Nobody plugged it in. It just felt the music.
+mo_flm_dj|Pink lights, pink pool, pink everything! This party is so pink, my bones are blushing.
+mo_flm_float|The giant inflatable flamingo spins slowly round the pool. It's the real guest of honour.
+mo_flm_guard|No running! No diving! No pushing! No... honestly I've forgotten the rest. Just be nice.
+mo_flm_guest|Best party ever! I came for the pool, stayed for the flamingos. I can't swim. I just float. Skeletons are very floaty.
+mo_flm_plaque|The Pool Party. An unofficial fan tribute. Not affiliated with or endorsed by anyone it celebrates.
+mo_flm_splash|Cannonbaaall! Splash! Did you see that? Rate it out of ten! Be honest! Be nice!
 mo_gem_bubbles|The bubbled gems float up into the dark, safe in their little bubbles.
 mo_gem_hand|The giant stone hand waves at you. Slowly. Politely. Wave back. It's only polite.
 mo_gem_keeper|This temple has stood for five thousand years. It was built by gems. It was dusted by me. Mostly by me.
 mo_gem_sculptor|I carve statues out of crystal. Big ones, small ones, one of my cousin. He says it doesn't look like him. It's better.
 mo_gem_statue|The statue's gem begins to glow and turn. Something ancient wakes up. It yawns. It goes back to sleep.
 mo_gem_tourist|Excuse me, is this the gift shop? I took a wrong warp pad. Then another. Then about nine. Where am I?
+mo_gld_chest|Da da da daaa! You got a key! It opens this chest. Which is already open. Congratulations.
+mo_gld_fairy|Welcome to the fountain! Throw in a coin and make a wish. I'll keep the coin. The wish is between you and the fountain.
+mo_gld_pot|Hey! Stop smashing pots! Every hero comes in here smashing pots. Do you know how long these take to make?
+mo_gld_sage|It's dangerous to go alone. That's why I never go anywhere. I've been sitting on this rock for three hundred years. Very safe.
+mo_gld_shop|Bombs, arrows, a slightly used shield. Everything a young hero needs. No refunds. No returns. No questions.
+mo_gld_sword|The sword slides out of the stone! Then slides right back in. Not today, it says. Come back with more courage. And bigger arms.
+mo_glm_gargoyle|I'm a gargoyle. I've guarded this roof for five hundred years. You're the first person to notice I can turn my head.
+mo_glm_inform|You didn't hear it from me. Psst. Something big is going down at the docks. Or the bakery. I always mix them up.
+mo_glm_reporter|Scoop of the century! A masked stranger saves the city again! And I missed it again! Do you know what he looks like? Anyone?
+mo_glm_signal|The skull signal lights up the clouds. Somewhere, someone with a cape sighs and puts their shoes back on.
+mo_glm_swing|A shadowy stranger swings past on a rope. Nobody knows who it is. It's definitely not the night watchman.
+mo_glm_watch|Quiet night up here. Well. Quiet for Gloom City. Only three mysterious figures so far. That's a slow night.
+mo_her_drill|Drop and give me twenty! Twenty bones! I don't care which ones! Move it, recruits!
+mo_her_gadget|This gadget shoots grappling hooks. This one shoots foam. This one shoots me, somehow. Still working on that one.
+mo_her_lab|The experiment bubbles, glows, and swells up to twice its size. That's either very good or very bad.
+mo_her_robot|Training robot online. Punching sequence engaged. Please stand very still. Or don't. I'm not very accurate.
+mo_her_shield|The shield bounces off the wall, off the ceiling, off a dummy, and right back to where it started. Show-off.
+mo_her_sidekick|I was a sidekick for forty years. Fetched the coffee, held the cape. Now I'm retired. I still hold the cape. Habit.
+mo_hny_drip|A big drop of honey falls from the ceiling. Splat. That's going to be sticky for a week.
+mo_hny_jar|Hey! Hey! I'm a talking honey jar! Please don't eat me! Eat the other jars! They don't talk!
+mo_hny_jars|I collect jars. Empty jars, full jars, jars of jars. This one's my favourite. It's a jar.
+mo_hny_keeper|Beekeeping's easy when you're a skeleton. They can't sting what isn't there. They do try. Bless them.
+mo_hny_queen|I am the Queen of the Great Hive. My subjects make the honey. I make the decisions. Mostly the decision to have more honey.
+mo_hny_swarm|The bees swirl around in a buzzing cloud. They're not angry. They're dancing. It's how they give directions.
 mo_ink_band|The band kicks in! Drums, guitar, and a lot of very enthusiastic splatting.
 mo_ink_blast|The speaker stack goes boom. Everybody's bones rattle in time.
 mo_ink_dj|Turn it up! Louder! Louder! The bass is so deep you can hear it in your bones. Especially here. We're all bones.
@@ -452,18 +525,97 @@ mo_inn_dancer|Five, six, seven, eight! Step, turn, dip! Careful on the dip. Last
 mo_inn_host|Welcome to the Grand Ballroom, darling. Dress code is formal. Flesh is optional. Most of us opted out.
 mo_inn_spa|Our signature treatment is the bone polish. Thirty minutes of buffing and you'll shine like a new tooth.
 mo_inn_tub|Ahh. Do you mind? I'm soaking. Well. I'm soaking through. That's the trouble with being all gaps.
+mo_inv2_alien|Greetings, Earth skeleton! I am Zorp! I came through the portal for the gift shop. Where is the gift shop? Is this the gift shop?
+mo_inv2_gravity|The gravity flipper flips. The gadget on top flips. Everything else stays exactly where it was. Version two will be better.
+mo_inv2_neighbour|Every night there's a green flash in that garage. Then somebody comes out wearing a different shirt. Then a different face.
+mo_inv2_ray|The shrink ray fires! Everything gets bigger. It's a grow ray. Somebody wired it backwards.
+mo_inv2_robot|Helpful robot H three. What is my purpose? To hold this screwdriver. Oh. Okay. I am happy to hold the screwdriver.
+mo_inv2_snack|Bing! The snack teleporter beams in one cheese puff from a dimension made entirely of cheese puffs.
+mo_inv_arm|Robot arm, ready. Picking up wrench. Picking up wrench. Dropping wrench. Picking up wrench again.
+mo_inv_mail|Parcel for the garage! Fourteen boxes of rocket parts and one box of sandwiches. Somebody's planning a big day.
+mo_inv_neighbour|Those kids next door built a rocket again. Last week it was a submarine. In the paddling pool. It worked.
+mo_inv_plan|The blueprint unrolls across the table. It's a plan for a rocket. And a rollercoaster. And a rocket rollercoaster.
+mo_inv_rocket|Three, two, one, liftoff! The test rocket shoots up and away! It'll come down somewhere. Probably not here.
+mo_inv_scout|Our scout troop is here for the space badge. We'll need to go to space. I've brought snacks. And helmets. And more snacks.
+mo_mrk_confetti|Pop! Confetti everywhere! Somebody somewhere just reached a big milestone. Everyone cheers.
+mo_mrk_curator|Every painting in this gallery was made by a fan. A skeleton fan. Mostly with their fingers. Very bony fingers.
+mo_mrk_desk|The editing desk rattles. Rendering. Rendering. Still rendering. It'll be done by Tuesday.
+mo_mrk_editor|I edit videos all night. Cut, cut, jump scare, cut. I haven't slept since nineteen ninety nine. Don't need to. Skeleton.
+mo_mrk_fan|I made a sign! It says hello! I've been holding it up for three days. My arms are fine. They're just bones.
+mo_mrk_plaque|The Fan Art Gallery. An unofficial fan tribute. Not affiliated with or endorsed by anyone it celebrates.
+mo_mrk_scare|Boo! Ha! Got you! That's what the painting is about. It's a jump scare painting. It's my best work.
+mo_myr_ball|The skee-ball rolls up the lane, hops over the hundred, and lands in the ten. Every time.
+mo_myr_claw|The claw comes down, grabs a prize, lifts it up, and drops it. Of course it does. That's what claws do.
+mo_myr_prize|You've got twelve thousand tickets! You can have a pencil. Or two pencils. Or a slightly larger pencil.
+mo_myr_skee|Skee-ball champion, nineteen eighty-two through now. The secret is in the wrist. I don't have a wrist anymore. Still champion.
+mo_myr_tokens|Tokens! Get your tokens! Twenty tokens a dollar! The skee-ball takes three. The claw machine takes your soul.
+mo_myr_whack|Hi! Ow! Hi! Ow! Whack a skull is the worst game! Who invented this? Ow!
+mo_mys_conspiracy|Birds aren't real. Squirrels aren't real. I'm not sure I'm real. Write that down. Actually, don't write anything down.
+mo_mys_eye|I see you. I always see you. I have one eye and it's always looking. It's very tiring. Please blink for me.
+mo_mys_hatch|The bunker hatch creaks open. A ladder goes down into the dark. A sign at the bottom says, go back up.
+mo_mys_hunter|I've photographed a sea monster, a gnome army and a man made entirely of bees. All of the photos are blurry. All of them.
+mo_mys_journal|The old journal rises off its pedestal and turns its own pages. Most of them say: trust no one. One says: buy milk.
+mo_mys_lumber|I'm a lumberjack and I'm okay. I chop all day. Well, I used to. The trees around here started chopping back.
+mo_nbk_clown|Want to see a trick? I can fit eleven grapes in my mouth! Well. Through my mouth. They fall out the bottom.
+mo_nbk_council|Vote for me for student council! I promise longer lunches, shorter lessons, and a better seat in the cafeteria. Anywhere but by the bins.
+mo_nbk_fight|Food fight! A pea flies across the cafeteria. Then a meatball. Then, somehow, a whole trifle.
+mo_nbk_lunch|Today's special is mystery meat. Yesterday's special was mystery meat. Tomorrow's is a surprise. It's mystery meat.
+mo_nbk_meat|Hello. I'm the mystery meat. Nobody knows what I am. Not even me. It's a lot of pressure.
+mo_nbk_milk|The milk carton spins on the table. Chocolate milk. The good kind. Everybody wants it.
 mo_nc_beam|The lighthouse beam sweeps over the sea. Somewhere out there, a ship says thank you.
 mo_nc_flight|The flying machine lifts off the sand. Twelve whole seconds in the air! History is made. And then it lands in a dune.
 mo_nc_horses|Wild horses gallop along the beach. They've lived on these islands for hundreds of years. They don't care about you at all.
 mo_nc_keeper|I've kept this lighthouse lit for two hundred years. Ships stay off the shoals. Seagulls stay off my head. Mostly.
 mo_nc_kite|Best wind on the whole coast! People came here to learn to fly. I came here to fly a kite. I'm winning.
 mo_nc_pirate|Arr! These waters were full of pirates once. Now it's mostly me and a very confused crab. The crab is my first mate.
+mo_nth_bard|Sit, friend, and hear the song of the hero who took a cheese wheel to the knee. It's a short song. It's a sad song. It's mostly about cheese.
+mo_nth_chief|Welcome to my hall, traveller! Eat! Drink! Sit anywhere but my chair. That's my chair. Everyone knows that's my chair.
+mo_nth_fire|The long fire roars up the whole length of the hall. Everybody cheers. Somebody's beard is a little bit singed.
+mo_nth_guard|I used to be a traveller like you. Then I got a really comfy job in a warm hall. Best career move I ever made.
+mo_nth_mug|Skol! A mug flies down the table, spinning, and lands right in somebody's hand. Not the right somebody.
+mo_nth_shields|Shield wall! The shields pop up in a line. Nothing's attacking. They just like doing it.
+mo_pct_clerk|Evidence locker. Sign here, initial here, and here, and here. Don't sign there. That's evidence.
+mo_pct_detective|Where were you on the night of the twelfth? I'll tell you where I was. Here. Asking you that. I'm always here.
+mo_pct_exhibit|Exhibit A. A rubber chicken. Found at the scene. We don't know which scene. We have a lot of scenes.
+mo_pct_lamp|The interrogation lamp swings round and shines straight in the detective's eyes. He confesses to everything.
+mo_pct_mirror|This is a one way mirror. You can't see me. I can see you. Hello. Wave if you can't see me.
+mo_pct_suspect|I want my lawyer. He's a skeleton too. We went to school together. He wasn't very good then either.
 mo_plt_block|Bonk! A coin pops out of the block. The block looks pleased with itself.
 mo_plt_cloud|Welcome to the Cloud Kingdom! The platforms are solid. The clouds are not. Please do not stand on the clouds. We lose a tourist a week.
 mo_plt_guard|Halt! Who goes there? Oh. A visitor. The princess is in another castle. Actually, there's no princess. Just me. I'm lonely.
 mo_plt_merchant|Mushrooms! Get your mushrooms! Red ones make you taller. Green ones make you happier. Purple ones, I'm not allowed to talk about.
 mo_plt_pipe|Surprise! I live in a pipe! I'm a plant! I bite! Please water me.
 mo_plt_slab|Grr! I'm the grumpy slab! I fall on things! It's not personal. It's just gravity and a bad attitude.
+mo_prk_barker|Step right up! Step right up! Win a prize for your sweetheart! Or your skeleton-heart! Three throws a token!
+mo_prk_bell|Ding! The puck flies all the way up and rings the bell! Nobody's ever done that. The strongman is furious.
+mo_prk_candy|Cotton candy! Pink, blue, and bone white! It melts in your mouth. It falls straight through mine.
+mo_prk_darts|Pop! One balloon down! Only four hundred more for the big prize.
+mo_prk_rings|The ring flies, spins, bounces off three bottles and lands on the floor. So close. So very close.
+mo_prk_strong|I am the strongman! I can lift anything! Except my own arm. That came off in nineteen thirty. Try the bell!
+mo_pxr_gate|None shall pass. Unless they ask nicely. Or answer a riddle. Or wait about a minute, I get bored.
+mo_pxr_post|Letter for you! It's from you! You sent it to yourself! You must have wanted to know something.
+mo_pxr_riddle|Riddle me this! What has bones but no body? Me! Also you! Also everybody here. It's an easy riddle.
+mo_pxr_rock|I'm a rock. I don't move. Push all you like. I've been here since the ruins were new. Not moving now.
+mo_pxr_spikes|The spike tiles pop up! Then back down. They're more of a suggestion.
+mo_pxr_star|A little star glows in the old ruins. You feel like everything is going to be okay.
+mo_pzk_box|Hello. Is this my pizza? No. I'm in the pizza box. Close the lid. Close the lid. Please.
+mo_pzk_chef|Every pizza is made with love, flour, and a little pine needle. That last one isn't on purpose. It just happens.
+mo_pzk_dishes|I wash the dishes. Every night, the dishes come back dirty. Every night. I don't think anyone's eating off them.
+mo_pzk_dough|The dough spins up into the air, round and round. It lands perfectly. The chef bows.
+mo_pzk_driver|Thirty minutes or it's free! I've never made it in thirty minutes. Everybody's pizza is free. I'm very popular.
+mo_pzk_oven|Whoomph! The oven flares up. The pizza is done. And so is the oven glove.
+mo_scb_cube|S C B nine fifty seven. A cube that counts. It has been counting since nineteen sixty. It's on four. Nobody knows what happens at five.
+mo_scb_door|S C B nine fifty. A door that only opens if you say please. If you say thank you, it closes again, very proudly.
+mo_scb_researcher|Containment Wing B. Three anomalies, all perfectly safe. That's what the paperwork says. I wrote the paperwork.
+mo_scb_security|My job is to make sure nothing gets out. In twenty years, nothing has. Well. One stair. We don't talk about the stair.
+mo_scb_stair|S C B nine sixty four. One extra stair. Wherever you walk in the dark, there is always one more stair than you expected.
+mo_scb_volunteer|I'm a test volunteer! I've tested all three anomalies! The door was nice. The cube was confusing. The stair, I'm still on the stair.
+mo_sea_clam|I'm the giant clam. I have opinions. Close the door. Use a coaster. And never trust a crab.
+mo_sea_diver|Diver to surface. I've found the kelp forest. Also, I've lost the surface. Please send directions.
+mo_sea_guide|Welcome to the kelp forest! Stay with the group, mind the jellyfish, and don't let the clam talk you into anything.
+mo_sea_jelly|A jellyfish pulses up through the kelp, glowing pink. It doesn't have a brain. It's doing great anyway.
+mo_sea_snail|I race snails! My snail is the fastest on the seabed. Top speed: one foot an hour. We're in no hurry.
+mo_sea_treasure|The old treasure chest burps a stream of bubbles. Inside: gold, pearls, and one very soggy sandwich.
 mo_shd_book|A book flaps up off the table and circles the room. Overdue books are like that.
 mo_shd_librarian|Shh. This is a library. The books are sleeping. If you wake the encyclopedias, they won't stop talking.
 mo_shd_monitor|Hall pass? No hall pass, no hall. Rules are rules. I made the rules. I'm very proud of the rules.
@@ -482,6 +634,37 @@ mo_spd_mech|New tyres, new spokes, new shoelaces. You're good to go. Try not to 
 mo_spd_racer|Loops? I love loops. Upside down is just right side up for people who are fast enough.
 mo_spd_spring|Boing! The spring launches nothing at all, very, very high.
 mo_spd_time|Your lap time was four point two seconds. The record is four point one. The record holder is a very determined squirrel.
+mo_trh_car|Beep beep! The little car honks. It's ready for the next fifty states. It's had a long week.
+mo_trh_gas|Fill it up? That'll be a lot more than a penny, friend. A lot more. Maybe pay me in jokes.
+mo_trh_hitch|Going anywhere? I'm going everywhere. I've hitched across the whole country twice. The trick is to look friendly. I just look bony.
+mo_trh_jar|The penny jar rattles. A hundred pennies. A thousand. Enough to cross the country, one penny at a time.
+mo_trh_map|The road map unfolds, and unfolds, and unfolds. Nobody will ever fold it back up again.
+mo_trh_plaque|The Road Trip. An unofficial fan tribute. Not affiliated with or endorsed by anyone it celebrates.
+mo_trh_waitress|Coffee's a penny, pie's two pennies, and the conversation is free. Long way from home, hon?
+mo_tst_cube|Dispensing one test cube. Please do not become attached to the cube. The cube will not become attached to you.
+mo_tst_drone|Safety drone online. Hovering safely. Watching safely. Please do not wave at the safety drone.
+mo_tst_janitor|Somebody's got to clean the test chambers. Goo, glass, little burnt patches. I've seen things. Mostly goo.
+mo_tst_scan|Scanning. Bones detected. Many bones. That's normal. Please continue.
+mo_tst_subject|I'm test subject thirty seven! I've passed every test! Well, I've finished every test. That's nearly the same.
+mo_tst_super|Test subject, you are doing very well. Statistically. Compared to the others. The others are mostly bones now.
+mo_wat_bucket|The giant bucket fills, and fills, and tips! Splooosh! Nobody was standing under it. Somebody always is next time.
+mo_wat_float|Rent a tube! Float round the lazy river! It takes forty minutes. It takes four hours if you fall asleep. Most people fall asleep.
+mo_wat_guard|Walk, don't run! Whistle! Walk, don't run! Whistle! I've been blowing this whistle so long it's playing a tune.
+mo_wat_snack|Hot dogs, nachos, and slushies in every colour! The blue one turns your teeth blue. And you've got a lot of teeth.
+mo_wat_tube|A skeleton drifts past on a tube, fast asleep. They've been going round since the park opened.
+mo_wat_wave|Wave incoming! The wave machine sends a big one rolling across the pool. Everybody bobs. Nobody minds.
+mo_wsp_cousin|Shh. My cousin runs the library. I run the whisper room. Our family has been shushing people for six generations.
+mo_wsp_mort|Breathe in. Breathe out. I don't have lungs. I just pretend. It's still very relaxing.
+mo_wsp_pin|You could hear a pin drop in here. Listen. There. You just did.
+mo_wsp_shush|Shhhhhh.
+mo_wsp_sneeze|Ah. Ah. Ahh. Choo! Sorry! Sorry. Sorry. That was so loud. Everyone's looking at me.
+mo_wsp_wilma|Psst. Welcome to the whisper room. Next door they scream. In here, we whisper. It's a lot easier on the jaw.
+mo_xms_confetti|The present bursts open! Confetti everywhere! Inside: another present. Inside that: more confetti.
+mo_xms_headelf|Faster! Faster! Only four hundred days until Christmas! That's not a lot of days! Every day is Christmas here, actually. Never mind.
+mo_xms_robot|Wind up robot. Walking. Walking. Walking. Please wind me up again. Thank you.
+mo_xms_sleigh|The test sleigh shoots up through the roof! It'll be back by Christmas. Probably this Christmas.
+mo_xms_tester|I'm the toy tester. I test every toy! This one squeaks. This one bounces. This one bit me. That's a fail.
+mo_xms_wrap|Wrapping champion, three years running! I can wrap anything! A bicycle! A piano! Myself, once. That took a while to undo.
 my_dad|I came for the mysteries. I've paid forty dollars to see a rock. It's a good rock.
 my_detector|Beep. Beep. Weirdness level: yes.
 my_gnome|You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye.
