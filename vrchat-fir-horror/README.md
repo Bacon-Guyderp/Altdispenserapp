@@ -206,6 +206,41 @@ All original takes on their genres, each with voiced skeletons and gags (`Data/m
 * **The Skits:** 10 rapid-fire stick-figure skits in a white room.
 * **The Corn Flakes Room:** a giant bowl, a talking cereal box, a chef, a swimmer, and 9 corn flake jokes.
 
+## The second batch of Station stops
+
+More original takes on favourite genres, plus two real places. Each has voiced, captioned skeletons:
+
+* **Crystal Cove:** a beach town with a temple in the cliff (a four-armed statue), warp pads up the
+  cliff, a donut shop, crystal skeletons with gems in their ribs, and a fusion dance that goes wrong.
+* **Critter Meadow:** tall grass where a critter jumps out, a lab with three starter critters, a critter
+  center, a gym, a battle arena (the trainer's critter is a rock) and a rival who runs laps.
+* **The Shadow Below:** a classroom whose supply closet opens on a dark world to explore: cliffs on a
+  glowing path, the Glimmerwood, a candy field, floating cards, a tile-puzzle gate, a castle town with the
+  Chess King, a shop, a jester, and a roaring pillar of light. Wake up to get back.
+* **Ink Plaza:** walk on the turf to ink it in your colour (per player, with a score), ink pads, a
+  dripping tower, squid-kid skeletons and an ink cannon.
+* **The Dread Depths:** a space cave with energy orbs, a high-jump pad up to a ledge, a morph tube, a
+  bounty hunter in her suit, a jelly in a jar, a save station and a talking computer.
+* **Hero's Glade:** a sword that won't come out, pots, a chest (with a smaller chest inside), chickens
+  you should not hit, a fairy, an old man's cave and a heart container.
+* **Honeycomb Hollow:** notes to collect up a climbable hill, a jigsaw piece at the top, a bear with a
+  bird in his backpack, a rhyming witch's lair and a mole.
+* **Dragon Shore:** gems to collect, a glide pad on a tower, crystal dragons to free, a dragonfly, an
+  egg thief, and a sheep that becomes a butterfly.
+* **Hero Tower:** a superhero team's headquarters, a hammer nobody has tried to lift, a gauntlet that
+  snaps, and a scene after the credits.
+* **Gloom City:** night-time rooftops, a vigilante on a gargoyle, a flying hero circling the skyline, a
+  clown villain, a butler, a reporter, and the bone signal.
+* **Myrtle Beach:** the boardwalk, a big wheel you can ride, pancake houses #47, #48 and #49, mini golf
+  with a volcano, a beach shop, saltwater taffy, shag dancers and a fry-stealing seagull.
+* **Boone, NC:** King Street, a bluegrass porch, a swinging bridge between two peaks, the rock where the
+  snow falls up, a ski slope, a steam train you can ride, fog, and fall colours.
+* **The Dachshund Room:** sleepy doxies, portraits, a sausage couch, the longest dachshund in the world
+  (still arriving), a hot dog costume, stairs (the stairs win), a race, and a dachshund skeleton.
+* **Extremely Christmas:** an enormous tree, a train round it you can ride, Santa Bones on his throne,
+  the workshop, a sleigh and reindeer, a snowman, cocoa, a gingerbread house, giant candy canes, far too
+  many lights (and a switch for more), presents all the way down, snow, and a carol on the console.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:
@@ -316,6 +351,7 @@ python make_unitypackage.py
   * FirCodeLock: the Mystery Hut's secret keypad
   * FirBoost: the Speed Zone's boost pads, springs and rings
   * FirResident: the Marrow Arms residents' daily routines
+  * FirInkTurf: the Ink Plaza's turf
   * FirThrowable: toilets and babies
   * FirCheck*: the systems check
 * `legacy/` holds the previous map's code, for reference only. Nothing uses it.

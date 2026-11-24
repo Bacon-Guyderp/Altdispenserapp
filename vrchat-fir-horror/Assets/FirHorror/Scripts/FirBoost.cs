@@ -16,6 +16,7 @@ public class FirBoost : UdonSharpBehaviour
     public Transform[] rings;
     public float ringRadius = 1.0f;
     public TextMeshPro counter;
+    public string counterLabel = "RINGS";   // what the collectables are called on the counter
     public AudioSource sfx;
     public AudioClip boostClip, springClip, ringClip;
 
@@ -70,7 +71,7 @@ public class FirBoost : UdonSharpBehaviour
         for (int i = 0; i < rings.Length; i++) if (rings[i] != null && rings[i].gameObject.activeSelf) rings[i].localRotation = rings[i].localRotation * Quaternion.Euler(0, 180f * Time.deltaTime, 0);
     }
 
-    void Show() { if (counter != null) counter.text = "<b>RINGS: " + count + "</b>"; }
+    void Show() { if (counter != null) counter.text = "<b>" + counterLabel + ": " + count + "</b>"; }
 
     public int Count() { return count; }
 }

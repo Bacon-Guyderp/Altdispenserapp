@@ -19,6 +19,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "apart") { ApartTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "batch2") { Batch2Tests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -230,6 +231,7 @@ public static class SimCheck {
     MysteryTests(A, B);
     LaterTests(A, B);
     ApartTests(A, B);
+    Batch2Tests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -958,6 +960,101 @@ public static class SimCheck {
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
   }
 
+  static void Batch2Tests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The second batch of Station stops");
+    var stops = new[] { new { t = "CRYSTAL COVE", x = 1055f }, new { t = "CRITTER MEADOW", x = 1125f }, new { t = "THE SHADOW BELOW", x = 1180f }, new { t = "INK PLAZA", x = 1310f },
+                        new { t = "THE DREAD DEPTHS", x = 1375f }, new { t = "HERO'S GLADE", x = 1445f }, new { t = "HONEYCOMB HOLLOW", x = 1515f }, new { t = "DRAGON SHORE", x = 1585f },
+                        new { t = "HERO TOWER", x = 1650f }, new { t = "GLOOM CITY", x = 1715f }, new { t = "MYRTLE BEACH", x = 1790f }, new { t = "BOONE, NC", x = 1870f },
+                        new { t = "DACHSHUND ROOM", x = 1935f }, new { t = "EXTREMELY CHRISTMAS", x = 2000f } };
+    int ok = 0; var bad = new List<string>();
+    foreach (var st in stops) {
+      A.player.pos = new Vector3(-4f, 0.05f, -1f);
+      var go = All<FirTeleport>(A).FirstOrDefault(t => t.name == st.t);
+      if (go == null) { bad.Add(st.t + " (no button)"); continue; }
+      Sim.Press(A, go); Sim.Run(1f);
+      bool there = Flat(A.player.pos, new Vector3(st.x, 0, 22f)) < 0.3f;
+      var back = All<FirTeleport>(A).FirstOrDefault(t => t.name == "Back to the lobby" && Mathf.Abs(t.transform.position.x - st.x) < 25f);
+      if (back != null) { Sim.Press(A, back); Sim.Run(1f); }
+      if (there && back != null && Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f) ok++; else bad.Add(st.t);
+    }
+    Check(ok == 14, ok + " of 14 new Station stops go there and back" + string.Concat(bad.Select(x => " | " + x)));
+    foreach (var rep in new[] { "Crystal Cove:", "Critter Meadow:", "The Shadow Below:", "Ink Plaza:", "The Dread Depths:", "Hero's Glade:", "Honeycomb Hollow:", "Dragon Shore:", "Hero Tower:", "Gloom City:", "Myrtle Beach:", "Boone, NC:", "The Dachshund Room:", "Extremely Christmas:" })
+      Check(Sim.BuildLog.Any(l => l.Contains(rep)), "built: " + Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains(rep)) ?? rep + " MISSING"));
+    var probs = Sim.BuildLog.Where(l => l.Contains("problem")).ToList();
+    Check(probs.Count == 0, "the build reports no problems" + string.Concat(probs.Take(5).Select(x => " | " + x)));
+    string what;
+    // the shadow world: in through the supply closet, a tile gate, out by waking up
+    A.player.pos = new Vector3(1188.5f, 0.05f, 30f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Open the supply closet")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(1235f, 0, 23f)) < 0.3f, "the supply closet opens on the dark world");
+    var toCastle = new[] { new Vector3(1235f, 0, 55f), new Vector3(1235f, 0, 64f) };
+    Check(Blocked(A, toCastle, out what), "the tile gate blocks the way to the castle (" + what + ")");
+    var ftA = All<FirTiles>(A).First(t => t.gate.transform.position.x > 1190f);
+    foreach (int v in ftA.startPressed) { Sim.Press(A, All<FirHuntButton>(A).First(b => b.action == 31 && b.value == v && b.hunt != null && b.hunt.program == ftA)); Sim.Step(); }
+    Check(ftA.IsSolved() && !Blocked(A, toCastle, out what), "flipping the right tiles opens the gate" + (what != "" ? " | " + what : ""));
+    var spring = All<FirSay>(A).First(x => x.name == "The Shade Spring");
+    Sim.Press(A, spring); Sim.Run(1f);
+    Check(Plain(spring.caption.text).Contains("shade spring"), "the shade spring: \"" + Plain(spring.caption.text) + "\"");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Wake up (back to class)")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(1180f, 0, 22f)) < 0.3f, "waking up puts you back in class");
+    // the warp pad and the morph tube
+    var warp = All<FirPortal>(A).First(p => p.a.position.x > 1030f && p.a.position.x < 1080f);
+    A.player.pos = warp.a.position + new Vector3(0, 0.05f, 0); Sim.Run(0.3f);
+    Check(A.player.pos.y > 9.5f && Flat(A.player.pos, warp.b.position) < 1.5f, "the warp pad puts you on top of the cliff " + A.player.pos);
+    A.player.pos = new Vector3(1055f, 0.05f, 22f); Sim.Run(1.5f);
+    var tube = All<FirPortal>(A).First(p => p.a.position.x > 1350f && p.a.position.x < 1400f);
+    A.player.pos = tube.a.position + new Vector3(0, 0.05f, 0); Sim.Run(0.3f);
+    Check(Flat(A.player.pos, tube.b.position) < 1.5f, "the morph tube rolls you across the cave");
+    // collectables and launch pads
+    foreach (var lab in new[] { "ENERGY", "NOTES", "GEMS" }) {
+      var fb = All<FirBoost>(A).First(x => x.counterLabel == lab);
+      A.player.pos = new Vector3(1000f, 0.05f, 22f); Sim.Run(0.5f);
+      int before = fb.Count();
+      A.player.pos = fb.rings[fb.rings.Length - 1].position - new Vector3(0, 0.9f, 0); Sim.Run(0.3f);
+      Check(fb.Count() == before + 1 && Plain(fb.counter.text).Contains(lab + ": "), fb.rings.Length + " " + lab.ToLower() + " to collect; picked one up: \"" + Plain(fb.counter.text) + "\"");
+      if (fb.pads.Length > 0) {
+        A.player.pos = new Vector3(1000f, 0.05f, 22f); Sim.Run(0.8f);
+        A.player.velocity = Vector3.zero; A.player.pos = fb.pads[0].position + new Vector3(0, 0.03f, 0); Sim.Run(0.2f);
+        Check(A.player.velocity.y > 6f, "...and its launch pad throws you up (" + A.player.velocity + ")");
+      }
+    }
+    // the ink turf
+    var turf = All<FirInkTurf>(A)[0];
+    Func<int, FirHuntButton> Ink = act => All<FirHuntButton>(A).First(b => b.action == (act < 0 ? 72 : 71) && (act < 0 || b.value == act) && b.hunt != null && b.hunt.program == turf);
+    for (int k = 0; k < 5; k++) { A.player.pos = turf.origin + new Vector3(k * 2f, 0.05f, 0); Sim.Step(); }
+    Check(turf.Painted() == 5 && turf.tiles[0].sharedMaterial == turf.inkMats[0] && Plain(turf.board.text).Contains("TURF: 6%"), "walking 5 tiles inks them orange: " + Plain(turf.board.text));
+    Sim.Press(A, Ink(1)); Sim.Step();
+    A.player.pos = turf.origin + new Vector3(0, 0.05f, 2f); Sim.Step();
+    var turfB = All<FirInkTurf>(B)[0];
+    Check(turf.tiles[10].sharedMaterial == turf.inkMats[1] && turfB.Painted() == 0, "switch to blue and it inks blue (just for you: Bob's turf is clean)");
+    A.player.pos = new Vector3(1310f, 0.05f, 27.5f); Sim.Step();
+    Sim.Press(A, Ink(-1)); Sim.Step();
+    Check(turf.Painted() == 0 && turf.tiles[0].sharedMaterial == turf.blankMat, "CLEAN wipes the turf");
+    // rides
+    var rides = All<FirRide>(A);
+    var wheel = rides.First(r => r.rotor != null && r.rotor.position.x > 1760f && r.rotor.position.x < 1820f && r.upright != null && r.upright.Length == 6);
+    var train = rides.First(r => r.kind == 1 && r.carts[0].position.x > 1840f && r.carts[0].position.x < 1900f);
+    var xtrain = rides.First(r => r.kind == 1 && r.carts.Length == 3 && r.carts[0].position.x > 1970f);
+    var dog = rides.First(r => r.kind == 1 && r.carts[0].position.x > 1920f && r.carts[0].position.x < 1950f);
+    var q0 = wheel.rotor.rotation; var p1 = train.carts[0].position; var p2 = xtrain.carts[0].position; var p3 = dog.carts[0].position;
+    Sim.Run(3f);
+    Check(Quaternion.Angle(q0, wheel.rotor.rotation) > 5f && Vector3.Distance(p1, train.carts[0].position) > 2f && Vector3.Distance(p2, xtrain.carts[0].position) > 2f && Vector3.Distance(p3, dog.carts[0].position) > 1f,
+          "the beach wheel turns, the steam train and the Christmas train run, and a dachshund walks the room");
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 1020f);
+    Check(seats == 10, seats + " seats to ride in (6 on the beach wheel, the steam train, 3 on the Christmas train)");
+    // the people
+    string[] pre = { "gm_", "cr_", "sh_", "ik_", "dr_", "gl_", "hn_", "dg_", "hr_", "gc_", "mb_", "bn_", "dx_", "xm_" };
+    var voiced = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && pre.Any(p => r.voice.clip.name.StartsWith(p))).ToList();
+    Check(voiced.Count == 60 && voiced.All(r => r.caption.Length > 5), voiced.Count + " new voiced, captioned skeletons");
+    Check(All<FirWanderer>(A).Any(w => w.voice.clip != null && w.voice.clip.name == "cr_rival"), "the rival runs laps of the meadow");
+    var carol = All<FirSkeletonCombo>(A).FirstOrDefault(c => c.title == "The Twelve Bones of Christmas");
+    Check(carol != null && carol.lines.Length == 5 && carol.lineText.All(t => t.Length > 5), "the carol is on the console, captioned");
+    // every new gag
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 1020f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 31, gagOk + " of " + gagN + " new gags played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
+  }
+
   static void ApartTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The Marrow Arms (Bonetown's apartments)");
     Check(Sim.BuildLog.Any(l => l.Contains("The Marrow Arms: 7 apartments")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Marrow Arms")) ?? "no Marrow Arms in the build log"));
@@ -1079,7 +1176,7 @@ public static class SimCheck {
     Check(All<FirWanderer>(A).Any(w => w.voice.clip != null && w.voice.clip.name == "sp_dash"), "Dash laps the speed zone");
     // every gag in the new areas
     int gagN; var gagBad = new List<string>();
-    int gagOk = RunGags(B, g => g.transform.position.x >= 555f, out gagN, gagBad);
+    int gagOk = RunGags(B, g => g.transform.position.x >= 555f && g.transform.position.x < 1010f, out gagN, gagBad);
     Check(gagOk == gagN && gagN == 46, gagOk + " of " + gagN + " new gags (16 placed + 4 bonk blocks + flag + 5 NC/circus + 10 skits + 10 corn) played, talked, showed their line and reset" + string.Concat(gagBad.Take(6).Select(x => " | " + x)));
   }
 

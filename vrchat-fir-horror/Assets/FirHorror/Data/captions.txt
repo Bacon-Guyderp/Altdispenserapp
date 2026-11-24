@@ -33,6 +33,14 @@ bbq_2|Tomato!
 bbq_3|Vinegar is tradition!
 bbq_4|Tomato is also tradition!
 bbq_5|Hush puppies? Hush puppies.
+bn_banjo|Welcome to the porch! I play the banjo. Five strings, fifty songs, and every one is about a mountain.
+bn_coffee|Fresh coffee on King Street! Flannel optional. Flannel is not optional.
+bn_fog|The fog rolled in. You can't see your hand. You're a skeleton. You couldn't see it anyway.
+bn_hiker|Mile high swinging bridge up ahead! Don't look down. I looked down. I'm fine.
+bn_rock|This is the rock where the snow falls upward. The wind blows everything back up. Including your hat.
+bn_ski|First snow! Hit the slopes! I can't ski. But I can fall down a mountain beautifully.
+bn_student|College in the mountains! The walk to class is uphill both ways. I checked.
+bn_train|All aboard the old steam train! Watch out for train robbers! They're actors. Mostly.
 bonetones_1|Doo wop, doo wop, doo wop.
 bonetones_2|We're the Bone Tones!
 bonetones_3|Shoo be doo wah. Oooooh!
@@ -55,6 +63,31 @@ ci_mime|The mime would like you to know he is trapped in a box. The box is also 
 ci_ringmaster|Welcome, welcome, welcome, to the show! The show never ends! That's a feature!
 ci_strongman|I lift weights. The weights are drawn on. I am lifting a drawing. Very heavy drawing.
 ci_void|The void says hi. The void would like to know how your day is going.
+cr_catch|Catch cube thrown! One. Two. Three. It got out. It's judging you.
+cr_grass|A wild critter appeared! It's a Mossbun! It's eating your shoelaces.
+cr_gym|To earn this badge you must defeat me! Or ask nicely. Badges are mostly decorative.
+cr_nurse|Your critters are fully healed! Please don't ask how. It's mostly hugs.
+cr_prof|Ah, a new trainer! Pick a critter! Not that one. That one bites. They all bite.
+cr_rival|Smell you later! ...I don't have a nose. Smell you never!
+cr_trainer|I challenge you to a critter battle! My critter is a rock. It's undefeated. It's never moved.
+dg_dragon|I'm a purple dragon skeleton! I breathe fire! I also breathe out of my ribs. Lots of drafts.
+dg_elder|Long ago, all the dragons were turned to crystal. We've been very still. Very, very still.
+dg_fly|I'm the dragonfly! I follow you around and change colour when you get hurt. Mostly, I buzz.
+dg_frozen|Thank you for freeing me from the crystal! I'd shake your hand, but I'm a dragon. Have a claw.
+dg_sheep|You charged the sheep. The sheep is fine. The sheep is now a butterfly.
+dg_thief|Egg thief! That's me! These are my eggs now. They're rocks. I've been robbing rocks.
+dr_computer|Warning. Self destruct in ten minutes. Just kidding. Or am I. I'm the computer.
+dr_hunter|Bounty hunter. Power suit. Very shiny. I can roll into a ball. My knees hate it.
+dr_jelly|Specimen: floating jelly. Do not remove from the jar. It drains energy. And small talk.
+dr_save|Saving. Saving. Game saved. You are still in a creepy space cave.
+dr_science|We found a creature that eats energy. We fed it a battery. It wants another battery.
+dx_bark|Woof! Woof! That's the whole joke. Woof.
+dx_bun|A dachshund in a hot dog bun costume. He has never been so proud.
+dx_long|This is the longest dachshund in the world. He started walking in on Tuesday. He's still arriving.
+dx_owner|I love dachshunds! Long dogs, short legs! They're basically a hallway with a tail.
+dx_race|And they're off! The wiener dog race! It's very close. They're all very low to the ground.
+dx_skeleton|I'm a dachshund skeleton. I'm mostly ribs. Long, long ribs.
+dx_stairs|Dachshund versus stairs. The stairs are winning. The stairs always win.
 finale_1|We are the skeleton crew!
 finale_2|Thank you, good night!
 gag_B1|Two hundred and six. Each.
@@ -233,6 +266,42 @@ gag_Z6|Rule one: don't. Rule two: also don't.
 gag_Z7|Survival not guaranteed.
 gag_Z8|They keep it very cold in here. For the pizzas. And the... other things.
 gag_Z9|Is it closing time yet? That's when the fun starts. For them.
+gc_butler|Master Owl, your soup is getting cold. Again. Every night. Brooding is not a meal plan.
+gc_flyer|Up, up and away! I'm faster than a speeding bus! Which isn't saying much in this city.
+gc_giggles|Why so bony? Ha ha! I'm Mister Giggles! My jokes are criminal! Literally. They're illegal.
+gc_owl|I am the night. I am vengeance. I am also very cold. Gloom City has terrible heating.
+gc_reporter|This is the Daily Gloom! Still no idea who the masked owl is. All skeletons look the same!
+gc_signal|The bone signal lights up the sky! It's a call for help. Or a very big night light.
+gl_chest|You opened the chest! You found: a slightly smaller chest!
+gl_clucks|You hit the chicken. The chicken called its friends.
+gl_fairy|Hello! I'm a fairy! Hey! Listen! Hey! ...Sorry. It's a habit.
+gl_hero|Hyaa! Sorry. I only speak in grunts. It's a whole thing. Hyaa!
+gl_old|It's dangerous to go alone. Take this! It's a spoon. Good luck.
+gl_pot|You smashed a pot! You found one coin. The pot was worth more.
+gl_sword|You try to pull the sword. It doesn't budge. A sign says: come back in a hundred years.
+gm_amethyst|Fusion dance? We tried. We just became one very confused skeleton with four elbows.
+gm_donut|Welcome to the Big Ring! Every donut has a hole. So do I. Several.
+gm_fuse|Two skeletons dance, and become one taller skeleton! Much too tall. Abort.
+gm_kid|I've got a magic shield, a cat-shaped backpack, and absolutely no idea what I'm doing!
+gm_pearl|I'm a crystal skeleton. My gem is in my ribcage. Very convenient. Very hard to lose.
+gm_warp|Warp pad activated. Please keep your arms inside the beam. And your bones.
+hn_bear|Hi! I'm a bear skeleton, and there's a bird skeleton in my backpack. We don't talk about how.
+hn_bird|Squawk! Hurry up, bonehead! Those notes won't collect themselves!
+hn_gibber|Gruntle wobble bluh bluh! Sorry. That's how we talk around here.
+hn_jigsaw|Jigsaw piece! You've got one. You need ninety nine more. Good luck!
+hn_mole|Ah, you found me! I'll teach you a move! It's called walking. You've mastered it!
+hn_witch|I'm the witch, I'm here to say, I'll steal your looks and run away! ...You don't have looks. You're bones.
+hr_armor|Genius. Inventor. Skeleton. My armour has heated seats. I just think that's important.
+hr_assemble|Heroes, assemble! Okay, one at a time. Someone's elbow is in my eye.
+hr_captain|I'm Captain Calcium! My shield is made of milk. I can do this all day. Mostly because I'm bones. I don't get tired.
+hr_credits|You stayed after the credits! That's it. That was the scene. A skeleton eating a sandwich.
+hr_snap|The gauntlet snapped. Half the skeletons turned to dust. They're fine. They were already dust.
+hr_thunder|I am Thunderbone, god of loud noises! My hammer is very heavy. Nobody else can lift it. I've also never lifted it.
+ik_cannon|Splat! Direct hit. The wall is now a lovely shade of orange.
+ik_dj|Turf war at noon! Cover the floor with ink! The janitors hate us.
+ik_kid|Stay fresh! I'm half kid, half squid, all skeleton. The squid half is very confused.
+ik_news|Today's stages: a parking lot, and a different parking lot. Stay fresh!
+ik_shop|Fresh fits! This hat makes you look like a tentacle. Everyone looks like a tentacle.
 in_brimstone|I'm the bartender. Drinks are on the house. The house is on fire. Same thing.
 in_cinder|Hi! I'm Cinder! This hotel redeems sinners! So far we've redeemed a sock. It was a very bad sock.
 in_dial|Good evening, listeners, and welcome to the Redemption Inn! Please stay tuned. You can't change the station anyway.
@@ -261,6 +330,13 @@ lb_proctor5|Test three. The crate is on the other side of the glass. So is a por
 lb_proctor6|Testing complete. Your reward is the satisfaction of a test completed. And this sign.
 lb_sprout|Square wheat. Square carrots. I grew a round potato once. Nobody believed me.
 lb_woolly|My sheep are cubes. When they jump, they go boing. A square boing.
+mb_golf|Mini golf! The volcano erupts every ten minutes. Last time, it erupted on me. Hole in one, though.
+mb_gull|A seagull stole your french fry. The seagull feels no remorse.
+mb_pancake|Welcome to pancake house number forty seven! Number forty eight is across the street. Number forty nine is next door.
+mb_shag|We're doing the shag! The state dance of South Carolina! Slide, slide, rock step. Don't make it weird.
+mb_shop|Beach towels! Hermit crabs! T-shirts that say I survived! We're the fourteenth beach shop on this street!
+mb_taffy|Saltwater taffy! Pulled fresh! It pulls your teeth out too. Good thing I'm all teeth.
+mb_wheel|The big wheel! You can see the whole beach! And a lot of seagulls. The seagulls can see you too.
 medal_brown|Third! That's bronze, right? Close enough.
 medal_gold|First place!
 medal_silver|Second. Again.
@@ -400,6 +476,13 @@ res_peach|I'm practising for the town dance. My partner is a broom. He's very qu
 res_plum|I keep eating, but nothing ever stays down. Or in.
 res_rust|Welcome to the snack shack! Today's special is soup. It goes right through you.
 res_sky|I'm writing a song! It's called Ribcage Rock. It's mostly xylophone.
+sh_hero|In this world I'm a knight! In the other world I'm a student. The homework follows me here.
+sh_jester|Ho ho! Welcome to the shadow side! Here everything is purple and nothing makes sense! Chaos! Chaos!
+sh_king|I am the Chess King! I can only move one square at a time. It's very frustrating. Bow. Slowly.
+sh_rude|I'm the rude buddy. I'm not your friend. I'm also your friend. Don't tell anyone.
+sh_shop|Welcome, welcome! I sell darkness candy. It tastes like the colour purple.
+sh_spring|The shade spring roars. It's very loud. It's very dramatic. Please don't touch it.
+sh_teacher|Class! Please collect your chalk. Someone's gone missing. Probably in the supply closet. It's always the closet.
 skel_SK1|Skeleton crew, reporting for duty!
 skel_SK10|Green skeleton. Also, ha.
 skel_SK11|I'd run, but I don't have the guts.
@@ -442,6 +525,20 @@ wan_lime|Out for my evening stroll. Want to come? I'm very slow. And very dead.
 wan_magenta|Can't stop! I'm late for a very important... nothing! Bye!
 wan_neon|Wheee! Running is the best! I never get out of breath. No lungs!
 wan_turquoise|Tag! You're it! ...Oh. You're not playing. That's fine.
+xm_cocoa|Hot cocoa! Extra marshmallows! It goes straight through my ribs. A very festive puddle.
+xm_elf|I make toys all year! Eleven months of toys! One month of panic!
+xm_lights|You turned on the lights! All forty thousand of them! Somewhere, the power company is crying.
+xm_present|You opened a present! It's another present! Inside that, another present! It's presents all the way down.
+xm_reindeer|I'm a reindeer! My nose doesn't glow. I'm a skeleton. I don't have a nose.
+xm_santa|Ho ho ho! I'm Santa Bones! I checked my list. Everybody's on the nice list. I'm very lenient!
+xm_snowman|I'm a snowman made of snow bones! Brrr. That's not the cold. That's my personality.
+xm_train|All aboard the Christmas train! It goes round the tree. Forever. There's no stop. Merry Christmas.
+xm_tree|The tree is so big, it has its own weather. It's snowing on the angel.
+xmas_1|On the first day of Christmas, my true love gave to me...
+xmas_2|A skull in a fir tree!
+xmas_3|On the second day of Christmas, my true love gave to me...
+xmas_4|Two femurs, and...
+xmas_5|A skull in a fir tree! Merry Christmas!
 xs_apricot|Can't talk! Training for the skeleton marathon! It's all downhill from here!
 xs_aqua|Wind me up and watch me go! Clickety clack!
 xs_ash|I'm wrapping myself as a present. Nobody ever wants to unwrap a skeleton.

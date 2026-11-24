@@ -523,11 +523,122 @@ def apart_lines():
         yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
 
 
+# The second batch of Station stops -> Audio/<Area>/<id>.ogg
+AREAS2 = [
+    ("Gem/gm_pearl", "mb-us1", 125, 70, 1.05, "skel", "I'm a crystal skeleton. My gem is in my ribcage. Very convenient. Very hard to lose."),
+    ("Gem/gm_amethyst", "mb-us1", 150, 45, 0.95, "skel", 'Fusion dance? We tried. We just became one very confused skeleton with four elbows.'),
+    ("Gem/gm_donut", "mb-us3", 160, 60, 1.05, "skel", 'Welcome to the Big Ring! Every donut has a hole. So do I. Several.'),
+    ("Gem/gm_kid", "mb-us3", 175, 85, 1.25, "skel", "I've got a magic shield, a cat-shaped backpack, and absolutely no idea what I'm doing!"),
+    ("Gem/gm_warp", "mb-us2", 140, 40, 1.0, "narr", 'Warp pad activated. Please keep your arms inside the beam. And your bones.'),
+    ("Gem/gm_fuse", "mb-us2", 140, 40, 1.0, "narr", 'Two skeletons dance, and become one taller skeleton! Much too tall. Abort.'),
+    ("Critter/cr_trainer", "mb-us3", 175, 75, 1.2, "skel", "I challenge you to a critter battle! My critter is a rock. It's undefeated. It's never moved."),
+    ("Critter/cr_prof", "mb-us2", 130, 35, 0.92, "skel", 'Ah, a new trainer! Pick a critter! Not that one. That one bites. They all bite.'),
+    ("Critter/cr_nurse", "mb-us1", 150, 75, 1.1, "skel", "Your critters are fully healed! Please don't ask how. It's mostly hugs."),
+    ("Critter/cr_grass", "mb-us2", 150, 45, 1.0, "narr", "A wild critter appeared! It's a Mossbun! It's eating your shoelaces."),
+    ("Critter/cr_catch", "mb-us2", 150, 45, 1.0, "narr", "Catch cube thrown! One. Two. Three. It got out. It's judging you."),
+    ("Critter/cr_gym", "mb-us2", 120, 25, 0.88, "skel", 'To earn this badge you must defeat me! Or ask nicely. Badges are mostly decorative.'),
+    ("Critter/cr_rival", "mb-us3", 180, 65, 1.15, "skel", "Smell you later! ...I don't have a nose. Smell you never!"),
+    ("Shade/sh_teacher", "mb-us1", 135, 55, 1.0, "skel", "Class! Please collect your chalk. Someone's gone missing. Probably in the supply closet. It's always the closet."),
+    ("Shade/sh_jester", "mb-us3", 185, 90, 1.3, "glitch", 'Ho ho! Welcome to the shadow side! Here everything is purple and nothing makes sense! Chaos! Chaos!'),
+    ("Shade/sh_king", "mb-us2", 110, 15, 0.82, "skel", "I am the Chess King! I can only move one square at a time. It's very frustrating. Bow. Slowly."),
+    ("Shade/sh_shop", "mb-us1", 140, 60, 1.05, "skel", 'Welcome, welcome! I sell darkness candy. It tastes like the colour purple.'),
+    ("Shade/sh_hero", "mb-us3", 150, 55, 1.05, "skel", "In this world I'm a knight! In the other world I'm a student. The homework follows me here."),
+    ("Shade/sh_spring", "mb-us2", 130, 30, 0.95, "narr", "The shade spring roars. It's very loud. It's very dramatic. Please don't touch it."),
+    ("Shade/sh_rude", "mb-us2", 160, 40, 0.95, "skel", "I'm the rude buddy. I'm not your friend. I'm also your friend. Don't tell anyone."),
+    ("Ink/ik_kid", "mb-us3", 180, 80, 1.25, "skel", "Stay fresh! I'm half kid, half squid, all skeleton. The squid half is very confused."),
+    ("Ink/ik_dj", "mb-us2", 165, 50, 1.05, "skel", 'Turf war at noon! Cover the floor with ink! The janitors hate us.'),
+    ("Ink/ik_shop", "mb-us1", 155, 65, 1.1, "skel", 'Fresh fits! This hat makes you look like a tentacle. Everyone looks like a tentacle.'),
+    ("Ink/ik_cannon", "mb-us2", 150, 45, 1.0, "narr", 'Splat! Direct hit. The wall is now a lovely shade of orange.'),
+    ("Ink/ik_news", "mb-us1", 170, 70, 1.15, "skel", "Today's stages: a parking lot, and a different parking lot. Stay fresh!"),
+    ("Dread/dr_hunter", "mb-us1", 125, 35, 0.95, "skel", 'Bounty hunter. Power suit. Very shiny. I can roll into a ball. My knees hate it.'),
+    ("Dread/dr_jelly", "mb-us2", 130, 35, 0.95, "narr", 'Specimen: floating jelly. Do not remove from the jar. It drains energy. And small talk.'),
+    ("Dread/dr_save", "mb-us2", 130, 35, 0.95, "radio", 'Saving. Saving. Game saved. You are still in a creepy space cave.'),
+    ("Dread/dr_science", "mb-us3", 150, 60, 1.05, "skel", 'We found a creature that eats energy. We fed it a battery. It wants another battery.'),
+    ("Dread/dr_computer", "mb-us2", 120, 30, 0.95, "radio", "Warning. Self destruct in ten minutes. Just kidding. Or am I. I'm the computer."),
+    ("Glade/gl_hero", "mb-us3", 160, 60, 1.1, "skel", "Hyaa! Sorry. I only speak in grunts. It's a whole thing. Hyaa!"),
+    ("Glade/gl_sword", "mb-us2", 140, 40, 1.0, "narr", "You try to pull the sword. It doesn't budge. A sign says: come back in a hundred years."),
+    ("Glade/gl_pot", "mb-us2", 140, 40, 1.0, "narr", 'You smashed a pot! You found one coin. The pot was worth more.'),
+    ("Glade/gl_chest", "mb-us2", 140, 40, 1.0, "narr", 'You opened the chest! You found: a slightly smaller chest!'),
+    ("Glade/gl_fairy", "mb-us1", 190, 95, 1.4, "skel", "Hello! I'm a fairy! Hey! Listen! Hey! ...Sorry. It's a habit."),
+    ("Glade/gl_clucks", "mb-us2", 140, 40, 1.0, "narr", 'You hit the chicken. The chicken called its friends.'),
+    ("Glade/gl_old", "mb-us2", 105, 20, 0.85, "skel", "It's dangerous to go alone. Take this! It's a spoon. Good luck."),
+    ("Honey/hn_bear", "mb-us2", 120, 25, 0.85, "skel", "Hi! I'm a bear skeleton, and there's a bird skeleton in my backpack. We don't talk about how."),
+    ("Honey/hn_bird", "mb-us3", 190, 90, 1.35, "skel", "Squawk! Hurry up, bonehead! Those notes won't collect themselves!"),
+    ("Honey/hn_witch", "mb-us1", 150, 70, 1.1, "glitch", "I'm the witch, I'm here to say, I'll steal your looks and run away! ...You don't have looks. You're bones."),
+    ("Honey/hn_mole", "mb-us2", 110, 30, 0.9, "skel", "Ah, you found me! I'll teach you a move! It's called walking. You've mastered it!"),
+    ("Honey/hn_jigsaw", "mb-us2", 140, 45, 1.0, "narr", "Jigsaw piece! You've got one. You need ninety nine more. Good luck!"),
+    ("Honey/hn_gibber", "mb-us3", 200, 70, 1.3, "skel", "Gruntle wobble bluh bluh! Sorry. That's how we talk around here."),
+    ("Dragon/dg_dragon", "mb-us3", 165, 70, 1.15, "skel", "I'm a purple dragon skeleton! I breathe fire! I also breathe out of my ribs. Lots of drafts."),
+    ("Dragon/dg_frozen", "mb-us2", 130, 30, 0.9, "skel", "Thank you for freeing me from the crystal! I'd shake your hand, but I'm a dragon. Have a claw."),
+    ("Dragon/dg_elder", "mb-us2", 100, 10, 0.8, "skel", "Long ago, all the dragons were turned to crystal. We've been very still. Very, very still."),
+    ("Dragon/dg_fly", "mb-us1", 200, 95, 1.4, "skel", "I'm the dragonfly! I follow you around and change colour when you get hurt. Mostly, I buzz."),
+    ("Dragon/dg_sheep", "mb-us2", 140, 45, 1.0, "narr", 'You charged the sheep. The sheep is fine. The sheep is now a butterfly.'),
+    ("Dragon/dg_thief", "mb-us3", 175, 55, 1.1, "skel", "Egg thief! That's me! These are my eggs now. They're rocks. I've been robbing rocks."),
+    ("Hero/hr_captain", "mb-us2", 135, 35, 0.95, "skel", "I'm Captain Calcium! My shield is made of milk. I can do this all day. Mostly because I'm bones. I don't get tired."),
+    ("Hero/hr_thunder", "mb-us2", 115, 15, 0.82, "skel", "I am Thunderbone, god of loud noises! My hammer is very heavy. Nobody else can lift it. I've also never lifted it."),
+    ("Hero/hr_armor", "mb-us3", 170, 55, 1.05, "skel", "Genius. Inventor. Skeleton. My armour has heated seats. I just think that's important."),
+    ("Hero/hr_snap", "mb-us2", 130, 35, 0.95, "narr", "The gauntlet snapped. Half the skeletons turned to dust. They're fine. They were already dust."),
+    ("Hero/hr_credits", "mb-us2", 130, 35, 0.95, "narr", "You stayed after the credits! That's it. That was the scene. A skeleton eating a sandwich."),
+    ("Hero/hr_assemble", "mb-us1", 150, 60, 1.05, "skel", "Heroes, assemble! Okay, one at a time. Someone's elbow is in my eye."),
+    ("Gloom/gc_owl", "mb-us2", 95, 5, 0.78, "skel", 'I am the night. I am vengeance. I am also very cold. Gloom City has terrible heating.'),
+    ("Gloom/gc_flyer", "mb-us3", 160, 55, 1.05, "skel", "Up, up and away! I'm faster than a speeding bus! Which isn't saying much in this city."),
+    ("Gloom/gc_giggles", "mb-us3", 175, 85, 1.25, "glitch", "Why so bony? Ha ha! I'm Mister Giggles! My jokes are criminal! Literally. They're illegal."),
+    ("Gloom/gc_butler", "mb-us2", 115, 30, 0.9, "skel", 'Master Owl, your soup is getting cold. Again. Every night. Brooding is not a meal plan.'),
+    ("Gloom/gc_signal", "mb-us2", 130, 35, 0.95, "narr", "The bone signal lights up the sky! It's a call for help. Or a very big night light."),
+    ("Gloom/gc_reporter", "mb-us1", 170, 65, 1.1, "skel", 'This is the Daily Gloom! Still no idea who the masked owl is. All skeletons look the same!'),
+    ("Myrtle/mb_shag", "mb-us1", 155, 65, 1.05, "skel", "We're doing the shag! The state dance of South Carolina! Slide, slide, rock step. Don't make it weird."),
+    ("Myrtle/mb_pancake", "mb-us3", 165, 60, 1.1, "skel", 'Welcome to pancake house number forty seven! Number forty eight is across the street. Number forty nine is next door.'),
+    ("Myrtle/mb_golf", "mb-us2", 150, 45, 1.0, "skel", 'Mini golf! The volcano erupts every ten minutes. Last time, it erupted on me. Hole in one, though.'),
+    ("Myrtle/mb_wheel", "mb-us1", 150, 70, 1.1, "skel", 'The big wheel! You can see the whole beach! And a lot of seagulls. The seagulls can see you too.'),
+    ("Myrtle/mb_shop", "mb-us3", 180, 65, 1.15, "skel", "Beach towels! Hermit crabs! T-shirts that say I survived! We're the fourteenth beach shop on this street!"),
+    ("Myrtle/mb_gull", "mb-us2", 140, 40, 1.0, "narr", 'A seagull stole your french fry. The seagull feels no remorse.'),
+    ("Myrtle/mb_taffy", "mb-us2", 140, 50, 1.0, "skel", "Saltwater taffy! Pulled fresh! It pulls your teeth out too. Good thing I'm all teeth."),
+    ("Boone/bn_banjo", "mb-us2", 125, 30, 0.9, "skel", 'Welcome to the porch! I play the banjo. Five strings, fifty songs, and every one is about a mountain.'),
+    ("Boone/bn_hiker", "mb-us3", 165, 60, 1.1, "skel", "Mile high swinging bridge up ahead! Don't look down. I looked down. I'm fine."),
+    ("Boone/bn_coffee", "mb-us1", 150, 60, 1.05, "skel", 'Fresh coffee on King Street! Flannel optional. Flannel is not optional.'),
+    ("Boone/bn_rock", "mb-us2", 140, 40, 1.0, "narr", 'This is the rock where the snow falls upward. The wind blows everything back up. Including your hat.'),
+    ("Boone/bn_ski", "mb-us3", 170, 70, 1.15, "skel", "First snow! Hit the slopes! I can't ski. But I can fall down a mountain beautifully."),
+    ("Boone/bn_student", "mb-us1", 160, 70, 1.1, "skel", 'College in the mountains! The walk to class is uphill both ways. I checked.'),
+    ("Boone/bn_train", "mb-us2", 130, 30, 0.92, "skel", "All aboard the old steam train! Watch out for train robbers! They're actors. Mostly."),
+    ("Boone/bn_fog", "mb-us2", 140, 40, 1.0, "narr", "The fog rolled in. You can't see your hand. You're a skeleton. You couldn't see it anyway."),
+    ("Doxie/dx_long", "mb-us2", 140, 40, 1.0, "narr", "This is the longest dachshund in the world. He started walking in on Tuesday. He's still arriving."),
+    ("Doxie/dx_owner", "mb-us1", 160, 70, 1.1, "skel", "I love dachshunds! Long dogs, short legs! They're basically a hallway with a tail."),
+    ("Doxie/dx_bun", "mb-us2", 140, 40, 1.0, "narr", 'A dachshund in a hot dog bun costume. He has never been so proud.'),
+    ("Doxie/dx_stairs", "mb-us2", 140, 40, 1.0, "narr", 'Dachshund versus stairs. The stairs are winning. The stairs always win.'),
+    ("Doxie/dx_skeleton", "mb-us3", 150, 50, 1.05, "skel", "I'm a dachshund skeleton. I'm mostly ribs. Long, long ribs."),
+    ("Doxie/dx_race", "mb-us2", 170, 50, 1.05, "narr", "And they're off! The wiener dog race! It's very close. They're all very low to the ground."),
+    ("Doxie/dx_bark", "mb-us3", 160, 80, 1.3, "skel", "Woof! Woof! That's the whole joke. Woof."),
+    ("Xmas/xm_santa", "mb-us2", 125, 20, 0.85, "skel", "Ho ho ho! I'm Santa Bones! I checked my list. Everybody's on the nice list. I'm very lenient!"),
+    ("Xmas/xm_elf", "mb-us1", 190, 90, 1.35, "skel", 'I make toys all year! Eleven months of toys! One month of panic!'),
+    ("Xmas/xm_reindeer", "mb-us3", 150, 55, 1.05, "skel", "I'm a reindeer! My nose doesn't glow. I'm a skeleton. I don't have a nose."),
+    ("Xmas/xm_snowman", "mb-us2", 130, 40, 0.95, "skel", "I'm a snowman made of snow bones! Brrr. That's not the cold. That's my personality."),
+    ("Xmas/xm_cocoa", "mb-us1", 160, 70, 1.1, "skel", 'Hot cocoa! Extra marshmallows! It goes straight through my ribs. A very festive puddle.'),
+    ("Xmas/xm_train", "mb-us2", 140, 40, 1.0, "narr", "All aboard the Christmas train! It goes round the tree. Forever. There's no stop. Merry Christmas."),
+    ("Xmas/xm_lights", "mb-us2", 140, 40, 1.0, "narr", 'You turned on the lights! All forty thousand of them! Somewhere, the power company is crying.'),
+    ("Xmas/xm_present", "mb-us2", 140, 40, 1.0, "narr", "You opened a present! It's another present! Inside that, another present! It's presents all the way down."),
+    ("Xmas/xm_tree", "mb-us2", 140, 40, 1.0, "narr", "The tree is so big, it has its own weather. It's snowing on the angel."),
+]
+SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
+COMBO += [
+    ("xmas_1", ["santa"], "On the first day of Christmas, my true love gave to me..."),
+    ("xmas_2", ["elf"], "A skull in a fir tree!"),
+    ("xmas_3", ["reindeer"], "On the second day of Christmas, my true love gave to me..."),
+    ("xmas_4", ["snowman"], "Two femurs, and..."),
+    ("xmas_5", ["santa", "elf", "reindeer", "snowman"], "A skull in a fir tree! Merry Christmas!"),
+]
+
+
+def area2_lines():
+    for name, v, speed, pitch, rate, kind, text in AREAS2:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
 def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
     for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
-                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines()):
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines()):
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
@@ -614,6 +725,15 @@ def main():
         if "--captions" in sys.argv:
             write_captions()
             return
+        if "--areas2" in sys.argv:   # only the second batch of Station stops, and the carol
+            for folder in sorted({n.split("/")[0] for n, *_ in AREAS2}): os.makedirs(os.path.join(OUT, folder), exist_ok=True)
+            render_only(tmp, list(area2_lines()), "Xmas")
+            only = [c for c in COMBO if c[0].startswith("xmas_")]
+            saved = COMBO[:]; COMBO[:] = only
+            try: make_combo(tmp)
+            finally: COMBO[:] = saved
+            write_captions()
+            return
         if "--apart" in sys.argv:   # only the Marrow Arms apartments
             render_only(tmp, list(apart_lines()), "Apart")
             write_captions()
@@ -680,7 +800,7 @@ def main():
                 print(name, os.path.getsize(out) // 1024, "KB")
             make_combo(tmp)
             return
-        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines()) + list(area_lines()) + list(apart_lines())
+        todo = list(rainbow_lines()) if only_rainbow else list(LINES) + list(gag_lines()) + list(skeleton_lines()) + list(rainbow_lines()) + list(town_lines()) + list(extra_lines()) + list(park_lines()) + list(cop_lines()) + list(pizza_lines()) + list(pixel_lines()) + list(lab_lines()) + list(north_lines()) + list(mystery_lines()) + list(area_lines()) + list(apart_lines()) + list(area2_lines())
         for name, voice, speed, pitch, text, filt in todo:
             wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
             subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
