@@ -660,6 +660,14 @@ wan_lime|Out for my evening stroll. Want to come? I'm very slow. And very dead.
 wan_magenta|Can't stop! I'm late for a very important... nothing! Bye!
 wan_neon|Wheee! Running is the best! I never get out of breath. No lungs!
 wan_turquoise|Tag! You're it! ...Oh. You're not playing. That's fine.
+wp_bowl|Welcome to the Bone Bowl! Climb the tower, sit in a raft, keep your arms inside the tube. Round and round you go, and down the hole!
+wp_bucket|The giant bucket tips! Splash! Everyone underneath is now very wet. And still bones.
+wp_kid|Again! Again! Can we go on the bowl again? Can we? Can we?
+wp_lifeguard|No running! No diving! No... is that a skeleton at the bottom of the deep end? Oh. It's all of you. Carry on.
+wp_plaque|Splashbone Water Park! A bowl slide, a lazy river, a wave pool, and a very big bucket. Skeletons float surprisingly well.
+wp_snack|Hot dogs! Nachos! Frozen lemonade! It all goes straight through me. Like everything.
+wp_sunscreen|Sunscreen? Don't need it. No skin. I'm just here to get a tan on my bones.
+wp_wave|Wave pool! Every ten minutes, a wave! The wave is about this big.
 xm_cocoa|Hot cocoa! Extra marshmallows! It goes straight through my ribs. A very festive puddle.
 xm_elf|I make toys all year! Eleven months of toys! One month of panic!
 xm_lights|You turned on the lights! All forty thousand of them! Somewhere, the power company is crying.

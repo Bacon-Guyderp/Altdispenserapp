@@ -747,6 +747,14 @@ AREAS2 = [
     ("Portal/rm_sideways", "mb-us2", 140, 40, 1.0, "narr", 'Welcome to the sideways dimension. The floor is the wall. Your coffee is everywhere.'),
     ("Portal/rm_pink", "mb-us2", 140, 40, 1.0, "narr", "It's the garage again. But pink. The skeletons here are pink too. They seem happier."),
     ("Portal/rm_portal", "mb-us2", 140, 40, 1.0, "narr", 'Portal opened! Please mind the green.'),
+    ("Water/wp_plaque", "mb-us2", 135, 40, 1.0, "narr", 'Splashbone Water Park! A bowl slide, a lazy river, a wave pool, and a very big bucket. Skeletons float surprisingly well.'),
+    ("Water/wp_bowl", "mb-us3", 165, 55, 1.05, "radio", 'Welcome to the Bone Bowl! Climb the tower, sit in a raft, keep your arms inside the tube. Round and round you go, and down the hole!'),
+    ("Water/wp_lifeguard", "mb-us2", 140, 30, 0.92, "skel", "No running! No diving! No... is that a skeleton at the bottom of the deep end? Oh. It's all of you. Carry on."),
+    ("Water/wp_sunscreen", "mb-us1", 140, 65, 1.05, "skel", "Sunscreen? Don't need it. No skin. I'm just here to get a tan on my bones."),
+    ("Water/wp_bucket", "mb-us2", 140, 40, 1.0, "narr", 'The giant bucket tips! Splash! Everyone underneath is now very wet. And still bones.'),
+    ("Water/wp_snack", "mb-us3", 160, 60, 1.05, "skel", 'Hot dogs! Nachos! Frozen lemonade! It all goes straight through me. Like everything.'),
+    ("Water/wp_wave", "mb-us2", 140, 40, 1.0, "narr", 'Wave pool! Every ten minutes, a wave! The wave is about this big.'),
+    ("Water/wp_kid", "mb-us3", 190, 95, 1.4, "skel", 'Again! Again! Can we go on the bowl again? Can we? Can we?'),
 ]
 SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
 COMBO += [

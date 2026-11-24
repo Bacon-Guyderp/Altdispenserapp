@@ -276,6 +276,16 @@ act out whatever is on: the news, a cowboy show, a cooking show and a dance part
   * BONE-999, a door that always leads to the lobby
   * a breach alarm and a records terminal
 
+* **The Interdimensional Garage:** a cranky genius, an anxious assistant, a thingamaflux, a TV that picks up
+  other dimensions, and a green portal to a world of dimensions: the sideways one, the sandwich one, the
+  pink garage, a galactic market and a flying saucer to ride.
+* **Splashbone Water Park:**
+  * **The Bone Bowl,** a bowl slide: climb the tower and sit in a raft. It goes down an enclosed tube into
+    the rim of a big striped bowl, spirals two and a half times down to the middle, drops through the hole
+    and splashes out into a pool.
+  * A wave pool, a lazy river with inner tubes to ride, a giant tipping bucket, a snack shack and a
+    lifeguard.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:

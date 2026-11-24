@@ -238,6 +238,7 @@ public static class FirCheckBuilder
         BuildBattleIsland(root);
         BuildContainment(root);
         BuildPortalGarage(root);
+        BuildWaterPark(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -1875,6 +1876,8 @@ public static class FirCheckBuilder
         A("DoxieBrown", null, new Color(0.55f, 0.28f, 0.1f), 1, new Color(0f, 0f, 0f));
         A("DoxieBlack", null, new Color(0.12f, 0.08f, 0.06f), 1, new Color(0f, 0f, 0f));
         A("Bun", null, new Color(0.85f, 0.6f, 0.3f), 1, new Color(0f, 0f, 0f));
+        A("PoolBlue", null, new Color(0.15f, 0.4f, 0.9f), 1, new Color(0.02f, 0.06f, 0.15f));
+        A("PoolGreen", null, new Color(0.45f, 0.78f, 0.35f), 1, new Color(0.05f, 0.1f, 0.04f));
         A("NightSky", null, new Color(0.12f, 0.15f, 0.3f), 1, new Color(0.03f, 0.04f, 0.1f));
         A("LabWhite", null, new Color(0.92f, 0.93f, 0.95f), 1, Color.black);
         A("LabFloor", "concrete", new Color(0.75f, 0.77f, 0.8f), 1, Color.black);
@@ -3626,6 +3629,176 @@ public static class FirCheckBuilder
         Prim(PrimitiveType.Cylinder, "Button", lb, Vector3.zero, new Vector3(0.3f, 0.05f, 0.3f), M("GlowGreen"));
         launch.target = lb; launch.moveBy = new Vector3(0, -0.04f, 0); launch.wobble = 5f;
         report.Add("The Interdimensional Garage: a cranky genius, an anxious assistant, a thingamaflux, a TV of other dimensions (4 channels), and a portal to the dimensions: sideways, sandwiches, the pink garage, a galactic market and a saucer to ride; 4 gags");
+    }
+
+    // =================================================================== Splashbone Water Park, with a bowl slide
+
+    /// <summary>A tube (a run of cylinders) through the given points.</summary>
+    static void Tube(Transform g, Vector3[] pts, float radius, string matA, string matB)
+    {
+        for (int i = 0; i + 1 < pts.Length; i++)
+        {
+            var a = pts[i]; var b = pts[i + 1]; var d = b - a;
+            var seg = Prim(PrimitiveType.Cylinder, "Tube", g, (a + b) / 2f, new Vector3(radius * 2f, d.magnitude / 2f + 0.15f, radius * 2f), M(i % 2 == 0 ? matA : matB));
+            seg.transform.localRotation = Quaternion.FromToRotation(Vector3.up, d.normalized);
+        }
+    }
+
+    /// <summary>The bowl's surface height at radius r (1 m hole in the middle, rim at r = 7).</summary>
+    static float BowlY(float r) { float k = Mathf.Clamp01((r - 1f) / 6f); return 3f + 3f * k * k; }
+
+    static void BuildWaterPark(Transform root)
+    {
+        var g = AreaShell(root, "Splashbone Water Park", 2710f, 2790f, 20f, 90f, 30f, "Concrete", "PixelSky", "Sky",
+                          "SPLASHBONE WATER PARK", new Color(0.2f, 0.7f, 1f), "the Bone Bowl, a lazy river, a wave pool and a very big bucket", "WATER PARK");
+        Plaque(g, new Vector3(2738f, 0, 23.5f), "<b>SPLASHBONE WATER PARK</b>\nthe Bone Bowl (climb the tower, sit in a raft)\nthe lazy river, the wave pool, the big bucket\n\n<size=80%>(press to hear more)</size>", "Water/wp_plaque");
+        for (int k = 0; k < 8; k++) Box(g, "Lawn", new Vector3(2715f + (k % 2) * 60f, 0.006f, 30f + (k / 2) * 15f), new Vector3(8f, 0.01f, 12f), M("Grass"), false);
+        // ---- THE BONE BOWL: a tower, a tube into the rim, the bowl, a drop through the middle, a splash pool
+        var bowl = Group(g, "The Bone Bowl", Vector3.zero);
+        var C = new Vector3(2762f, 0, 62f);
+        const int segs = 28;
+        for (int ring = 0; ring < 8; ring++)
+        {
+            float r0 = 1f + ring * 0.75f, r1 = r0 + 0.75f, rm = (r0 + r1) / 2f, y0 = BowlY(r0), y1 = BowlY(r1);
+            for (int s = 0; s < segs; s++)
+            {
+                float a = (s + 0.5f) * Mathf.PI * 2f / segs;
+                var u = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)); var t = new Vector3(-Mathf.Sin(a), 0, Mathf.Cos(a));
+                var f = (u * (r1 - r0) + Vector3.up * (y1 - y0)).normalized;
+                var n = Vector3.Cross(t, f);
+                var p = C + u * rm + Vector3.up * ((y0 + y1) / 2f) - n * 0.05f;
+                var panel = Box(bowl, "Bowl panel", p, new Vector3(2f * Mathf.PI * rm / segs * 1.08f, 0.1f, Mathf.Sqrt((r1 - r0) * (r1 - r0) + (y1 - y0) * (y1 - y0)) * 1.04f), M((s / 2) % 2 == 0 ? "PoolBlue" : "PoolGreen"));
+                panel.transform.localRotation = Quaternion.LookRotation(f, n);
+            }
+        }
+        for (int s = 0; s < segs; s++)
+        {
+            float a = (s + 0.5f) * Mathf.PI * 2f / segs;
+            var u = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+            var sk = Box(bowl, "Bowl skirt", C + u * 7.15f + Vector3.up * 5.2f, new Vector3(2f * Mathf.PI * 7.15f / segs * 1.08f, 2.4f, 0.12f), M((s / 2) % 2 == 0 ? "PoolBlue" : "PoolGreen"));
+            sk.transform.localRotation = Quaternion.LookRotation(u, Vector3.up);
+            DPrim(PrimitiveType.Cylinder, "Rim", bowl, C + u * 7.2f + Vector3.up * 6.45f, new Vector3(0.3f, 0.8f, 0.3f), M("PoolBlue"), Quaternion.LookRotation(Vector3.up, u) * Quaternion.Euler(0, 0, 0));
+        }
+        for (int k = 0; k < 6; k++)
+        {
+            float a = k * Mathf.PI / 3f;
+            DPrim(PrimitiveType.Cylinder, "BowlLeg", bowl, C + new Vector3(Mathf.Cos(a) * 5f, BowlY(5f) / 2f, Mathf.Sin(a) * 5f), new Vector3(0.35f, BowlY(5f) / 2f, 0.35f), M("Metal"));
+        }
+        Prim(PrimitiveType.Cylinder, "Water swirl", bowl, C + Vector3.up * 3.5f, new Vector3(5f, 0.02f, 5f), M("Water"));
+        // the tower, its stairs and the platform at the top
+        var tw = new Vector3(2784f, 0, 46f);
+        for (int k = 0; k < 32; k++) Box(bowl, "Stair " + k, new Vector3(tw.x, 0.175f + k * 0.35f, 28f + k * 0.5f), new Vector3(2f, 0.35f, 0.5f), M("DeskWood"));
+        Box(bowl, "Platform", tw + new Vector3(0, 10.95f, 0), new Vector3(4f, 0.3f, 4f), M("DeskWood"));
+        foreach (float px in new[] { -1.8f, 1.8f }) foreach (float pz in new[] { -1.8f, 1.8f }) DPrim(PrimitiveType.Cylinder, "TowerLeg", bowl, tw + new Vector3(px, 5.5f, pz), new Vector3(0.3f, 5.5f, 0.3f), M("Metal"));
+        Box(bowl, "RailE", tw + new Vector3(2f, 11.6f, 0), new Vector3(0.08f, 1f, 4f), M("Metal"));
+        Box(bowl, "RailN", tw + new Vector3(0, 11.6f, 2f), new Vector3(4f, 1f, 0.08f), M("Metal"));
+        Box(bowl, "Canopy", tw + new Vector3(0, 13.6f, 0), new Vector3(4.4f, 0.2f, 4.4f), M("GiftRed"), false);
+        Text("BowlSign", bowl, tw + new Vector3(0, 14.3f, -2.2f), Face(Vector3.back), new Vector2(5f, 1f), 0.6f, "<b>THE BONE BOWL</b>").color = new Color(1f, 0.9f, 0.2f);
+        // the ride: a tube from the platform into the rim, two and a half turns down the bowl, the drop, the splash pool
+        var route = new List<Vector3>();
+        route.Add(tw + new Vector3(-1.2f, 11.3f, -1.2f));   // boarding: the raft creeps across the platform, so there's time to get in
+        var tubePts = new[] { tw + new Vector3(-1.2f, 11.3f, 0.2f), tw + new Vector3(-5f, 10.4f, 1f), tw + new Vector3(-9f, 9.4f, 3f), C + new Vector3(9f, 8.4f, -10f), C + new Vector3(8f, 7.5f, -6f), C + new Vector3(7.4f, 6.8f, -3f), C + new Vector3(6.9f, 6.5f, -1.4f) };
+        route.AddRange(tubePts);
+        int spiral = 46;
+        for (int k = 0; k <= spiral; k++)
+        {
+            float th = -0.15f + k * (Mathf.PI * 5f / spiral);
+            float r = Mathf.Lerp(6.6f, 1.1f, k / (float)spiral);
+            route.Add(C + new Vector3(Mathf.Cos(th) * r, BowlY(r) + 0.15f, Mathf.Sin(th) * r));
+        }
+        var dropPts = new[] { C + new Vector3(0, 2.2f, 0.3f), C + new Vector3(0, 1.1f, 2.2f), C + new Vector3(0, 0.7f, 6f), C + new Vector3(0, 0.35f, 11f), C + new Vector3(0, 0.3f, 13f) };
+        route.AddRange(dropPts);
+        int poolEnd = route.Count - 1;
+        route.Add(C + new Vector3(0, -3f, 15f));
+        route.Add(tw + new Vector3(-1.2f, -3f, 0f));
+        Tube(bowl, tubePts.Skip(1).ToArray(), 0.85f, "PoolBlue", "PoolBlue");
+        Tube(bowl, new[] { C + new Vector3(0, 3f, 0), dropPts[0], dropPts[1], dropPts[2], dropPts[3] }, 0.85f, "PoolGreen", "PoolGreen");
+        for (int k = 1; k < tubePts.Length - 1; k++) DPrim(PrimitiveType.Cylinder, "TubeLeg", bowl, new Vector3(tubePts[k].x, tubePts[k].y / 2f, tubePts[k].z), new Vector3(0.25f, tubePts[k].y / 2f, 0.25f), M("Metal"));
+        // the splash pool at the end
+        var pool = C + new Vector3(0, 0, 13.5f);
+        foreach (var pr in new[] { new { p = new Vector3(0, 0.25f, 2.6f), sz = new Vector3(6f, 0.5f, 0.3f) }, new { p = new Vector3(-3f, 0.25f, 0), sz = new Vector3(0.3f, 0.5f, 5.5f) }, new { p = new Vector3(3f, 0.25f, 0), sz = new Vector3(0.3f, 0.5f, 5.5f) } })
+            Box(bowl, "SplashRim", pool + pr.p, pr.sz, M("Concrete"));
+        Box(bowl, "SplashWater", pool + new Vector3(0, 0.2f, 0), new Vector3(5.7f, 0.02f, 5.2f), M("Water"), false);
+        var bowlExit = Marker(bowl, "Bowl exit", pool + new Vector3(4.2f, 0.05f, 0), 90f);
+        // three rafts going round, each with a seat
+        var rafts = new List<Transform>();
+        for (int k = 0; k < 3; k++)
+        {
+            var raft = Group(bowl, "Raft " + k, route[0]);
+            Prim(PrimitiveType.Cylinder, "Raft", raft, new Vector3(0, 0.1f, 0), new Vector3(1.3f, 0.12f, 1.3f), M(k == 0 ? "GlowYellow" : k == 1 ? "InkOrange" : "GiftRed"));
+            Prim(PrimitiveType.Cylinder, "Hole", raft, new Vector3(0, 0.17f, 0), new Vector3(0.6f, 0.02f, 0.6f), M("Black"));
+            RideSeat(raft, "Bowl raft seat " + k, new Vector3(0, 0.25f, 0), 0f, bowlExit);
+            rafts.Add(raft);
+        }
+        var fr = Add<FirRide>(bowl.gameObject); fr.kind = 1; fr.carts = rafts.ToArray(); fr.route = route.ToArray(); fr.speed = 5f;
+        var pace = Enumerable.Repeat(1f, route.Count).ToArray();
+        pace[0] = 0.05f;                                     // boarding (about 6 seconds)
+        pace[poolEnd - 1] = 0.25f; pace[poolEnd] = 0.6f; pace[poolEnd + 1] = 3f; pace[poolEnd + 2] = 0.6f;   // slow into the pool; underground back to the tower; up to the platform
+        fr.pace = pace;
+        var ann = Gg(g, "The Bone Bowl sign", tw + new Vector3(-4f, 0, -19f), 180f, "Water/wp_bowl", 1.6f, 2.6f);
+        DPrim(PrimitiveType.Cylinder, "Post", ann.transform, new Vector3(0, 1f, 0), new Vector3(0.1f, 1f, 0.1f), M("Metal"));
+        var ab = Group(ann.transform, "Board", new Vector3(0, 2.1f, 0));
+        Prim(PrimitiveType.Cube, "Board", ab, Vector3.zero, new Vector3(1.6f, 0.8f, 0.06f), M("PoolBlue"));
+        Text("BoardText", ab, new Vector3(0, 0, -0.04f), Quaternion.identity, new Vector2(1.5f, 0.7f), 0.12f, "<b>THE BONE BOWL</b>\nup the stairs. sit in a raft.\nround and round, and down the hole").color = Color.white;
+        ann.target = ab; ann.wobble = 6f;
+        Folk(g, "Splash Kid", "#4fc3f7", 16, new Vector3(2781f, 0, 26f), 160f, "Water/wp_kid", 0.7f);
+        // ---- the wave pool
+        var wp = Group(g, "Wave pool", Vector3.zero);
+        Box(wp, "WaveWater", new Vector3(2726f, 0.02f, 70f), new Vector3(20f, 0.02f, 18f), M("Water"), false);
+        foreach (var pr in new[] { new { p = new Vector3(2726f, 0.25f, 79.1f), sz = new Vector3(20.4f, 0.5f, 0.2f) }, new { p = new Vector3(2715.9f, 0.25f, 70f), sz = new Vector3(0.2f, 0.5f, 18f) }, new { p = new Vector3(2736.1f, 0.25f, 70f), sz = new Vector3(0.2f, 0.5f, 18f) } })
+            Box(wp, "WaveRim", pr.p, pr.sz, M("Concrete"));
+        var waves = Group(wp, "Waves", new Vector3(2726f, 0.05f, 70f));
+        var wv = new List<Transform>();
+        for (int k = 0; k < 6; k++) { var w = Group(waves, "Wave", new Vector3(0, 0, -7f + k * 2.8f)); Prim(PrimitiveType.Cube, "Crest", w, Vector3.zero, new Vector3(19.6f, 0.15f, 0.8f), M("CaneWhite")); wv.Add(w); }
+        var wr = Add<FirRide>(waves.gameObject); wr.kind = 0; wr.rotor = waves; wr.axis = Vector3.up; wr.degPerSec = 0f; wr.bobbers = wv.ToArray(); wr.bobHeight = 0.35f; wr.bobSpeed = 1.6f;
+        var wsign = Gg(wp, "Wave pool sign", new Vector3(2726f, 0, 60f), 180f, "Water/wp_wave", 1.4f, 2.4f);
+        DPrim(PrimitiveType.Cylinder, "Post", wsign.transform, new Vector3(0, 1f, 0), new Vector3(0.1f, 1f, 0.1f), M("Metal"));
+        var wb = Group(wsign.transform, "Board", new Vector3(0, 2f, 0));
+        Prim(PrimitiveType.Cube, "Board", wb, Vector3.zero, new Vector3(1.4f, 0.5f, 0.05f), M("InkBlue"));
+        Text("WaveText", wb, new Vector3(0, 0, -0.03f), Quaternion.identity, new Vector2(1.3f, 0.4f), 0.13f, "<b>WAVE POOL</b>").color = Color.white;
+        wsign.target = wb; wsign.wobble = 8f;
+        Folk(g, "Lifeguard Lars", "#ff7043", 20, new Vector3(2737.5f, 1.6f, 66f), -90f, "Water/wp_lifeguard");
+        Box(g, "LifeguardChair", new Vector3(2737.5f, 0.8f, 66f), new Vector3(0.8f, 1.6f, 0.8f), M("CaneWhite"));
+        Gear("Lifeguard Lars", 2, PrimitiveType.Sphere, new Vector3(0, 0.1f, 0.05f), new Vector3(0.3f, 0.12f, 0.36f), "CaneRed");
+        // ---- the lazy river (sit in a tube and float round)
+        var lr = Group(g, "Lazy river", new Vector3(2738f, 0, 40f));
+        for (int k = 0; k < 36; k++)
+        {
+            float a = k * Mathf.PI * 2f / 36f;
+            DPrim(PrimitiveType.Cube, "River", lr, new Vector3(Mathf.Cos(a) * 9f, 0.02f, Mathf.Sin(a) * 6f), new Vector3(2.2f, 0.02f, 2.6f), M("Water"), Quaternion.Euler(0, -a * Mathf.Rad2Deg, 0));
+        }
+        DPrim(PrimitiveType.Cylinder, "Island", lr, new Vector3(0, 0.15f, 0), new Vector3(14f, 0.15f, 8.5f), M("Grass"));
+        PalmTree(lr, new Vector3(0, 0, 0), 5f);
+        var lrot = Group(lr, "Current", Vector3.zero);
+        var tubes = new List<Transform>();
+        var lrExit = Marker(lr, "River exit", new Vector3(0, 0.05f, -8.2f), 180f);
+        for (int k = 0; k < 6; k++)
+        {
+            float a = k * Mathf.PI / 3f;
+            var tb = Group(lrot, "Inner tube " + k, new Vector3(Mathf.Cos(a) * 9f, 0.15f, Mathf.Sin(a) * 6f));
+            Prim(PrimitiveType.Cylinder, "Tube", tb, Vector3.zero, new Vector3(1.2f, 0.15f, 1.2f), M(new[] { "GlowYellow", "InkOrange", "GiftGreen", "BonePink", "InkBlue", "GiftRed" }[k]));
+            RideSeat(tb, "River tube seat " + k, new Vector3(0, 0.15f, 0), 0f, lrExit);
+            tubes.Add(tb);
+        }
+        var lrr = Add<FirRide>(lr.gameObject); lrr.kind = 0; lrr.rotor = lrot; lrr.axis = Vector3.up; lrr.degPerSec = 5f; lrr.upright = tubes.ToArray();
+        // ---- the big bucket on the splash tower
+        var bk = Gg(g, "The big bucket", new Vector3(2716f, 0, 44f), 90f, "Water/wp_bucket", 2.4f, 2f);
+        foreach (float px in new[] { -1f, 1f }) foreach (float pz in new[] { -1f, 1f }) DPrim(PrimitiveType.Cylinder, "BucketLeg", bk.transform, new Vector3(px, 2.5f, pz), new Vector3(0.2f, 2.5f, 0.2f), M("InkOrange"));
+        Box(bk.transform, "SplashDeck", new Vector3(0, 0.01f, 0), new Vector3(3f, 0.02f, 3f), M("PoolBlue"), false);
+        var bucket = Group(bk.transform, "Bucket", new Vector3(0, 5.6f, 0));
+        Prim(PrimitiveType.Cylinder, "Bucket", bucket, Vector3.zero, new Vector3(2f, 0.7f, 2f), M("GlowYellow"));
+        Prim(PrimitiveType.Cylinder, "Water", bucket, new Vector3(0, 0.6f, 0), new Vector3(1.9f, 0.02f, 1.9f), M("Water"));
+        var splash = Group(bk.transform, "Splash", new Vector3(0, 2.5f, 0));
+        for (int k = 0; k < 8; k++) Prim(PrimitiveType.Sphere, "Drop", splash, new Vector3(Mathf.Cos(k * 0.8f) * 0.6f, -k * 0.3f, Mathf.Sin(k * 0.8f) * 0.6f), Vector3.one * 0.5f, M("Water"));
+        bk.target = bucket; bk.rotateBy = new Vector3(0, 0, 120f); bk.inTime = 1f;
+        // ---- the snack shack, deck chairs, umbrellas, palm trees
+        var sn = Stall(g, "SNACK SHACK", new Vector3(2752f, 0, 85f), 180f, "GlowYellow", "PoolBlue");
+        Folk(sn, "Nacho Bones", "#ffca28", 3, new Vector3(0, 0, -0.3f), 0f, "Water/wp_snack");
+        for (int k = 0; k < 5; k++) Box(g, "DeckChair", new Vector3(2744f + k * 2.2f, 0.25f, 76f), new Vector3(0.8f, 0.5f, 1.9f), M(k % 2 == 0 ? "CaneWhite" : "PoolBlue"));
+        Folk(g, "Sunny", "#ffab91", 9, new Vector3(2746.2f, 0.5f, 76f), 180f, "Water/wp_sunscreen");
+        Gear("Sunny", 2, PrimitiveType.Cube, new Vector3(0, 0.05f, 0.15f), new Vector3(0.26f, 0.06f, 0.04f), "Black");
+        foreach (var pp in new[] { new Vector3(2713f, 0, 25f), new Vector3(2713f, 0, 86f), new Vector3(2787f, 0, 86f), new Vector3(2742f, 0, 58f), new Vector3(2750f, 0, 26f) }) PalmTree(g, pp, 5f);
+        report.Add("Splashbone Water Park: the Bone Bowl (a tower, a tube, a striped bowl you spiral round, a drop through the middle, a splash pool; 3 rafts to ride), a wave pool, a lazy river with 6 tubes to ride, a giant tipping bucket, a snack shack; 4 voiced skeletons and 3 gags");
     }
 
     // =================================================================== the second batch of Station stops: helpers

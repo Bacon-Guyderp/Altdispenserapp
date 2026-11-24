@@ -27,6 +27,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "four") { FourTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "scp") { ScpTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rm") { PortalGarageTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -246,6 +247,7 @@ public static class SimCheck {
     FourTests(A, B);
     ScpTests(A, B);
     PortalGarageTests(A, B);
+    WaterParkTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -972,6 +974,47 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void WaterParkTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Splashbone Water Park");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "WATER PARK")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2750f, 0, 22f)) < 0.3f, "the Station sends Alice to the water park");
+    Check(Sim.BuildLog.Any(l => l.Contains("Splashbone Water Park: the Bone Bowl")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Splashbone")) ?? "missing"));
+    string what;
+    Check(!Blocked(A, new[] { new Vector3(2784f, 0, 26f), new Vector3(2784f, 0.35f, 28.2f), new Vector3(2784f, 11.2f, 43.7f), new Vector3(2783f, 11.2f, 45f) }, out what), "up the tower stairs to the platform" + (what != "" ? " | " + what : ""));
+    var ride = All<FirRide>(A).First(r => r.name == "The Bone Bowl");
+    var C = new Vector3(2762f, 0, 62f);
+    // follow one raft through a whole run: it must board, enter the bowl at the rim, spiral inward and down, drop through the middle and reach the pool
+    float minR = 99f, maxRin = 0f; bool rim = false, center = false, pool = false, boarded = false, inside = false; int runs = 0; float lastA = 0f, total = 0f;
+    var raft = ride.carts[0];
+    for (int f = 0; f < 2400; f++) {
+      Sim.Step();
+      var p = raft.position; var d = p - C; d.y = 0f;
+      if (Mathf.Abs(p.y - 11.3f) < 0.2f && Flat(p, new Vector3(2782.8f, 0, 45f)) < 1.5f) boarded = true;
+      bool nowIn = d.magnitude < 7f && p.y > 2.9f && p.y < 6.6f;
+      if (nowIn && !inside) { runs++; maxRin = 0f; }
+      inside = nowIn;
+      if (nowIn) {
+        if (d.magnitude > 6f) rim = true;
+        if (d.magnitude < 1.5f) center = true;
+        float a = Mathf.Atan2(d.z, d.x);
+        if (maxRin > 0f && runs == 2) { float da = ((a - lastA) * Mathf.Rad2Deg + 540f) % 360f - 180f; total += da; }
+        lastA = a; maxRin = Mathf.Max(maxRin, d.magnitude); minR = Mathf.Min(minR, d.magnitude);
+      }
+      if (Flat(p, C + new Vector3(0, 0, 13f)) < 1.5f && p.y < 0.6f && p.y > 0f) pool = true;
+    }
+    float perRun = Mathf.Abs(total) / 360f;
+    Check(boarded && rim && center && pool && perRun > 2.2f && perRun < 2.8f, "a raft boards at the top, enters the bowl at the rim, spirals " + perRun.ToString("0.0") + " turns down to the middle, drops through and splashes into the pool");
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.name.StartsWith("Bowl raft seat"));
+    int tubes = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.name.StartsWith("River tube seat"));
+    Check(seats == 3 && tubes == 6, seats + " bowl rafts and " + tubes + " lazy river tubes to ride");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("wp_") && r.caption.Length > 3);
+    Check(voiced == 4, voiced + " voiced, captioned skeletons (a kid, the lifeguard, the snack seller, a sunbather)");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2705f && g.transform.position.x < 2795f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 3, gagOk + " of " + gagN + " gags (the Bone Bowl sign, the wave pool sign, the big bucket)" + string.Concat(gagBad.Select(x => " | " + x)));
   }
 
   static void PortalGarageTests(Sim.Client A, Sim.Client B) {
