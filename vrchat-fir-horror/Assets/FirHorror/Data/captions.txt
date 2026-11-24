@@ -50,6 +50,14 @@ bn_train|All aboard the old steam train! Watch out for train robbers! They're ac
 bonetones_1|Doo wop, doo wop, doo wop.
 bonetones_2|We're the Bone Tones!
 bonetones_3|Shoo be doo wah. Oooooh!
+br_builder|Build! Build! Build! I've built forty ramps. I don't know why. I can't stop.
+br_bus|Thank the bus driver! The bus flies over the island. Nobody knows who's driving. It's a skeleton.
+br_chest|You opened a chest! You found: a slightly legendary spoon.
+br_dancer|I won a match once. I've been dancing about it ever since. Four years.
+br_drop|Supply drop! It's full of bandages. Skeletons don't bleed. Thanks, though.
+br_noob|Where do I land? Where's everyone going? Why am I alone? ...Oh no. Oh no.
+br_plaque|A battle royale island, inspired by the games where a hundred players jump out of a flying bus. Here, everyone is a skeleton.
+br_storm|The storm is closing in! Get to the circle! The circle is very small. It's mostly a hula hoop.
 cb_convict|Twenty years of digging with a spoon. Freedom at last! ...Wait. Why is it so cozy in here?
 cb_cooking|Channel seven, the cooking show. Today we're making a getaway.
 cb_cowboy|Channel four. Cowboys! Yee haw! Bang, bang! ...I'm getting very tired.
@@ -340,6 +348,13 @@ inn_2|Where every guest gets a second chance!
 inn_3|And a third. And a fourth. I'm not singing.
 inn_4|He's singing a little bit!
 inn_5|Check in, cheer up, and stay forever!
+iv_bro1|Today's project: a rollercoaster! In the backyard! Out of spare ribs! It's going to be the best day of summer!
+iv_bro2|...Yep.
+iv_doc|Behold! The Shrink Ray Three Thousand! It shrinks: nothing. It has never worked. But behold it anyway!
+iv_gnome|I'm a garden gnome. I'm also a secret agent. Please act natural. Stop looking at me.
+iv_mom|Mom's car pulls into the driveway. The rollercoaster vanishes. Nobody knows where it goes.
+iv_plaque|A summer backyard, inspired by cartoons about inventing something new every single day of the holidays.
+iv_sis|Mom! They're building a rollercoaster again! ...Mom? MOM!
 knock_1|Knock knock.
 knock_2|Who's there?
 knock_3|Orange.
@@ -391,6 +406,12 @@ my_shrink|The incredible shrinking tree! Please don't ask it about its feelings.
 my_squirrel|Behold! The six legged squirrel! Please ignore the tape.
 my_toenail|Bigfoot's toenail! He wants it back. He can't have it.
 my_unicorn|The genuine unicorn! Do not look at the tape. Do not ask about the goat.
+nb_brother|My band is called Loud Bones. We know one song. It's very loud. It's the only thing it is.
+nb_cheese|Don't touch the cursed cheese. Nobody has touched the cursed cheese since nineteen ninety eight. It's still there. It's still cursed.
+nb_friend|Hi! Want to be best friends? We already are! I decided!
+nb_gym|Gym class! Today we climb the rope. Nobody has ever reached the top. Nobody ever will.
+nb_kid|Day one of middle school. I've already lost my locker combination. And my dignity. Mostly the locker combination.
+nb_plaque|A notebook middle school, inspired by books drawn in a diary, about surviving the worst years of your life. In pencil.
 nc_flight|First in flight! Twelve seconds, a hundred and twenty feet. The skeletons would like it noted that they were not invited.
 nc_flytrap|Venus flytraps only grow wild around here. I'm very picky about my neighbours. And my lunch.
 nc_hiker|I hiked the Blue Ridge. Turns out it's only blue because it's very, very far away.
@@ -519,6 +540,26 @@ rt_t3|Paperclip, for a pencil. We are moving up in the world.
 rt_t4|Pencil, for a bicycle! Don't ask how. Nobody knows how.
 rt_t5|Bicycle, for a car! It doesn't have an engine. But it's a car!
 rt_vlog|Day one! I've got one penny and a dream. Mostly the penny. Let's see how far it gets us!
+sb_boss|Money! Lovely money! Every customer is a coin with legs. Well. Bones.
+sb_burger|Flip! The burger flies up, and lands on the ceiling. Order up?
+sb_cashier|Welcome to the Crusty Clam. Can I take your order. Please don't order.
+sb_cook|Order up! One clam burger, extra kelp! I love this job! I've worked here every day since I was a skeleton!
+sb_jelly|Jellyfish! They sting. Not you, though. You're bones. There's nothing to sting.
+sb_plaque|An undersea town, inspired by cartoons about life at the bottom of the sea.
+sb_star|I'm a starfish. I've been lying here for three weeks. It's my best work.
+sc_booth|AAAAAAAAAAAAAAAAAAAAAAAAAH!
+sc_chicken|Aaaaaaaaaaaaaaaaaaahhhhhh... eeeeee.
+sc_goat|Meeeeeeh! AAAAAAAAAAAAH! ...meh.
+sc_hobby|I've been screaming since nineteen eighty seven. I'm not scared. It's a hobby. I'm very good at it.
+sc_hush|Shhhhh! This is a quiet room! ...AAAAAAAAAAAH! Sorry. It's catching.
+sc_kettle|Eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee!
+sc_plaque|The Scream Room. A room dedicated entirely to screaming. Please scream responsibly.
+sc_void|You scream into the void. The void screams back. Politely. Then it asks if you're okay.
+scream_1|Aaaaaaaaaah!
+scream_2|Aaaaaaaaaah!
+scream_3|Aaaaaaaaaah!
+scream_4|Eeeeeeeeeeeeeh!
+scream_5|AAAAAAAAAAAAAAAAAAAH!
 sh_hero|In this world I'm a knight! In the other world I'm a student. The homework follows me here.
 sh_jester|Ho ho! Welcome to the shadow side! Here everything is purple and nothing makes sense! Chaos! Chaos!
 sh_king|I am the Chess King! I can only move one square at a time. It's very frustrating. Bow. Slowly.

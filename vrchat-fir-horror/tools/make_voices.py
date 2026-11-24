@@ -685,6 +685,42 @@ AREAS2 = [
     ("Fan/rt_t4", "mb-us2", 140, 45, 1.0, "narr", "Pencil, for a bicycle! Don't ask how. Nobody knows how."),
     ("Fan/rt_t5", "mb-us2", 140, 45, 1.0, "narr", "Bicycle, for a car! It doesn't have an engine. But it's a car!"),
     ("Fan/rt_plaque", "mb-us2", 135, 40, 1.0, "narr", "A fan room, inspired by Ryan Trahan's videos: penny challenges, trading up, and very long road trips. An unofficial tribute. Not affiliated."),
+    ("Scream/sc_plaque", "mb-us2", 135, 40, 1.0, "narr", 'The Scream Room. A room dedicated entirely to screaming. Please scream responsibly.'),
+    ("Scream/sc_booth", "mb-us3", 120, 99, 1.3, "skel", 'AAAAAAAAAAAAAAAAAAAAAAAAAH!'),
+    ("Scream/sc_goat", "mb-us2", 150, 70, 1.2, "skel", 'Meeeeeeh! AAAAAAAAAAAAH! ...meh.'),
+    ("Scream/sc_kettle", "mb-us1", 90, 99, 1.5, "glitch", 'Eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee!'),
+    ("Scream/sc_chicken", "mb-us3", 110, 95, 1.45, "skel", 'Aaaaaaaaaaaaaaaaaaahhhhhh... eeeeee.'),
+    ("Scream/sc_void", "mb-us2", 130, 30, 0.9, "narr", "You scream into the void. The void screams back. Politely. Then it asks if you're okay."),
+    ("Scream/sc_hush", "mb-us1", 120, 60, 1.0, "skel", "Shhhhh! This is a quiet room! ...AAAAAAAAAAAH! Sorry. It's catching."),
+    ("Scream/sc_hobby", "mb-us3", 160, 60, 1.05, "skel", "I've been screaming since nineteen eighty seven. I'm not scared. It's a hobby. I'm very good at it."),
+    ("Four/iv_bro1", "mb-us3", 175, 70, 1.15, "skel", "Today's project: a rollercoaster! In the backyard! Out of spare ribs! It's going to be the best day of summer!"),
+    ("Four/iv_bro2", "mb-us2", 90, 20, 0.85, "skel", '...Yep.'),
+    ("Four/iv_sis", "mb-us1", 175, 80, 1.15, "skel", "Mom! They're building a rollercoaster again! ...Mom? MOM!"),
+    ("Four/iv_mom", "mb-us2", 140, 40, 1.0, "narr", "Mom's car pulls into the driveway. The rollercoaster vanishes. Nobody knows where it goes."),
+    ("Four/iv_gnome", "mb-us2", 120, 30, 0.9, "skel", "I'm a garden gnome. I'm also a secret agent. Please act natural. Stop looking at me."),
+    ("Four/iv_doc", "mb-us2", 140, 35, 0.95, "glitch", 'Behold! The Shrink Ray Three Thousand! It shrinks: nothing. It has never worked. But behold it anyway!'),
+    ("Four/iv_plaque", "mb-us2", 135, 40, 1.0, "narr", 'A summer backyard, inspired by cartoons about inventing something new every single day of the holidays.'),
+    ("Four/nb_kid", "mb-us3", 150, 55, 1.0, "skel", "Day one of middle school. I've already lost my locker combination. And my dignity. Mostly the locker combination."),
+    ("Four/nb_friend", "mb-us1", 175, 85, 1.2, "skel", 'Hi! Want to be best friends? We already are! I decided!'),
+    ("Four/nb_brother", "mb-us2", 135, 25, 0.9, "skel", "My band is called Loud Bones. We know one song. It's very loud. It's the only thing it is."),
+    ("Four/nb_cheese", "mb-us2", 140, 40, 1.0, "narr", "Don't touch the cursed cheese. Nobody has touched the cursed cheese since nineteen ninety eight. It's still there. It's still cursed."),
+    ("Four/nb_gym", "mb-us2", 130, 35, 0.95, "skel", 'Gym class! Today we climb the rope. Nobody has ever reached the top. Nobody ever will.'),
+    ("Four/nb_plaque", "mb-us2", 135, 40, 1.0, "narr", 'A notebook middle school, inspired by books drawn in a diary, about surviving the worst years of your life. In pencil.'),
+    ("Four/sb_cook", "mb-us3", 185, 80, 1.25, "skel", "Order up! One clam burger, extra kelp! I love this job! I've worked here every day since I was a skeleton!"),
+    ("Four/sb_cashier", "mb-us2", 100, 20, 0.85, "skel", "Welcome to the Crusty Clam. Can I take your order. Please don't order."),
+    ("Four/sb_boss", "mb-us2", 130, 30, 0.92, "skel", 'Money! Lovely money! Every customer is a coin with legs. Well. Bones.'),
+    ("Four/sb_star", "mb-us3", 110, 45, 0.95, "skel", "I'm a starfish. I've been lying here for three weeks. It's my best work."),
+    ("Four/sb_jelly", "mb-us2", 140, 40, 1.0, "narr", "Jellyfish! They sting. Not you, though. You're bones. There's nothing to sting."),
+    ("Four/sb_burger", "mb-us2", 140, 40, 1.0, "narr", 'Flip! The burger flies up, and lands on the ceiling. Order up?'),
+    ("Four/sb_plaque", "mb-us2", 135, 40, 1.0, "narr", 'An undersea town, inspired by cartoons about life at the bottom of the sea.'),
+    ("Four/br_bus", "mb-us2", 140, 40, 1.0, "narr", "Thank the bus driver! The bus flies over the island. Nobody knows who's driving. It's a skeleton."),
+    ("Four/br_builder", "mb-us3", 185, 70, 1.2, "skel", "Build! Build! Build! I've built forty ramps. I don't know why. I can't stop."),
+    ("Four/br_dancer", "mb-us1", 160, 70, 1.1, "skel", "I won a match once. I've been dancing about it ever since. Four years."),
+    ("Four/br_storm", "mb-us2", 140, 40, 1.0, "narr", "The storm is closing in! Get to the circle! The circle is very small. It's mostly a hula hoop."),
+    ("Four/br_chest", "mb-us2", 140, 40, 1.0, "narr", 'You opened a chest! You found: a slightly legendary spoon.'),
+    ("Four/br_drop", "mb-us2", 140, 40, 1.0, "narr", "Supply drop! It's full of bandages. Skeletons don't bleed. Thanks, though."),
+    ("Four/br_noob", "mb-us3", 150, 60, 1.05, "skel", "Where do I land? Where's everyone going? Why am I alone? ...Oh no. Oh no."),
+    ("Four/br_plaque", "mb-us2", 135, 40, 1.0, "narr", 'A battle royale island, inspired by the games where a hundred players jump out of a flying bus. Here, everyone is a skeleton.'),
 ]
 SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
 COMBO += [
@@ -693,6 +729,16 @@ COMBO += [
     ("xmas_3", ["reindeer"], "On the second day of Christmas, my true love gave to me..."),
     ("xmas_4", ["snowman"], "Two femurs, and..."),
     ("xmas_5", ["santa", "elf", "reindeer", "snowman"], "A skull in a fir tree! Merry Christmas!"),
+]
+
+
+SKV.update({"shrieka": ("mb-us1", 120, 99, 1.4), "howler": ("mb-us3", 120, 70, 1.15), "yelpington": ("mb-us2", 120, 40, 0.95), "bellow": ("mb-us2", 110, 5, 0.78)})
+COMBO += [
+    ("scream_1", ["bellow"], "Aaaaaaaaaah!"),
+    ("scream_2", ["yelpington"], "Aaaaaaaaaah!"),
+    ("scream_3", ["howler"], "Aaaaaaaaaah!"),
+    ("scream_4", ["shrieka"], "Eeeeeeeeeeeeeh!"),
+    ("scream_5", ["bellow", "yelpington", "howler", "shrieka"], "AAAAAAAAAAAAAAAAAAAH!"),
 ]
 
 

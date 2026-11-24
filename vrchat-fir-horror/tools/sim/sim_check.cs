@@ -23,6 +23,8 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "cell") { CellTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "bigtown") { BigTownTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "fans") { FanTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "scream") { ScreamTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "four") { FourTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -238,6 +240,8 @@ public static class SimCheck {
     CellTests(A, B);
     BigTownTests(A, B);
     FanTests(A, B);
+    ScreamTests(A, B);
+    FourTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -964,6 +968,52 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void FourTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The backyard, the notebook school, the seabed town, the battle island");
+    var rooms = new[] { new { t = "INVENTORS' BACKYARD", x = 2330f }, new { t = "NOTEBOOK SCHOOL", x = 2378f }, new { t = "SEABED TOWN", x = 2430f }, new { t = "BATTLE ISLAND", x = 2485f } };
+    foreach (var rm in rooms) {
+      A.player.pos = new Vector3(-4f, 0.05f, -1f);
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == rm.t)); Sim.Run(1f);
+      bool there = Flat(A.player.pos, new Vector3(rm.x, 0, 22f)) < 0.3f;
+      var plaque = All<FirSay>(A).First(x => x.name == "The plaque" && Mathf.Abs(x.transform.position.x - rm.x) < 20f);
+      Sim.Press(A, plaque); Sim.Run(1f);
+      bool said = Plain(plaque.caption.text).Contains("inspired by");
+      Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && Mathf.Abs(t.transform.position.x - rm.x) < 20f)); Sim.Run(1f);
+      Check(there && said && Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, rm.t + ": there, the plaque, and back");
+    }
+    Check(new[] { "The Inventors' Backyard:", "The Notebook School:", "The Seabed Town:", "Battle Island:" }.All(r => Sim.BuildLog.Any(l => l.Contains(r))), "all four built");
+    var bus = All<FirRide>(A).First(r => r.rotor != null && r.rotor.name == "The bus route");
+    var jelly = All<FirRide>(A).First(r => r.rotor != null && r.rotor.name == "Jellyfish");
+    var q0 = bus.rotor.rotation; var j0 = jelly.bobbers[0].localPosition.y; Sim.Run(2f);
+    Check(Quaternion.Angle(q0, bus.rotor.rotation) > 10f && Mathf.Abs(jelly.bobbers[0].localPosition.y - j0) > 0.01f, "the bus flies round the island, and the jellyfish bob");
+    string[] pre = { "iv_", "nb_", "sb_", "br_" };
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && pre.Any(p => r.voice.clip.name.StartsWith(p)) && r.caption.Length > 3);
+    Check(voiced == 19, voiced + " voiced, captioned skeletons across the four rooms");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2305f && g.transform.position.x < 2515f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 9, gagOk + " of " + gagN + " gags (Mom's car, the shrink ray, the cheese, the jellyfish sign, the burger, the bus driver, the storm, the chest, the supply drop)" + string.Concat(gagBad.Select(x => " | " + x)));
+  }
+
+  static void ScreamTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Scream Room");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "SCREAM ROOM")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2278f, 0, 22f)) < 0.3f, "the Station sends Alice to the Scream Room");
+    Check(Sim.BuildLog.Any(l => l.Contains("The Scream Room: a scream booth")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Scream Room")) ?? "no Scream Room in the build log"));
+    var vd = All<FirSay>(A).First(x => x.name == "The Void" && x.transform.position.x > 2255f);
+    Sim.Press(A, vd); Sim.Run(1f);
+    Check(Plain(vd.caption.text).Contains("void screams back"), "the void: \"" + Plain(vd.caption.text) + "\"");
+    var choir = All<FirSkeletonCombo>(A).FirstOrDefault(c => c.title == "The Screaming Choir");
+    Check(choir != null && choir.lines.Length == 5 && choir.pivots.Length == 40, "the screaming choir: 4 skeletons, 5 screams, on the console");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && (r.voice.clip.name.StartsWith("sc_") || r.voice.clip.name.StartsWith("scream_")) && r.caption.Length > 3);
+    Check(voiced == 6, voiced + " voiced, captioned skeletons (the choir, Ms Hush and Hollerbone)");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2255f && g.transform.position.x < 2300f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 5, gagOk + " of " + gagN + " gags scream (the booth, the meter, the goat, the kettle, the rubber chicken)" + string.Concat(gagBad.Select(x => " | " + x)));
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 2255f)); Sim.Run(1f);
+    Check(Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "...and back to the (quiet) lobby");
   }
 
   static void FanTests(Sim.Client A, Sim.Client B) {

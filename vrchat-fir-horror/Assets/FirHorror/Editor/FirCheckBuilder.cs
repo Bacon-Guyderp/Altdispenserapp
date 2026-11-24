@@ -231,6 +231,11 @@ public static class FirCheckBuilder
         BuildMarkiplierRoom(root);
         BuildFlamingoRoom(root);
         BuildRyanTrahanRoom(root);
+        BuildScreamRoom(root);
+        BuildInventorsBackyard(root);
+        BuildNotebookSchool(root);
+        BuildSeabedTown(root);
+        BuildBattleIsland(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -2916,7 +2921,7 @@ public static class FirCheckBuilder
         cap.color = Color.white;
         var fs = Add<FirSay>(pl.gameObject);
         fs.line = CaptionFor(clip); fs.caption = cap;
-        fs.voice = Src(pl, new Vector3(0, 1f, 0), Clip("Fan/" + clip), false, 1f, 1f, 10f, false);
+        fs.voice = Src(pl, new Vector3(0, 1f, 0), Clip(clip.Contains("/") ? clip : "Fan/" + clip), false, 1f, 1f, 10f, false);
         SetInteract(fs, "Read the plaque", 2.5f);
     }
 
@@ -3086,6 +3091,309 @@ public static class FirCheckBuilder
         for (int k = 0; k < 6; k++) Prim(PrimitiveType.Cylinder, "Coin", jg, new Vector3(-0.08f + (k % 3) * 0.08f, 0.04f + (k / 3) * 0.03f, 0), new Vector3(0.07f, 0.01f, 0.07f), M(k % 2 == 0 ? "Brass" : "GiftRed"));
         jar.target = jg; jar.wobble = 8f;
         report.Add("The Ryan Trahan Room (fan tribute): a penny you can trade up (to a car), a road-trip map, a vlogger, a hitchhiker, a tent, a donation jar; 1 gag");
+    }
+
+    // =================================================================== the Scream Room (a room dedicated entirely to screaming)
+
+    static void BuildScreamRoom(Transform root)
+    {
+        var g = AreaShell(root, "The Scream Room", 2260f, 2296f, 20f, 50f, 7f, "Rug", "GemPurple", "Ceiling",
+                          "THE SCREAM ROOM", new Color(1f, 0.3f, 0.2f), "a room dedicated entirely to screaming. please scream responsibly.", "SCREAM ROOM");
+        var pl = Group(g, "The plaque", new Vector3(2284f, 0, 23.5f));
+        Box(pl, "Stand", new Vector3(0, 0.6f, 0), new Vector3(1.4f, 1.2f, 0.2f), M("DeskWood"));
+        Text("PlaqueText", pl, new Vector3(0, 1.05f, -0.125f), Face(Vector3.back), new Vector2(1.2f, 0.65f), 0.09f, "<b>THE SCREAM ROOM</b>\neverything in here screams\n(press things)").color = new Color(0.9f, 0.85f, 0.7f);
+        var pcol = pl.gameObject.AddComponent<BoxCollider>(); pcol.size = new Vector3(1.4f, 1.6f, 0.4f); pcol.center = new Vector3(0, 0.8f, 0);
+        var pcap = Text("Caption", pl, new Vector3(0, 2.0f, -0.12f), Face(Vector3.back), new Vector2(3f, 0.6f), 0.11f, ""); pcap.color = Color.white;
+        var ps = Add<FirSay>(pl.gameObject); ps.line = CaptionFor("sc_plaque"); ps.caption = pcap;
+        ps.voice = Src(pl, new Vector3(0, 1f, 0), Clip("Scream/sc_plaque"), false, 1f, 1f, 10f, false);
+        SetInteract(ps, "Read the plaque", 2.5f);
+        // the scream booth and its meter
+        Box(g, "BoothBack", new Vector3(2264f, 1.25f, 47.9f), new Vector3(2.6f, 2.5f, 0.1f), M("Black"));
+        Box(g, "BoothL", new Vector3(2262.75f, 1.25f, 46.8f), new Vector3(0.1f, 2.5f, 2.2f), M("Glass"));
+        Box(g, "BoothR", new Vector3(2265.25f, 1.25f, 46.8f), new Vector3(0.1f, 2.5f, 2.2f), M("Glass"));
+        Box(g, "BoothRoof", new Vector3(2264f, 2.55f, 46.8f), new Vector3(2.6f, 0.1f, 2.3f), M("Black"), false);
+        Text("BoothSign", g, new Vector3(2264f, 2.9f, 45.6f), Face(Vector3.back), new Vector2(2.6f, 0.4f), 0.2f, "<b>SCREAM BOOTH</b> <size=60%>(soundproof. it isn't)</size>").color = Color.white;
+        var booth = Gg(g, "The scream booth", new Vector3(2264f, 0, 46.5f), 180f, "Scream/sc_booth", 2f, 2.4f);
+        var mic = Group(booth.transform, "Microphone", new Vector3(0, 0, 0));
+        Prim(PrimitiveType.Cylinder, "Stand", mic, new Vector3(0, 0.7f, 0), new Vector3(0.04f, 0.7f, 0.04f), M("Black"));
+        Prim(PrimitiveType.Sphere, "Mic", mic, new Vector3(0, 1.45f, 0), Vector3.one * 0.12f, M("Metal"));
+        booth.target = mic; booth.wobble = 25f;
+        var meter = Gg(g, "The scream meter", new Vector3(2268f, 0, 47.6f), 180f, "Scream/sc_booth", 1f, 3f);
+        Box(meter.transform, "MeterBack", new Vector3(0, 1.6f, 0), new Vector3(0.5f, 3f, 0.1f), M("Black"), false);
+        Text("MeterTop", meter.transform, new Vector3(0, 3.25f, -0.06f), Quaternion.identity, new Vector2(1.2f, 0.3f), 0.12f, "TOO LOUD").color = new Color(1f, 0.2f, 0.2f);
+        var bar = Group(meter.transform, "Level", new Vector3(0, 0.15f, -0.06f));
+        Prim(PrimitiveType.Cube, "Bar", bar, new Vector3(0, 0.15f, 0), new Vector3(0.35f, 0.3f, 0.02f), M("GlowRed"));
+        meter.target = bar; meter.scaleBy = 9.5f; meter.inTime = 0.4f;
+        Text("Record", g, new Vector3(2268f, 4f, 49.85f), Face(Vector3.back), new Vector2(5f, 0.5f), 0.2f, "LOUDEST SCREAM TODAY: <b>140 decibels</b> <size=70%>(it was the goat)</size>").color = new Color(1f, 0.9f, 0.4f);
+        // the screaming choir, and its console
+        Box(g, "Risers", new Vector3(2280f, 0.25f, 46.5f), new Vector3(8f, 0.5f, 2.2f), M("Stage"));
+        var choir = new[] { new { who = "Bellow", hex = "#5d4037", clip = "scream_1" }, new { who = "Yelpington", hex = "#1e88e5", clip = "scream_2" }, new { who = "Howler", hex = "#43a047", clip = "scream_3" }, new { who = "Shrieka", hex = "#e91e63", clip = "scream_4" } };
+        for (int k = 0; k < 4; k++) Folk(g, choir[k].who, choir[k].hex, 2, new Vector3(2276.5f + k * 2.3f, 0.5f, 46.5f), 180f, "Combo/" + choir[k].clip);
+        var console = Console(g, "ScreamConsole", new Vector3(2280f, 1.25f, 41.5f), Vector3.back, "<size=80%>THE SCREAMING CHOIR</size>");
+        ComboAct(console, 0, 9, "The Screaming Choir", choir.Select(c => c.who).ToArray(), new[] { "scream_1", "scream_2", "scream_3", "scream_4", "scream_5" }, new[] { 0, 1, 2, 3, -1 }, 2f);
+        // the goat, the kettle, the rubber chicken
+        var goat = Gg(g, "The screaming goat", new Vector3(2292f, 0, 36f), -90f, "Scream/sc_goat", 1.6f, 1.6f);
+        var gt = Group(goat.transform, "Goat", Vector3.zero);
+        Prim(PrimitiveType.Sphere, "Body", gt, new Vector3(0, 0.75f, 0), new Vector3(0.5f, 0.5f, 0.9f), M("CaneWhite"));
+        var gh = Group(gt, "Head", new Vector3(0, 1.05f, 0.5f));
+        Prim(PrimitiveType.Sphere, "Head", gh, Vector3.zero, new Vector3(0.25f, 0.3f, 0.35f), M("CaneWhite"));
+        foreach (float hx in new[] { -0.08f, 0.08f }) Prim(PrimitiveType.Cylinder, "Horn", gh, new Vector3(hx, 0.18f, -0.05f), new Vector3(0.04f, 0.1f, 0.04f), M("Trunk")).transform.localRotation = Quaternion.Euler(-30, 0, 0);
+        Prim(PrimitiveType.Sphere, "Mouth", gh, new Vector3(0, -0.08f, 0.16f), new Vector3(0.12f, 0.1f, 0.06f), M("Black"));
+        foreach (float lx in new[] { -0.15f, 0.15f }) foreach (float lz in new[] { -0.3f, 0.3f }) Prim(PrimitiveType.Cube, "Leg", gt, new Vector3(lx, 0.25f, lz), new Vector3(0.07f, 0.5f, 0.07f), M("CaneWhite"));
+        goat.target = gh; goat.rotateBy = new Vector3(-35f, 0, 0); goat.wobble = 10f; goat.inTime = 0.2f;
+        var kettle = Gg(g, "The kettle", new Vector3(2292f, 0, 28f), -90f, "Scream/sc_kettle", 1f, 1.4f);
+        Box(kettle.transform, "Stove", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.7f), M("Metal"), false);
+        var kt = Group(kettle.transform, "Kettle", new Vector3(0, 0.9f, 0));
+        Prim(PrimitiveType.Sphere, "Pot", kt, new Vector3(0, 0.15f, 0), new Vector3(0.4f, 0.35f, 0.4f), M("HeroRed"));
+        Prim(PrimitiveType.Cylinder, "Spout", kt, new Vector3(0, 0.2f, 0.22f), new Vector3(0.06f, 0.1f, 0.06f), M("HeroRed")).transform.localRotation = Quaternion.Euler(60, 0, 0);
+        var steam = Group(kettle.transform, "Steam", new Vector3(0, 1.2f, 0.3f));
+        for (int k = 0; k < 3; k++) Prim(PrimitiveType.Sphere, "Puff", steam, new Vector3(0, k * 0.25f, k * 0.1f), Vector3.one * (0.15f + k * 0.08f), M("Mist"));
+        kettle.target = steam; kettle.hideWhenIdle = true; kettle.moveBy = new Vector3(0, 0.6f, 0); kettle.wobble = 12f;
+        var chick = Gg(g, "The rubber chicken", new Vector3(2272f, 0, 33f), 0f, "Scream/sc_chicken", 1f, 1.4f);
+        Box(chick.transform, "Table", new Vector3(0, 0.4f, 0), new Vector3(0.8f, 0.8f, 0.8f), M("DeskWood"), false);
+        var rc = Group(chick.transform, "Chicken", new Vector3(0, 0.8f, 0));
+        Prim(PrimitiveType.Capsule, "Body", rc, new Vector3(0, 0.15f, 0), new Vector3(0.15f, 0.3f, 0.15f), M("GlowYellow")).transform.localRotation = Quaternion.Euler(0, 0, 80);
+        Prim(PrimitiveType.Sphere, "Head", rc, new Vector3(0.3f, 0.2f, 0), Vector3.one * 0.12f, M("GlowYellow"));
+        Prim(PrimitiveType.Cube, "Comb", rc, new Vector3(0.3f, 0.3f, 0), new Vector3(0.04f, 0.06f, 0.08f), M("GlowRed"));
+        rc.localScale = Vector3.one;
+        chick.target = rc; chick.scaleBy = 0.6f; chick.inTime = 0.15f; chick.wobble = 8f;
+        // the void (scream into it)
+        var vd = Group(g, "The Void", new Vector3(2262f, 0, 30f));
+        Prim(PrimitiveType.Cylinder, "Hole", vd, new Vector3(0, 0.012f, 0), new Vector3(2.4f, 0.01f, 2.4f), M("Black"));
+        Prim(PrimitiveType.Cylinder, "Rim", vd, new Vector3(0, 0.15f, 0), new Vector3(2.8f, 0.15f, 2.8f), M("Concrete"));
+        var vcol = vd.gameObject.AddComponent<BoxCollider>(); vcol.size = new Vector3(2.8f, 0.6f, 2.8f); vcol.center = new Vector3(0, 0.3f, 0);
+        Text("VoidSign", vd, new Vector3(0, 1.2f, -1.5f), Face(Vector3.back), new Vector2(2.4f, 0.4f), 0.16f, "<b>SCREAM INTO THE VOID</b>").color = Color.white;
+        var vcap = Text("Caption", vd, new Vector3(0, 1.8f, -1.5f), Face(Vector3.back), new Vector2(3.2f, 0.6f), 0.12f, ""); vcap.color = new Color(0.85f, 0.85f, 1f);
+        var vs = Add<FirSay>(vd.gameObject); vs.line = "* " + CaptionFor("sc_void"); vs.caption = vcap;
+        vs.voice = Src(vd, new Vector3(0, 0.5f, 0), Clip("Scream/sc_void"), false, 1f, 1f, 10f, false);
+        SetInteract(vs, "Scream into the void", 3f);
+        // a skeleton version of a very famous (and very old) painting
+        Box(g, "Frame", new Vector3(2260.06f, 3f, 40f), new Vector3(0.05f, 2.4f, 1.9f), M("GlowGold"), false);
+        for (int k = 0; k < 6; k++) Box(g, "Sky stripe", new Vector3(2260.09f, 3.9f - k * 0.18f, 40f), new Vector3(0.02f, 0.18f, 1.7f), M(k % 2 == 0 ? "InkOrange" : "GlowRed"), false);
+        Box(g, "Water", new Vector3(2260.09f, 2.4f, 40f), new Vector3(0.02f, 1.1f, 1.7f), M("InkBlue"), false);
+        DPrim(PrimitiveType.Sphere, "Skull", g, new Vector3(2260.12f, 2.6f, 40f), new Vector3(0.02f, 0.5f, 0.38f), M("BoneWhite"));
+        DPrim(PrimitiveType.Sphere, "ScreamingMouth", g, new Vector3(2260.14f, 2.45f, 40f), new Vector3(0.02f, 0.16f, 0.1f), M("Black"));
+        foreach (float hz in new[] { -0.22f, 0.22f }) DPrim(PrimitiveType.Cube, "Hand", g, new Vector3(2260.14f, 2.6f, 40f + hz), new Vector3(0.02f, 0.35f, 0.07f), M("BoneWhite"));
+        Text("PaintingLabel", g, new Vector3(2260.1f, 1.55f, 40f), Face(Vector3.right), new Vector2(2f, 0.3f), 0.09f, "after a famous 1893 painting (but with more bones)").color = Color.white;
+        // the people
+        Folk(g, "Ms Hush", "#a1887f", 0, new Vector3(2286f, 0, 30f), 200f, "Scream/sc_hush");
+        Gear("Ms Hush", 6, PrimitiveType.Cube, new Vector3(0, -0.28f, 0.1f), new Vector3(0.03f, 0.12f, 0.03f), "BoneWhite");
+        Folk(g, "Hollerbone", "#ff7043", 2, new Vector3(2276f, 0, 28f), 160f, "Scream/sc_hobby");
+        report.Add("The Scream Room: a scream booth and meter, a screaming choir on the console, a screaming goat, a kettle, a rubber chicken, the void, a famous painting with more bones; 6 voiced skeletons and 5 gags");
+    }
+
+    // =================================================================== four more rooms: a summer backyard of inventions, a notebook middle school, an undersea town, a battle royale island
+
+    static void BuildInventorsBackyard(Transform root)
+    {
+        var g = AreaShell(root, "The Inventors' Backyard", 2310f, 2350f, 20f, 56f, 18f, "Grass", "PixelSky", "Sky",
+                          "THE INVENTORS' BACKYARD", new Color(1f, 0.6f, 0.1f), "two step-brothers, one summer, and something enormous built before lunch", "INVENTORS' BACKYARD");
+        Plaque(g, new Vector3(2338f, 0, 23.5f), "<b>THE INVENTORS' BACKYARD</b>\na summer backyard, inspired by cartoons\nabout inventing something new\nevery single day of the holidays\n\n<size=80%>(press to hear more)</size>", "Four/iv_plaque");
+        // the house, the fence, the big tree
+        Box(g, "House", new Vector3(2330f, 3f, 54f), new Vector3(16f, 6f, 4f), M("Wall2"));
+        foreach (float sgn in new[] { -1f, 1f }) Box(g, "HouseRoof", new Vector3(2330f, 6.9f, 54f + sgn * 1f), new Vector3(16.6f, 0.2f, 2.6f), M("CaneRed"), false).transform.localRotation = Quaternion.Euler(sgn * 35f, 0, 0);
+        Box(g, "BackDoor", new Vector3(2330f, 1.1f, 51.97f), new Vector3(1.2f, 2.2f, 0.05f), M("DoorWood"), false);
+        for (int k = 0; k < 18; k++) DPrim(PrimitiveType.Cube, "FencePlank", g, new Vector3(2311f + k * 2.2f, 0.9f, 20.3f), new Vector3(2f, 1.8f, 0.08f), M("DeskWood"));
+        TreeAt(g, "BigTree", new Vector3(2314f, 0, 46f), 0f, 3.2f, false);
+        // the contraption: a rollercoaster in the backyard (it vanishes when Mom pulls in)
+        var mom = Gg(g, "Mom's car pulls in", new Vector3(2347f, 0, 26f), -90f, "Four/iv_mom", 1.6f, 1.6f);
+        Box(mom.transform, "Sign", new Vector3(0, 1.2f, 0), new Vector3(1.4f, 0.8f, 0.06f), M("Board"), false);
+        Text("SignText", mom.transform, new Vector3(0, 1.2f, -0.04f), Quaternion.identity, new Vector2(1.3f, 0.7f), 0.1f, "<b>MOM'S CAR</b>\n(press to see what happens)").color = Color.white;
+        var coaster = Group(mom.transform, "The rollercoaster", Vector3.zero);
+        var cw = coaster;   // built in the gag's frame (yaw -90): its local +x is world +z, local +z is world -x
+        for (int k = 0; k < 30; k++)
+        {
+            float a = k * Mathf.PI * 2f / 30f;
+            var p = new Vector3(Mathf.Sin(a) * 7f + 4f, 2.5f + Mathf.Sin(a * 2f) * 2f, 17f + Mathf.Cos(a) * 9f);
+            Prim(PrimitiveType.Cube, "Track", cw, p, new Vector3(1.4f, 0.12f, 2f), M(k % 2 == 0 ? "InkOrange" : "GlowYellow")).transform.localRotation = Quaternion.Euler(0, a * Mathf.Rad2Deg + 90f, 0);
+            if (k % 3 == 0) Prim(PrimitiveType.Cylinder, "Strut", cw, new Vector3(p.x, p.y / 2f, p.z), new Vector3(0.12f, p.y / 2f, 0.12f), M("Metal"));
+        }
+        for (int k = 0; k < 10; k++)
+        {
+            float a = k * Mathf.PI * 2f / 10f;
+            Prim(PrimitiveType.Cube, "Loop", cw, new Vector3(4f, 5f + Mathf.Sin(a) * 3f, 26f + Mathf.Cos(a) * 3f), new Vector3(1.4f, 0.12f, 1.9f), M("InkBlue")).transform.localRotation = Quaternion.Euler(-a * Mathf.Rad2Deg, 0, 0);
+        }
+        mom.target = coaster; mom.scaleBy = 0.01f; mom.inTime = 0.4f; mom.holdTime = 4f; mom.outTime = 1.2f;
+        // the inventors and their sister
+        Box(g, "Workbench", new Vector3(2322f, 0.45f, 30f), new Vector3(3f, 0.9f, 1.2f), M("DeskWood"));
+        for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cube, "Blueprint", g, new Vector3(2321f + k * 0.6f, 0.92f, 30f), new Vector3(0.5f, 0.01f, 0.7f), M("InkBlue"));
+        Folk(g, "Tinker Tri", "#ff8a65", 16, new Vector3(2321f, 0, 28.6f), 180f, "Four/iv_bro1");
+        Folk(g, "Quiet Quill", "#81c784", 0, new Vector3(2323.4f, 0, 28.6f), 180f, "Four/iv_bro2", 1.1f);
+        Folk(g, "Big Sis", "#ff80ab", 9, new Vector3(2340f, 0, 50f), 200f, "Four/iv_sis");
+        // the gnome who's a secret agent, and the scientist next door
+        Folk(g, "Agent Gnome", "#8d6e63", 0, new Vector3(2344f, 0, 40f), -90f, "Four/iv_gnome", 0.5f);
+        Gear("Agent Gnome", 2, PrimitiveType.Capsule, new Vector3(0, 0.22f, 0), new Vector3(0.24f, 0.3f, 0.24f), "GiftRed");
+        Gear("Agent Gnome", 2, PrimitiveType.Cube, new Vector3(0, 0.05f, 0.17f), new Vector3(0.26f, 0.06f, 0.02f), "Black");
+        Box(g, "LabNextDoor", new Vector3(2347f, 2.5f, 47f), new Vector3(5f, 5f, 6f), M("GemPurple"));
+        var doc = Gg(g, "The Shrink Ray 3000", new Vector3(2343.6f, 0, 47f), -90f, "Four/iv_doc", 1.6f, 2.2f);
+        Box(doc.transform, "RayBase", new Vector3(0, 0.6f, 0), new Vector3(0.8f, 1.2f, 0.8f), M("Black"), false);
+        var ray = Group(doc.transform, "Ray", new Vector3(0, 1.3f, 0));
+        Prim(PrimitiveType.Cylinder, "Barrel", ray, new Vector3(0, 0, 0.4f), new Vector3(0.3f, 0.5f, 0.3f), M("Metal")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        Prim(PrimitiveType.Sphere, "Tip", ray, new Vector3(0, 0, 0.95f), Vector3.one * 0.25f, M("GlowGreen"));
+        doc.target = ray; doc.wobble = 20f; doc.rotateBy = new Vector3(-20f, 0, 0);
+        Folk(g, "Doctor Dreadbone", "#9575cd", 15, new Vector3(2344f, 0, 49.5f), -120f, "Four/iv_doc");
+        report.Add("The Inventors' Backyard: a rollercoaster in the garden (gone the moment Mom pulls in), two inventors, a big sister, a secret-agent gnome, a shrink ray next door; 2 gags");
+    }
+
+    static void BuildNotebookSchool(Transform root)
+    {
+        var g = AreaShell(root, "The Notebook School", 2360f, 2396f, 20f, 50f, 6f, "Paper", "Paper", "Paper",
+                          "THE NOTEBOOK SCHOOL", new Color(0.1f, 0.1f, 0.1f), "a middle school drawn in pencil, in somebody's diary. sorry: journal.", "NOTEBOOK SCHOOL");
+        Plaque(g, new Vector3(2384f, 0, 23.5f), "<b>THE NOTEBOOK SCHOOL</b>\ninspired by books drawn in a diary\nabout surviving middle school\n\n<size=80%>(press to hear more)</size>", "Four/nb_plaque");
+        // blue lines and a red margin on every wall: it's all notebook paper
+        for (int k = 0; k < 9; k++)
+        {
+            float y = 0.6f + k * 0.6f;
+            foreach (float wx in new[] { 2360.05f, 2395.95f }) DPrim(PrimitiveType.Cube, "Line", g, new Vector3(wx, y, 35f), new Vector3(0.01f, 0.02f, 30f), M("InkBlue"));
+            DPrim(PrimitiveType.Cube, "Line", g, new Vector3(2378f, y, 49.95f), new Vector3(36f, 0.02f, 0.01f), M("InkBlue"));
+        }
+        DPrim(PrimitiveType.Cube, "Margin", g, new Vector3(2364f, 3f, 49.94f), new Vector3(0.04f, 6f, 0.01f), M("GlowRed"));
+        // lockers down one side
+        for (int k = 0; k < 12; k++)
+        {
+            Box(g, "Locker", new Vector3(2361f, 1.1f, 27f + k * 1.0f), new Vector3(0.9f, 2.2f, 0.9f), M("CaneWhite"));
+            DPrim(PrimitiveType.Cube, "LockerOutline", g, new Vector3(2361.46f, 1.1f, 27f + k * 1.0f), new Vector3(0.01f, 2.1f, 0.85f), M("Black"));
+            DPrim(PrimitiveType.Cube, "LockerVent", g, new Vector3(2361.47f, 1.8f, 27f + k * 1.0f), new Vector3(0.01f, 0.25f, 0.5f), M("CaneWhite"));
+        }
+        // the cursed cheese on the court
+        Box(g, "Court", new Vector3(2380f, 0.006f, 38f), new Vector3(12f, 0.01f, 8f), M("CaneWhite"), false);
+        foreach (float cz in new[] { 34f, 42f }) DPrim(PrimitiveType.Cube, "CourtLine", g, new Vector3(2380f, 0.012f, cz), new Vector3(12f, 0.01f, 0.06f), M("Black"));
+        var ch = Gg(g, "The cursed cheese", new Vector3(2380f, 0, 38f), 180f, "Four/nb_cheese", 1.2f, 0.8f);
+        var cheese = Group(ch.transform, "Cheese", new Vector3(0, 0.1f, 0));
+        Prim(PrimitiveType.Cube, "Cheese", cheese, Vector3.zero, new Vector3(0.3f, 0.12f, 0.25f), M("GlowYellow"));
+        for (int k = 0; k < 3; k++) Prim(PrimitiveType.Sphere, "Stink", cheese, new Vector3(-0.1f + k * 0.1f, 0.25f + k * 0.08f, 0), Vector3.one * 0.06f, M("GlowGreen"));
+        ch.target = cheese; ch.wobble = 15f; ch.bob = 0.05f;
+        Text("CheeseSign", g, new Vector3(2380f, 1.5f, 33.9f), Face(Vector3.back), new Vector2(3f, 0.4f), 0.18f, "<b>DO NOT TOUCH THE CHEESE</b>").color = Color.black;
+        // the gym rope
+        DPrim(PrimitiveType.Cylinder, "Rope", g, new Vector3(2392f, 3f, 30f), new Vector3(0.08f, 3f, 0.08f), M("Trunk"));
+        // the basement band
+        Box(g, "Drum", new Vector3(2390f, 0.4f, 46f), new Vector3(0.8f, 0.8f, 0.8f), M("CaneRed"));
+        DPrim(PrimitiveType.Cylinder, "Cymbal", g, new Vector3(2391f, 1.3f, 46.5f), new Vector3(0.6f, 0.01f, 0.6f), M("GlowGold"));
+        Text("BandName", g, new Vector3(2390f, 3.4f, 49.9f), Face(Vector3.back), new Vector2(4f, 0.6f), 0.4f, "<b>LOUD BONES</b>").color = Color.black;
+        // the kids (stick figures: black bones on white paper)
+        Folk(g, "The New Kid", "#212121", 16, new Vector3(2372f, 0, 30f), 180f, "Four/nb_kid");
+        Folk(g, "Best Friend Benny", "#212121", 5, new Vector3(2374f, 0, 30.5f), 200f, "Four/nb_friend", 1.1f);
+        Folk(g, "Big Bro Dez", "#212121", 9, new Vector3(2388f, 0, 46.5f), 180f, "Four/nb_brother");
+        Folk(g, "Coach Gruff", "#212121", 20, new Vector3(2390f, 0, 30f), -90f, "Four/nb_gym");
+        Gear("Coach Gruff", 2, PrimitiveType.Sphere, new Vector3(0, -0.15f, 0.12f), Vector3.one * 0.06f, "Metal");
+        report.Add("The Notebook School: lined-paper walls, lockers, the cursed cheese, a gym rope nobody can climb, a basement band; 4 stick-figure skeletons and 1 gag");
+    }
+
+    static void BuildSeabedTown(Transform root)
+    {
+        var g = AreaShell(root, "The Seabed Town", 2410f, 2450f, 20f, 56f, 14f, "PixelSand", "InkBlue", "InkBlue",
+                          "THE SEABED TOWN", new Color(1f, 0.9f, 0.2f), "a little town at the bottom of the sea. the burgers are mostly kelp.", "SEABED TOWN");
+        Plaque(g, new Vector3(2438f, 0, 23.5f), "<b>THE SEABED TOWN</b>\nan undersea town, inspired by cartoons\nabout life at the bottom of the sea\n\n<size=80%>(press to hear more)</size>", "Four/sb_plaque");
+        // kelp, coral, rising bubbles
+        for (int k = 0; k < 24; k++)
+        {
+            var kp = new Vector3(2412f + (k * 13 % 36), 0, 26f + (k * 7 % 28));
+            for (int s = 0; s < 4; s++) DPrim(PrimitiveType.Capsule, "Kelp", g, kp + new Vector3(Mathf.Sin(s + k) * 0.15f, 0.6f + s * 1.1f, 0), new Vector3(0.15f, 0.6f, 0.15f), M("GiftGreen"));
+        }
+        for (int k = 0; k < 10; k++) DPrim(PrimitiveType.Sphere, "Coral", g, new Vector3(2412f + k * 3.8f, 0.3f, 54.5f - (k % 2)), new Vector3(1f, 0.8f, 0.8f), M(k % 3 == 0 ? "BonePink" : k % 3 == 1 ? "InkOrange" : "GemPurple"));
+        var bub = Group(g, "Bubbles", new Vector3(2430f, 2f, 38f));
+        var bubs = new List<Transform>();
+        for (int k = 0; k < 20; k++)
+        {
+            var b = Group(bub, "Bubble", new Vector3(Mathf.Cos(k * 1.9f) * (4f + k % 9), (k * 5 % 9), Mathf.Sin(k * 1.9f) * (4f + k % 9)));
+            Prim(PrimitiveType.Sphere, "Bubble", b, Vector3.zero, Vector3.one * (0.2f + (k % 3) * 0.1f), M("Glass"));
+            bubs.Add(b);
+        }
+        var br = Add<FirRide>(bub.gameObject); br.kind = 0; br.rotor = bub; br.axis = Vector3.up; br.degPerSec = 5f; br.bobbers = bubs.ToArray(); br.bobHeight = 1.5f; br.bobSpeed = 0.6f;
+        // the jellyfish field
+        var jf = Group(g, "Jellyfish", new Vector3(2440f, 3f, 44f));
+        var jl = new List<Transform>();
+        for (int k = 0; k < 8; k++)
+        {
+            var j = Group(jf, "Jelly", new Vector3(Mathf.Cos(k * 0.8f) * 4f, (k % 3) * 0.8f, Mathf.Sin(k * 0.8f) * 4f));
+            Prim(PrimitiveType.Sphere, "Bell", j, Vector3.zero, new Vector3(0.6f, 0.4f, 0.6f), M("BonePink"));
+            for (int t = 0; t < 3; t++) Prim(PrimitiveType.Cylinder, "Tentacle", j, new Vector3(-0.15f + t * 0.15f, -0.4f, 0), new Vector3(0.03f, 0.3f, 0.03f), M("BonePink"));
+            jl.Add(j);
+        }
+        var jr = Add<FirRide>(jf.gameObject); jr.kind = 0; jr.rotor = jf; jr.axis = Vector3.up; jr.degPerSec = 10f; jr.bobbers = jl.ToArray(); jr.bobHeight = 0.6f; jr.bobSpeed = 1.2f;
+        var jg = Gg(g, "Jellyfish field sign", new Vector3(2440f, 0, 37f), 180f, "Four/sb_jelly", 1.2f, 2f);
+        Box(jg.transform, "Post", new Vector3(0, 0.7f, 0), new Vector3(0.1f, 1.4f, 0.1f), M("DeskWood"), false);
+        var jsign = Group(jg.transform, "Board", new Vector3(0, 1.5f, 0));
+        Prim(PrimitiveType.Cube, "Board", jsign, Vector3.zero, new Vector3(1.2f, 0.5f, 0.05f), M("DeskWood"));
+        Text("JellyText", jsign, new Vector3(0, 0, 0.03f), Face(Vector3.forward), new Vector2(1.1f, 0.4f), 0.12f, "<b>JELLYFISH FIELDS</b>").color = Color.white;
+        jg.target = jsign; jg.wobble = 10f;
+        // the burger shack: the Crusty Clam
+        Box(g, "Shack", new Vector3(2420f, 2.2f, 48f), new Vector3(10f, 4.4f, 6f), M("DeskWood"));
+        Box(g, "ShackRoof", new Vector3(2420f, 4.6f, 48f), new Vector3(10.6f, 0.4f, 6.6f), M("InkOrange"));
+        Box(g, "Window", new Vector3(2420f, 1.6f, 44.97f), new Vector3(4f, 1.2f, 0.05f), M("Black"), false);
+        Box(g, "ServeCounter", new Vector3(2420f, 1f, 44.6f), new Vector3(4f, 0.1f, 0.6f), M("CaneWhite"));
+        Text("ShackSign", g, new Vector3(2420f, 3.6f, 44.95f), Face(Vector3.back), new Vector2(9f, 0.8f), 0.6f, "<b>THE CRUSTY CLAM</b>").color = new Color(1f, 0.9f, 0.3f);
+        Folk(g, "Fry Cook Flip", "#ffeb3b", 16, new Vector3(2418.5f, 0, 45.6f), 180f, "Four/sb_cook");
+        Folk(g, "Grumpy Till", "#80cbc4", 0, new Vector3(2421.5f, 0, 45.6f), 180f, "Four/sb_cashier");
+        Folk(g, "Boss Pinch", "#e53935", 15, new Vector3(2425.8f, 0, 44f), 200f, "Four/sb_boss");
+        foreach (float cx in new[] { -0.2f, 0.2f }) Gear("Boss Pinch", cx < 0 ? 5 : 6, PrimitiveType.Sphere, new Vector3(0, -0.3f, 0.05f), new Vector3(0.18f, 0.12f, 0.1f), "GlowRed");
+        var flip = Gg(g, "The flipping burger", new Vector3(2416f, 0, 44.4f), 180f, "Four/sb_burger", 1f, 1.4f);
+        Box(flip.transform, "Grill", new Vector3(0, 0.5f, 0), new Vector3(0.8f, 1f, 0.6f), M("Black"), false);
+        var patty = Group(flip.transform, "Patty", new Vector3(0, 1.05f, 0));
+        Prim(PrimitiveType.Cylinder, "Patty", patty, Vector3.zero, new Vector3(0.35f, 0.04f, 0.35f), M("Trunk"));
+        flip.target = patty; flip.moveBy = new Vector3(0, 2.6f, 0); flip.rotateBy = new Vector3(540f, 0, 0); flip.inTime = 0.6f;
+        // a rock house, a glass dome, the starfish
+        Prim(PrimitiveType.Sphere, "RockHouse", g, new Vector3(2445f, 0, 28f), new Vector3(5f, 4f, 5f), M("Stone"));
+        Prim(PrimitiveType.Sphere, "Dome", g, new Vector3(2414f, 0, 28f), new Vector3(6f, 6f, 6f), M("Glass"));
+        DPrim(PrimitiveType.Cylinder, "DomeTree", g, new Vector3(2414f, 1.2f, 28f), new Vector3(0.3f, 1.2f, 0.3f), M("Trunk"));
+        Folk(g, "Lounging Lou", "#ff8a80", 9, new Vector3(2441.5f, 0.1f, 28f), -90f, "Four/sb_star");
+        report.Add("The Seabed Town: kelp, coral, rising bubbles, a jellyfish field, the Crusty Clam (a fry cook, a grumpy cashier, a money-loving boss), a rock house, a glass dome, a starfish; 2 gags");
+    }
+
+    static void BuildBattleIsland(Transform root)
+    {
+        var g = AreaShell(root, "Battle Island", 2460f, 2510f, 20f, 70f, 22f, "PixelGreen", "PixelSky", "Sky",
+                          "BATTLE ISLAND", new Color(0.4f, 0.7f, 1f), "a hundred skeletons jump out of a bus. one of them wins. the rest dance anyway.", "BATTLE ISLAND");
+        Plaque(g, new Vector3(2490f, 0, 23.5f), "<b>BATTLE ISLAND</b>\na battle royale island, inspired by the games\nwhere players jump out of a flying bus\n(here, everyone is a skeleton)\n\n<size=80%>(press to hear more)</size>", "Four/br_plaque");
+        // the bus, flying round overhead on a balloon
+        var bus = Group(g, "The bus route", new Vector3(2485f, 16f, 45f));
+        var b = Group(bus, "The bus", new Vector3(14f, 0, 0));
+        Prim(PrimitiveType.Cube, "Body", b, Vector3.zero, new Vector3(2.4f, 2.4f, 6f), M("InkBlue"));
+        Prim(PrimitiveType.Cube, "Windows", b, new Vector3(0, 0.5f, 0), new Vector3(2.45f, 0.8f, 5f), M("Glass"));
+        Prim(PrimitiveType.Sphere, "Balloon", b, new Vector3(0, 3.5f, 0), new Vector3(3.4f, 3f, 3.4f), M("GlowRed"));
+        b.localRotation = Quaternion.Euler(0, 0, 0);
+        var busr = Add<FirRide>(bus.gameObject); busr.kind = 0; busr.rotor = bus; busr.axis = Vector3.up; busr.degPerSec = 12f;
+        var thank = Gg(g, "Thank the bus driver", new Vector3(2470f, 0, 26f), 180f, "Four/br_bus", 1.4f, 2f);
+        Box(thank.transform, "Post", new Vector3(0, 0.7f, 0), new Vector3(0.1f, 1.4f, 0.1f), M("Metal"), false);
+        var tb = Group(thank.transform, "Button", new Vector3(0, 1.5f, 0));
+        Prim(PrimitiveType.Cube, "Panel", tb, Vector3.zero, new Vector3(1.2f, 0.5f, 0.06f), M("GlowYellow"));
+        Text("Thanks", tb, new Vector3(0, 0, 0.04f), Face(Vector3.forward), new Vector2(1.1f, 0.4f), 0.11f, "<b>THANK THE BUS DRIVER</b>").color = Color.black;
+        thank.target = tb; thank.wobble = 10f;
+        // the storm (a purple ring that closes in)
+        var st = Gg(g, "The storm", new Vector3(2485f, 0, 48f), 180f, "Four/br_storm", 2f, 1f);
+        Prim(PrimitiveType.Cylinder, "Circle", st.transform, new Vector3(0, 0.01f, 0), new Vector3(2f, 0.005f, 2f), M("CaneWhite"));
+        var storm = Group(st.transform, "Storm wall", Vector3.zero);
+        for (int k = 0; k < 24; k++)
+        {
+            float a = k * Mathf.PI / 12f;
+            Prim(PrimitiveType.Cube, "Storm", storm, new Vector3(Mathf.Cos(a) * 9f, 4f, Mathf.Sin(a) * 9f), new Vector3(2.4f, 8f, 0.1f), M("PortalPurple")).transform.localRotation = Quaternion.Euler(0, -a * Mathf.Rad2Deg + 90f, 0);
+        }
+        st.target = storm; st.scaleBy = 0.15f; st.inTime = 3f; st.hideWhenIdle = true;
+        // chests, a supply drop, ramps somebody built
+        var chest = Gg(g, "A glowing chest", new Vector3(2466f, 0, 40f), 90f, "Four/br_chest", 1.4f, 1.2f);
+        Box(chest.transform, "Box", new Vector3(0, 0.35f, 0), new Vector3(1.2f, 0.7f, 0.8f), M("GlowGold"), false);
+        var lid = Group(chest.transform, "Lid", new Vector3(0, 0.7f, -0.4f));
+        Prim(PrimitiveType.Cube, "Lid", lid, new Vector3(0, 0.1f, 0.4f), new Vector3(1.22f, 0.2f, 0.82f), M("GlowGold"));
+        Prim(PrimitiveType.Cube, "Spoon", chest.transform, new Vector3(0, 0.8f, 0), new Vector3(0.05f, 0.3f, 0.03f), M("GlowYellow"));
+        chest.target = lid; chest.rotateBy = new Vector3(-100f, 0, 0);
+        var drop = Gg(g, "Supply drop", new Vector3(2504f, 0, 40f), -90f, "Four/br_drop", 1.6f, 1.6f);
+        var crate = Group(drop.transform, "Crate", new Vector3(0, 8f, 0));
+        Prim(PrimitiveType.Cube, "Crate", crate, new Vector3(0, 0.5f, 0), Vector3.one * 1f, M("InkBlue"));
+        Prim(PrimitiveType.Sphere, "Chute", crate, new Vector3(0, 2.4f, 0), new Vector3(2.6f, 1.2f, 2.6f), M("CaneWhite"));
+        drop.target = crate; drop.moveBy = new Vector3(0, -8f, 0); drop.inTime = 2.5f; drop.hideWhenIdle = true;
+        for (int k = 0; k < 5; k++)
+        {
+            var rp = Box(g, "Ramp " + k, new Vector3(2496f, 0.9f + k * 1.6f, 58f + k * 2.6f), new Vector3(2.6f, 0.15f, 3.4f), M("DeskWood"));
+            rp.transform.localRotation = Quaternion.Euler(-32f, 0, 0);
+        }
+        // the skeletons: a builder, a dancer, a lost newbie, more dancers
+        Folk(g, "Builder Bob", "#ff7043", 12, new Vector3(2493f, 0, 56f), 180f, "Four/br_builder");
+        Gear("Builder Bob", 6, PrimitiveType.Cube, new Vector3(0, -0.35f, 0.08f), new Vector3(0.06f, 0.4f, 0.06f), "Metal");
+        Folk(g, "Dancing Dee", "#ab47bc", 7, new Vector3(2480f, 0, 34f), 180f, "Four/br_dancer");
+        for (int k = 0; k < 3; k++) Folk(g, "Emote " + (k + 1), new[] { "#26c6da", "#ffee58", "#66bb6a" }[k], new[] { 18, 24, 29 }[k], new Vector3(2476f + k * 1.6f, 0, 36f), 180f, "Four/br_dancer", 0.95f);
+        Folk(g, "Newbie Ned", "#bdbdbd", 2, new Vector3(2502f, 0, 30f), 220f, "Four/br_noob");
+        Text("Victory", g, new Vector3(2485f, 8f, 69.85f), Face(Vector3.back), new Vector2(16f, 2f), 1.4f, "<b>VICTORY!</b>").color = new Color(1f, 0.85f, 0.2f);
+        report.Add("Battle Island: a bus flying round on a balloon, a storm that closes in, a chest, a supply drop, ramps somebody built, a builder, a lost newbie, dancers; 4 gags");
     }
 
     // =================================================================== the second batch of Station stops: helpers
@@ -6004,7 +6312,7 @@ public static class FirCheckBuilder
     static void StationStop(string title, Transform arrive, Transform backParent, Vector3 backPos, Vector3 backNormal)
     {
         int i = stationSlots++;
-        var b = TeleportButton(stationBoard, title, new Vector3(-1.2f + (i % 4) * 0.8f, 2.17f - (i / 4) * 0.2f, -0.03f), Vector3.back, arrive, new Vector3(0.76f, 0.17f, 0.06f));   // 4 across, up to 36 stops
+        var b = TeleportButton(stationBoard, title, new Vector3(-1.2f + (i % 4) * 0.8f, 2.17f - (i / 4) * 0.18f, -0.03f), Vector3.back, arrive, new Vector3(0.76f, 0.15f, 0.06f));   // 4 across, up to 40 stops
         TeleportButton(backParent, "Back to the lobby", backPos, backNormal, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
     }
 
