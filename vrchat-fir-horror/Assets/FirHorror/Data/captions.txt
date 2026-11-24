@@ -3,12 +3,18 @@ ap_clavicle|Morning! I've done four hundred push-ups. My bones are very toned. T
 ap_coccyx|I work from home. My commute is eleven steps. I'm still late.
 ap_dryer|The dryer ate a sock. And a femur. Femur would like it back.
 ap_femur|I'm the superintendent. The lift's been broken since I got here. I'm starting to think it's decorative.
+ap_forrent|Now renting: second floor flats! Stairs not included. There's a ramp. It's a very good ramp.
+ap_humerus|I'm a comedian! Why did the skeleton skip the party? He had no body to go with. I'll be here all week. I live here.
+ap_hyoid|Just moved in! Box thirty seven of two hundred. Who designed this ramp? Me. I did. I regret it.
 ap_lift|Going up! ...Just kidding. It has never gone up.
 ap_mail|You've got mail! It's a bill. For the mailbox.
+ap_mandible|I grow tomatoes on the roof. Well. I grow one tomato. His name is Gerald.
 ap_mortimer|I write sad songs on the guitar. Granny Tibia says they're too loud. I say they're too sad. We're both right.
 ap_phalange|I've swept this hallway nine times today. There's still dust. I think the dust is me.
+ap_raccoon|Excuse me. This is a private dumpster. Residents only. I'm a resident.
 ap_ribsy|Have you heard? Apartment two got a new guitar string! And apartment four ordered soup! Again!
 ap_scapula|I teach dance in the common room! Nobody comes. The dancing is still mandatory.
+ap_stapes|I'm the smallest bone in the body! I watch the stars from the roof. From here, they're even smaller than me.
 ap_tibia|Back in my day we didn't have apartments. We had crypts. And we were grateful!
 as_balloon|I'm going to pop this balloon! Waaaaah!
 as_cake|Who ordered the cake? Nobody? It's mine now.

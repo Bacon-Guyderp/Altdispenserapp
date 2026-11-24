@@ -1096,21 +1096,25 @@ public static class SimCheck {
 
   static void ApartTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The Marrow Arms (Bonetown's apartments)");
-    Check(Sim.BuildLog.Any(l => l.Contains("The Marrow Arms: 7 apartments")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Marrow Arms")) ?? "no Marrow Arms in the build log"));
+    Check(Sim.BuildLog.Any(l => l.Contains("The Marrow Arms: 11 apartments on two floors")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Marrow Arms")) ?? "no Marrow Arms in the build log"));
     var probs = Sim.BuildLog.Where(l => l.Contains("can't get to") || l.Contains("are both at")).ToList();
     Check(probs.Count == 0, "every routine fits its day, and nobody stands in anybody's spot" + string.Concat(probs.Take(4).Select(x => " | " + x)));
     string what;
-    float[] xc = { -61.75f, -69.25f, -76.75f, -84.25f };
-    Check(!Blocked(A, new[] { new Vector3(-40f, 0, 11f), new Vector3(-55f, 0, 11f), new Vector3(-86.5f, 0, 11f) }, out what), "from Bonetown's plaza, through the west doorway, the lobby and down the hallway" + (what != "" ? " | " + what : ""));
+    float[] xc = { -69.75f, -77.25f, -84.75f, -92.25f };
+    Check(!Blocked(A, new[] { new Vector3(-40f, 0, 11f), new Vector3(-56f, 0, 11f), new Vector3(-63f, 0, 11f), new Vector3(-94.5f, 0, 11f) }, out what), "from Bonetown's plaza, through the west doorway, across the front yard, the lobby and down the hallway" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-49f, 0, 11f), new Vector3(-49f, 0, -16f), new Vector3(-107f, 0, -16f), new Vector3(-107f, 0, 37f), new Vector3(-49f, 0, 37f), new Vector3(-49f, 0, 11f) }, out what), "all the way round the outside of the building" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-60.3f, 0.2f, -8.15f), new Vector3(-66.2f, 3.6f, -8.15f), new Vector3(-67.2f, 3.6f, -6.4f), new Vector3(-92.25f, 3.6f, -6.2f), new Vector3(-92.25f, 3.6f, -3.5f) }, out what), "up the ramp, along the balcony and in at flat 11's door" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-63f, 3.6f, -6.2f), new Vector3(-63f, 3.6f, -2f), new Vector3(-63f, 3.6f, 15f), new Vector3(-78f, 3.6f, 18f) }, out what), "from the balcony onto the roof terrace" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-92.25f, 3.6f, -6.2f), new Vector3(-97.1f, 3.6f, -6.2f), new Vector3(-97.1f, 3.6f, 10.8f), new Vector3(-94f, 3.6f, 10.8f), new Vector3(-92f, 3.6f, 18f) }, out what), "...and round the side walkway onto the terrace" + (what != "" ? " | " + what : ""));
     int open = 0;
     foreach (float x in xc) {
       if (!Blocked(A, new[] { new Vector3(x, 0, 11f), new Vector3(x, 0, 16f) }, out what)) open++;
       if (!Blocked(A, new[] { new Vector3(x, 0, 11f), new Vector3(x, 0, 6f) }, out what)) open++;
     }
     Check(open == 8, open + " of 8 doorways off the hallway walk in (7 flats and the laundry)");
-    Check(!Blocked(A, new[] { new Vector3(-55f, 0, 11f), new Vector3(-55f, 0, 19f) }, out what) && !Blocked(A, new[] { new Vector3(-55f, 0, 11f), new Vector3(-55f, 0, 2f) }, out what), "the gym and the common room open off the lobby");
+    Check(!Blocked(A, new[] { new Vector3(-63f, 0, 11f), new Vector3(-63f, 0, 19f) }, out what) && !Blocked(A, new[] { new Vector3(-63f, 0, 11f), new Vector3(-63f, 0, 2f) }, out what), "the gym and the common room open off the lobby");
     var res = All<FirResident>(A);
-    Check(res.Count == 8, res.Count + " residents: " + string.Join(", ", res.Select(r => r.who)));
+    Check(res.Count == 12, res.Count + " residents: " + string.Join(", ", res.Select(r => r.who)));
     // a day on the Bonetown clock, checked every hour: everyone is where their routine says, doing it, captioned
     int checks = 0, right = 0; var wrong = new List<string>();
     for (float h = 0.75f; h < 24f; h += 1f) {
@@ -1157,8 +1161,8 @@ public static class SimCheck {
     var gw = All<FirWanderer>(A);
     Check(gw.All(w => w.line.Length > 5), "all " + gw.Count + " wanderers caption their lines");
     int gagN; var gagBad = new List<string>();
-    int gagOk = RunGags(B, g => g.transform.position.x < -48f && g.transform.position.x > -88f && g.transform.position.z > -5f && g.transform.position.z < 27f, out gagN, gagBad);
-    Check(gagOk == gagN && gagN == 3, gagOk + " of " + gagN + " apartment gags (the lift, the mailboxes, the dryer)" + string.Concat(gagBad.Select(x => " | " + x)));
+    int gagOk = RunGags(B, g => g.transform.position.x < -48f && g.transform.position.x > -110f && g.transform.position.z > -17f && g.transform.position.z < 39f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 5, gagOk + " of " + gagN + " apartment gags (the lift, the mailboxes, the dryer, the for-rent sign, the dumpster)" + string.Concat(gagBad.Select(x => " | " + x)));
   }
 
   static void LaterTests(Sim.Client A, Sim.Client B) {

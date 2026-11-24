@@ -8,8 +8,8 @@ using VRC.Udon;
 /// A resident of the Marrow Arms apartments in Bonetown, living a daily routine on the Bonetown clock.
 /// A Bonetown day is short (dayMs of real time), and comes from the server clock, so every player sees every
 /// resident in the same place doing the same thing, with nothing synced.
-/// The routine is a list of stops: at hour[i] the resident sets off for spot[i] (walking through doorways via
-/// its room's inside and outside points and the hallway hub), and once there faces yaw[i] and does pose[i],
+/// The routine is a list of stops: at hour[i] the resident sets off for spot[i] (along a way worked out when the world
+/// is built: through doorways, up the outside ramp, over the roof), and once there faces yaw[i] and does pose[i],
 /// with doing[i] as the caption over its head. Press it and it stops, turns to you and says its line (captioned);
 /// the press is shared (FirShare, kind 6). Afterwards it hurries back to where its routine says it should be.
 /// Bones: 0 root (at the feet), 1 torso, 2 skull, 3/4 upper arms, 5/6 forearms, 7/8 legs, 9 jaw.
@@ -27,11 +27,8 @@ public class FirResident : UdonSharpBehaviour
     public float[] yaw;                     // which way to face there
     public int[] pose;                      // what to do there (see Act)
     public string[] doing;                  // the caption
-    public int[] room;                      // which room the spot is in
-    public Vector3[] roomIn, roomOut;       // each room's doorway: just inside, and outside in the hallway
-    public Vector3 hub;                     // where the hallway meets the lobby
-    public bool[] viaHub;                   // rooms on the lobby side (the way there goes through the hub)
-    public bool[] noDoor;                   // open spaces (the hallway, the lobby): no doorway to go through
+    public Vector3[] legPts;                // the way to each stop, worked out when the world is built (through doorways, up the ramp, ...)
+    public int[] legStart, legLen;          // ...stop i's way is legPts[legStart[i]] .. legPts[legStart[i] + legLen[i] - 1]
     public AudioSource voice;
     public string line = "";
     public TextMeshPro caption;
@@ -58,7 +55,9 @@ public class FirResident : UdonSharpBehaviour
         for (int i = 0; i < pivots.Length; i++) restRot[i] = pivots[i].localRotation;
         restPos0 = pivots[0].localPosition;
         restRot0 = pivots[0].localRotation;
-        pts = new Vector3[8];
+        int most = 2;
+        for (int i = 0; i < legLen.Length; i++) if (legLen[i] > most) most = legLen[i];
+        pts = new Vector3[most];
         facing = transform.rotation;
         Place(true);
     }
@@ -80,27 +79,18 @@ public class FirResident : UdonSharpBehaviour
         return s;
     }
 
-    /// <summary>The way from the previous stop to stop s, through the doorways (fills pts, npts).</summary>
+    /// <summary>The way from the previous stop to stop s (fills pts, npts).</summary>
     void Path(int s)
     {
-        int n = hour.Length;
-        int p = (s + n - 1) % n;
-        npts = 0;
-        pts[npts++] = spot[p];
-        int a = room[p], b = room[s];
-        if (a != b)
-        {
-            if (!noDoor[a]) { pts[npts++] = roomIn[a]; pts[npts++] = roomOut[a]; }
-            if (viaHub[a] != viaHub[b]) pts[npts++] = hub;
-            if (!noDoor[b]) { pts[npts++] = roomOut[b]; pts[npts++] = roomIn[b]; }
-        }
-        pts[npts++] = spot[s];
+        int n = legLen[s];
+        if (pts == null || pts.Length < n) pts = new Vector3[n];
+        for (int i = 0; i < n; i++) pts[i] = legPts[legStart[s] + i];
+        npts = n;
     }
 
     /// <summary>Length of the way to stop s, in metres (for the checks).</summary>
     public float PathLength(int s)
     {
-        if (pts == null) pts = new Vector3[8];
         Path(s);
         float d = 0f;
         for (int i = 1; i < npts; i++) d += Vector3.Distance(pts[i - 1], pts[i]);

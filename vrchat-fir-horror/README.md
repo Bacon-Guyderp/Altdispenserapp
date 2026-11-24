@@ -282,13 +282,26 @@ It's an original take on the life-sim genre, and none of it is scary.
   and the console has 4 combo acts: The Squabble, Town Band, The Proposal and the Bonetown Finale.
 * **22 more gags** (`Data/town_gags.txt`): signs, frames, pop-ups, spinners, waddlers and talking trees.
 * That's 24 new skeleton colours. The game's tree never goes to Bonetown.
-* **The Marrow Arms** (through the doorway in Bonetown's west wall) is an apartment building: a lobby
-  with a clock, mailboxes and a lift that has never gone up, a hallway, 7 flats, a gym, a common room
-  and a laundry. Its 8 residents live their own days on the Bonetown clock (a day is 12 minutes):
-  * Clavicle works out, Mortimer plays sad guitar all night, Granny Tibia waters plastic plants and
-    knocks on Mortimer's door at 11 pm, and Coccyx works from home.
-  * Ribsy gossips, Phalange cleans the clean, Scapula teaches a dance class nobody comes to, and Femur
-    the superintendent fixes the lift (again).
+* **The Marrow Arms** (through the doorway in Bonetown's west wall) is an apartment building with
+  grounds of its own:
+  * **Outside:** brick walls with lit windows, an awning and the building's name over the door, and a
+    front yard with a for-rent sign. Round the sides are parking with two cars, a back yard (a dumpster
+    with a raccoon in it, a washing line and a shed), and a north yard with a pool, a vegetable patch and
+    a basketball hoop.
+  * **Ground floor:** a lobby (clock, mailboxes, a lift that has never gone up), a hallway, 7 flats, a gym,
+    a common room and a laundry.
+  * **Second floor:** a ramp from the yard to an open balcony with flats 8-11, and a side walkway round
+    to the roof.
+  * **The roof terrace:** a water tower, a garden (with Gerald the tomato), a telescope, a barbecue, an
+    open-mic corner and string lights.
+  * **12 residents** live their own days on the Bonetown clock (a day is 12 minutes). Their walks are
+    worked out on a graph of doorways, the ramp, the balcony and the roof:
+    * Clavicle works out, Mortimer plays sad guitar all night, Granny Tibia waters plastic plants and
+      knocks on Mortimer's door at 11 pm, and Coccyx works from home.
+    * Ribsy gossips, Phalange cleans the clean, Scapula teaches a dance class nobody comes to, and Femur
+      the superintendent fixes the lift (and the water tower).
+    * Upstairs: Humerus does open-mic comedy on the roof, Mandible grows one tomato, tiny Stapes
+      stargazes, and Hyoid is still moving in (box 37 of 200).
   * A caption over each head says what they're doing ("on the way: ..." while walking). Press one and
     they stop and talk, captioned, for everyone. It all comes from the server clock, so everyone sees
     the same day with no network traffic.

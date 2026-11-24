@@ -259,7 +259,13 @@ namespace UnityEngine {
       foreach (var b in Boxes) { float t; if (Slab(o, d, b.Key - b.Value, b.Key + b.Value, out t) && t <= best) { best = t; hit = true; } }
       foreach (var c in All()) {
         if (!Usable(c, mask, q)) continue; var bb = B(c); float t;
-        if (Slab(o, d, bb.min, bb.max, out t) && t <= best) { best = t; hit = true; h.collider = c; }
+        if (!Slab(o, d, bb.min, bb.max, out t) || t > best) continue;
+        if (c is BoxCollider) {   // a box that's turned (a ramp): test it in its own frame, not by its axis-aligned bounds
+          var tr = c.transform; var lo = tr.InverseTransformPoint(o); var ld = tr.InverseTransformPoint(o + d) - lo;
+          var half = new Vector3(c.LocalSize.x * 0.5f, c.LocalSize.y * 0.5f, c.LocalSize.z * 0.5f);
+          if (!Slab(lo, ld, c.LocalCenter - half, c.LocalCenter + half, out t) || t > best) continue;
+        }
+        best = t; hit = true; h.collider = c;
       }
       if (hit) { h.distance = best; h.point = o + d * best; }
       return hit;

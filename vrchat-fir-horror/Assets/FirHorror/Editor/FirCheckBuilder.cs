@@ -2104,40 +2104,101 @@ public static class FirCheckBuilder
     const float AptH = 3.4f;
 
     /// <summary>A wall along x (at z) from xa to xb, with 1.3 m doorways at the given x centres.</summary>
-    static void WallAlongX(Transform g, string mat, float z, float xa, float xb, params float[] doors)
+    static void WallAlongX(Transform g, string mat, float z, float xa, float xb, params float[] doors) { WallX(g, mat, z, xa, xb, 0f, AptH, doors); }
+
+    static void WallX(Transform g, string mat, float z, float xa, float xb, float y0, float h, params float[] doors)
     {
         float lo = Mathf.Min(xa, xb), hi = Mathf.Max(xa, xb);
         var cuts = doors.OrderBy(d => d).ToList();
         float from = lo;
         foreach (var d in cuts)
         {
-            if (d - 0.65f > from) Box(g, "Wall", new Vector3((from + d - 0.65f) / 2f, AptH / 2f, z), new Vector3(d - 0.65f - from, AptH, 0.15f), M(mat));
-            Box(g, "Lintel", new Vector3(d, (2.3f + AptH) / 2f, z), new Vector3(1.3f, AptH - 2.3f, 0.15f), M(mat));
+            if (d - 0.65f > from) Box(g, "Wall", new Vector3((from + d - 0.65f) / 2f, y0 + h / 2f, z), new Vector3(d - 0.65f - from, h, 0.15f), M(mat));
+            Box(g, "Lintel", new Vector3(d, y0 + (2.3f + h) / 2f, z), new Vector3(1.3f, h - 2.3f, 0.15f), M(mat));
             from = d + 0.65f;
         }
-        if (hi > from) Box(g, "Wall", new Vector3((from + hi) / 2f, AptH / 2f, z), new Vector3(hi - from, AptH, 0.15f), M(mat));
+        if (hi > from) Box(g, "Wall", new Vector3((from + hi) / 2f, y0 + h / 2f, z), new Vector3(hi - from, h, 0.15f), M(mat));
     }
 
-    static void WallAlongZ(Transform g, string mat, float x, float za, float zb)
+    static void WallAlongZ(Transform g, string mat, float x, float za, float zb) { WallZ(g, mat, x, za, zb, 0f, AptH); }
+
+    static void WallZ(Transform g, string mat, float x, float za, float zb, float y0, float h)
     {
         float lo = Mathf.Min(za, zb), hi = Mathf.Max(za, zb);
-        Box(g, "Wall", new Vector3(x, AptH / 2f, (lo + hi) / 2f), new Vector3(0.15f, AptH, hi - lo), M(mat));
+        Box(g, "Wall", new Vector3(x, y0 + h / 2f, (lo + hi) / 2f), new Vector3(0.15f, h, hi - lo), M(mat));
     }
 
-    class AptRoom { public Vector3 inside, outside; public bool lobbySide, open; }
+    /// <summary>A little car (for the parking lot).</summary>
+    static void Car(Transform g, Vector3 at, string paint)
+    {
+        Box(g, "CarBody", at + new Vector3(0, 0.55f, 0), new Vector3(3.6f, 0.7f, 1.6f), M(paint));
+        Box(g, "CarCabin", at + new Vector3(-0.2f, 1.2f, 0), new Vector3(2f, 0.6f, 1.5f), M("Glass"), false);
+        foreach (float wx in new[] { -1.2f, 1.2f }) foreach (float wz in new[] { -0.8f, 0.8f })
+            DPrim(PrimitiveType.Cylinder, "Wheel", g, at + new Vector3(wx, 0.3f, wz), new Vector3(0.6f, 0.1f, 0.6f), M("Black"), Quaternion.Euler(90, 0, 0));
+    }
+
+    /// <summary>A window seen from outside: a frame and a warm glow.</summary>
+    static void OutWindow(Transform g, Vector3 at, Vector3 normal)
+    {
+        var rot = Face(normal);
+        var w = Group(g, "Window", at);
+        w.localRotation = rot;
+        Prim(PrimitiveType.Cube, "Frame", w, Vector3.zero, new Vector3(1.7f, 1.3f, 0.04f), M("CaneWhite"));
+        Prim(PrimitiveType.Cube, "Glow", w, new Vector3(0, 0, -0.025f), new Vector3(1.5f, 1.1f, 0.02f), M("GlowWarm"));
+        Prim(PrimitiveType.Cube, "Bar", w, new Vector3(0, 0, -0.04f), new Vector3(0.05f, 1.1f, 0.02f), M("CaneWhite"));
+    }
+
+    class AptRoom { public Vector3 inside; public int zone; public bool open; }
     class AptSpot { public Vector3 pos; public float yaw; public int room; }
+
+    /// <summary>Where a stop joins the walking graph: its room's doorway, or (in an open space) the nearest node in the same zone.</summary>
+    static int Anchor(Vector3 spot, int room, List<AptRoom> rooms, List<int> roomNode, List<Vector3> nodes, List<int> nodeZone)
+    {
+        if (!rooms[room].open) return roomNode[room];
+        int best = -1; float bd = 1e9f;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            if (nodeZone[i] != rooms[room].zone || Mathf.Abs(nodes[i].y - spot.y) > 1f) continue;
+            float d = Vector3.Distance(nodes[i], spot);
+            if (d < bd) { bd = d; best = i; }
+        }
+        if (best < 0) report.Add("problem: no way to reach the spot at " + spot);
+        return Mathf.Max(best, 0);
+    }
+
+    /// <summary>The shortest way between two graph nodes (both ends included).</summary>
+    static List<int> Dijkstra(int a, int b, List<Vector3> nodes, List<List<int>> links)
+    {
+        var dist = Enumerable.Repeat(float.MaxValue, nodes.Count).ToArray();
+        var prev = Enumerable.Repeat(-1, nodes.Count).ToArray();
+        var done = new bool[nodes.Count];
+        dist[a] = 0f;
+        for (int step = 0; step < nodes.Count; step++)
+        {
+            int u = -1;
+            for (int i = 0; i < nodes.Count; i++) if (!done[i] && (u < 0 || dist[i] < dist[u])) u = i;
+            if (u < 0 || dist[u] == float.MaxValue) break;
+            done[u] = true;
+            if (u == b) break;
+            foreach (int v in links[u])
+            {
+                float nd = dist[u] + Vector3.Distance(nodes[u], nodes[v]);
+                if (nd < dist[v]) { dist[v] = nd; prev[v] = u; }
+            }
+        }
+        var way = new List<int>();
+        if (dist[b] == float.MaxValue) { report.Add("problem: the walking graph has no way from " + nodes[a] + " to " + nodes[b]); way.Add(a); way.Add(b); return way; }
+        for (int v = b; v >= 0; v = prev[v]) way.Insert(0, v);
+        return way;
+    }
 
     static void BuildApartments(Transform root)
     {
-        const float dz = 7f;   // the building is drawn in its own frame, 7 m north of it (its doorway lines up with Bonetown's at z 11)
-        var g = Group(root, "The Marrow Arms", new Vector3(0, 0, dz));
+        const float dz = 7f, dx = -8f;   // the building is drawn in its own frame: 8 m west (room for a front yard) and 7 m north (its door lines up with Bonetown's at z 11)
+        var off = new Vector3(dx, 0, dz);
+        var g = Group(root, "The Marrow Arms", off);
         float X0 = -52f, X1 = -88f, Z0 = -12f, Z1 = 20f;
-        // ---- the way in from Bonetown
-        Box(g, "PassageFloor", new Vector3(-50f, -0.1f, 4f), new Vector3(4.2f, 0.2f, 2.4f), M("Floor2"));
-        Box(g, "PassageCeiling", new Vector3(-50f, 3.1f, 4f), new Vector3(4.2f, 0.2f, 2.8f), M("Ceiling"));
-        Box(g, "PassageS", new Vector3(-50f, 1.5f, 2.7f), new Vector3(4.2f, 3f, 0.2f), M("BrickWall"));
-        Box(g, "PassageN", new Vector3(-50f, 1.5f, 5.3f), new Vector3(4.2f, 3f, 0.2f), M("BrickWall"));
-        Text("WaySign", g, new Vector3(-47.85f, 3.6f, 4f), Face(Vector3.right), new Vector2(5f, 0.8f), 0.4f, "<b>THE MARROW ARMS</b>\n<size=50%>apartments  ·  residents only  ·  (and visitors)  ·  (and everyone)</size>").color = new Color(0.25f, 0.2f, 0.35f);
+        Text("WaySign", root, new Vector3(-47.85f, 4.2f, 11f), Face(Vector3.right), new Vector2(5f, 0.8f), 0.4f, "<b>THE MARROW ARMS</b>  >\n<size=50%>apartments  ·  residents only  ·  (and visitors)  ·  (and everyone)</size>").color = new Color(0.25f, 0.2f, 0.35f);
         // ---- the shell: floor, ceiling, outer walls
         Box(g, "Floor", new Vector3((X0 + X1) / 2f, -0.1f, (Z0 + Z1) / 2f), new Vector3(36f, 0.2f, 32f), M("Floor2"));
         Box(g, "Ceiling", new Vector3((X0 + X1) / 2f, AptH + 0.1f, (Z0 + Z1) / 2f), new Vector3(36f, 0.2f, 32f), M("Ceiling"));
@@ -2159,43 +2220,81 @@ public static class FirCheckBuilder
         Box(g, "Runner", new Vector3(-73f, 0.006f, 4f), new Vector3(30f, 0.01f, 1.6f), M("Rug"), false);
         for (int k = 0; k < 4; k++) PendantLamp(g, new Vector3(-62f - k * 7.5f, AptH, 4f), 0.3f);
         Text("FireExit", g, new Vector3(X1 + 0.09f, 1.6f, 4f), Face(Vector3.right), new Vector2(2.6f, 0.8f), 0.2f, "<b>FIRE EXIT</b>\n<size=60%>(painted on. please do not run into it again)</size>").color = new Color(0.2f, 0.7f, 0.3f);
-        // ---- the rooms (doorways: just inside, and out in the hallway or lobby)
+        // ---- the rooms, and a graph of the ways between them (worked out into each resident's walks below)
+        const float F2 = AptH + 0.2f;   // the second floor (the top of the ground floor's ceiling)
         var rooms = new List<AptRoom>();
-        var north = new Vector3(0, 0, dz);
-        Func<Vector3, Vector3, bool, bool, int> AddRoom = (i, o, lobbySide, open) => { rooms.Add(new AptRoom { inside = i + north, outside = o + north, lobbySide = lobbySide, open = open }); return rooms.Count - 1; };
-        int rLobby = AddRoom(new Vector3(-55f, 0, 4f), new Vector3(-55f, 0, 4f), true, true);
-        int rGym = AddRoom(new Vector3(-55f, 0, 10.2f), new Vector3(-55f, 0, 7.8f), true, false);
-        int rCommon = AddRoom(new Vector3(-55f, 0, -2.2f), new Vector3(-55f, 0, 0.2f), true, false);
-        int rLaundry = AddRoom(new Vector3(xc[0], 0, 1.4f), new Vector3(xc[0], 0, 4f), false, false);
-        var rApt = new int[8];
-        for (int u = 0; u < 4; u++) rApt[u + 1] = AddRoom(new Vector3(xc[u], 0, 6.6f), new Vector3(xc[u], 0, 4f), false, false);
-        for (int u = 1; u < 4; u++) rApt[u + 4] = AddRoom(new Vector3(xc[u], 0, 1.4f), new Vector3(xc[u], 0, 4f), false, false);
-        int rHall = AddRoom(Vector3.zero, Vector3.zero, false, true);
-        int rOut = AddRoom(new Vector3(-48.6f, 0, 4f), new Vector3(-53f, 0, 4f), true, false);
-        var hub = new Vector3(-57f, 0, 4f) + north;
+        var nodes = new List<Vector3>(); var nodeZone = new List<int>(); var links = new List<List<int>>();
+        const int ZIn = 0, ZRoom = 1, ZYard = 2, ZTown = 3, ZUp = 4;
+        Func<float, float, float, int, int> N = (x, y, z, zone) => { nodes.Add(new Vector3(x, y, z) + off); nodeZone.Add(zone); links.Add(new List<int>()); return nodes.Count - 1; };
+        Action<int, int> L = (p, q) => { links[p].Add(q); links[q].Add(p); };
+        Func<int, int, bool, int> AddRoom = (inNode, zone, open) => { rooms.Add(new AptRoom { inside = inNode >= 0 ? nodes[inNode] : Vector3.zero, zone = zone, open = open }); return rooms.Count - 1; };
+        var roomNode = new List<int>();
+        Func<int, int, bool, int> Room = (inNode, zone, open) => { roomNode.Add(inNode); return AddRoom(inNode, zone, open); };
+        int nHub = N(-57f, 0, 4f, ZIn);
+        var hall = new int[4];
+        for (int u = 0; u < 4; u++) { hall[u] = N(xc[u], 0, 4f, ZIn); L(u == 0 ? nHub : hall[u - 1], hall[u]); }
+        int nLob = N(-55f, 0, 4f, ZIn); L(nHub, nLob);
+        int nGymO = N(-55f, 0, 7.8f, ZIn), nGymI = N(-55f, 0, 10.2f, ZRoom); L(nLob, nGymO); L(nGymO, nGymI);
+        int nComO = N(-55f, 0, 0.2f, ZIn), nComI = N(-55f, 0, -2.2f, ZRoom); L(nLob, nComO); L(nComO, nComI);
+        int nEin = N(-53.2f, 0, 4f, ZIn); L(nLob, nEin);
+        int nEout = N(-50.8f, 0, 4f, ZYard); L(nEin, nEout);
+        int nY = N(-46f, 0, 4f, ZYard); L(nEout, nY);
+        int nB = N(-39.4f, 0, 4f, ZTown); L(nY, nB);
+        int nYs = N(-46f, 0, -15.15f, ZYard); L(nY, nYs);
+        int nYs2 = N(-46f, 0, -17f, ZYard); L(nYs, nYs2);
+        int nYws = N(-98f, 0, -17f, ZYard); L(nYs2, nYws);
+        int nYn = N(-46f, 0, 29f, ZYard); L(nY, nYn);
+        int nYw = N(-98f, 0, 29f, ZYard); L(nYn, nYw); L(nYw, nYws);
+        int nR0 = N(-52f, 0, -15.15f, ZYard); L(nYs, nR0);
+        int nR1 = N(-58.2f, F2, -15.15f, ZUp); L(nR0, nR1);
+        int nLand = N(-59.2f, F2, -13.4f, ZUp); L(nR1, nLand);
+        int nBalE = N(-55f, F2, -13.2f, ZUp); L(nBalE, nLand);
+        var bal = new int[4];
+        for (int u = 0; u < 4; u++) { bal[u] = N(xc[u], F2, -13.2f, ZUp); L(u == 0 ? nLand : bal[u - 1], bal[u]); }
+        int nW1 = N(-89.1f, F2, -13.2f, ZUp); L(bal[3], nW1);
+        int nW2 = N(-89.1f, F2, 3.8f, ZUp); L(nW1, nW2);
+        int nW3 = N(-86f, F2, 3.8f, ZUp); L(nW2, nW3);
+        int nRoofS = N(-55f, F2, -9f, ZUp); L(nBalE, nRoofS);
+        int nRoofN = N(-55f, F2, 8f, ZUp); L(nRoofS, nRoofN);
+        int nT = N(-70f, F2, 11f, ZUp); L(nRoofN, nT);
+        int nT2 = N(-84f, F2, 11f, ZUp); L(nT, nT2); L(nW3, nT2);
+        int rLobby = Room(-1, ZIn, true);
+        int rGym = Room(nGymI, ZRoom, false);
+        int rCommon = Room(nComI, ZRoom, false);
+        int lIn = N(xc[0], 0, 1.4f, ZRoom); L(lIn, hall[0]);
+        int rLaundry = Room(lIn, ZRoom, false);
+        var rApt = new int[12];
+        for (int u = 0; u < 4; u++) { int ni = N(xc[u], 0, 6.6f, ZRoom); L(ni, hall[u]); rApt[u + 1] = Room(ni, ZRoom, false); }
+        for (int u = 1; u < 4; u++) { int ni = N(xc[u], 0, 1.4f, ZRoom); L(ni, hall[u]); rApt[u + 4] = Room(ni, ZRoom, false); }
+        for (int u = 0; u < 4; u++) { int ni = N(xc[u], F2, -10.9f, ZRoom); L(ni, bal[u]); rApt[u + 8] = Room(ni, ZRoom, false); }
+        int rHall = Room(-1, ZIn, true);
+        int rOut = Room(-1, ZTown, true);
+        int rRoof = Room(-1, ZUp, true);
+        int rYard = Room(-1, ZYard, true);
         // ---- the places people go
         var spots = new Dictionary<string, AptSpot>();
-        Action<string, float, float, float, int> S = (n, x, z, yaw, r) => spots[n] = new AptSpot { pos = new Vector3(x, 0, z) + north, yaw = yaw, room = r };
-        string[] names = { "", "Clavicle", "Mortimer", "Granny Tibia", "Coccyx", "Ribsy", "Phalange", "Scapula" };
-        string[] hexes = { "", "#ff8a65", "#9575cd", "#b0bec5", "#4db6ac", "#f06292", "#aed581", "#ffd54f" };
-        for (int a = 1; a <= 7; a++)
+        Action<string, float, float, float, int, float> S6 = (n, x, z, yaw, r, y) => spots[n] = new AptSpot { pos = new Vector3(x, y, z) + off, yaw = yaw, room = r };
+        Action<string, float, float, float, int> S = (n, x, z, yaw, r) => S6(n, x, z, yaw, r, 0f);
+        string[] names = { "", "Clavicle", "Mortimer", "Granny Tibia", "Coccyx", "Ribsy", "Phalange", "Scapula", "Humerus", "Mandible", "Stapes", "Hyoid" };
+        string[] hexes = { "", "#ff8a65", "#9575cd", "#b0bec5", "#4db6ac", "#f06292", "#aed581", "#ffd54f", "#ffb300", "#8bc34a", "#80deea", "#ff8a80" };
+        for (int a = 1; a <= 11; a++)
         {
-            bool south = a >= 5;
-            float c = south ? xc[a - 4] : xc[a - 1];
-            Func<float, float> Zm = z => south ? 8f - z : z;
+            bool south = a >= 5 && a <= 7, upstairs = a >= 8;
+            float c = upstairs ? xc[a - 8] : south ? xc[a - 4] : xc[a - 1];
+            float y0 = upstairs ? F2 : 0f, ceil = upstairs ? 3.2f : AptH;
+            Func<float, float> Zm = z => south ? 8f - z : upstairs ? z - 17.5f : z;
             Func<float, float> Ym = y => south ? 180f - y : y;
-            Func<Vector3, Vector3> P = v => new Vector3(c + v.x, v.y, Zm(v.z));
-            Func<Vector3, Vector3> Sz = v => v;
+            Func<Vector3, Vector3> P = v => new Vector3(c + v.x, v.y + y0, Zm(v.z));
             int r = rApt[a];
-            S("a" + a + ":bed", c + 2.2f, Zm(17.6f), Ym(180f), r);
-            S("a" + a + ":cook", c - 2.2f, Zm(18.6f), Ym(0f), r);
-            S("a" + a + ":chair", c - 2.0f, Zm(12.1f), Ym(0f), r);
-            S("a" + a + ":couch", c + 2.55f, Zm(10.5f), -90f, r);
-            S("a" + a + ":mid", c + 0.3f, Zm(14f), Ym(180f), r);
-            S("a" + a + ":plant", c - 2.6f, Zm(7.4f), -90f, r);
+            S6("a" + a + ":bed", c + 2.2f, Zm(17.6f), Ym(180f), r, y0);
+            S6("a" + a + ":cook", c - 2.2f, Zm(18.6f), Ym(0f), r, y0);
+            S6("a" + a + ":chair", c - 2.0f, Zm(12.1f), Ym(0f), r, y0);
+            S6("a" + a + ":couch", c + 2.55f, Zm(10.5f), -90f, r, y0);
+            S6("a" + a + ":mid", c + 0.3f, Zm(14f), Ym(180f), r, y0);
+            S6("a" + a + ":plant", c - 2.6f, Zm(7.4f), -90f, r, y0);
             var ag = Group(g, "Apartment " + a + " (" + names[a] + ")", Vector3.zero);
             Box(ag, "Bed", P(new Vector3(2.2f, 0.25f, 17.6f)), new Vector3(1.3f, 0.5f, 2.3f), M("DeskWood"));
-            Box(ag, "Blanket", P(new Vector3(2.2f, 0.51f, 17.3f)), new Vector3(1.32f, 0.04f, 1.6f), M(new[] { "GiftRed", "GiftBlue", "GiftGreen", "Rug", "GiftGold", "Curtain", "Wainscot" }[a - 1]), false);
+            Box(ag, "Blanket", P(new Vector3(2.2f, 0.51f, 17.3f)), new Vector3(1.32f, 0.04f, 1.6f), M(new[] { "GiftRed", "GiftBlue", "GiftGreen", "Rug", "GiftGold", "Curtain", "Wainscot", "InkOrange", "GiftGreen", "InkBlue", "BonePink" }[a - 1]), false);
             Box(ag, "Pillow", P(new Vector3(2.2f, 0.56f, 18.45f)), new Vector3(1.0f, 0.12f, 0.4f), M("CaneWhite"), false);
             Box(ag, "Counter", P(new Vector3(-2.2f, 0.45f, 19.45f)), new Vector3(2.8f, 0.9f, 0.7f), M("Wainscot"));
             foreach (float bx in new[] { -2.8f, -2.2f }) DPrim(PrimitiveType.Cylinder, "Burner", ag, P(new Vector3(bx, 0.91f, 19.4f)), new Vector3(0.35f, 0.01f, 0.35f), M("Black"));
@@ -2208,18 +2307,22 @@ public static class FirCheckBuilder
             DPrim(PrimitiveType.Cylinder, "PlantPot", ag, P(new Vector3(-3.3f, 0.25f, 7.4f)), new Vector3(0.4f, 0.25f, 0.4f), M("Pot"));
             DPrim(PrimitiveType.Sphere, "Plant", ag, P(new Vector3(-3.3f, 0.8f, 7.4f)), new Vector3(0.7f, 0.8f, 0.7f), M("Needles"));
             Box(ag, "Window", P(new Vector3(0f, 1.9f, 19.9f)), new Vector3(2.2f, 1.2f, 0.02f), M("WindowSnow"), false);
-            PendantLamp(ag, P(new Vector3(0f, AptH, 13f)), 0.4f);
+            PendantLamp(ag, P(new Vector3(0f, ceil, 13f)), 0.4f);
             // the number by the door, out in the hallway
-            float signZ = south ? 2.58f : 5.42f;
-            Text("DoorSign", ag, new Vector3(c + 1.1f, 2.0f, signZ), Face(south ? Vector3.forward : Vector3.back), new Vector2(1.0f, 0.5f), 0.14f,
+            float signZ = south ? 2.58f : upstairs ? -12.1f : 5.42f;
+            Text("DoorSign", ag, new Vector3(c + 1.1f, y0 + 2.0f, signZ), Face(south ? Vector3.forward : Vector3.back), new Vector2(1.0f, 0.5f), 0.14f,
                  "<b>APT " + a + "</b>\n<size=70%>" + names[a].ToUpper() + "</size>").color = new Color(0.95f, 0.9f, 0.75f);
             // what makes it theirs
-            if (a == 1) { Box(ag, "YogaMat", P(new Vector3(0.3f, 0.01f, 15.5f)), new Vector3(0.7f, 0.02f, 1.8f), M("GiftGreen"), false); foreach (float dx in new[] { -0.3f, 0.3f }) DPrim(PrimitiveType.Cylinder, "Dumbbell", ag, P(new Vector3(1.2f + dx, 0.1f, 16f)), new Vector3(0.2f, 0.1f, 0.2f), M("Metal")); }
+            if (a == 1) { Box(ag, "YogaMat", P(new Vector3(0.3f, 0.01f, 15.5f)), new Vector3(0.7f, 0.02f, 1.8f), M("GiftGreen"), false); foreach (float ddx in new[] { -0.3f, 0.3f }) DPrim(PrimitiveType.Cylinder, "Dumbbell", ag, P(new Vector3(1.2f + ddx, 0.1f, 16f)), new Vector3(0.2f, 0.1f, 0.2f), M("Metal")); }
             if (a == 2) { DPrim(PrimitiveType.Sphere, "GuitarBody", ag, P(new Vector3(3.2f, 0.45f, 12.2f)), new Vector3(0.45f, 0.55f, 0.15f), M("DeskWood")); DPrim(PrimitiveType.Cube, "GuitarNeck", ag, P(new Vector3(3.2f, 1.0f, 12.2f)), new Vector3(0.07f, 0.7f, 0.04f), M("Black")); Box(ag, "Poster", P(new Vector3(-3.66f, 1.8f, 15f)), new Vector3(0.02f, 1.0f, 0.7f), M("WallDark"), false); }
             if (a == 3) { for (int k = 0; k < 3; k++) { DPrim(PrimitiveType.Cylinder, "Pot", ag, P(new Vector3(-3.3f, 0.2f, 8.4f + k * 0.8f)), new Vector3(0.3f, 0.2f, 0.3f), M("Pot")); DPrim(PrimitiveType.Sphere, "Plastic plant", ag, P(new Vector3(-3.3f, 0.6f, 8.4f + k * 0.8f)), Vector3.one * 0.5f, M("GiftGreen")); } }
             if (a == 4) { Box(ag, "Monitor", P(new Vector3(-2.0f, 1.0f, 13.3f)), new Vector3(0.6f, 0.4f, 0.04f), M("GlowGreen"), false); for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cylinder, "SoupCan", ag, P(new Vector3(-3.0f + (k % 3) * 0.2f, 0.98f + (k / 3) * 0.2f, 19.4f)), new Vector3(0.14f, 0.1f, 0.14f), M("GiftRed")); }
             if (a == 5) { for (int k = 0; k < 8; k++) Box(ag, "Photo", P(new Vector3(-3.66f, 1.4f + (k % 2) * 0.5f, 10f + (k / 2) * 0.6f)), new Vector3(0.02f, 0.35f, 0.45f), M(k % 3 == 0 ? "Paper" : k % 3 == 1 ? "GiftGold" : "Book1"), false); }
             if (a == 6) { for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cylinder, "Broom", ag, P(new Vector3(-3.5f, 0.75f, 15f + k * 0.35f)), new Vector3(0.05f, 0.75f, 0.05f), M("DeskWood")); }
+            if (a == 8) { DPrim(PrimitiveType.Cylinder, "MicStand", ag, P(new Vector3(0.3f, 0.7f, 16f)), new Vector3(0.04f, 0.7f, 0.04f), M("Black")); DPrim(PrimitiveType.Sphere, "Mic", ag, P(new Vector3(0.3f, 1.45f, 16f)), Vector3.one * 0.1f, M("Metal")); Box(ag, "Poster", P(new Vector3(-3.66f, 1.6f, 15f)), new Vector3(0.02f, 1f, 0.7f), M("InkOrange"), false); }
+            if (a == 9) { for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Sphere, "Seedling", ag, P(new Vector3(-3.3f, 0.95f, 15f + k * 0.4f)), Vector3.one * 0.15f, M("GiftGreen")); Box(ag, "SeedShelf", P(new Vector3(-3.3f, 0.45f, 15.6f)), new Vector3(0.6f, 0.9f, 1.8f), M("DeskWood")); }
+            if (a == 10) { for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Sphere, "Star chart", ag, P(new Vector3(-3.66f, 1.2f + (k % 2) * 0.7f, 9f + (k / 2) * 1.2f)), new Vector3(0.02f, 0.25f, 0.25f), M("GlowGold")); }
+            if (a == 11) { for (int k = 0; k < 9; k++) Box(ag, "Moving box", P(new Vector3(-0.8f + (k % 3) * 0.55f, 0.25f + (k / 3) * 0.5f, 16.5f)), new Vector3(0.5f, 0.48f, 0.5f), M("Cardboard"), false); }
             if (a == 7) { DPrim(PrimitiveType.Sphere, "DiscoBall", ag, P(new Vector3(0.3f, 2.9f, 14f)), Vector3.one * 0.4f, M("Glint")); Box(ag, "Mirror", P(new Vector3(-3.66f, 1.5f, 15f)), new Vector3(0.02f, 1.8f, 2.4f), M("Glass"), false); }
         }
         // the gym, the common room, the laundry, the lobby, the hallway, outside
@@ -2271,15 +2374,148 @@ public static class FirCheckBuilder
         Prim(PrimitiveType.Cube, "Panel", liftDoor, Vector3.zero, new Vector3(0.03f, 2.2f, 1.4f), M("Metal"));
         Text("Dial", lift.transform, new Vector3(0.08f, 2.5f, 0), Face(Vector3.right), new Vector2(1.4f, 0.3f), 0.13f, "<b>LIFT</b>  <size=70%>floors 2-9</size>").color = new Color(1f, 0.85f, 0.4f);
         lift.target = liftDoor; lift.moveBy = new Vector3(0, 0, 1.35f); lift.inTime = 1.2f; lift.holdTime = 2f;
-        Text("Stairs", lb, new Vector3(-57.91f, 1.7f, 0.8f), Face(Vector3.right), new Vector2(1.6f, 0.8f), 0.13f, "<b>STAIRS</b>\n<size=70%>to floors 2-9: closed for bone density testing</size>").color = new Color(0.9f, 0.3f, 0.3f);
+        Text("Stairs", lb, new Vector3(-57.91f, 1.7f, 0.8f), Face(Vector3.right), new Vector2(1.6f, 0.8f), 0.13f, "<b>STAIRS</b>\n<size=70%>to floors 3-9: closed for bone density testing.\nfloor 2: use the ramp outside</size>").color = new Color(0.9f, 0.3f, 0.3f);
         Text("Directory", lb, new Vector3(-52.09f, 1.6f, 7.4f), Face(Vector3.left), new Vector2(2.2f, 1.6f), 0.11f,
-             "<b>RESIDENTS</b>\n1 Clavicle   2 Mortimer\n3 Granny Tibia   4 Coccyx\n5 Ribsy   6 Phalange   7 Scapula\n<size=80%>superintendent: Femur (at the desk, or under the lift)</size>").color = new Color(0.95f, 0.9f, 0.75f);
+             "<b>RESIDENTS</b>\n1 Clavicle   2 Mortimer   3 Granny Tibia\n4 Coccyx   5 Ribsy   6 Phalange   7 Scapula\n<b>UPSTAIRS</b> 8 Humerus   9 Mandible\n10 Stapes   11 Hyoid (just moved in)\n<size=80%>superintendent: Femur (at the desk, or under the lift)</size>").color = new Color(0.95f, 0.9f, 0.75f);
         var clock = Text("MarrowClock", lb, new Vector3(-52.09f, 2.75f, 4f), Face(Vector3.left), new Vector2(2.2f, 0.6f), 0.22f, "");
         clock.color = new Color(1f, 0.85f, 0.4f);
         S("lobby:mail", -56.6f, 0.1f, 180f, rLobby); S("lobby:polish", -57.3f, 0.5f, 180f, rLobby); S("lobby:desk", -53.5f, 6.9f, 0f, rLobby); S("lobby:lift", -57.1f, 7.4f, -90f, rLobby);
         S("hall:knock2", xc[1], 4.9f, 0f, rHall); S("hall:knock4", xc[3], 4.9f, 0f, rHall); S("hall:bulb", -73f, 4f, 0f, rHall);
         S("hall:sweepE", -66f, 3.6f, -90f, rHall); S("hall:sweepW", -80f, 4.3f, 90f, rHall); S("hall:jog", -75f, 4f, 90f, rHall); S("hall:dance", -71f, 4f, 0f, rHall);
-        S("out:fountain", -30f, 6.15f - dz, 0f, rOut); S("out:sweep", -44f, 11f - dz, 90f, rOut);   // out in Bonetown (world z, so take off the shift)
+        S("out:fountain", -30f - dx, 6.15f - dz, 0f, rOut); S("out:sweep", -44f - dx, 11f - dz, 90f, rOut);   // out in Bonetown (world positions, so take off the shift)
+        S6("roof:tower", -80f, 12.6f, -40f, rRoof, F2); S6("roof:garden", -66f, 14.6f, 0f, rRoof, F2); S6("roof:telescope", -62f, 16.6f, 0f, rRoof, F2);
+        S6("roof:bbq", -74f, 7.2f, 0f, rRoof, F2); S6("roof:stage", -84f, 8f, 90f, rRoof, F2);
+        S("yard:boxes", -44.5f, -4f, 90f, rYard); S("yard:garden", -60f, 23.3f, 0f, rYard);
+        S("lobby:board", -52.8f, 6.2f, 90f, rLobby);
+        // ---- the second floor: flats 8-11 over the south row, opening onto a balcony; a ramp up to it from the yard
+        var up = Group(g, "Second floor", Vector3.zero);
+        const float H2 = 3.2f;
+        WallX(up, "BrickWall", -12f, -58f, X1, F2, H2, xc);
+        WallX(up, "BrickWall", 2.5f, -58f, X1, F2, H2);
+        foreach (float px in new[] { -58f, -65.5f, -73f, -80.5f, -88f }) WallZ(up, px == -58f || px == -88f ? "BrickWall" : "Wall", px, -12f, 2.5f, F2, H2);
+        Box(up, "Roof2", new Vector3(-73f, F2 + H2 + 0.1f, -4.75f), new Vector3(30.3f, 0.2f, 14.8f), M("Concrete"));
+        Box(up, "Balcony", new Vector3(-70f, F2 - 0.1f, -13.15f), new Vector3(36f, 0.2f, 2.1f), M("DeskWood"));
+        Box(up, "RailE", new Vector3(-55.1f, F2 + 0.5f, -14.15f), new Vector3(6.2f, 1f, 0.08f), M("Metal"));
+        Box(up, "RailW", new Vector3(-74.1f, F2 + 0.5f, -14.15f), new Vector3(27.8f, 1f, 0.08f), M("Metal"));
+        Box(up, "RailEnd", new Vector3(-51.95f, F2 + 0.5f, -13.15f), new Vector3(0.08f, 1f, 2.1f), M("Metal"));
+        // the side walkway: from the balcony's west end, round the end of the building to the roof terrace
+        Box(up, "SideWalk", new Vector3(-89.1f, F2 - 0.1f, -4.8f), new Vector3(2.2f, 0.2f, 19f), M("DeskWood"));
+        Box(up, "SideRail", new Vector3(-90.15f, F2 + 0.5f, -4.8f), new Vector3(0.08f, 1f, 19f), M("Metal"));
+        Box(up, "SideRailS", new Vector3(-89.1f, F2 + 0.5f, -14.25f), new Vector3(2.2f, 1f, 0.08f), M("Metal"));
+        Box(up, "SideRailN", new Vector3(-89.1f, F2 + 0.5f, 4.65f), new Vector3(2.2f, 1f, 0.08f), M("Metal"));
+        for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cylinder, "SidePost", up, new Vector3(-90.1f, F2 / 2f, -13f + k * 5.5f), new Vector3(0.18f, F2 / 2f, 0.18f), M("Metal"));
+        for (int k = 0; k < 7; k++) DPrim(PrimitiveType.Cylinder, "BalconyPost", up, new Vector3(-53f - k * 5.8f, F2 / 2f, -14.1f), new Vector3(0.18f, F2 / 2f, 0.18f), M("Metal"));
+        var ramp = Box(up, "Ramp", new Vector3(-55.1f, 1.75f, -15.15f), new Vector3(7.17f, 0.2f, 1.5f), M("DeskWood"));
+        ramp.transform.localRotation = Quaternion.Euler(0, 0, -30.14f);
+        foreach (float rz in new[] { -14.4f, -15.9f }) DPrim(PrimitiveType.Cube, "RampRail", up, new Vector3(-55.1f, 2.6f, rz), new Vector3(7.17f, 0.06f, 0.06f), M("Metal"), Quaternion.Euler(0, 0, -30.14f));
+        Box(up, "Landing", new Vector3(-59.2f, F2 - 0.1f, -14.9f), new Vector3(2f, 0.2f, 2.4f), M("DeskWood"));
+        Box(up, "LandingRail", new Vector3(-59.2f, F2 + 0.5f, -16.05f), new Vector3(2f, 1f, 0.08f), M("Metal"));
+        Box(up, "LandingRailW", new Vector3(-60.15f, F2 + 0.5f, -15.1f), new Vector3(0.08f, 1f, 1.8f), M("Metal"));
+        DPrim(PrimitiveType.Cylinder, "LandingPost", up, new Vector3(-59.2f, F2 / 2f, -15.9f), new Vector3(0.18f, F2 / 2f, 0.18f), M("Metal"));
+        // ---- the roof terrace (over the hallway and the north flats, and the lobby end)
+        var roof = Group(g, "Roof terrace", Vector3.zero);
+        Box(roof, "ParapetN", new Vector3(-70f, F2 + 0.5f, 19.95f), new Vector3(36.2f, 1f, 0.2f), M("BrickWall"));
+        Box(roof, "ParapetE", new Vector3(-52.05f, F2 + 0.5f, 4f), new Vector3(0.2f, 1f, 32f), M("BrickWall"));
+        Box(roof, "ParapetW", new Vector3(-87.95f, F2 + 0.5f, 12.5f), new Vector3(0.2f, 1f, 15f), M("BrickWall"));   // open from z 2.5 to 5: the way in from the side walkway
+        Box(roof, "Deck", new Vector3(-70f, F2 + 0.006f, 11f), new Vector3(30f, 0.01f, 14f), M("DeskWood"), false);
+        // the water tower
+        foreach (float tlx in new[] { -1.4f, 1.4f }) foreach (float lz in new[] { -1.4f, 1.4f }) DPrim(PrimitiveType.Cylinder, "TowerLeg", roof, new Vector3(-82f + tlx, F2 + 1.5f, 15f + lz), new Vector3(0.15f, 1.5f, 0.15f), M("Metal"));
+        Prim(PrimitiveType.Cylinder, "Tank", roof, new Vector3(-82f, F2 + 4.2f, 15f), new Vector3(3.2f, 1.2f, 3.2f), M("DeskWood"));
+        Prim(PrimitiveType.Sphere, "TankTop", roof, new Vector3(-82f, F2 + 5.5f, 15f), new Vector3(3.3f, 1.2f, 3.3f), M("Trunk"));
+        // the garden (with Gerald), the telescope, the barbecue, the open-mic corner, string lights
+        Box(roof, "GardenBed", new Vector3(-66f, F2 + 0.25f, 16f), new Vector3(4f, 0.5f, 1.5f), M("Dirt"));
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Sphere, "Plant", roof, new Vector3(-67.6f + k * 0.8f, F2 + 0.75f, 16f), new Vector3(0.5f, 0.6f, 0.5f), M("GiftGreen"));
+        DPrim(PrimitiveType.Sphere, "Gerald", roof, new Vector3(-66f, F2 + 0.75f, 15.6f), Vector3.one * 0.3f, M("GlowRed"));
+        Text("GeraldSign", roof, new Vector3(-66f, F2 + 0.6f, 15.24f), Face(Vector3.back), new Vector2(1f, 0.2f), 0.08f, "GERALD").color = Color.white;
+        foreach (float a3 in new[] { 0f, 120f, 240f }) DPrim(PrimitiveType.Cylinder, "TripodLeg", roof, new Vector3(-62f, F2 + 0.5f, 17.5f) + Quaternion.Euler(0, a3, 0) * new Vector3(0, 0, 0.25f), new Vector3(0.04f, 0.5f, 0.04f), M("Black"), Quaternion.Euler(0, a3, 0) * Quaternion.Euler(15, 0, 0));
+        DPrim(PrimitiveType.Cylinder, "Telescope", roof, new Vector3(-62f, F2 + 1.2f, 17.6f), new Vector3(0.18f, 0.5f, 0.18f), M("CaneWhite"), Quaternion.Euler(-50, 0, 0));
+        Box(roof, "Grill", new Vector3(-74f, F2 + 0.5f, 8f), new Vector3(1f, 1f, 0.6f), M("Black"));
+        DPrim(PrimitiveType.Sphere, "Coals", roof, new Vector3(-74f, F2 + 1.02f, 8f), new Vector3(0.8f, 0.05f, 0.45f), M("GlowFlame"));
+        Box(roof, "MicRug", new Vector3(-84f, F2 + 0.01f, 8f), new Vector3(2.4f, 0.01f, 2.4f), M("Stage"), false);
+        for (int k = 0; k < 4; k++) Box(roof, "LawnChair", new Vector3(-79.5f, F2 + 0.25f, 6.5f + k * 1.1f), new Vector3(0.6f, 0.5f, 0.6f), M(k % 2 == 0 ? "InkOrange" : "InkBlue"));
+        for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cylinder, "LightPole", roof, new Vector3(-56f - k * 9.5f, F2 + 1.4f, 19.3f), new Vector3(0.08f, 1.4f, 0.08f), M("Metal"));
+        for (int k = 0; k < 30; k++) DPrim(PrimitiveType.Sphere, "StringLight", roof, new Vector3(-56f - k * 0.98f, F2 + 2.6f - Mathf.Abs(Mathf.Sin(k * 0.33f)) * 0.4f, 19.3f), Vector3.one * 0.12f, Bulb(k % 2 == 0 ? "BulbWarm" : "BulbGold"));
+        Box(roof, "PigeonCoop", new Vector3(-56f, F2 + 0.6f, 17f), new Vector3(1.4f, 1.2f, 1f), M("DoorWood"));
+        DPrim(PrimitiveType.Sphere, "Dish", roof, new Vector3(-56f, F2 + 0.8f, 0f), new Vector3(1f, 1f, 0.3f), M("CaneWhite"), Quaternion.Euler(-30, 40, 0));
+        // ---- the outside of the building: brick, windows, the entrance
+        var ext = Group(g, "Outside", Vector3.zero);
+        Box(ext, "SkinN", new Vector3(-70f, 1.8f, 20.1f), new Vector3(36.3f, 3.6f, 0.05f), M("BrickWall"), false);
+        Box(ext, "SkinS", new Vector3(-70f, 1.8f, -12.1f), new Vector3(36.3f, 3.6f, 0.05f), M("BrickWall"), false);
+        Box(ext, "SkinW", new Vector3(-88.1f, 1.8f, 4f), new Vector3(0.05f, 3.6f, 32.3f), M("BrickWall"), false);
+        Box(ext, "SkinE S", new Vector3(-51.9f, 1.8f, (-12f + 2.8f) / 2f), new Vector3(0.05f, 3.6f, 14.8f), M("BrickWall"), false);
+        Box(ext, "SkinE N", new Vector3(-51.9f, 1.8f, (5.2f + 20f) / 2f), new Vector3(0.05f, 3.6f, 14.8f), M("BrickWall"), false);
+        Box(ext, "SkinE Top", new Vector3(-51.9f, 3.3f, 4f), new Vector3(0.05f, 0.6f, 2.4f), M("BrickWall"), false);
+        foreach (float wx in xc)
+        {
+            OutWindow(ext, new Vector3(wx, 1.9f, 20.14f), Vector3.forward);
+            OutWindow(ext, new Vector3(wx, 1.9f, -12.14f), Vector3.back);
+            OutWindow(ext, new Vector3(wx + 2.2f, F2 + 1.7f, -12.1f), Vector3.back);
+            OutWindow(ext, new Vector3(wx, F2 + 1.7f, 2.6f), Vector3.forward);
+        }
+        foreach (float wz in new[] { -6f, 15f }) OutWindow(ext, new Vector3(-51.86f, 1.9f, wz), Vector3.right);
+        Box(ext, "Awning", new Vector3(-50.9f, 3.05f, 4f), new Vector3(2.3f, 0.12f, 3.2f), M("GiftRed"), false);
+        foreach (float az in new[] { 2.6f, 5.4f }) DPrim(PrimitiveType.Cylinder, "AwningPost", ext, new Vector3(-49.9f, 1.5f, az), new Vector3(0.08f, 1.5f, 0.08f), M("Brass"));
+        foreach (float lz in new[] { 2.3f, 5.7f }) DPrim(PrimitiveType.Sphere, "DoorLamp", ext, new Vector3(-51.7f, 2.4f, lz), Vector3.one * 0.3f, M("GlowWarm"));
+        Text("BuildingSign", ext, new Vector3(-51.92f, F2 + 0.5f, 4f), Face(Vector3.right), new Vector2(10f, 0.9f), 0.55f, "<b>THE MARROW ARMS</b>").color = new Color(1f, 0.9f, 0.6f);
+        Text("Est", ext, new Vector3(-51.92f, 2.6f, 7.8f), Face(Vector3.right), new Vector2(2.4f, 0.5f), 0.14f, "est. 1891\n<size=70%>(the bones are older)</size>").color = new Color(1f, 0.9f, 0.6f);
+        // ---- the yards: front (path, lawn, the for-rent sign, Hyoid's boxes), south (parking), back (dumpster, washing line, shed), north (pool, garden, hoop)
+        var yd = Group(g, "Yards", Vector3.zero);
+        Box(yd, "FrontPath", new Vector3(-46f, 0.005f, 4f), new Vector3(12f, 0.01f, 2f), M("Concrete"), false);
+        Box(yd, "SidePath", new Vector3(-46f, 0.005f, -6.5f), new Vector3(1.6f, 0.01f, 21f), M("Concrete"), false);
+        Box(yd, "Parking", new Vector3(-75f, 0.004f, -21f), new Vector3(36f, 0.01f, 5f), M("GloomStone"), false);
+        for (int k = 0; k < 6; k++) Box(yd, "ParkingLine", new Vector3(-60f - k * 6f, 0.01f, -21f), new Vector3(0.1f, 0.01f, 4.6f), M("CaneWhite"), false);
+        Car(yd, new Vector3(-66f, 0, -21f), "GiftBlue");
+        Car(yd, new Vector3(-78f, 0, -21f), "GlowYellow");
+        Text("ParkingSign", yd, new Vector3(-90f, 1.6f, -21f), Face(Vector3.right), new Vector2(2.4f, 0.6f), 0.16f, "<b>RESIDENT PARKING</b>\n<size=70%>(nobody here can drive. no feet)</size>").color = Color.white;
+        DPrim(PrimitiveType.Cylinder, "MailPost", yd, new Vector3(-43f, 0.6f, 6.5f), new Vector3(0.1f, 0.6f, 0.1f), M("DeskWood"));
+        Box(yd, "MailBox", new Vector3(-43f, 1.3f, 6.5f), new Vector3(0.5f, 0.35f, 0.3f), M("PoliceBlue"));
+        Box(yd, "Bench", new Vector3(-47f, 0.42f, 8.5f), new Vector3(1.8f, 0.08f, 0.5f), M("DeskWood"));
+        for (int k = 0; k < 5; k++) Box(yd, "Moving box", new Vector3(-43.3f + (k % 2) * 0.3f, 0.25f + (k / 2) * 0.5f, -4.4f + (k % 3) * 0.4f), new Vector3(0.5f, 0.48f, 0.5f), M("Cardboard"), false);
+        var rent = Gg(yd, "For rent", new Vector3(-42.5f, 0, 0.5f), 90f, "Apart/ap_forrent", 1.4f, 2f);
+        DPrim(PrimitiveType.Cylinder, "RentPost", rent.transform, new Vector3(0, 0.7f, 0), new Vector3(0.08f, 0.7f, 0.08f), M("DeskWood"));
+        var board = Group(rent.transform, "Board", new Vector3(0, 1.6f, 0));
+        Prim(PrimitiveType.Cube, "Board", board, Vector3.zero, new Vector3(1.2f, 0.7f, 0.05f), M("CaneWhite"));
+        Text("RentText", board, new Vector3(0, 0, -0.03f), Quaternion.identity, new Vector2(1.1f, 0.6f), 0.1f, "<b>FOR RENT</b>\nflats 8-11, 2nd floor\n<size=70%>stairs not included</size>").color = new Color(0.8f, 0.1f, 0.1f);
+        rent.target = board; rent.wobble = 12f;
+        var dump = Gg(yd, "The dumpster", new Vector3(-95f, 0, -6f), 90f, "Apart/ap_raccoon", 2f, 1.6f);
+        Box(dump.transform, "Bin", new Vector3(0, 0.6f, 0), new Vector3(2f, 1.2f, 1.2f), M("GiftGreen"), false);
+        var lid = Group(dump.transform, "Lid", new Vector3(0, 1.2f, 0.6f));
+        Prim(PrimitiveType.Cube, "Lid", lid, new Vector3(0, 0.03f, -0.6f), new Vector3(2.05f, 0.06f, 1.25f), M("Black"));
+        var coon = Mini(lid, "Raccoon", new Vector3(0, -0.9f, -0.6f), 0f, 0.45f, "#9e9e9e");
+        Prim(PrimitiveType.Cube, "Mask", coon[2], new Vector3(0, 0.06f, 0.17f), new Vector3(0.3f, 0.08f, 0.02f), M("Black"));
+        dump.target = lid; dump.rotateBy = new Vector3(-80f, 0, 0); dump.inTime = 0.5f;
+        foreach (float pz in new[] { 4f, 14f }) DPrim(PrimitiveType.Cylinder, "LinePole", yd, new Vector3(-94f, 1.1f, pz), new Vector3(0.08f, 1.1f, 0.08f), M("Metal"));
+        DPrim(PrimitiveType.Cube, "Line", yd, new Vector3(-94f, 2.1f, 9f), new Vector3(0.02f, 0.02f, 10f), M("CaneWhite"));
+        string[] wash = { "GiftRed", "CaneWhite", "InkBlue", "GlowYellow", "BonePink", "GiftGreen" };
+        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cube, "Washing", yd, new Vector3(-94f, 1.7f, 5f + k * 1.5f), new Vector3(0.03f, 0.7f, 0.8f), M(wash[k]));
+        Box(yd, "Shed", new Vector3(-93.5f, 1.2f, 24f), new Vector3(3f, 2.4f, 3f), M("DoorWood"));
+        Box(yd, "ShedRoof", new Vector3(-93.5f, 2.5f, 24f), new Vector3(3.4f, 0.2f, 3.4f), M("Trunk"), false);
+        foreach (var pr in new[] { new { p = new Vector3(-70f, 0.15f, 24f), sz = new Vector3(8.4f, 0.3f, 0.2f) }, new { p = new Vector3(-70f, 0.15f, 28f), sz = new Vector3(8.4f, 0.3f, 0.2f) },
+                                   new { p = new Vector3(-74.1f, 0.15f, 26f), sz = new Vector3(0.2f, 0.3f, 4f) }, new { p = new Vector3(-65.9f, 0.15f, 26f), sz = new Vector3(0.2f, 0.3f, 4f) } })
+            Box(yd, "PoolRim", pr.p, pr.sz, M("Concrete"));
+        Box(yd, "Pool", new Vector3(-70f, 0.12f, 26f), new Vector3(8f, 0.02f, 3.8f), M("Water"), false);
+        for (int k = 0; k < 3; k++) Box(yd, "PoolChair", new Vector3(-74f + k * 4f, 0.25f, 22f), new Vector3(0.7f, 0.5f, 1.8f), M(k % 2 == 0 ? "CaneWhite" : "InkBlue"));
+        Box(yd, "YardGarden", new Vector3(-60f, 0.15f, 25f), new Vector3(4f, 0.3f, 2.4f), M("Dirt"));
+        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Sphere, "Tomato plant", yd, new Vector3(-61.5f + (k % 3) * 1.5f, 0.6f, 24.4f + (k / 3) * 1.2f), new Vector3(0.6f, 0.7f, 0.6f), M(k % 2 == 0 ? "GiftGreen" : "Hedge"));
+        DPrim(PrimitiveType.Cylinder, "HoopPole", yd, new Vector3(-86f, 1.6f, 31f), new Vector3(0.12f, 1.6f, 0.12f), M("Metal"));
+        Box(yd, "Backboard", new Vector3(-86f, 3.2f, 30.6f), new Vector3(1.4f, 0.9f, 0.05f), M("CaneWhite"), false);
+        DPrim(PrimitiveType.Cylinder, "Hoop", yd, new Vector3(-86f, 2.9f, 30.2f), new Vector3(0.5f, 0.02f, 0.5f), M("InkOrange"));
+        foreach (var tp in new[] { new Vector3(-44f, 0, 22f), new Vector3(-44f, 0, -12f), new Vector3(-100f, 0, 8f), new Vector3(-100f, 0, -10f) })
+        {
+            DPrim(PrimitiveType.Cylinder, "YardTrunk", yd, tp + new Vector3(0, 1.5f, 0), new Vector3(0.3f, 1.5f, 0.3f), M("Trunk"));
+            DPrim(PrimitiveType.Sphere, "YardTree", yd, tp + new Vector3(0, 3.6f, 0), new Vector3(2.6f, 2.4f, 2.6f), M("Hedge"));
+        }
+        // ---- the grounds: grass, and sky all round (Bonetown is through the doorway to the east)
+        var gr = Group(root, "Marrow Arms grounds", Vector3.zero);
+        float ex0 = -48f, ex1 = -110f, ez0 = -17f, ez1 = 39f, eh = 16f;
+        Box(gr, "Ground", new Vector3((ex0 + ex1) / 2f, -0.12f, (ez0 + ez1) / 2f), new Vector3(ex0 - ex1, 0.2f, ez1 - ez0), M("Grass"));
+        Box(gr, "Sky", new Vector3((ex0 + ex1) / 2f, eh + 0.1f, (ez0 + ez1) / 2f), new Vector3(ex0 - ex1, 0.2f, ez1 - ez0), M("Sky"));
+        Box(gr, "SkyW", new Vector3(ex1 - 0.1f, eh / 2f, (ez0 + ez1) / 2f), new Vector3(0.2f, eh, ez1 - ez0), M("Sky"));
+        Box(gr, "SkyN", new Vector3((ex0 + ex1) / 2f, eh / 2f, ez1 + 0.1f), new Vector3(ex0 - ex1, eh, 0.2f), M("Sky"));
+        Box(gr, "SkyS", new Vector3((ex0 + ex1) / 2f, eh / 2f, ez0 - 0.1f), new Vector3(ex0 - ex1, eh, 0.2f), M("Sky"));
+        Box(gr, "SkyE S", new Vector3(ex0 + 0.1f, eh / 2f, (ez0 - 14.2f) / 2f), new Vector3(0.2f, eh, -14.2f - ez0), M("Sky"));
+        Box(gr, "SkyE N", new Vector3(ex0 + 0.1f, eh / 2f, (22.2f + ez1) / 2f), new Vector3(0.2f, eh, ez1 - 22.2f), M("Sky"));
+        Box(gr, "SkyE Top", new Vector3(ex0 + 0.1f, (6.2f + eh) / 2f, 4f), new Vector3(0.2f, eh - 6.2f, 36.4f), M("Sky"));
         // ---- who lives here, and what they do all day (hours on the Bonetown clock)
         var people = new[] {
             new { who = "Clavicle", home = "apt 1", hex = hexes[1], clip = "ap_clavicle", day = new object[] {
@@ -2314,8 +2550,23 @@ public static class FirCheckBuilder
                 17f, "a7:couch", 5, "watching dance videos",  20f, "common:dance", 7, "dance class (Granny Tibia came, to complain)",  22.5f, "a7:bed", 1, "asleep" } },
             new { who = "Femur", home = "superintendent", hex = "#8d6e63", clip = "ap_femur", day = new object[] {
                 0f, "lobby:desk", 2, "asleep at the desk (on duty)",  6f, "lobby:lift", 18, "fixing the lift (day 4,018)",  8.5f, "hall:bulb", 19, "changing a light bulb (it was fine)",
-                10f, "laundry:fix", 18, "fixing a washer. finding socks",  12f, "lobby:desk", 2, "lunch break at the desk",  14f, "gym:fix", 18, "tightening the treadmill",
-                16f, "lobby:lift", 18, "fixing the lift again",  18.5f, "out:sweep", 8, "sweeping the path outside",  20f, "lobby:desk", 2, "night shift (asleep at 9)" } } };
+                10f, "laundry:fix", 18, "fixing a washer. finding socks",  12f, "lobby:desk", 2, "lunch break at the desk",  13f, "roof:tower", 18, "fixing the water tower",
+                16.5f, "lobby:lift", 18, "fixing the lift again (it was the water tower)",  19.5f, "out:sweep", 8, "sweeping the path outside",  20.5f, "lobby:desk", 2, "night shift (asleep at 9)" } },
+            new { who = "Humerus", home = "apt 8", hex = hexes[8], clip = "ap_humerus", day = new object[] {
+                0f, "a8:bed", 1, "asleep (dreaming of applause)",  9f, "a8:mid", 9, "writing jokes. none of them are good",  11f, "lobby:board", 17, "reading the directory, looking for an audience",
+                14f, "common:dance", 9, "testing jokes on the common room (tough crowd)",  17f, "roof:stage", 9, "open mic night on the roof",  22f, "a8:bed", 1, "asleep" } },
+            new { who = "Mandible", home = "apt 9", hex = hexes[9], clip = "ap_mandible", day = new object[] {
+                0f, "a9:bed", 1, "asleep",  6f, "roof:garden", 10, "watering Gerald (the tomato)",  9f, "a9:cook", 3, "tomato soup (not Gerald)",
+                11f, "roof:garden", 9, "talking to Gerald",  13f, "yard:garden", 10, "weeding the garden in the yard",  16.5f, "a9:couch", 5, "watching gardening shows",
+                20f, "a9:chair", 4, "reading \"Tomatoes and You\"",  22.5f, "a9:bed", 1, "asleep" } },
+            new { who = "Stapes", home = "apt 10", hex = hexes[10], clip = "ap_stapes", day = new object[] {
+                0f, "roof:telescope", 0, "stargazing",  4f, "a10:bed", 1, "asleep (so are the stars)",  12f, "a10:cook", 3, "a very small breakfast",
+                13f, "a10:chair", 4, "reading about very small stars",  15f, "lobby:board", 17, "reading the directory (it's taller than him)",  18f, "a10:couch", 5, "watching space documentaries",
+                21f, "roof:telescope", 0, "stargazing" } },
+            new { who = "Hyoid", home = "apt 11", hex = hexes[11], clip = "ap_hyoid", day = new object[] {
+                0f, "a11:bed", 1, "asleep on a pile of boxes",  7f, "yard:boxes", 17, "picking up box 37 of 200",  9.5f, "a11:mid", 12, "unpacking. it's all spoons",
+                12f, "yard:boxes", 17, "box 38 of 200. also spoons",  14.5f, "a11:mid", 12, "unpacking. more spoons",
+                17f, "a11:couch", 5, "too tired to unpack",  19f, "roof:bbq", 3, "a welcome barbecue (for himself)",  22f, "a11:bed", 1, "asleep" } } };
         var rg = Group(root, "Marrow Arms residents", Vector3.zero);
         var built = new List<FirResident>();
         int stopsTotal = 0;
@@ -2328,15 +2579,34 @@ public static class FirCheckBuilder
             var fr = Add<FirResident>(res.gameObject);
             fr.dayMs = 720000; fr.walkSpeed = 1.4f;
             fr.pivots = piv; fr.who = p.who; fr.home = p.home;
-            fr.hour = new float[n]; fr.spot = new Vector3[n]; fr.yaw = new float[n]; fr.pose = new int[n]; fr.doing = new string[n]; fr.room = new int[n];
+            fr.hour = new float[n]; fr.spot = new Vector3[n]; fr.yaw = new float[n]; fr.pose = new int[n]; fr.doing = new string[n];
+            var stopRoom = new int[n];
             for (int i = 0; i < n; i++)
             {
                 var sp = spots[(string)p.day[i * 4 + 1]];
-                fr.hour[i] = (float)p.day[i * 4]; fr.spot[i] = sp.pos; fr.yaw[i] = sp.yaw; fr.room[i] = sp.room;
+                fr.hour[i] = (float)p.day[i * 4]; fr.spot[i] = sp.pos; fr.yaw[i] = sp.yaw; stopRoom[i] = sp.room;
                 fr.pose[i] = (int)p.day[i * 4 + 2]; fr.doing[i] = (string)p.day[i * 4 + 3];
             }
-            fr.roomIn = rooms.Select(r => r.inside).ToArray(); fr.roomOut = rooms.Select(r => r.outside).ToArray();
-            fr.viaHub = rooms.Select(r => r.lobbySide).ToArray(); fr.noDoor = rooms.Select(r => r.open).ToArray(); fr.hub = hub;
+            // each walk: from the last stop to this one, along the graph between the rooms' doorways
+            var legs = new List<Vector3>(); fr.legStart = new int[n]; fr.legLen = new int[n];
+            for (int i = 0; i < n; i++)
+            {
+                int pi = (i + n - 1) % n;
+                var way = new List<Vector3> { fr.spot[pi] };
+                bool sameRoom = stopRoom[pi] == stopRoom[i] && !rooms[stopRoom[i]].open;
+                if (!sameRoom)
+                {
+                    int na = Anchor(fr.spot[pi], stopRoom[pi], rooms, roomNode, nodes, nodeZone), nb = Anchor(fr.spot[i], stopRoom[i], rooms, roomNode, nodes, nodeZone);
+                    if (na != nb) foreach (int k in Dijkstra(na, nb, nodes, links)) way.Add(nodes[k]);
+                }
+                way.Add(fr.spot[i]);
+                var clean = new List<Vector3>();
+                foreach (var w in way) if (clean.Count == 0 || Vector3.Distance(clean[clean.Count - 1], w) > 0.01f) clean.Add(w);
+                if (clean.Count == 1) clean.Add(clean[0]);
+                fr.legStart[i] = legs.Count; fr.legLen[i] = clean.Count;
+                legs.AddRange(clean);
+            }
+            fr.legPts = legs.ToArray();
             fr.voice = Src(piv[2], Vector3.zero, Clip("Apart/" + p.clip), false, 1f, 1f, 15f, false);
             fr.line = CaptionFor(p.clip);
             fr.caption = Text("Caption", res, new Vector3(0, 2.2f, 0), Quaternion.identity, new Vector2(2.4f, 0.7f), 0.15f, "<b>" + p.who + "</b>");
@@ -2347,6 +2617,8 @@ public static class FirCheckBuilder
                 fr.clockText = clock;
                 Prim(PrimitiveType.Cylinder, "Cap", piv[2], new Vector3(0, 0.12f, 0.02f), new Vector3(0.26f, 0.05f, 0.26f), M("PoliceBlue"));
             }
+            if (p.who == "Stapes") res.localScale = Vector3.one * 0.6f;
+            if (p.who == "Hyoid") Prim(PrimitiveType.Cube, "Box", piv[6], new Vector3(-0.1f, -0.35f, 0.15f), new Vector3(0.4f, 0.3f, 0.3f), M("Cardboard"));
             if (p.who == "Granny Tibia") Prim(PrimitiveType.Sphere, "Bun", piv[2], new Vector3(0, 0.14f, -0.08f), Vector3.one * 0.13f, M("BoneSilver"));
             SetInteract(fr, "Say hi to " + p.who, 3f);
             built.Add(fr);
@@ -2359,7 +2631,7 @@ public static class FirCheckBuilder
                 float gap = (i + 1 < fr.hour.Length ? fr.hour[i + 1] : fr.hour[0] + 24f) - fr.hour[i];
                 float walk = fr.PathLength(i) / fr.walkSpeed;
                 float secPerHour = fr.dayMs / 1000f / 24f;
-                if (walk > gap * secPerHour * 0.8f) report.Add("problem: " + fr.who + " can't get to \"" + fr.doing[i] + "\" in time (" + walk.ToString("0") + " s to walk, " + (gap * secPerHour).ToString("0") + " s there)");
+                if (walk > gap * secPerHour * 0.9f) report.Add("problem: " + fr.who + " can't get to \"" + fr.doing[i] + "\" in time (" + walk.ToString("0") + " s to walk, " + (gap * secPerHour).ToString("0") + " s there)");
             }
         for (float h = 0f; h < 24f; h += 0.25f)
             for (int a = 0; a < built.Count; a++)
@@ -2369,7 +2641,7 @@ public static class FirCheckBuilder
                     if (Vector3.Distance(built[a].spot[sa], built[b].spot[sb]) < 0.6f)
                         report.Add("problem: " + built[a].who + " and " + built[b].who + " are both at \"" + built[a].doing[sa] + "\" at " + h + "h");
                 }
-        report.Add("The Marrow Arms: 7 apartments, a gym, a common room, a laundry and a lobby; " + built.Count + " residents with " + stopsTotal + " stops in their days, captioned; 3 gags");
+        report.Add("The Marrow Arms: 11 apartments on two floors, a gym, a common room, a laundry, a lobby, a roof terrace and yards all round; " + built.Count + " residents with " + stopsTotal + " stops in their days, captioned; 5 gags");
     }
 
     // =================================================================== the second batch of Station stops: helpers

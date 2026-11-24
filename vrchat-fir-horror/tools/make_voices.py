@@ -514,6 +514,12 @@ APART = [
     ("Apart/ap_lift", "mb-us2", 140, 40, 1.0, "narr", "Going up! ...Just kidding. It has never gone up."),
     ("Apart/ap_mail", "mb-us1", 150, 55, 1.0, "narr", "You've got mail! It's a bill. For the mailbox."),
     ("Apart/ap_dryer", "mb-us3", 150, 50, 1.0, "narr", "The dryer ate a sock. And a femur. Femur would like it back."),
+    ("Apart/ap_humerus", "mb-us3", 165, 60, 1.08, "skel", "I'm a comedian! Why did the skeleton skip the party? He had no body to go with. I'll be here all week. I live here."),
+    ("Apart/ap_mandible", "mb-us2", 120, 30, 0.9, "skel", "I grow tomatoes on the roof. Well. I grow one tomato. His name is Gerald."),
+    ("Apart/ap_stapes", "mb-us1", 190, 95, 1.4, "skel", "I'm the smallest bone in the body! I watch the stars from the roof. From here, they're even smaller than me."),
+    ("Apart/ap_hyoid", "mb-us3", 160, 55, 1.05, "skel", "Just moved in! Box thirty seven of two hundred. Who designed this ramp? Me. I did. I regret it."),
+    ("Apart/ap_raccoon", "mb-us3", 175, 70, 1.25, "skel", "Excuse me. This is a private dumpster. Residents only. I'm a resident."),
+    ("Apart/ap_forrent", "mb-us2", 140, 45, 1.0, "narr", "Now renting: second floor flats! Stairs not included. There's a ramp. It's a very good ramp."),
 ]
 
 
