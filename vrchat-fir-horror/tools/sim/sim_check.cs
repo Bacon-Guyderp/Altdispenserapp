@@ -18,6 +18,8 @@ public static class SimCheck {
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
     if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "town") { TownTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "park") { ParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "apart") { ApartTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "batch2") { Batch2Tests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "cell") { CellTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -470,7 +472,7 @@ public static class SimCheck {
         bool ok = newStreets || p.x < -12.6f && p.x > -47.4f && p.z > -9.2f && p.z < 17.2f && Flat(p, new Vector3(-30f, 0, 4f)) > 2.3f && !(p.x < -43f && p.z > -1.7f && p.z < 7.7f);
         RaycastHit hit;
         var d = p - last[i];
-        if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = wa[i].name + " walked through " + hit.collider.name; }
+        if (ok && d.magnitude > 0.01f && d.magnitude < 3f && Physics.Raycast(last[i] + Vector3.up * 0.6f, d.normalized, out hit, d.magnitude, 1, QueryTriggerInteraction.Ignore)) { ok = false; what = wa[i].name + " walked through " + hit.collider.name + " (" + hit.collider.transform.parent.name + ") from " + last[i] + " to " + p; }
         if (!ok) { bad++; if (what == "") what = wa[i].name + " at " + p; }
         last[i] = p;
       }
@@ -610,7 +612,7 @@ public static class SimCheck {
     Check(Sim.BuildLog.Any(l => l.Contains("Boneanza Park: 5 working rides") && l.Contains("30 skeletons, 20 gags, 7 jump scares")),
           Sim.BuildLog.Where(l => l.Contains("Boneanza Park")).Select(l => l.Replace("Fir Warning systems check: ", "")).FirstOrDefault() ?? "no park in the build log");
     var parkRides = new[] { "Big Wheel", "Carousel", "Teacups", "Drop Tower", "Ghost Train" };
-    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name) && r.transform.position.x < 1000f).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name) && r.transform.position.x < 1000f).ToList();
+    var ridesA = All<FirRide>(A).Where(r => parkRides.Contains(r.name) && r.rotor.position.x < 1000f).ToList(); var ridesB = All<FirRide>(B).Where(r => parkRides.Contains(r.name) && r.rotor.position.x < 1000f).ToList();
     Check(ridesA.Count == 5, ridesA.Count + " rides: " + string.Join(", ", ridesA.Select(r => r.name)));
     var wheel = ridesA.First(r => r.name == "Big Wheel"); var wheelB = ridesB.First(r => r.name == "Big Wheel");
     var w0 = wheel.rotor.rotation; Sim.Run(2f);
