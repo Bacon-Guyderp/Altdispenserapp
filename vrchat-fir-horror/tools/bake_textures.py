@@ -17,6 +17,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, "textures")
 OUT = os.path.join(os.path.dirname(HERE), "Assets", "FirHorror", "Data", "textures_baked.txt")
 CAP = {"skeleton": 1024, "stewie_head": 1024, "stewie_trim": 1024, "stewie_body": 512}
+# the remastered surfaces keep their full 1024 px
+for _n in ["brick", "wood_floor", "concrete", "metal", "ceiling", "carpet_red", "office_carpet", "wallpaper", "paper", "cardboard"]:
+    CAP[_n] = 1024
 
 
 def main():

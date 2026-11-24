@@ -241,6 +241,11 @@ public static class FirCheckBuilder
         BuildWaterPark(root);
         BuildChrisAndTripp(root);
         BuildShare(root);
+        {
+            int verts = 0, objs = 0;
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true)) if (mf.sharedMesh != null) { verts += mf.sharedMesh.vertexCount; objs++; }
+            report.Add("Remaster: lit, grained shading on every surface but the talking trees; " + bevelled + " bevelled box shapes; " + objs + " meshes, " + verts + " vertices in all");
+        }
 
         // ---- copy everything into Udon, then check what UdonSharp stored
         foreach (var b in root.GetComponentsInChildren<UdonSharpBehaviour>(true)) Sync(b);
@@ -306,6 +311,12 @@ public static class FirCheckBuilder
 
     static GameObject DPrim(PrimitiveType t, string n, Transform p, Vector3 pos, Vector3 sc, Material m)
     {
+        if (t == PrimitiveType.Cube && m != null && m.mainTexture == null && sc.x > 0f && sc.y > 0f && sc.z > 0f)
+        {
+            // the remaster: plain-coloured decoration cubes become real bevelled boxes (same size, no collider)
+            var bx = Box(p, n, pos, sc, m, false);
+            return bx;
+        }
         var g = Prim(t, n, p, pos, sc, m);
         GameObjectUtility.SetStaticEditorFlags(g, StaticEditorFlags.BatchingStatic);
         return g;
@@ -1649,11 +1660,70 @@ public static class FirCheckBuilder
             }
             tri.AddRange(new[] { s, s + 1, s + 2, s, s + 2, s + 3 });
         }
+        // the remaster: props and furniture (up to 4 m) get bevelled edges that catch the light;
+        // big walls and floors stay plain boxes to keep the vertex count down on Quest
+        float lo = Mathf.Min(size.x, Mathf.Min(size.y, size.z)), hi = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+        if (hi <= 4f && lo >= 0.012f) { v.Clear(); n.Clear(); uv.Clear(); tri.Clear(); Bevel(h, Mathf.Clamp(lo * 0.12f, 0.003f, 0.03f), v, n, uv, tri); bevelled++; }
         var m = new Mesh { name = key };
         m.SetVertices(v); m.SetNormals(n); m.SetUVs(0, uv); m.SetTriangles(tri, 0);
         m.RecalculateBounds();
         meshCache[key] = m;
         return m;
+    }
+
+    static int bevelled;
+
+    /// <summary>A box with half-size h and its 12 edges chamfered by b: 6 inset faces, 12 edge strips, 8 corner triangles.</summary>
+    static void Bevel(Vector3 h, float b, List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> tri)
+    {
+        Func<Vector3, Vector2> UV = p =>
+        {
+            var a = new Vector3(Mathf.Abs(p.x) / Mathf.Max(h.x, 1e-4f), Mathf.Abs(p.y) / Mathf.Max(h.y, 1e-4f), Mathf.Abs(p.z) / Mathf.Max(h.z, 1e-4f));
+            if (a.y >= a.x && a.y >= a.z) return new Vector2(p.x / 2f, p.z / 2f);
+            if (a.x >= a.z) return new Vector2(p.z / 2f, p.y / 2f);
+            return new Vector2(p.x / 2f, p.y / 2f);
+        };
+        Action<Vector3[], Vector3> Poly = (pts, N) =>
+        {
+            int s0 = v.Count;
+            foreach (var p in pts) { v.Add(p); n.Add(N); uv.Add(UV(p)); }
+            for (int k = 1; k + 1 < pts.Length; k++)
+            {
+                // Unity's front faces wind clockwise: Cross(b - a, c - a) points out of the surface
+                if (Vector3.Dot(Vector3.Cross(pts[k] - pts[0], pts[k + 1] - pts[0]), N) >= 0f) tri.AddRange(new[] { s0, s0 + k, s0 + k + 1 });
+                else tri.AddRange(new[] { s0, s0 + k + 1, s0 + k });
+            }
+        };
+        var ax = new[] { Vector3.right, Vector3.up, Vector3.forward };
+        float[] hh = { h.x, h.y, h.z };
+        // faces
+        for (int a = 0; a < 3; a++)
+            foreach (float sa in new[] { -1f, 1f })
+            {
+                int u = (a + 1) % 3, w = (a + 2) % 3;
+                var c = ax[a] * sa * hh[a];
+                Vector3 U = ax[u] * (hh[u] - b), W = ax[w] * (hh[w] - b);
+                Poly(new[] { c - U - W, c - U + W, c + U + W, c + U - W }, ax[a] * sa);
+            }
+        // edges: between face a (sign sa) and face u (sign su), running along w
+        for (int a = 0; a < 3; a++)
+        {
+            int u = (a + 1) % 3, w = (a + 2) % 3;
+            foreach (float sa in new[] { -1f, 1f })
+                foreach (float su in new[] { -1f, 1f })
+                {
+                    var onA = ax[a] * sa * hh[a] + ax[u] * su * (hh[u] - b);
+                    var onU = ax[u] * su * hh[u] + ax[a] * sa * (hh[a] - b);
+                    var W = ax[w] * (hh[w] - b);
+                    Poly(new[] { onA - W, onA + W, onU + W, onU - W }, (ax[a] * sa + ax[u] * su).normalized);
+                }
+        }
+        // corners
+        foreach (float sx in new[] { -1f, 1f })
+            foreach (float sy in new[] { -1f, 1f })
+                foreach (float sz in new[] { -1f, 1f })
+                    Poly(new[] { new Vector3(sx * h.x, sy * (h.y - b), sz * (h.z - b)), new Vector3(sx * (h.x - b), sy * h.y, sz * (h.z - b)), new Vector3(sx * (h.x - b), sy * (h.y - b), sz * h.z) },
+                         new Vector3(sx, sy, sz).normalized);
     }
 
     static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 pos, Vector3 scale, Material mat)
@@ -1725,6 +1795,9 @@ public static class FirCheckBuilder
     static Action<string, string, Color, float, Color> AddMatImpl;
     static void AddMat(string n, string tex, Color c, float full, Color glow) { AddMatImpl(n, tex, c, full, glow); }
 
+    /// <summary>The talking trees' own materials: these keep the original flat shading.</summary>
+    static readonly HashSet<string> TreeMats = new HashSet<string> { "Needles", "Pot", "Stand", "Trunk", "Eye", "Pupil", "Mouth", "Teeth", "HatRed", "HatWhite", "ScareGreen" };
+
     static void MakeMaterials()
     {
         var sh = Shader.Find("FirHorror/Lantern");
@@ -1743,6 +1816,8 @@ public static class FirCheckBuilder
             m.SetFloat("_Fullbright", full);
             m.SetColor("_Glow", glow);
             m.SetFloat("_VertexColor", n == "Needles" ? 1f : 0f);
+            // the remaster leaves the talking trees exactly as they were
+            m.SetFloat("_Remaster", TreeMats.Contains(n) ? 0f : 1f);
             m.SetFloat("_Reach", 14f);
             m.SetFloat("_Dark", 0f);
             m.SetFloat("_Ambient", 0.35f);

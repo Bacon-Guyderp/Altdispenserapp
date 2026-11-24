@@ -31,6 +31,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "rm") { PortalGarageTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "ct") { ChrisTrippTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "remaster") { RemasterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -252,6 +253,7 @@ public static class SimCheck {
     PortalGarageTests(A, B);
     WaterParkTests(A, B);
     ChrisTrippTests(A, B);
+    RemasterTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -984,6 +986,37 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  // ======================================================================== the remaster: shading, bevels, trees untouched
+  static void RemasterTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The remaster");
+    var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("Remaster:"));
+    Check(line != null, line != null ? line.Replace("Fir Warning systems check: ", "") : "no remaster line in the build log");
+    var mats = All<MeshRenderer>(A).Select(r => r.sharedMaterial).Where(m => m != null && m.name != null && m.name.StartsWith("Check_")).Distinct().ToList();
+    var treeNames = new[] { "Needles", "Pot", "Stand", "Trunk", "Eye", "Pupil", "Mouth", "Teeth", "HatRed", "HatWhite", "ScareGreen" };
+    Func<Material, string> baseName = m => m.name.Split('_').Last();
+    var tree = mats.Where(m => treeNames.Contains(baseName(m))).ToList();
+    var rest = mats.Where(m => m.floats.ContainsKey("_Fullbright") && !treeNames.Contains(baseName(m))).ToList();
+    Check(tree.Count >= 8 && tree.All(m => m.floats.ContainsKey("_Remaster") && m.floats["_Remaster"] == 0f),
+          "the talking trees keep their original look (" + tree.Count + " tree materials with the remaster off: " + string.Join(", ", tree.Select(m => baseName(m)).Distinct()) + ")");
+    var off = rest.Where(m => !(m.floats.ContainsKey("_Remaster") && m.floats["_Remaster"] == 1f)).ToList();
+    Check(rest.Count > 100 && off.Count == 0, rest.Count + " other materials get the remastered shading" + (off.Count > 0 ? " | not: " + string.Join(", ", off.Take(8).Select(m => m.name)) : ""));
+    // the bevelled boxes: closed, facing outwards, and exactly the size of their colliders
+    var boxes = All<MeshFilter>(A).Where(f => f.sharedMesh != null && f.sharedMesh.name != null && f.sharedMesh.name.StartsWith("box") && f.sharedMesh.verts.Count == 96).Select(f => f.sharedMesh).Distinct().ToList();
+    int badWind = 0, badSize = 0;
+    foreach (var m in boxes) {
+      for (int t = 0; t < m.tris.Count; t += 3) {
+        Vector3 a = m.verts[m.tris[t]], b = m.verts[m.tris[t + 1]], c = m.verts[m.tris[t + 2]];
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), (a + b + c) / 3f) <= 0f) { badWind++; if (badWind == 1) Console.WriteLine("    inward: " + m.name + " " + a + b + c); }
+      }
+      var parts = m.name.Substring(3).Split('_').Select(x => float.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+      float mx = m.verts.Max(q => q.x) * 2f, my = m.verts.Max(q => q.y) * 2f, mz = m.verts.Max(q => q.z) * 2f;
+      if (Mathf.Abs(mx - parts[0]) > 0.002f || Mathf.Abs(my - parts[1]) > 0.002f || Mathf.Abs(mz - parts[2]) > 0.002f) { badSize++; if (badSize == 1) Console.WriteLine("    size: " + m.name + " " + mx + " " + my + " " + mz); }
+    }
+    Check(boxes.Count > 300 && badWind == 0 && badSize == 0, boxes.Count + " bevelled box shapes, every face pointing outwards and every one the size of its collider" + (badWind + badSize > 0 ? " | " + badWind + " inward faces, " + badSize + " wrong sizes" : ""));
+    var walls = All<MeshFilter>(A).Count(f => f.sharedMesh != null && f.sharedMesh.name != null && f.sharedMesh.name.StartsWith("box") && f.sharedMesh.verts.Count == 24);
+    Check(walls > 100, walls + " big walls and floors stay plain boxes (cheap on Quest)");
   }
 
   static void ChrisTrippTests(Sim.Client A, Sim.Client B) {

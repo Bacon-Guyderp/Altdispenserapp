@@ -361,6 +361,26 @@ It's an original take on the life-sim genre, and none of it is scary.
 * **Captions everywhere:** every voiced skeleton shows what it says under its name while it talks, and
   combo acts show each line on their button (`Data/captions.txt`, written by `make_voices.py --captions`).
 
+## The remaster
+
+Everything except the talking trees' models and the voices has been remastered:
+
+* **Shading.** The world's one shader (`FirLantern`) now gives every surface form: a soft key light and a
+  sky/ground fill shade each face by which way it points, a fine world-space grain breaks up flat colours, and
+  edges catch a faint rim. The lantern-lit horror rooms get the grain and a little sky light on top of the
+  lantern. The trees' materials (`Needles`, `Pot`, `Stand`, `Trunk`, `Eye`, `Pupil`, `Mouth`, `Teeth`, the hat
+  and the jump-scare green) set `_Remaster` to 0 and look exactly as before.
+* **Geometry.** Props and furniture up to 4 m (every builder box, and plain-coloured decoration cubes) are
+  bevelled boxes now, with chamfered edges that catch the light; big walls and floors stay plain boxes to keep
+  the vertex count down on Quest. Colliders are unchanged.
+* **Textures.** Brick, wood floor, concrete, metal, ceiling tiles, both carpets, the wallpaper, paper and
+  cardboard are repainted at 1024 px with real-world sizes (25 cm bricks and planks, 67 cm ceiling tiles,
+  50 cm carpet tiles), mortar, plank gaps, knots, rivets, cracks, stains and wear
+  (`tools/remaster_textures.py`). The needles texture and the window picture are untouched.
+* **Sound effects and music.** 44.1 kHz, with a convolution reverb sized for each sound, a sub layer under the
+  hits and the music box's tines clicking. The trees' talking, singing, laughing, notes, whisper and screams,
+  and every voice line, are untouched.
+
 ## Gags (all game long)
 
 * **53 original gags** and **12 skeleton routines** line the Gift Wrap Hall, Toy Workshop, Chimney Lounge

@@ -71,6 +71,7 @@ namespace UnityEngine {
     public System.Collections.Generic.List<int> tris = new System.Collections.Generic.List<int>();
     public System.Collections.Generic.List<Color> cols = new System.Collections.Generic.List<Color>();
     public void SetVertices(System.Collections.Generic.List<Vector3> v) { verts = new System.Collections.Generic.List<Vector3>(v); }
+    public int vertexCount { get { return verts.Count; } }
     public System.Collections.Generic.List<Vector2> uvs = new System.Collections.Generic.List<Vector2>();
     public void SetNormals(System.Collections.Generic.List<Vector3> v) { } public void SetUVs(int c, System.Collections.Generic.List<Vector2> v) { uvs = new System.Collections.Generic.List<Vector2>(v); }
     public void SetColors(System.Collections.Generic.List<Color> v) { cols = new System.Collections.Generic.List<Color>(v); }

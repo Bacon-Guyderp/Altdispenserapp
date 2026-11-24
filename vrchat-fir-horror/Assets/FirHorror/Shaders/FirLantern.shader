@@ -14,6 +14,9 @@
 //   _Fullbright      1 = ignore the lantern (lobby, signs), 0 = lantern lit
 //   _Glow            colour added after lighting (eyes, furnace, exit signs); ignores blackouts
 //   _VertexColor     1 = multiply by the mesh's vertex colours (the tree canopies)
+//   _Remaster        1 = remastered shading: a soft key light and sky/ground fill give every surface its
+//                    form, a fine world-space grain breaks up flat colours, and edges catch a faint rim.
+//                    0 = the original flat look (the talking trees keep it)
 Shader "FirHorror/Lantern"
 {
     Properties
@@ -28,6 +31,7 @@ Shader "FirHorror/Lantern"
         _Ambient ("Extra ambient", Float) = 0.004
         _AmbColor ("Room ambient colour", Color) = (0.02,0.02,0.03,1)
         _LanColor ("Lantern colour", Color) = (1,0.9,0.75,1)
+        _Remaster ("Remastered shading", Range(0,1)) = 1
     }
     SubShader
     {
@@ -53,6 +57,17 @@ Shader "FirHorror/Lantern"
             float _Ambient;
             float4 _AmbColor;
             float4 _LanColor;
+            float _Remaster;
+
+            float hash2(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            float vnoise(float2 p)
+            {
+                float2 c = floor(p);
+                float2 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);
+                float a = hash2(c), b = hash2(c + float2(1.0, 0.0)), e = hash2(c + float2(0.0, 1.0)), g = hash2(c + float2(1.0, 1.0));
+                return lerp(lerp(a, b, f.x), lerp(e, g, f.x), f.y);
+            }
 
             struct appdata
             {
@@ -111,8 +126,24 @@ Shader "FirHorror/Lantern"
                              + lanCol * (fall * facing * (0.3 + 0.9 * cone));
                 light = light * (1.0 - saturate(_Dark));
 
-                float3 lit = albedo.rgb * light;
-                float3 col = lerp(lit, albedo.rgb, _Fullbright) + _Glow.rgb;
+                // ---- the remaster: form shading, grain and a rim, all from the surface normal and world position
+                float3 n = normalize(i.wn);
+                float3 keyDir = float3(0.42, 0.78, 0.46);                  // a soft key light from up and to one side
+                float key = saturate(dot(n, keyDir));
+                float sky = n.y * 0.5 + 0.5;                                 // sky above, bounce from the ground below
+                float form = 0.68 + 0.22 * key + 0.14 * sky;
+                float3 an = abs(n);
+                float2 gp = an.x > an.y ? (an.x > an.z ? i.wpos.zy : i.wpos.xy) : (an.y > an.z ? i.wpos.xz : i.wpos.xy);
+                float gn = vnoise(gp * 2.3) * 0.6 + vnoise(gp * 9.7) * 0.4;
+                float grain = 1.0 + (gn - 0.5) * 0.16 * saturate(1.0 - d / 30.0);
+                float3 warmCool = lerp(float3(0.93, 0.96, 1.04), float3(1.04, 1.0, 0.95), key);
+                float rim = pow(1.0 - saturate(dot(n, -dir)), 4.0) * 0.07;
+                float3 fullShade = lerp(float3(1.0, 1.0, 1.0), form * grain * warmCool, _Remaster);
+                float3 lanShade = lerp(float3(1.0, 1.0, 1.0), grain * (0.9 + 0.1 * sky) * float3(1.0, 1.0, 1.0), _Remaster);
+
+                float3 lit = albedo.rgb * light * lanShade;
+                float3 full = albedo.rgb * fullShade + rim * _Remaster * float3(0.85, 0.9, 1.0);
+                float3 col = lerp(lit, full, _Fullbright) + _Glow.rgb;
                 return float4(col, 1.0);
             }
             ENDCG

@@ -228,6 +228,9 @@ def main():
         (0.10, "SAFETY FIRST", BOLD, 60, (20, 20, 20)),
         (0.45, "If a tree moves\nwhile you are\nnot looking at it,\n\nLOOK AT IT.", BOLD, 44, (20, 20, 20)),
         (0.88, "Days without incident: 0", MONO, 26, (20, 20, 20))])
+    # the remaster: the walls, floors and ceilings repainted at 1024 px (the needles and the window stay as they were)
+    import remaster_textures
+    remaster_textures.make_all(save, font, BOLD_IT, BOLD, MONO)
 
 
 if __name__ == "__main__":
