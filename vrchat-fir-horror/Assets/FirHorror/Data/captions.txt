@@ -105,6 +105,12 @@ dx_skeleton|I'm a dachshund skeleton. I'm mostly ribs. Long, long ribs.
 dx_stairs|Dachshund versus stairs. The stairs are winning. The stairs always win.
 finale_1|We are the skeleton crew!
 finale_2|Thank you, good night!
+g_clock|Bong! Bong! The town hall clock strikes the hour. Every hour is thirteen o'clock here.
+g_cow|Moo. I'm a cow skeleton. Yes, I still make milk. No, you don't want it.
+g_ducks|The ducks are skeletons too. They still quack. Nobody knows how.
+g_ladder|The ladder goes up! It's rescuing a cat. The cat is fine. The cat is always fine.
+g_scarecrow|I'm a scarecrow! The crows aren't scared. They think I'm a perch. I've given up.
+g_schoolbell|Ring ring! School's out! Everyone rattles home.
 gag_B1|Two hundred and six. Each.
 gag_B10|It just falls straight through.
 gag_B11|Bulking season! Somebody has to.
@@ -520,6 +526,25 @@ squabble_2|It's MY femur!
 squabble_3|Then whose femur am I standing on?
 squabble_4|Mine. Sorry.
 squabble_5|Bone buddies! Hug it out!
+t2_baker|Fresh bread! Still warm! I can't feel warm. I just trust the oven.
+t2_barber|Skull Cuts! We do trims, fades, and polishes. Mostly polishes. Nobody here has any hair.
+t2_bus|I've been waiting for the number nine bus since nineteen sixty two. It'll come. Any minute now.
+t2_cafe|Coffee? Tea? A milkshake? Everything here goes straight through. We call it the full experience.
+t2_farmer|Welcome to the farm! Corn, pumpkins, and a scarecrow who isn't very scary. He's family.
+t2_fire|Bonetown Fire Station! We've never had a fire. Skeletons don't burn very well. We mostly rescue cats. The cats are also skeletons.
+t2_fish|Fish! Fresh fish! Well. Fish skeletons. We have a lot in common, me and these fish.
+t2_florist|Flowers for your sweetheart! Lilies, roses, and these. They're called skeleton flowers. They're real. Look them up.
+t2_house1|Welcome to the neighbourhood! I've baked you a pie. It's mostly crust. I ate the middle. I have no middle.
+t2_house2|I've been mowing this lawn since nineteen eighty. The grass is plastic. It's very well kept.
+t2_house3|Keep off my lawn! ...Sorry. Habit. You can stand on it. Just don't rattle.
+t2_librarian|Shhh. This is a library. Even my bones have to be quiet. They're on silent.
+t2_mayor|As mayor of Bonetown, I'm proud to announce the town is bigger! We didn't build anything new. We just moved the hedges.
+t2_pigeon|I feed the pigeons every day. They used to be scared of me. Now they just steal my fingers.
+t2_postie|Post office! Letters, parcels, and one very confused pigeon. Please stop sending us bones. We know.
+t2_teacher|Class is in session! Today's lesson: the two hundred and six bones of the body. Don't worry. You can count mine.
+t2_toys|Toys for all ages! Wind-up skeletons, skeleton dolls, and a skeleton in a box. That last one's my cousin.
+t2_usher|Welcome to the Boneplex! Tonight's film is a horror movie. It's about a man with skin. Terrifying.
+t2_veg|Fresh vegetables! Carrots, onions, and calcium. Calcium is not a vegetable. I sell it anyway.
 town_finale_1|Welcome to Bonetown!
 town_finale_2|Population: us!
 traffic_green|Green means go!
@@ -530,6 +555,12 @@ upsy_2|Upsy daisy!
 upsy_3|Wheeeeee!
 upsy_4|Oof. You're heavier than you look.
 upsy_5|I'm big boned too!
+w_dog|This is Biscuit. He's a skeleton dog. He fetches his own bones. Mostly his ribs.
+w_jog|Morning jog! Five laps! My knees rattle but I don't feel a thing!
+w_mail|Mail's here! Letters for everyone! Well, bills for everyone. And one postcard from the Root Cellar. It's blank.
+w_scooter|Wheee! Out of the way! I can't stop! These scooters have no brakes!
+w_tourist|We're tourists! We came for the fountain. It's out of order. Five stars!
+w_tourist2|Is this the way to the apartments? Every direction is the way to the apartments.
 wan_amber|Lovely day for a walk. I left my legs on, just in case.
 wan_bubblegum|Shopping day! I'm buying a new skull. This one's a bit hollow.
 wan_cocoa|I jog every morning. Lose weight? I haven't got any to lose!

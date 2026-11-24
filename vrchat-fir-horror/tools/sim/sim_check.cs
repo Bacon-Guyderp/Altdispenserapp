@@ -21,6 +21,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "apart") { ApartTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "batch2") { Batch2Tests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "cell") { CellTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "bigtown") { BigTownTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -234,6 +235,7 @@ public static class SimCheck {
     ApartTests(A, B);
     Batch2Tests(A, B);
     CellTests(A, B);
+    BigTownTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -427,7 +429,7 @@ public static class SimCheck {
   static void TownTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== Bonetown: the wanderers");
     var wa = All<FirWanderer>(A).Where(w => w.transform.position.x < -12f).ToList(); var wb = All<FirWanderer>(B).Where(w => w.transform.position.x < -12f).ToList();
-    Check(wa.Count == 14, wa.Count + " wanderers live in Bonetown");
+    Check(wa.Count == 20, wa.Count + " wanderers live in Bonetown (14 in the old town, 6 on the new streets)");
     Sim.Run(1f);
     var p0 = wa.Select(w => w.transform.position).ToList();
     var leg0 = wa.Select(w => w.pivots[7].localRotation).ToList();
@@ -960,6 +962,31 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void BigTownTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Bonetown, bigger");
+    Check(Sim.BuildLog.Any(l => l.Contains("Bonetown districts: the town is now 98 x 130 m")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Bonetown districts")) ?? "no districts in the build log"));
+    string what;
+    Check(!Blocked(A, new[] { new Vector3(-42f, 0, -6.5f), new Vector3(-46f, 0, -12f), new Vector3(-46f, 0, -30f), new Vector3(-46f, 0, -35f) }, out what),
+          "from old Bonetown's west end, down the south lane to the town hall steps" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-14f, 0, -30f), new Vector3(-108f, 0, -30f) }, out what), "the whole length of Main Street" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-44.5f, 0, 12f), new Vector3(-46f, 0, 18f), new Vector3(-46f, 0, 50f), new Vector3(-108f, 0, 50f) }, out what), "up the north lane and along Clavicle Avenue" + (what != "" ? " | " + what : ""));
+    Check(!Blocked(A, new[] { new Vector3(-51.5f, 0, -25f), new Vector3(-51.5f, 0, -12f) }, out what) && !Blocked(A, new[] { new Vector3(-51.5f, 0, 45f), new Vector3(-51.5f, 0, 33f) }, out what),
+          "the Marrow Arms' hedge has gates from Main Street and Clavicle Avenue" + (what != "" ? " | " + what : ""));
+    Check(Blocked(A, new[] { new Vector3(-70f, 0, -20f), new Vector3(-70f, 0, -14f) }, out what), "...and is a hedge everywhere else (" + what + ")");
+    Check(Blocked(A, new[] { new Vector3(-30f, 0, 16f), new Vector3(-30f, 0, 26f) }, out what), "old Bonetown's houses have real back walls now (" + what + ")");
+    var folk = All<FirRainbowSkeleton>(A).Where(r => r.voice.clip != null && r.voice.clip.name.StartsWith("t2_") && r.caption.Length > 5).ToList();
+    Check(folk.Count == 19, folk.Count + " new voiced, captioned townsfolk");
+    var wn = All<FirWanderer>(A).Where(w => w.voice.clip != null && w.voice.clip.name.StartsWith("w_")).ToList();
+    Check(wn.Count == 6, wn.Count + " new wanderers: " + string.Join(", ", wn.Select(w => w.voice.clip.name)));
+    var mgr = All<FirRide>(A).First(r => r.rotor != null && r.rotor.parent != null && r.rotor.parent.name == "Merry-go-round");
+    var q0 = mgr.rotor.rotation; Sim.Run(2f);
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.name.StartsWith("Merry-go-round seat"));
+    Check(Quaternion.Angle(q0, mgr.rotor.rotation) > 20f && seats == 4, "the merry-go-round turns, with " + seats + " horses to ride");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.voice != null && g.voice.clip != null && g.voice.clip.name.StartsWith("g_"), out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 6, gagOk + " of " + gagN + " new town gags (the ducks, the clock, the scarecrow, the cow, the school bell, the fire truck's ladder)" + string.Concat(gagBad.Select(x => " | " + x)));
   }
 
   static void CellTests(Sim.Client A, Sim.Client B) {

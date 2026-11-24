@@ -282,6 +282,17 @@ It's an original take on the life-sim genre, and none of it is scary.
   and the console has 4 combo acts: The Squabble, Town Band, The Proposal and the Bonetown Finale.
 * **22 more gags** (`Data/town_gags.txt`): signs, frames, pop-ups, spinners, waddlers and talking trees.
 * That's 24 new skeleton colours. The game's tree never goes to Bonetown.
+* **Bonetown is bigger** (98 x 130 m, under one sky). It wraps round the Marrow Arms, whose grounds sit
+  behind a hedge with three gates. Lanes lead out of the old town's west end:
+  * **Main Street (south):** a bakery, Skull Cuts (the barber), a toy shop, the post office, the Boneplex
+    cinema, Cafe Calcium, a florist, and an empty shop to lease. Also the town hall with a clock tower
+    (and the mayor), a market, a bus stop where Patience has waited since 1962, and a park behind the
+    shops with a duck pond, a pigeon man and a merry-go-round you can ride.
+  * **Clavicle Avenue (north):** houses with fences and mailboxes, Bonetown Elementary (with a bell), the
+    library (shh), the fire station (the ladder goes up), a farm with a scarecrow and a cow skeleton, and
+    a lookout hill.
+  * 19 new voiced, captioned townsfolk, 6 gags, and 6 more wanderers: a postie, a jogger, a kid on a
+    scooter, a dog walker and two tourists.
 * **The Marrow Arms** (through the doorway in Bonetown's west wall) is an apartment building with
   grounds of its own:
   * **Outside:** brick walls with lit windows, an awning and the building's name over the door, and a

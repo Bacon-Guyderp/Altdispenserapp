@@ -212,6 +212,7 @@ public static class FirCheckBuilder
         BuildSkits(root);
         BuildCornFlakes(root);
         BuildApartments(root);
+        BuildTownDistricts(root);
         BuildCrystalCove(root);
         BuildCritterMeadow(root);
         BuildShadowBelow(root);
@@ -2198,7 +2199,7 @@ public static class FirCheckBuilder
         var off = new Vector3(dx, 0, dz);
         var g = Group(root, "The Marrow Arms", off);
         float X0 = -52f, X1 = -88f, Z0 = -12f, Z1 = 20f;
-        Text("WaySign", root, new Vector3(-47.85f, 4.2f, 11f), Face(Vector3.right), new Vector2(5f, 0.8f), 0.4f, "<b>THE MARROW ARMS</b>  >\n<size=50%>apartments  ·  residents only  ·  (and visitors)  ·  (and everyone)</size>").color = new Color(0.25f, 0.2f, 0.35f);
+        Text("WaySign", root, new Vector3(-47.75f, 3.9f, 11f), Face(Vector3.right), new Vector2(5f, 0.8f), 0.4f, "<b>THE MARROW ARMS</b>  >\n<size=50%>apartments  ·  residents only  ·  (and visitors)  ·  (and everyone)</size>").color = new Color(0.25f, 0.2f, 0.35f);
         // ---- the shell: floor, ceiling, outer walls
         Box(g, "Floor", new Vector3((X0 + X1) / 2f, -0.1f, (Z0 + Z1) / 2f), new Vector3(36f, 0.2f, 32f), M("Floor2"));
         Box(g, "Ceiling", new Vector3((X0 + X1) / 2f, AptH + 0.1f, (Z0 + Z1) / 2f), new Vector3(36f, 0.2f, 32f), M("Ceiling"));
@@ -2505,17 +2506,9 @@ public static class FirCheckBuilder
             DPrim(PrimitiveType.Cylinder, "YardTrunk", yd, tp + new Vector3(0, 1.5f, 0), new Vector3(0.3f, 1.5f, 0.3f), M("Trunk"));
             DPrim(PrimitiveType.Sphere, "YardTree", yd, tp + new Vector3(0, 3.6f, 0), new Vector3(2.6f, 2.4f, 2.6f), M("Hedge"));
         }
-        // ---- the grounds: grass, and sky all round (Bonetown is through the doorway to the east)
+        // ---- the grounds: grass (the town's hedge, with gates, goes round them; the sky is the town's)
         var gr = Group(root, "Marrow Arms grounds", Vector3.zero);
-        float ex0 = -48f, ex1 = -110f, ez0 = -17f, ez1 = 39f, eh = 16f;
-        Box(gr, "Ground", new Vector3((ex0 + ex1) / 2f, -0.12f, (ez0 + ez1) / 2f), new Vector3(ex0 - ex1, 0.2f, ez1 - ez0), M("Grass"));
-        Box(gr, "Sky", new Vector3((ex0 + ex1) / 2f, eh + 0.1f, (ez0 + ez1) / 2f), new Vector3(ex0 - ex1, 0.2f, ez1 - ez0), M("Sky"));
-        Box(gr, "SkyW", new Vector3(ex1 - 0.1f, eh / 2f, (ez0 + ez1) / 2f), new Vector3(0.2f, eh, ez1 - ez0), M("Sky"));
-        Box(gr, "SkyN", new Vector3((ex0 + ex1) / 2f, eh / 2f, ez1 + 0.1f), new Vector3(ex0 - ex1, eh, 0.2f), M("Sky"));
-        Box(gr, "SkyS", new Vector3((ex0 + ex1) / 2f, eh / 2f, ez0 - 0.1f), new Vector3(ex0 - ex1, eh, 0.2f), M("Sky"));
-        Box(gr, "SkyE S", new Vector3(ex0 + 0.1f, eh / 2f, (ez0 - 14.2f) / 2f), new Vector3(0.2f, eh, -14.2f - ez0), M("Sky"));
-        Box(gr, "SkyE N", new Vector3(ex0 + 0.1f, eh / 2f, (22.2f + ez1) / 2f), new Vector3(0.2f, eh, ez1 - 22.2f), M("Sky"));
-        Box(gr, "SkyE Top", new Vector3(ex0 + 0.1f, (6.2f + eh) / 2f, 4f), new Vector3(0.2f, eh - 6.2f, 36.4f), M("Sky"));
+        Box(gr, "Ground", new Vector3(-79f, -0.12f, 11f), new Vector3(62f, 0.2f, 56f), M("Grass"));
         // ---- who lives here, and what they do all day (hours on the Bonetown clock)
         var people = new[] {
             new { who = "Clavicle", home = "apt 1", hex = hexes[1], clip = "ap_clavicle", day = new object[] {
@@ -2642,6 +2635,268 @@ public static class FirCheckBuilder
                         report.Add("problem: " + built[a].who + " and " + built[b].who + " are both at \"" + built[a].doing[sa] + "\" at " + h + "h");
                 }
         report.Add("The Marrow Arms: 11 apartments on two floors, a gym, a common room, a laundry, a lobby, a roof terrace and yards all round; " + built.Count + " residents with " + stopsTotal + " stops in their days, captioned; 5 gags");
+    }
+
+    // =================================================================== Bonetown, bigger: Main Street to the south, Clavicle Avenue to the north
+
+    /// <summary>A shop on Main Street: open at the front (facing north), a counter, a sign and an awning.</summary>
+    static Transform Shop(Transform g, string title, float x, float w, string wall, string awning)
+    {
+        var s = Group(g, "Shop " + title, Vector3.zero);
+        float zf = -36f, zb = -44f, zm = (zf + zb) / 2f;
+        Box(s, "Back", new Vector3(x, 2f, zb), new Vector3(w, 4f, 0.2f), M(wall));
+        Box(s, "SideA", new Vector3(x - w / 2f, 2f, zm), new Vector3(0.2f, 4f, 8f), M(wall));
+        Box(s, "SideB", new Vector3(x + w / 2f, 2f, zm), new Vector3(0.2f, 4f, 8f), M(wall));
+        Box(s, "Roof", new Vector3(x, 4.1f, zm), new Vector3(w + 0.4f, 0.2f, 8.4f), M("TrimDark"));
+        Box(s, "Facade", new Vector3(x, 4.7f, zf), new Vector3(w + 0.4f, 1.2f, 0.2f), M(wall));
+        Text("Sign", s, new Vector3(x, 4.7f, zf + 0.12f), Face(Vector3.forward), new Vector2(w - 0.4f, 0.9f), 0.5f, "<b>" + title + "</b>").color = new Color(1f, 0.95f, 0.8f);
+        Box(s, "Awning", new Vector3(x, 3.2f, zf + 0.7f), new Vector3(w, 0.1f, 1.4f), M(awning), false);
+        Box(s, "Counter", new Vector3(x, 0.5f, -38.6f), new Vector3(w - 2f, 1f, 0.6f), M("DeskWood"));
+        Box(s, "Floor", new Vector3(x, 0.01f, zm), new Vector3(w - 0.2f, 0.02f, 8f), M("Floor2"), false);
+        return s;
+    }
+
+    /// <summary>A house on Clavicle Avenue (facing south): walls, a pitched roof, a door, windows, a fence and a mailbox.</summary>
+    static void House(Transform g, string name, float x, float w, string wall, string roof)
+    {
+        var h = Group(g, name, Vector3.zero);
+        float zf = 57f, zb = 64f, zm = (zf + zb) / 2f;
+        Box(h, "Body", new Vector3(x, 1.75f, zm), new Vector3(w, 3.5f, zb - zf), M(wall));
+        foreach (float sgn in new[] { -1f, 1f })
+            Box(h, "RoofSide", new Vector3(x, 4.3f, zm + sgn * 1.75f), new Vector3(w + 0.6f, 0.2f, 4.3f), M(roof), false).transform.localRotation = Quaternion.Euler(sgn * 32f, 0, 0);
+        Box(h, "Door", new Vector3(x, 1.05f, zf - 0.03f), new Vector3(1.1f, 2.1f, 0.05f), M("DoorWood"), false);
+        foreach (float wx in new[] { -w / 3.2f, w / 3.2f }) OutWindow(h, new Vector3(x + wx, 1.9f, zf - 0.05f), Vector3.back);
+        Box(h, "FenceL", new Vector3(x - w / 4f - 0.6f, 0.45f, 54.5f), new Vector3(w / 2f - 1.2f, 0.9f, 0.1f), M("CaneWhite"));
+        Box(h, "FenceR", new Vector3(x + w / 4f + 0.6f, 0.45f, 54.5f), new Vector3(w / 2f - 1.2f, 0.9f, 0.1f), M("CaneWhite"));
+        DPrim(PrimitiveType.Cylinder, "MailPost", h, new Vector3(x + w / 2f - 0.5f, 0.5f, 54.2f), new Vector3(0.08f, 0.5f, 0.08f), M("DeskWood"));
+        Box(h, "MailBox", new Vector3(x + w / 2f - 0.5f, 1.1f, 54.2f), new Vector3(0.4f, 0.3f, 0.25f), M("GiftRed"));
+    }
+
+    static void BuildTownDistricts(Transform root)
+    {
+        var g = Group(root, "Bonetown districts", Vector3.zero);
+        const float X0 = -12f, X1 = -110f, ZS = -60f, ZN = 70f, H = 16f;
+        // ---- ground, sky, the outer walls (the east one is Bonetown's, with the lobby doorway)
+        Box(g, "GrassSouth", new Vector3((X0 + X1) / 2f, -0.1f, (ZS - 17f) / 2f), new Vector3(X0 - X1, 0.2f, -17f - ZS), M("Grass"));
+        Box(g, "GrassSouthStrip", new Vector3(-30f, -0.1f, -15.5f), new Vector3(36f, 0.2f, 3f), M("Grass"));
+        Box(g, "GrassNorth", new Vector3((X0 + X1) / 2f, -0.1f, (39f + ZN) / 2f), new Vector3(X0 - X1, 0.2f, ZN - 39f), M("Grass"));
+        Box(g, "GrassNorthStrip", new Vector3(-30f, -0.1f, 30.5f), new Vector3(36f, 0.2f, 17f), M("Grass"));
+        Box(g, "Sky", new Vector3((X0 + X1) / 2f, H + 0.1f, (ZS + ZN) / 2f), new Vector3(X0 - X1, 0.2f, ZN - ZS), M("Sky"));
+        Box(g, "WallW", new Vector3(X1 - 0.1f, H / 2f, (ZS + ZN) / 2f), new Vector3(0.2f, H, ZN - ZS), M("Sky"));
+        Box(g, "WallN", new Vector3((X0 + X1) / 2f, H / 2f, ZN + 0.1f), new Vector3(X0 - X1, H, 0.2f), M("Sky"));
+        Box(g, "WallS", new Vector3((X0 + X1) / 2f, H / 2f, ZS - 0.1f), new Vector3(X0 - X1, H, 0.2f), M("Sky"));
+        // ---- the hedge round the Marrow Arms' grounds, with three gates
+        var fence = Group(g, "Marrow Arms hedge", Vector3.zero);
+        Box(fence, "HedgeS", new Vector3(-81.5f, 0.6f, -17f), new Vector3(57f, 1.2f, 0.4f), M("Hedge"));
+        Box(fence, "HedgeS2", new Vector3(-49f, 0.6f, -17f), new Vector3(2f, 1.2f, 0.4f), M("Hedge"));
+        Box(fence, "HedgeN", new Vector3(-81.5f, 0.6f, 39f), new Vector3(57f, 1.2f, 0.4f), M("Hedge"));
+        Box(fence, "HedgeN2", new Vector3(-49f, 0.6f, 39f), new Vector3(2f, 1.2f, 0.4f), M("Hedge"));
+        Box(fence, "HedgeE S", new Vector3(-48f, 0.6f, (-17f + 9.8f) / 2f), new Vector3(0.4f, 1.2f, 26.8f), M("Hedge"));
+        Box(fence, "HedgeE N", new Vector3(-48f, 0.6f, (12.2f + 39f) / 2f), new Vector3(0.4f, 1.2f, 26.8f), M("Hedge"));
+        foreach (var gate in new[] { new { at = new Vector3(-48f, 0, 11f), across = Vector3.forward }, new { at = new Vector3(-51.5f, 0, -17f), across = Vector3.right }, new { at = new Vector3(-51.5f, 0, 39f), across = Vector3.right } })
+        {
+            foreach (float sd in new[] { -1.3f, 1.3f }) DPrim(PrimitiveType.Cylinder, "GatePost", fence, gate.at + gate.across * sd + new Vector3(0, 1.6f, 0), new Vector3(0.25f, 1.6f, 0.25f), M("CaneWhite"));
+            DPrim(PrimitiveType.Cube, "GateBeam", fence, gate.at + new Vector3(0, 3.25f, 0), gate.across.x != 0 ? new Vector3(2.9f, 0.3f, 0.3f) : new Vector3(0.3f, 0.3f, 2.9f), M("CaneWhite"));
+        }
+        // ---- the lanes out of old Bonetown (at its west end), Main Street and Clavicle Avenue
+        Box(g, "LaneSouth", new Vector3(-46f, 0.006f, -20.5f), new Vector3(3f, 0.01f, 13f), M("Concrete"), false);
+        Box(g, "LaneNorth", new Vector3(-46f, 0.006f, 34.5f), new Vector3(3f, 0.01f, 25f), M("Concrete"), false);
+        Box(g, "MainStreet", new Vector3((X0 + X1) / 2f, 0.005f, -30f), new Vector3(X0 - X1, 0.01f, 6f), M("GloomStone"), false);
+        Box(g, "Avenue", new Vector3((X0 + X1) / 2f, 0.005f, 50f), new Vector3(X0 - X1, 0.01f, 6f), M("GloomStone"), false);
+        for (int k = 0; k < 24; k++)
+        {
+            DPrim(PrimitiveType.Cube, "Dash", g, new Vector3(-15f - k * 4f, 0.012f, -30f), new Vector3(1.6f, 0.01f, 0.15f), M("GlowYellow"));
+            DPrim(PrimitiveType.Cube, "Dash", g, new Vector3(-15f - k * 4f, 0.012f, 50f), new Vector3(1.6f, 0.01f, 0.15f), M("GlowYellow"));
+        }
+        Text("MainStreetSign", g, new Vector3(-43.2f, 2.6f, -26.6f), Face(Vector3.right), new Vector2(3f, 0.4f), 0.22f, "<b>MAIN STREET</b>").color = Color.white;
+        DPrim(PrimitiveType.Cylinder, "SignPost", g, new Vector3(-43.3f, 1.3f, -26.6f), new Vector3(0.08f, 1.3f, 0.08f), M("Metal"));
+        Text("AvenueSign", g, new Vector3(-43.2f, 2.6f, 46.6f), Face(Vector3.right), new Vector2(3f, 0.4f), 0.22f, "<b>CLAVICLE AVENUE</b>").color = Color.white;
+        DPrim(PrimitiveType.Cylinder, "SignPost", g, new Vector3(-43.3f, 1.3f, 46.6f), new Vector3(0.08f, 1.3f, 0.08f), M("Metal"));
+        for (int k = 0; k < 10; k++)
+            foreach (float lz in new[] { -26.6f, -33.4f, 46.6f, 53.4f })
+            {
+                if (Mathf.Abs(-18f - k * 10f + 46f) < 2f) continue;
+                DPrim(PrimitiveType.Cylinder, "StreetLamp", g, new Vector3(-18f - k * 10f, 1.8f, lz), new Vector3(0.1f, 1.8f, 0.1f), M("Black"));
+                DPrim(PrimitiveType.Sphere, "StreetLampGlow", g, new Vector3(-18f - k * 10f, 3.7f, lz), Vector3.one * 0.4f, M("GlowWarm"));
+            }
+
+        // ======== MAIN STREET (south): shops, the town hall, the market, the bus stop, and the park behind
+        var shops = new[] {
+            new { t = "BAKERY", x = -17f, wall = "Wall2", aw = "GlowYellow", who = "Bun Bonewell", hex = "#ffe0b2", clip = "t2_baker", act = 3 },
+            new { t = "SKULL CUTS", x = -26.5f, wall = "WallGreen", aw = "CaneRed", who = "Snips", hex = "#90caf9", clip = "t2_barber", act = 20 },
+            new { t = "TOYS", x = -36f, wall = "Wall", aw = "GiftBlue", who = "Tinker", hex = "#ffab40", clip = "t2_toys", act = 16 },
+            new { t = "POST OFFICE", x = -58f, wall = "BrickWall", aw = "PoliceBlue", who = "Stamp", hex = "#5c6bc0", clip = "t2_postie", act = 20 },
+            new { t = "THE BONEPLEX", x = -69f, wall = "WallDark", aw = "GemPurple", who = "Reel", hex = "#ef5350", clip = "t2_usher", act = 13 },
+            new { t = "CAFE CALCIUM", x = -80f, wall = "Wall2", aw = "Trunk", who = "Crema", hex = "#bcaaa4", clip = "t2_cafe", act = 3 },
+            new { t = "FLOWERS", x = -91f, wall = "WallGreen", aw = "BonePink", who = "Petal", hex = "#f48fb1", clip = "t2_florist", act = 4 },
+            new { t = "FOR LEASE", x = -102f, wall = "Wall", aw = "TrimDark", who = "", hex = "", clip = "", act = 0 } };
+        foreach (var sh in shops)
+        {
+            var s = Shop(g, sh.t, sh.x, 9f, sh.wall, sh.aw);
+            if (sh.who != "") Folk(s, sh.who, sh.hex, sh.act, new Vector3(sh.x, 0, -39.4f), 0f, "Town2/" + sh.clip);
+        }
+        // shop dressing
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Capsule, "Loaf", g, new Vector3(-19.5f + k * 1.1f, 1.15f, -38.6f), new Vector3(0.25f, 0.3f, 0.25f), M("Bun"), Quaternion.Euler(0, 0, 90));
+        DPrim(PrimitiveType.Cylinder, "BarberPole", g, new Vector3(-22.6f, 1.5f, -35.8f), new Vector3(0.25f, 1.2f, 0.25f), M("CaneRed"));
+        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cube, "Toy", g, new Vector3(-38.5f + k * 0.9f, 1.15f, -38.6f), Vector3.one * 0.3f, M(new[] { "GiftRed", "GiftBlue", "GlowYellow", "GiftGreen", "GemPurple", "InkOrange" }[k]));
+        Box(g, "Marquee", new Vector3(-69f, 3.6f, -35.4f), new Vector3(8f, 0.8f, 0.3f), M("GlowWarm"), false);
+        Text("NowShowing", g, new Vector3(-69f, 3.6f, -35.23f), Face(Vector3.forward), new Vector2(7.6f, 0.7f), 0.24f, "NOW SHOWING: <b>THE MAN WITH SKIN</b> (rated R for Revolting)").color = new Color(0.2f, 0.05f, 0.05f);
+        for (int k = 0; k < 3; k++) { Prim(PrimitiveType.Cylinder, "CafeTable", g, new Vector3(-83f + k * 3f, 0.38f, -34.6f), new Vector3(0.8f, 0.38f, 0.8f), M("CaneWhite")); }
+        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Sphere, "Bouquet", g, new Vector3(-94f + k * 0.8f, 1.2f, -38.6f), Vector3.one * 0.35f, M(new[] { "BonePink", "GlowYellow", "GiftRed", "GemPurple" }[k % 4]));
+        Text("Lease", g, new Vector3(-102f, 2f, -38.25f), Face(Vector3.forward), new Vector2(4f, 0.6f), 0.2f, "<b>FOR LEASE</b>\n<size=70%>ideal for a business. or a closet. or a closet business</size>").color = Color.white;
+        // the town hall, with a clock tower
+        var th = Group(g, "Town Hall", Vector3.zero);
+        Box(th, "Hall", new Vector3(-46f, 3f, -44f), new Vector3(10f, 6f, 8f), M("Concrete"));
+        for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cylinder, "Column", th, new Vector3(-49.5f + k * 2.33f, 2.5f, -39.6f), new Vector3(0.5f, 2.5f, 0.5f), M("CaneWhite"));
+        Box(th, "Portico", new Vector3(-46f, 5.2f, -39.6f), new Vector3(10.4f, 0.4f, 1.6f), M("CaneWhite"));
+        for (int k = 0; k < 3; k++) Box(th, "Step", new Vector3(-46f, 0.1f + k * 0.2f, -37.6f - k * 0.5f), new Vector3(8f, 0.2f, 1.6f - k * 0.5f), M("Concrete"));
+        Box(th, "Tower", new Vector3(-46f, 8.5f, -45f), new Vector3(3.6f, 5f, 3.6f), M("Concrete"));
+        Prim(PrimitiveType.Cylinder, "Spire", th, new Vector3(-46f, 11.6f, -45f), new Vector3(2.4f, 1.2f, 2.4f), M("PoliceBlue"));
+        Text("HallSign", th, new Vector3(-46f, 5.85f, -38.75f), Face(Vector3.forward), new Vector2(9f, 0.6f), 0.4f, "<b>BONETOWN TOWN HALL</b>").color = new Color(0.3f, 0.25f, 0.2f);
+        var clock = Gg(th, "The town clock", new Vector3(-46f, 0, -38.6f), 0f, "Town2/g_clock", 3f, 1.2f);
+        var face = Group(clock.transform, "Face", new Vector3(0, 9f, -4.5f));
+        Prim(PrimitiveType.Cylinder, "Dial", face, Vector3.zero, new Vector3(2.4f, 0.05f, 2.4f), M("CaneWhite")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        var hands = Group(face, "Hands", new Vector3(0, 0, 0.06f));
+        Prim(PrimitiveType.Cube, "Hour", hands, new Vector3(0, 0.35f, 0), new Vector3(0.1f, 0.7f, 0.02f), M("Black"));
+        Prim(PrimitiveType.Cube, "Minute", hands, new Vector3(0.45f, 0, 0), new Vector3(0.9f, 0.06f, 0.02f), M("Black"));
+        hands.localRotation = Quaternion.identity;
+        clock.target = hands; clock.rotateBy = new Vector3(0, 0, -390f); clock.inTime = 1.5f;
+        Folk(g, "Mayor Marrowmont", "#ffd54f", 15, new Vector3(-43.5f, 0.4f, -37.6f), 0f, "Town2/t2_mayor");
+        Gear("Mayor Marrowmont", 2, PrimitiveType.Cylinder, new Vector3(0, 0.18f, 0.02f), new Vector3(0.24f, 0.16f, 0.24f), "Black");
+        Gear("Mayor Marrowmont", 1, PrimitiveType.Cube, new Vector3(0, 0.25f, 0.1f), new Vector3(0.36f, 0.06f, 0.02f), "GiftRed", new Vector3(0, 0, 30));
+        // the market and the bus stop (north of Main Street)
+        var vendors = new[] { new { who = "Turnip Tom", hex = "#aed581", clip = "t2_veg" }, new { who = "Gill", hex = "#4fc3f7", clip = "t2_fish" } };
+        string[] mstripes = { "GiftGreen", "GiftBlue", "CaneRed", "GlowYellow" };
+        for (int k = 0; k < 4; k++)
+        {
+            var st = Stall(g, new[] { "VEG", "FISH", "CHEESE", "BREAD" }[k], new Vector3(-60f - k * 8f, 0, -21.5f), 180f, mstripes[k], "CaneWhite");
+            if (k < 2) Folk(st, vendors[k].who, vendors[k].hex, 3, new Vector3(0, 0, -0.3f), 0f, "Town2/" + vendors[k].clip);
+        }
+        Text("MarketSign", g, new Vector3(-72f, 3.8f, -17.3f), Face(Vector3.back), new Vector2(10f, 0.6f), 0.45f, "<b>BONETOWN MARKET</b>").color = new Color(1f, 0.9f, 0.4f);
+        Box(g, "BusShelterRoof", new Vector3(-22f, 2.6f, -24.6f), new Vector3(4f, 0.1f, 1.6f), M("Glass"), false);
+        Box(g, "BusShelterBack", new Vector3(-22f, 1.3f, -23.9f), new Vector3(4f, 2.6f, 0.08f), M("Glass"));
+        Box(g, "BusBench", new Vector3(-22f, 0.42f, -24.3f), new Vector3(3f, 0.08f, 0.5f), M("DeskWood"));
+        DPrim(PrimitiveType.Cylinder, "BusSignPost", g, new Vector3(-19.5f, 1.3f, -25.8f), new Vector3(0.06f, 1.3f, 0.06f), M("Metal"));
+        Text("BusSign", g, new Vector3(-19.5f, 2.6f, -25.9f), Face(Vector3.forward), new Vector2(1.2f, 0.6f), 0.14f, "<b>BUS 9</b>\nnext bus: soon\n<size=60%>(since 1962)</size>").color = Color.white;
+        Folk(g, "Patience", "#b0bec5", 0, new Vector3(-23f, 0, -25f), 0f, "Town2/t2_bus");
+        // the park behind the shops: a pond with ducks, a merry-go-round, benches, trees
+        var pk = Group(g, "The park", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "PondRim", pk, new Vector3(-70f, 0.1f, -52f), new Vector3(9f, 0.1f, 7f), M("Concrete"));
+        Prim(PrimitiveType.Cylinder, "Pond", pk, new Vector3(-70f, 0.12f, -52f), new Vector3(8.4f, 0.1f, 6.4f), M("Water"));
+        var ducks = Gg(pk, "The ducks", new Vector3(-70f, 0.2f, -52f), 0f, "Town2/g_ducks", 4f, 1f);
+        var flock = Group(ducks.transform, "Ducks", Vector3.zero);
+        for (int k = 0; k < 4; k++)
+        {
+            var dk = Group(flock, "Duck " + k, new Vector3(Mathf.Cos(k * 1.57f) * 1.6f, 0, Mathf.Sin(k * 1.57f) * 1.2f));
+            dk.localRotation = Quaternion.Euler(0, k * 90f + 90f, 0);
+            Prim(PrimitiveType.Sphere, "Body", dk, new Vector3(0, 0.15f, 0), new Vector3(0.3f, 0.2f, 0.45f), M("BoneWhite"));
+            Prim(PrimitiveType.Sphere, "Head", dk, new Vector3(0, 0.35f, 0.18f), Vector3.one * 0.16f, M("BoneWhite"));
+            Prim(PrimitiveType.Cube, "Beak", dk, new Vector3(0, 0.33f, 0.3f), new Vector3(0.08f, 0.03f, 0.1f), M("GlowYellow"));
+        }
+        ducks.target = flock; ducks.spin = 60f; ducks.bob = 0.06f;
+        Box(pk, "ParkBench", new Vector3(-62f, 0.42f, -47.4f), new Vector3(1.8f, 0.08f, 0.5f), M("DeskWood"));
+        Folk(pk, "Old Pigeonbone", "#9e9e9e", 1, new Vector3(-60.5f, 0, -47.8f), 180f, "Town2/t2_pigeon");
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Sphere, "Pigeon", pk, new Vector3(-60f + (k % 3) * 0.5f, 0.12f, -49.5f - (k / 3) * 0.5f), new Vector3(0.18f, 0.18f, 0.25f), M("LabGrey"));
+        var mg = Group(pk, "Merry-go-round", new Vector3(-90f, 0, -52f));
+        var rot = Group(mg, "Rotor", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "Deck", rot, new Vector3(0, 0.15f, 0), new Vector3(5f, 0.15f, 5f), M("CaneRed"));
+        Prim(PrimitiveType.Cylinder, "Pole", rot, new Vector3(0, 1.4f, 0), new Vector3(0.2f, 1.2f, 0.2f), M("GlowGold"));
+        Prim(PrimitiveType.Cylinder, "Canopy", rot, new Vector3(0, 2.7f, 0), new Vector3(5.2f, 0.15f, 5.2f), M("CaneWhite"));
+        var mgExit = Marker(mg, "Merry-go-round exit", new Vector3(0, 0.05f, 3.6f), 0f);
+        for (int k = 0; k < 4; k++)
+        {
+            var arm = Group(rot, "Horse " + k, Quaternion.Euler(0, k * 90f, 0) * new Vector3(0, 0, 1.8f));
+            arm.localRotation = Quaternion.Euler(0, k * 90f + 90f, 0);
+            Prim(PrimitiveType.Sphere, "Horse", arm, new Vector3(0, 0.75f, 0), new Vector3(0.35f, 0.45f, 0.8f), M(new[] { "CaneWhite", "BonePink", "GlowYellow", "GiftBlue" }[k]));
+            DPrim(PrimitiveType.Cylinder, "HorsePole", arm, new Vector3(0, 1.4f, 0), new Vector3(0.05f, 1.2f, 0.05f), M("GlowGold"));
+            RideSeat(arm, "Merry-go-round seat " + k, new Vector3(0, 0.75f, 0), 0f, mgExit);
+        }
+        var mr = Add<FirRide>(mg.gameObject); mr.kind = 0; mr.rotor = rot; mr.axis = Vector3.up; mr.degPerSec = 30f;
+        foreach (var tp in new[] { new Vector3(-56f, 0, -56f), new Vector3(-80f, 0, -57f), new Vector3(-100f, 0, -48f), new Vector3(-106f, 0, -56f), new Vector3(-20f, 0, -52f), new Vector3(-32f, 0, -55f) })
+            TreeAt(pk, "ParkTree", tp, 0f, 2.4f, false);
+        for (int k = 0; k < 3; k++) Box(pk, "PicnicTable", new Vector3(-18f - k * 6f, 0.4f, -50f), new Vector3(2f, 0.08f, 0.9f), M("DeskWood"));
+
+        // ======== CLAVICLE AVENUE (north): houses, the school, the library, the fire station; the farm and the lookout
+        House(g, "House: the Femorellis", -18f, 9f, "Wall2", "CaneRed");
+        Folk(g, "Mrs Femorelli", "#ffcc80", 4, new Vector3(-16f, 0, 55.6f), 180f, "Town2/t2_house1");
+        // the school
+        Box(g, "School", new Vector3(-36f, 2.5f, 61f), new Vector3(14f, 5f, 8f), M("BrickWall"));
+        Text("SchoolSign", g, new Vector3(-36f, 4.2f, 56.95f), Face(Vector3.back), new Vector2(10f, 0.7f), 0.45f, "<b>BONETOWN ELEMENTARY</b>").color = Color.white;
+        for (int k = 0; k < 4; k++) OutWindow(g, new Vector3(-41f + k * 3.3f, 2f, 56.95f), Vector3.back);
+        Folk(g, "Miss Ossica", "#ce93d8", 20, new Vector3(-31f, 0, 55.6f), 180f, "Town2/t2_teacher");
+        var bell = Gg(g, "School bell", new Vector3(-28f, 0, 55.8f), 180f, "Town2/g_schoolbell", 1f, 2.6f);
+        DPrim(PrimitiveType.Cylinder, "BellPost", bell.transform, new Vector3(0, 1.2f, 0), new Vector3(0.08f, 1.2f, 0.08f), M("Metal"));
+        var bb = Group(bell.transform, "Bell", new Vector3(0, 2.4f, 0));
+        Prim(PrimitiveType.Sphere, "Bell", bb, new Vector3(0, -0.12f, 0), new Vector3(0.3f, 0.35f, 0.3f), M("Brass"));
+        bell.target = bb; bell.wobble = 30f;
+        // the library
+        Box(g, "Library", new Vector3(-56f, 2.5f, 61f), new Vector3(10f, 5f, 8f), M("Concrete"));
+        for (int k = 0; k < 3; k++) DPrim(PrimitiveType.Cylinder, "LibColumn", g, new Vector3(-59f + k * 3f, 2f, 56.6f), new Vector3(0.4f, 2f, 0.4f), M("CaneWhite"));
+        Text("LibrarySign", g, new Vector3(-56f, 4.3f, 56.95f), Face(Vector3.back), new Vector2(8f, 0.6f), 0.4f, "<b>LIBRARY</b>  <size=60%>(shh)</size>").color = new Color(0.3f, 0.25f, 0.2f);
+        Folk(g, "Mrs Quietbone", "#a1887f", 0, new Vector3(-53f, 0, 55.6f), 180f, "Town2/t2_librarian");
+        Gear("Mrs Quietbone", 2, PrimitiveType.Cube, new Vector3(0, 0.03f, 0.16f), new Vector3(0.25f, 0.05f, 0.02f), "Black");
+        // the fire station (a truck, a ladder, a cat on the roof)
+        Box(g, "FireStation", new Vector3(-73f, 3f, 62f), new Vector3(12f, 6f, 9f), M("GiftRed"));
+        Box(g, "FireDoor", new Vector3(-73f, 2f, 57.45f), new Vector3(5f, 4f, 0.05f), M("Black"), false);
+        Text("FireSign", g, new Vector3(-73f, 5f, 57.45f), Face(Vector3.back), new Vector2(10f, 0.6f), 0.4f, "<b>FIRE STATION No. 1</b>").color = Color.white;
+        Folk(g, "Captain Blaze", "#ff7043", 20, new Vector3(-68f, 0, 55.4f), 180f, "Town2/t2_fire");
+        Gear("Captain Blaze", 2, PrimitiveType.Sphere, new Vector3(0, 0.12f, -0.02f), new Vector3(0.34f, 0.2f, 0.4f), "GlowYellow");
+        var truck = Gg(g, "Fire truck", new Vector3(-76f, 0, 55.4f), 90f, "Town2/g_ladder", 2f, 2.2f);
+        Box(truck.transform, "Truck", new Vector3(0, 0.9f, 0), new Vector3(1.8f, 1.4f, 4.4f), M("GiftRed"), false);
+        Box(truck.transform, "Cab", new Vector3(0, 1.4f, 1.7f), new Vector3(1.8f, 1.2f, 1f), M("Glass"), false);
+        foreach (float wz in new[] { -1.4f, 1.4f }) foreach (float wx in new[] { -0.9f, 0.9f }) Prim(PrimitiveType.Cylinder, "Wheel", truck.transform, new Vector3(wx, 0.35f, wz), new Vector3(0.7f, 0.1f, 0.7f), M("Black")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        var ladder = Group(truck.transform, "Ladder", new Vector3(0, 1.7f, -1.8f));
+        foreach (float lx in new[] { -0.3f, 0.3f }) Prim(PrimitiveType.Cube, "Rail", ladder, new Vector3(lx, 0, 1.6f), new Vector3(0.06f, 0.06f, 3.4f), M("Metal"));
+        for (int k = 0; k < 8; k++) Prim(PrimitiveType.Cube, "Rung", ladder, new Vector3(0, 0, 0.1f + k * 0.42f), new Vector3(0.6f, 0.04f, 0.04f), M("Metal"));
+        truck.target = ladder; truck.rotateBy = new Vector3(-55f, 0, 0); truck.inTime = 1.5f;
+        Prim(PrimitiveType.Sphere, "RoofCat", g, new Vector3(-70f, 6.25f, 63f), new Vector3(0.3f, 0.25f, 0.45f), M("BoneWhite"));
+        House(g, "House: the Mowers", -90f, 9f, "WallGreen", "GiftBlue");
+        Folk(g, "Mr Mowbray", "#8bc34a", 14, new Vector3(-88f, 0, 55.6f), 180f, "Town2/t2_house2");
+        House(g, "House: Old Gruff", -102f, 9f, "Wall", "TrimDark");
+        Folk(g, "Old Gruff", "#78909c", 0, new Vector3(-100f, 0, 55.6f), 180f, "Town2/t2_house3");
+        for (int k = 0; k < 12; k++)
+            if (k % 3 != 1) TreeAt(g, "AvenueTree", new Vector3(-52f - k * 5f, 0, 43f), 0f, 2.2f, false);
+        for (int k = 0; k < 4; k++) Box(g, "AvenueBench", new Vector3(-59.5f - k * 15f, 0.42f, 44.8f), new Vector3(1.8f, 0.08f, 0.5f), M("DeskWood"));
+        // the farm (north of old Bonetown, east of the lane)
+        var fm = Group(g, "The farm", Vector3.zero);
+        Box(fm, "Barn", new Vector3(-20f, 2.5f, 40f), new Vector3(8f, 5f, 6f), M("GiftRed"));
+        foreach (float sgn in new[] { -1f, 1f }) Box(fm, "BarnRoof", new Vector3(-20f, 5.6f, 40f + sgn * 1.5f), new Vector3(8.4f, 0.2f, 3.6f), M("TrimDark"), false).transform.localRotation = Quaternion.Euler(sgn * 30f, 0, 0);
+        Box(fm, "BarnDoor", new Vector3(-20f, 1.6f, 36.97f), new Vector3(3f, 3.2f, 0.05f), M("CaneWhite"), false);
+        for (int r = 0; r < 4; r++) for (int c = 0; c < 5; c++) DPrim(PrimitiveType.Sphere, "Pumpkin", fm, new Vector3(-28f + c * 1.6f, 0.25f, 26f + r * 1.6f), new Vector3(0.6f, 0.45f, 0.6f), M("InkOrange"));
+        Box(fm, "PenFence", new Vector3(-15f, 0.5f, 31f), new Vector3(0.1f, 1f, 6f), M("DeskWood"));
+        Folk(fm, "Farmer Fibbs", "#a1887f", 22, new Vector3(-23.5f, 0, 35f), 180f, "Town2/t2_farmer");
+        Gear("Farmer Fibbs", 2, PrimitiveType.Cylinder, new Vector3(0, 0.12f, 0), new Vector3(0.45f, 0.03f, 0.45f), "PixelSand");
+        var crow = Gg(fm, "The scarecrow", new Vector3(-26f, 0, 32f), 180f, "Town2/g_scarecrow", 1.2f, 2.4f);
+        DPrim(PrimitiveType.Cylinder, "Stake", crow.transform, new Vector3(0, 1f, 0), new Vector3(0.08f, 1f, 0.08f), M("DeskWood"));
+        var sc = Group(crow.transform, "Scarecrow", new Vector3(0, 0.4f, 0));
+        var scr = SkeletonRig(sc, "Rig", BoneMat("Scarecrow", "#d7ccc8"));
+        scr[3].localRotation = Quaternion.Euler(0, 0, -85); scr[4].localRotation = Quaternion.Euler(0, 0, 85);
+        Prim(PrimitiveType.Cylinder, "StrawHat", scr[2], new Vector3(0, 0.12f, 0), new Vector3(0.45f, 0.03f, 0.45f), M("PixelSand"));
+        Prim(PrimitiveType.Sphere, "Crow", scr[4], new Vector3(0, -0.5f, 0), new Vector3(0.15f, 0.15f, 0.25f), M("Black"));
+        crow.target = sc; crow.wobble = 8f;
+        var cow = Gg(fm, "The cow", new Vector3(-17f, 0, 31f), -90f, "Town2/g_cow", 2f, 1.6f);
+        var cw = Group(cow.transform, "Cow", Vector3.zero);
+        Prim(PrimitiveType.Cylinder, "Spine", cw, new Vector3(0, 1f, 0), new Vector3(0.1f, 0.8f, 0.1f), M("BoneWhite")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        for (int k = 0; k < 7; k++) Prim(PrimitiveType.Cylinder, "Rib", cw, new Vector3(0, 0.8f, -0.5f + k * 0.17f), new Vector3(0.6f, 0.01f, 0.04f), M("BoneWhite")).transform.localRotation = Quaternion.Euler(0, 0, 90);
+        Prim(PrimitiveType.Sphere, "Skull", cw, new Vector3(0, 1.05f, 1f), new Vector3(0.35f, 0.35f, 0.55f), M("BoneWhite"));
+        foreach (float hx in new[] { -0.2f, 0.2f }) Prim(PrimitiveType.Cylinder, "Horn", cw, new Vector3(hx, 1.3f, 0.9f), new Vector3(0.05f, 0.12f, 0.05f), M("CaneWhite"));
+        foreach (float lx in new[] { -0.2f, 0.2f }) foreach (float lz in new[] { -0.6f, 0.6f }) Prim(PrimitiveType.Cube, "Leg", cw, new Vector3(lx, 0.4f, lz), new Vector3(0.07f, 0.8f, 0.07f), M("BoneWhite"));
+        cow.target = cw; cow.wobble = 5f; cow.bob = 0.05f;
+        // the lookout hill (west of the lane is the hedge; it sits east of the lane, north of the barn)
+        for (int k = 0; k < 6; k++) Box(g, "Hill step " + k, new Vector3(-36f, 0.2f + k * 0.4f, 31f), new Vector3(10f - k * 1.4f, 0.4f, 10f - k * 1.4f), M(k % 2 == 0 ? "Grass" : "Hedge"));
+        Box(g, "LookoutBench", new Vector3(-36f, 2.85f, 31.6f), new Vector3(1.6f, 0.08f, 0.5f), M("DeskWood"));
+        DPrim(PrimitiveType.Cylinder, "Viewer", g, new Vector3(-36f, 3.2f, 30.2f), new Vector3(0.15f, 0.4f, 0.15f), M("Metal"));
+        Text("LookoutSign", g, new Vector3(-36f, 3.6f, 30f), Face(Vector3.back), new Vector2(2.4f, 0.4f), 0.14f, "<b>THE LOOKOUT</b>  <size=70%>(you can see the whole hedge from here)</size>").color = Color.white;
+
+        // ---- people walking about the new streets
+        var wg = Group(g, "Wanderers", Vector3.zero);
+        MakeWanderer(wg, "Postie Pete", "#5c6bc0", new[] { new Vector3(-14f, 0, -28.5f), new Vector3(-108f, 0, -28.5f), new Vector3(-108f, 0, -31.5f), new Vector3(-14f, 0, -31.5f) }, new[] { 1f, 1f, 1f, 1f }, 1.0f, 0, "Town2/w_mail", CaptionFor("w_mail"));
+        MakeWanderer(wg, "Jogging Jill", "#ec407a", new[] { new Vector3(-14f, 0, 48.5f), new Vector3(-108f, 0, 48.5f), new Vector3(-108f, 0, 51.5f), new Vector3(-14f, 0, 51.5f) }, new[] { 2.4f, 2.4f, 2.4f, 2.4f }, 1.1f, 9000, "Town2/w_jog", CaptionFor("w_jog"));
+        MakeWanderer(wg, "Scooter Sid", "#26c6da", new[] { new Vector3(-14f, 0, -27.8f), new Vector3(-108f, 0, -27.8f), new Vector3(-108f, 0, -32.2f), new Vector3(-14f, 0, -32.2f) }, new[] { 3f, 3f, 3f, 3f }, 1.1f, 4000, "Town2/w_scooter", CaptionFor("w_scooter"));
+        MakeWanderer(wg, "Dot and Biscuit", "#8d6e63", new[] { new Vector3(-20f, 0, 52.5f), new Vector3(-100f, 0, 52.5f) }, new[] { 1f, 1f }, 0.8f, 2000, "Town2/w_dog", CaptionFor("w_dog"));
+        MakeWanderer(wg, "Tourist Tess", "#ffee58", new[] { new Vector3(-42f, 0, -6f), new Vector3(-46f, 0, -12f), new Vector3(-46f, 0, -34.5f), new Vector3(-30f, 0, -34.5f) }, new[] { 1f, 1f, 1f, 1f }, 0.9f, 0, "Town2/w_tourist", CaptionFor("w_tourist"));
+        MakeWanderer(wg, "Tourist Ted", "#ffca28", new[] { new Vector3(-44.5f, 0, 12f), new Vector3(-46f, 0, 18f), new Vector3(-46f, 0, 46f), new Vector3(-80f, 0, 46f) }, new[] { 1f, 1f, 1f, 1f }, 0.9f, 15000, "Town2/w_tourist2", CaptionFor("w_tourist2"));
+        report.Add("Bonetown districts: the town is now 98 x 130 m round the Marrow Arms' grounds: Main Street (8 shops, the town hall, a market, a bus stop, a park with a pond and a merry-go-round) and Clavicle Avenue (houses, a school, a library, a fire station, a farm, a lookout); 19 voiced townsfolk, 6 wanderers, 6 gags");
     }
 
     // =================================================================== the second batch of Station stops: helpers
@@ -6345,24 +6600,15 @@ public static class FirCheckBuilder
         Text("CorridorSign", g, new Vector3(-9.6f, 2.3f, 5.18f), Face(Vector3.back), new Vector2(4f, 0.4f), 0.2f, "<b>BONETOWN</b> this way  <").color = new Color(1f, 0.85f, 0.4f);
         // ---- the town: grass, sky, a hedge round the walls
         Box(g, "Grass", new Vector3(cx, -0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Grass"));
-        Box(g, "Sky", new Vector3(cx, h + 0.1f, cz), new Vector3(36f, 0.2f, 36f), M("Sky"));
-        // the west wall, with the doorway through to the Marrow Arms apartments
-        Box(g, "WallW S", new Vector3(x1 - 0.1f, h / 2, (z0 + 9.8f) / 2f), new Vector3(0.2f, h, 9.8f - z0), M("Sky"));
-        Box(g, "WallW N", new Vector3(x1 - 0.1f, h / 2, (12.2f + z1) / 2f), new Vector3(0.2f, h, z1 - 12.2f), M("Sky"));
-        Box(g, "WallW Top", new Vector3(x1 - 0.1f, (3f + h) / 2f, 11f), new Vector3(0.2f, h - 3f, 2.4f), M("Sky"));
-        Box(g, "WallN", new Vector3(cx, h / 2, z1 + 0.1f), new Vector3(36.4f, h, 0.2f), M("Sky"));
-        Box(g, "WallS", new Vector3(cx, h / 2, z0 - 0.1f), new Vector3(36.4f, h, 0.2f), M("Sky"));
-        // the east wall, with the doorway in from the corridor
-        Box(g, "WallE S", new Vector3(x0 + 0.1f, h / 2, (z0 + 2.8f) / 2f), new Vector3(0.2f, h, 2.8f - z0), M("Sky"));
-        Box(g, "WallE N", new Vector3(x0 + 0.1f, h / 2, (5.2f + z1) / 2f), new Vector3(0.2f, h, z1 - 5.2f), M("Sky"));
-        Box(g, "WallE Top", new Vector3(x0 + 0.1f, (3f + h) / 2f, 4f), new Vector3(0.2f, h - 3f, 2.4f), M("Sky"));
+        // the town's sky and its north, south and west sides are built with the new districts (BuildTownDistricts);
+        // the east wall, with the doorway in from the corridor, runs the whole length of the bigger town
+        const float TS = -60f, TN = 70f, TH = 16f;
+        Box(g, "WallE S", new Vector3(x0 + 0.1f, TH / 2, (TS + 2.8f) / 2f), new Vector3(0.2f, TH, 2.8f - TS), M("Sky"));
+        Box(g, "WallE N", new Vector3(x0 + 0.1f, TH / 2, (5.2f + TN) / 2f), new Vector3(0.2f, TH, TN - 5.2f), M("Sky"));
+        Box(g, "WallE Top", new Vector3(x0 + 0.1f, (3f + TH) / 2f, 4f), new Vector3(0.2f, TH - 3f, 2.4f), M("Sky"));
         foreach (var hw in new[] {
-            new { p = new Vector3(x1 + 0.25f, 0.6f, (z0 + 9.6f) / 2f), s = new Vector3(0.3f, 1.2f, 9.6f - z0) },
-            new { p = new Vector3(x1 + 0.25f, 0.6f, (12.4f + z1) / 2f), s = new Vector3(0.3f, 1.2f, z1 - 12.4f) },
-            new { p = new Vector3(cx, 0.6f, z1 - 0.25f), s = new Vector3(36f, 1.2f, 0.3f) },
-            new { p = new Vector3(cx, 0.6f, z0 + 0.25f), s = new Vector3(36f, 1.2f, 0.3f) },
-            new { p = new Vector3(x0 - 0.25f, 0.6f, (z0 + 2.6f) / 2f), s = new Vector3(0.3f, 1.2f, 2.6f - z0) },
-            new { p = new Vector3(x0 - 0.25f, 0.6f, (5.4f + z1) / 2f), s = new Vector3(0.3f, 1.2f, z1 - 5.4f) } })
+            new { p = new Vector3(x0 - 0.25f, 0.6f, (TS + 2.6f) / 2f), s = new Vector3(0.3f, 1.2f, 2.6f - TS) },
+            new { p = new Vector3(x0 - 0.25f, 0.6f, (5.4f + TN) / 2f), s = new Vector3(0.3f, 1.2f, TN - 5.4f) } })
             Box(g, "Hedge", hw.p, hw.s, M("Hedge"), false);
         Text("TownTitle", g, new Vector3(x0 - 0.02f, 4.2f, 4f), Face(Vector3.left), new Vector2(6f, 0.8f), 0.6f, "<b>BONETOWN</b>").color = new Color(1f, 0.95f, 0.85f);
         Text("TownWelcome", g, new Vector3(x0 - 0.02f, 3.45f, 4f), Face(Vector3.left), new Vector2(7f, 0.4f), 0.17f,
@@ -6400,7 +6646,7 @@ public static class FirCheckBuilder
         }
         TreeAt(g, "TownTree", new Vector3(-14.0f, 0, -1.3f), -90f, 2.6f, false);
         TreeAt(g, "TownTree", new Vector3(-13.8f, 0, 16.6f), -90f, 2.6f, true);
-        TreeAt(g, "TownTree", new Vector3(-46f, 0, 18.5f), 135f, 2.2f, false);
+        TreeAt(g, "TownTree", new Vector3(-13.4f, 0, 26f), 135f, 2.2f, false);   // (moved out of the way of the north lane)
 
         // ---- the residents: six homes along the north side, and four along the south (the snack shack, the news, two homes)
         var homes = new[] {
@@ -6421,7 +6667,8 @@ public static class FirCheckBuilder
             float w = roomW[i], s = hm.side;
             float back = s > 0 ? z1 : z0, front = back - s * 4.5f, mid = (back + front) / 2f;
             var u = Group(g, "Home " + hm.who, Vector3.zero);
-            Box(u, "BackWall", new Vector3(hm.x, 1.75f, back - s * 0.12f), new Vector3(w, 3.5f, 0.04f), M(hm.wall), false);
+            Box(u, "BackWall", new Vector3(hm.x, 1.75f, back - s * 0.12f), new Vector3(w, 3.5f, 0.04f), M(hm.wall), true);
+            Box(u, "Outside", new Vector3(hm.x, 1.75f, back + s * 0.02f), new Vector3(w + 0.2f, 3.5f, 0.04f), M("BrickWall"), false);
             Box(u, "SideA", new Vector3(hm.x - w / 2f, 1.75f, mid), new Vector3(0.2f, 3.5f, 4.5f), M("Trim"));
             Box(u, "SideB", new Vector3(hm.x + w / 2f, 1.75f, mid), new Vector3(0.2f, 3.5f, 4.5f), M("Trim"));
             Box(u, "Roof", new Vector3(hm.x, 3.6f, mid), new Vector3(w + 0.4f, 0.2f, 4.9f), M(s > 0 ? "CaneRed" : "GiftBlue"));
