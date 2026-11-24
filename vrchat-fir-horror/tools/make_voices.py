@@ -733,6 +733,20 @@ AREAS2 = [
     ("Vault/sp_vend", "mb-us2", 140, 40, 1.0, "narr", "The machine only sells spoons. You pressed for a soda. You got a spoon. It's the best spoon you've ever seen."),
     ("Vault/sp_chair", "mb-us2", 140, 40, 1.0, "narr", "You sat in the chair. It's too comfortable. You've been sitting here for three days. You don't mind."),
     ("Vault/sp_door", "mb-us2", 140, 40, 1.0, "narr", 'Anomaly Bone nine nine nine: a door that always leads to the lobby. Researchers are furious.'),
+    ("Portal/rm_plaque", "mb-us2", 135, 40, 1.0, "narr", 'An interdimensional garage, inspired by cartoons about a cranky genius dragging his family through portals. Everyone here is a skeleton. In every dimension.'),
+    ("Portal/rm_genius", "mb-us2", 150, 25, 0.88, "skel", 'Listen. I built a portal to every dimension there is. Most of them are worse. One of them is just this garage. But pink.'),
+    ("Portal/rm_anxious", "mb-us3", 170, 75, 1.15, "skel", 'Oh boy. Oh no. Are we going through the portal again? I left some of my bones in the last dimension. The important ones.'),
+    ("Portal/rm_flux", "mb-us2", 140, 40, 1.0, "narr", "The thingamaflux. Everyone has one. Nobody can explain it. You turn the handle, and it goes thwup. That's all it does. It's essential."),
+    ("Portal/rm_tv1", "mb-us3", 160, 55, 1.05, "radio", "Channel ninety: celebrity housewives of the sun. They're all on fire. Nobody minds."),
+    ("Portal/rm_tv2", "mb-us3", 160, 55, 1.05, "radio", 'Channel twelve: a cooking show where the food cooks the chef.'),
+    ("Portal/rm_tv3", "mb-us3", 160, 55, 1.05, "radio", 'Channel three: a man shouting the weather at a goat. The goat disagrees.'),
+    ("Portal/rm_tv4", "mb-us3", 160, 55, 1.05, "radio", 'Channel infinity: an advert for a car that is also a dog. It runs on treats.'),
+    ("Portal/rm_sandwich", "mb-us1", 130, 50, 0.95, "skel", "I'm a sandwich. Everyone here is a sandwich. Please don't look at me like that."),
+    ("Portal/rm_alien", "mb-us3", 150, 80, 1.2, "glitch", 'Welcome to the galactic market! Three eyes, two prices, and one refund policy: no.'),
+    ("Portal/rm_saucer", "mb-us2", 140, 40, 1.0, "narr", 'The saucer takes off! It flies in a circle. It has never flown in anything but a circle.'),
+    ("Portal/rm_sideways", "mb-us2", 140, 40, 1.0, "narr", 'Welcome to the sideways dimension. The floor is the wall. Your coffee is everywhere.'),
+    ("Portal/rm_pink", "mb-us2", 140, 40, 1.0, "narr", "It's the garage again. But pink. The skeletons here are pink too. They seem happier."),
+    ("Portal/rm_portal", "mb-us2", 140, 40, 1.0, "narr", 'Portal opened! Please mind the green.'),
 ]
 SKV.update({"santa": ("mb-us2", 125, 20, 0.85), "elf": ("mb-us1", 190, 90, 1.35), "reindeer": ("mb-us3", 150, 55, 1.05), "snowman": ("mb-us2", 130, 40, 0.95)})
 COMBO += [

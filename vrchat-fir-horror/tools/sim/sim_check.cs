@@ -26,6 +26,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "scream") { ScreamTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "four") { FourTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "scp") { ScpTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "rm") { PortalGarageTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -244,6 +245,7 @@ public static class SimCheck {
     ScreamTests(A, B);
     FourTests(A, B);
     ScpTests(A, B);
+    PortalGarageTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -970,6 +972,32 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void PortalGarageTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The interdimensional garage");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "PORTAL GARAGE")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2588f, 0, 22f)) < 0.3f, "the Station sends Alice to the garage");
+    Check(Sim.BuildLog.Any(l => l.Contains("The Interdimensional Garage:")), Plain(Sim.BuildLog.FirstOrDefault(l => l.Contains("Interdimensional")) ?? "missing"));
+    var tv = All<FirChannels>(A).First(c => c.name == "Dimension remote");
+    var seen = new List<string>();
+    for (int k = 0; k < 4; k++) { Sim.Press(A, tv); Sim.Run(0.6f); seen.Add(tv.channels[tv.Channel()].activeSelf && Plain(tv.caption.text).StartsWith("Channel") ? tv.channels[tv.Channel()].name : "BAD"); }
+    Check(seen.Distinct().Count() == 4 && !seen.Contains("BAD"), "the dimension TV: " + string.Join(", ", seen));
+    var portal = All<FirPortal>(A).First(p => p.a.position.x > 2600f && p.a.position.x < 2610f);
+    A.player.pos = portal.a.position + new Vector3(0, 0.05f, 0); Sim.Run(0.3f);
+    Check(A.player.pos.x > 2620f, "through the green portal into the dimensions " + A.player.pos);
+    var saucer = All<FirRide>(A).First(r => r.rotor != null && r.rotor.parent != null && r.rotor.parent.name == "Saucer ride");
+    var q0 = saucer.rotor.rotation; Sim.Run(2f);
+    Check(Quaternion.Angle(q0, saucer.rotor.rotation) > 10f && All<VRC.SDK3.Components.VRCStation>(A).Any(st => st.name == "Saucer seat"), "the saucer flies round in a circle, with a seat");
+    A.player.pos = new Vector3(2635f, 0.05f, 40f); Sim.Run(1.5f);
+    A.player.pos = portal.b.position + new Vector3(0, 0.05f, 0); Sim.Run(0.3f);
+    Check(A.player.pos.x < 2610f, "...and back out through the portal to the garage");
+    var voiced = All<FirRainbowSkeleton>(A).Count(r => r.voice.clip != null && r.voice.clip.name.StartsWith("rm_") && r.caption.Length > 3);
+    Check(voiced == 5, voiced + " voiced, captioned skeletons (the genius, the assistant, their pink selves, an alien)");
+    int gagN; var gagBad = new List<string>();
+    int gagOk = RunGags(B, g => g.transform.position.x > 2565f && g.transform.position.x < 2695f, out gagN, gagBad);
+    Check(gagOk == gagN && gagN == 4, gagOk + " of " + gagN + " gags (the thingamaflux, the sideways sign, the sandwich, the saucer button)" + string.Concat(gagBad.Select(x => " | " + x)));
   }
 
   static void ScpTests(Sim.Client A, Sim.Client B) {

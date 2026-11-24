@@ -237,6 +237,7 @@ public static class FirCheckBuilder
         BuildSeabedTown(root);
         BuildBattleIsland(root);
         BuildContainment(root);
+        BuildPortalGarage(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -3488,6 +3489,145 @@ public static class FirCheckBuilder
         report.Add("The Containment Facility: five new anomalies in cells (the sock dryer, the polite void, the too-comfortable chair, the duck that knows your name, the spoon vending machine), BONE-999 (a door to the lobby), a breach alarm, a records terminal, staff; 6 gags");
     }
 
+    // =================================================================== the interdimensional garage (and the dimensions through its portal)
+
+    static Transform GreenPortal(Transform g, Vector3 at, float yaw)
+    {
+        var p = Group(g, "Green portal", at);
+        p.localRotation = Quaternion.Euler(0, yaw, 0);
+        Prim(PrimitiveType.Cylinder, "Swirl", p, new Vector3(0, 1.3f, 0), new Vector3(2.2f, 0.04f, 2.6f), M("GlowGreen")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        Prim(PrimitiveType.Cylinder, "Core", p, new Vector3(0, 1.3f, 0.02f), new Vector3(1.4f, 0.04f, 1.8f), M("AlienGlow")).transform.localRotation = Quaternion.Euler(90, 0, 0);
+        return p;
+    }
+
+    static void BuildPortalGarage(Transform root)
+    {
+        var g = AreaShell(root, "The Interdimensional Garage", 2570f, 2606f, 20f, 50f, 6f, "Concrete", "Wall2", "Ceiling",
+                          "THE INTERDIMENSIONAL GARAGE", new Color(0.4f, 1f, 0.5f), "a cranky genius, an anxious assistant, and a portal to everywhere (mostly worse places)", "PORTAL GARAGE");
+        Plaque(g, new Vector3(2594f, 0, 23.5f), "<b>THE INTERDIMENSIONAL GARAGE</b>\ninspired by cartoons about a cranky genius\ndragging his family through portals\n\n<size=80%>(press to hear more)</size>", "Portal/rm_plaque");
+        // the garage: workbench, tools on the wall, a saucer under a sheet
+        Box(g, "Workbench", new Vector3(2574f, 0.45f, 40f), new Vector3(1.2f, 0.9f, 6f), M("DeskWood"));
+        Box(g, "Pegboard", new Vector3(2570.1f, 2f, 40f), new Vector3(0.05f, 1.6f, 6f), M("Pegboard"), false);
+        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Cube, "Tool", g, new Vector3(2570.2f, 1.7f + (k % 2) * 0.5f, 37.5f + k * 0.7f), new Vector3(0.04f, 0.4f, 0.08f), M(k % 3 == 0 ? "HeroRed" : "Metal"));
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Cylinder, "Beaker", g, new Vector3(2574f, 1.05f, 38f + k * 0.9f), new Vector3(0.15f, 0.15f, 0.15f), M(k % 2 == 0 ? "GlowGreen" : "GemPurple"));
+        Prim(PrimitiveType.Sphere, "Saucer under a sheet", g, new Vector3(2598f, 0.5f, 42f), new Vector3(5f, 1.2f, 4f), M("CaneWhite"));
+        Folk(g, "Grandpa Genius", "#b0bec5", 15, new Vector3(2575.4f, 0, 42f), -90f, "Portal/rm_genius");
+        Gear("Grandpa Genius", 1, PrimitiveType.Cube, new Vector3(0, 0, 0), new Vector3(0.5f, 0.9f, 0.34f), "LabWhite");
+        Gear("Grandpa Genius", 2, PrimitiveType.Cube, new Vector3(0, 0.17f, -0.03f), new Vector3(0.3f, 0.12f, 0.3f), "InkBlue", new Vector3(0, 0, 0));
+        Folk(g, "Nervous Nate", "#ffe082", 2, new Vector3(2577.5f, 0, 39f), -110f, "Portal/rm_anxious", 0.9f);
+        Gear("Nervous Nate", 1, PrimitiveType.Cube, new Vector3(0, 0.1f, 0), new Vector3(0.44f, 0.6f, 0.32f), "GlowYellow");
+        // the thingamaflux
+        var flux = Gg(g, "The thingamaflux", new Vector3(2586f, 0, 46f), 180f, "Portal/rm_flux", 1.2f, 1.6f);
+        Box(flux.transform, "Shelf", new Vector3(0, 0.45f, 0), new Vector3(0.8f, 0.9f, 0.6f), M("DeskWood"), false);
+        var fx = Group(flux.transform, "Flux", new Vector3(0, 1f, 0));
+        Prim(PrimitiveType.Capsule, "Body", fx, new Vector3(0, 0.15f, 0), new Vector3(0.2f, 0.18f, 0.2f), M("BonePink"));
+        Prim(PrimitiveType.Sphere, "Knob", fx, new Vector3(0.15f, 0.25f, 0), Vector3.one * 0.1f, M("GemPurple"));
+        Prim(PrimitiveType.Cube, "Handle", fx, new Vector3(-0.18f, 0.1f, 0), new Vector3(0.04f, 0.04f, 0.2f), M("Metal"));
+        fx.localScale = Vector3.one * 1.4f;
+        flux.target = fx; flux.rotateBy = new Vector3(0, 0, 360f); flux.inTime = 0.8f;
+        // the TV that picks up other dimensions
+        var tv = Group(g, "Dimension TV", new Vector3(2590f, 0, 30f));
+        Box(tv, "Cabinet", new Vector3(0, 0.5f, 0), new Vector3(1.8f, 1f, 0.8f), M("DoorWood"));
+        Box(tv, "Set", new Vector3(0, 1.45f, 0), new Vector3(1.6f, 0.9f, 0.6f), M("Black"));
+        var snow = Group(tv, "Static", new Vector3(0, 1.45f, -0.31f));
+        Prim(PrimitiveType.Cube, "Snow", snow, Vector3.zero, new Vector3(1.4f, 0.75f, 0.01f), M("Mist"));
+        string[] chMat = { "GlowFlame", "GiftGreen", "LabGrey", "InkBlue" };
+        var chans = new GameObject[4]; var lines = new AudioSource[4]; var caps = new string[4];
+        for (int c = 0; c < 4; c++)
+        {
+            var ch = Group(tv, "Dimension channel " + (c + 1), new Vector3(0, 1.45f, -0.32f));
+            Prim(PrimitiveType.Cube, "Picture", ch, Vector3.zero, new Vector3(1.4f, 0.75f, 0.01f), M(chMat[c]));
+            var mini = Mini(ch, "On screen " + c, new Vector3(0, -0.35f, -0.02f), 180f, 0.35f, "#e0e0e0");
+            if (c == 0) Prim(PrimitiveType.Sphere, "Flames", mini[2], new Vector3(0, 0.2f, 0), Vector3.one * 0.3f, M("GlowFlame"));
+            chans[c] = ch.gameObject;
+            lines[c] = Src(tv, new Vector3(0, 1.45f, -0.4f), Clip("Portal/rm_tv" + (c + 1)), false, 1f, 1f, 12f, false);
+            caps[c] = CaptionFor("rm_tv" + (c + 1));
+        }
+        var remote = Group(g, "Dimension remote", new Vector3(2588f, 0.9f, 28.5f));
+        Box(g, "RemoteTable", new Vector3(2588f, 0.45f, 28.5f), new Vector3(0.6f, 0.9f, 0.6f), M("DeskWood"));
+        Prim(PrimitiveType.Cube, "Remote", remote, new Vector3(0, 0.03f, 0), new Vector3(0.12f, 0.05f, 0.3f), M("Black"));
+        remote.gameObject.AddComponent<BoxCollider>().size = new Vector3(0.5f, 0.3f, 0.6f);
+        var fc = Add<FirChannels>(remote.gameObject);
+        fc.channels = chans; fc.lines = lines; fc.captions = caps; fc.staticScreen = snow.gameObject;
+        fc.caption = Text("DimCaption", g, new Vector3(2590f, 2.4f, 29.55f), Face(Vector3.back), new Vector2(3.4f, 0.5f), 0.12f, "");
+        fc.caption.color = Color.white;
+        fc.click = Src(remote.transform, Vector3.zero, Clip("switch"), false, 1f, 1f, 6f, false);
+        SetInteract(fc, "Change the dimension", 2.5f);
+        // ---- the dimensions, through the portal (their own big space east of the garage)
+        var d = Group(root, "The Dimensions", Vector3.zero);
+        float x0 = 2620f, x1 = 2690f, z0 = 20f, z1 = 80f, h = 25f;
+        Box(d, "Ground", new Vector3((x0 + x1) / 2f, -0.1f, (z0 + z1) / 2f), new Vector3(x1 - x0, 0.2f, z1 - z0), M("PortalPurple"));
+        Box(d, "Sky", new Vector3((x0 + x1) / 2f, h + 0.1f, (z0 + z1) / 2f), new Vector3(x1 - x0, 0.2f, z1 - z0), M("NightSky"));
+        Box(d, "WallW", new Vector3(x0 - 0.1f, h / 2, (z0 + z1) / 2f), new Vector3(0.2f, h, z1 - z0), M("NightSky"));
+        Box(d, "WallE", new Vector3(x1 + 0.1f, h / 2, (z0 + z1) / 2f), new Vector3(0.2f, h, z1 - z0), M("NightSky"));
+        Box(d, "WallS", new Vector3((x0 + x1) / 2f, h / 2, z0 - 0.1f), new Vector3(x1 - x0, h, 0.2f), M("NightSky"));
+        Box(d, "WallN", new Vector3((x0 + x1) / 2f, h / 2, z1 + 0.1f), new Vector3(x1 - x0, h, 0.2f), M("NightSky"));
+        for (int k = 0; k < 7; k++) DPrim(PrimitiveType.Sphere, "Planet", d, new Vector3(2625f + k * 10f, 18f + (k % 3) * 2f, 78f), Vector3.one * (2f + (k % 3)), M(new[] { "GlowGreen", "InkOrange", "GemPurple", "InkBlue" }[k % 4]));
+        var pa = GreenPortal(g, new Vector3(2604f, 0, 36f), 90f);
+        var pb = GreenPortal(d, new Vector3(2626f, 0, 30f), 90f);
+        var gp = Add<FirPortal>(pa.gameObject); gp.a = pa; gp.b = pb; gp.radius = 0.9f;
+        gp.sfx = Src(pa, new Vector3(0, 1f, 0), Clip("Portal/rm_portal"), false, 0f, 1f, 5f, false);
+        Text("PortalSign", g, new Vector3(2603.9f, 3f, 36f), Face(Vector3.left), new Vector2(3f, 0.4f), 0.2f, "<b>THE PORTAL</b> <size=60%>(walk in. walk back out to come home)</size>").color = new Color(0.4f, 1f, 0.5f);
+        // the sideways dimension: the furniture is on the wall
+        var sw = Group(d, "Sideways dimension", Vector3.zero);
+        Box(sw, "SideWall", new Vector3(2640f, 6f, 79.8f), new Vector3(14f, 12f, 0.2f), M("Wall2"));
+        for (int k = 0; k < 4; k++) Box(sw, "Sideways furniture", new Vector3(2635f + k * 3.2f, 3f + (k % 2) * 3f, 79.2f), new Vector3(1.4f, 0.9f, 1f), M(new[] { "Seat", "DeskWood", "Curtain", "GiftBlue" }[k]), false);
+        var sws = Gg(d, "Sideways sign", new Vector3(2640f, 0, 76f), 0f, "Portal/rm_sideways", 1.4f, 2f);
+        var sb = Group(sws.transform, "Sign", new Vector3(0, 1.4f, 0));
+        Prim(PrimitiveType.Cube, "Board", sb, Vector3.zero, new Vector3(1.4f, 0.6f, 0.05f), M("Board"));
+        Text("SignText", sb, new Vector3(0, 0, -0.03f), Quaternion.identity, new Vector2(1.3f, 0.5f), 0.12f, "<b>THE SIDEWAYS DIMENSION</b>").color = Color.white;
+        sb.localRotation = Quaternion.Euler(0, 0, 90);
+        sws.target = sb; sws.rotateBy = new Vector3(0, 0, -90f);
+        // the sandwich dimension
+        for (int k = 0; k < 6; k++)
+        {
+            var sp = new Vector3(2660f + (k % 3) * 3f, 0, 40f + (k / 3) * 4f);
+            DPrim(PrimitiveType.Cube, "SandwichBread", d, sp + new Vector3(0, 0.15f, 0), new Vector3(1.2f, 0.3f, 1.2f), M("Bun"));
+            DPrim(PrimitiveType.Cube, "SandwichFilling", d, sp + new Vector3(0, 0.4f, 0), new Vector3(1.25f, 0.2f, 1.25f), M(k % 2 == 0 ? "GiftGreen" : "GiftRed"));
+            DPrim(PrimitiveType.Cube, "SandwichTop", d, sp + new Vector3(0, 0.65f, 0), new Vector3(1.2f, 0.3f, 1.2f), M("Bun"));
+        }
+        var sand = Gg(d, "A sandwich person", new Vector3(2669f, 0, 44f), -90f, "Portal/rm_sandwich", 1.4f, 2f);
+        var sp2 = Group(sand.transform, "Sandwich", Vector3.zero);
+        Prim(PrimitiveType.Cube, "Bread", sp2, new Vector3(0, 0.5f, 0), new Vector3(1f, 0.25f, 1f), M("Bun"));
+        Prim(PrimitiveType.Cube, "Filling", sp2, new Vector3(0, 0.75f, 0), new Vector3(1.05f, 0.25f, 1.05f), M("GiftGreen"));
+        Prim(PrimitiveType.Cube, "Top", sp2, new Vector3(0, 1f, 0), new Vector3(1f, 0.25f, 1f), M("Bun"));
+        foreach (float ex in new[] { -0.2f, 0.2f }) Prim(PrimitiveType.Sphere, "Eye", sp2, new Vector3(ex, 1.05f, -0.51f), Vector3.one * 0.1f, M("Eye"));
+        Prim(PrimitiveType.Cube, "Leg", sp2, new Vector3(-0.2f, 0.2f, 0), new Vector3(0.08f, 0.4f, 0.08f), M("BoneWhite"));
+        Prim(PrimitiveType.Cube, "Leg", sp2, new Vector3(0.2f, 0.2f, 0), new Vector3(0.08f, 0.4f, 0.08f), M("BoneWhite"));
+        sand.target = sp2; sand.bob = 0.12f; sand.wobble = 6f;
+        Text("SandwichSign", d, new Vector3(2663f, 2.4f, 37.5f), Face(Vector3.back), new Vector2(6f, 0.5f), 0.3f, "<b>DIMENSION 44-B</b> <size=60%>(everyone is a sandwich)</size>").color = Color.white;
+        // the pink garage
+        var pg = Group(d, "The pink garage", Vector3.zero);
+        Box(pg, "PinkBack", new Vector3(2682f, 2f, 66f), new Vector3(10f, 4f, 0.2f), M("BonePink"));
+        Box(pg, "PinkSideA", new Vector3(2677f, 2f, 63f), new Vector3(0.2f, 4f, 6f), M("BonePink"));
+        Box(pg, "PinkSideB", new Vector3(2687f, 2f, 63f), new Vector3(0.2f, 4f, 6f), M("BonePink"));
+        Box(pg, "PinkRoof", new Vector3(2682f, 4.1f, 63f), new Vector3(10.4f, 0.2f, 6.4f), M("GemPink"));
+        Box(pg, "PinkBench", new Vector3(2682f, 0.45f, 65f), new Vector3(6f, 0.9f, 1.2f), M("GemPink"));
+        Folk(pg, "Pink Genius", "#f8bbd0", 13, new Vector3(2680f, 0, 63f), 180f, "Portal/rm_pink");
+        Folk(pg, "Pink Nate", "#fce4ec", 7, new Vector3(2683f, 0, 63f), 180f, "Portal/rm_pink", 0.9f);
+        // the galactic market
+        var mk = Stall(d, "GALACTIC MARKET", new Vector3(2650f, 0, 58f), 180f, "AlienGlow", "GemPurple");
+        Folk(mk, "Zorblax", "#76ff03", 3, new Vector3(0, 0, -0.3f), 0f, "Portal/rm_alien");
+        Gear("Zorblax", 2, PrimitiveType.Sphere, new Vector3(0, 0.18f, 0.14f), Vector3.one * 0.08f, "Eye");
+        foreach (float ax in new[] { -0.08f, 0.08f }) Gear("Zorblax", 2, PrimitiveType.Cylinder, new Vector3(ax, 0.25f, 0), new Vector3(0.02f, 0.12f, 0.02f), "AlienGlow");
+        // the saucer: ride it round in a circle
+        var ride = Group(d, "Saucer ride", new Vector3(2655f, 0, 30f));
+        var rot = Group(ride, "Rotor", new Vector3(0, 4f, 0));
+        var sauc = Group(rot, "Saucer", new Vector3(8f, 0, 0));
+        Prim(PrimitiveType.Sphere, "Hull", sauc, Vector3.zero, new Vector3(3.4f, 0.6f, 3.4f), M("Metal"));
+        Prim(PrimitiveType.Sphere, "Dome", sauc, new Vector3(0, 0.4f, 0), new Vector3(1.6f, 1f, 1.6f), M("Glass"));
+        for (int k = 0; k < 6; k++) Prim(PrimitiveType.Sphere, "Light", sauc, new Vector3(Mathf.Cos(k * 1.05f) * 1.5f, -0.05f, Mathf.Sin(k * 1.05f) * 1.5f), Vector3.one * 0.18f, M("GlowGreen"));
+        var saucExit = Marker(ride, "Saucer exit", new Vector3(0, 0.05f, -3f), 180f);
+        RideSeat(sauc, "Saucer seat", new Vector3(0, 0.2f, 0), 90f, saucExit);
+        var sr = Add<FirRide>(ride.gameObject); sr.kind = 0; sr.rotor = rot; sr.axis = Vector3.up; sr.degPerSec = 15f; sr.upright = new[] { sauc };
+        var launch = Gg(d, "Saucer launch button", new Vector3(2655f, 0, 27f), 180f, "Portal/rm_saucer", 1f, 1.6f);
+        Box(launch.transform, "Post", new Vector3(0, 0.5f, 0), new Vector3(0.3f, 1f, 0.3f), M("Metal"), false);
+        var lb = Group(launch.transform, "Button", new Vector3(0, 1.05f, 0));
+        Prim(PrimitiveType.Cylinder, "Button", lb, Vector3.zero, new Vector3(0.3f, 0.05f, 0.3f), M("GlowGreen"));
+        launch.target = lb; launch.moveBy = new Vector3(0, -0.04f, 0); launch.wobble = 5f;
+        report.Add("The Interdimensional Garage: a cranky genius, an anxious assistant, a thingamaflux, a TV of other dimensions (4 channels), and a portal to the dimensions: sideways, sandwiches, the pink garage, a galactic market and a saucer to ride; 4 gags");
+    }
+
     // =================================================================== the second batch of Station stops: helpers
 
     /// <summary>A pressable gag that says its recorded line (captioned from Data/captions.txt). The caller sets target and motion.</summary>
@@ -6404,7 +6544,7 @@ public static class FirCheckBuilder
     static void StationStop(string title, Transform arrive, Transform backParent, Vector3 backPos, Vector3 backNormal)
     {
         int i = stationSlots++;
-        var b = TeleportButton(stationBoard, title, new Vector3(-1.2f + (i % 4) * 0.8f, 2.17f - (i / 4) * 0.18f, -0.03f), Vector3.back, arrive, new Vector3(0.76f, 0.15f, 0.06f));   // 4 across, up to 40 stops
+        var b = TeleportButton(stationBoard, title, new Vector3(-1.32f + (i % 5) * 0.66f, 2.17f - (i / 5) * 0.18f, -0.03f), Vector3.back, arrive, new Vector3(0.64f, 0.15f, 0.06f));   // 5 across, up to 50 stops
         TeleportButton(backParent, "Back to the lobby", backPos, backNormal, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
     }
 

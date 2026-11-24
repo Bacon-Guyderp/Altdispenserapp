@@ -531,6 +531,20 @@ res_peach|I'm practising for the town dance. My partner is a broom. He's very qu
 res_plum|I keep eating, but nothing ever stays down. Or in.
 res_rust|Welcome to the snack shack! Today's special is soup. It goes right through you.
 res_sky|I'm writing a song! It's called Ribcage Rock. It's mostly xylophone.
+rm_alien|Welcome to the galactic market! Three eyes, two prices, and one refund policy: no.
+rm_anxious|Oh boy. Oh no. Are we going through the portal again? I left some of my bones in the last dimension. The important ones.
+rm_flux|The thingamaflux. Everyone has one. Nobody can explain it. You turn the handle, and it goes thwup. That's all it does. It's essential.
+rm_genius|Listen. I built a portal to every dimension there is. Most of them are worse. One of them is just this garage. But pink.
+rm_pink|It's the garage again. But pink. The skeletons here are pink too. They seem happier.
+rm_plaque|An interdimensional garage, inspired by cartoons about a cranky genius dragging his family through portals. Everyone here is a skeleton. In every dimension.
+rm_portal|Portal opened! Please mind the green.
+rm_sandwich|I'm a sandwich. Everyone here is a sandwich. Please don't look at me like that.
+rm_saucer|The saucer takes off! It flies in a circle. It has never flown in anything but a circle.
+rm_sideways|Welcome to the sideways dimension. The floor is the wall. Your coffee is everywhere.
+rm_tv1|Channel ninety: celebrity housewives of the sun. They're all on fire. Nobody minds.
+rm_tv2|Channel twelve: a cooking show where the food cooks the chef.
+rm_tv3|Channel three: a man shouting the weather at a goat. The goat disagrees.
+rm_tv4|Channel infinity: an advert for a car that is also a dog. It runs on treats.
 rt_hitch|Anyone heading west? I can pay you. I have a penny. Or exposure. Mostly the penny.
 rt_jar|The donation jar! Every penny helps. This one is mostly buttons. The buttons help too.
 rt_plaque|A fan room, inspired by Ryan Trahan's videos: penny challenges, trading up, and very long road trips. An unofficial tribute. Not affiliated.
