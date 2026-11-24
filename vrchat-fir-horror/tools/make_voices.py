@@ -1218,8 +1218,168 @@ ROOMS = [
     ("Rooms/rm_orl_ghost", M3, 100, 30, 0.85, "glitch", "Pick an orange. Go on. Pick one. They're so juicy. They're so fresh. They're so looking at you."),
     ("Rooms/rm_orl_countdown", M2, 140, 40, 1.0, "narr", "T minus ten. Nine. Eight. Seven. We have ignition. We have liftoff. We have, slightly, a fire."),
     ("Rooms/rm_orl_moonwalk", M3, 170, 80, 1.25, "skel", "Welcome to the moon! Population: me! Gift shop's on your left! Please don't step on the flag!"),
+    # Monster Choir Island
+    ("Rooms/rm_msm_keeper", F1, 155, 65, 1.1, "skel", "Welcome to the island! Every monster here sings one part. One drums, one whistles, one hums like a mountain. Press them all and you'll hear the whole song."),
+    ("Rooms/rm_msm_breeder", M2, 140, 45, 1.0, "skel", "Put two monsters in the arch, wait a few hours, and out comes an egg. Sometimes it's a new monster. Sometimes it's just a very confused rock."),
+    ("Rooms/rm_msm_coins", F1, 165, 70, 1.15, "skel", "The monsters make coins when they sing. Don't ask me how. I just pick them up. My pockets are very heavy."),
+    ("Rooms/rm_msm_thump", M2, 140, 40, 1.0, "narr", "Boom. Boom. Ba-boom. Boom. Thumpkin keeps the beat with his whole belly."),
+    ("Rooms/rm_msm_hoot", M3, 190, 95, 1.45, "skel", "Hoo-weee-ooo! Hoo-weee! Hoo! That's my part. It's the high bit. Everybody hums it in the shower."),
+    ("Rooms/rm_msm_bass", M2, 80, 10, 0.7, "skel", "Doooom. Doooom. Dum, dum, dooom. I am a rock. I sing the low part. I have been singing it for ten thousand years."),
+    ("Rooms/rm_msm_fizz", F1, 185, 90, 1.4, "skel", "Bloop! Bip! Bloop bloop! Pop! I sing in bubbles. You have to catch the notes before they pop!"),
+    # the Shifting Bureau
+    ("Rooms/rm_bur_director", F1, 130, 40, 0.92, "skel", "I'm the director. I didn't apply for the job. The building chose me. It does that. Please don't stare at the pyramid; it stares back."),
+    ("Rooms/rm_bur_janitor", M2, 120, 35, 0.9, "skel", "Ah, a visitor. Mind the floor, I just mopped it. The corridor moved again last night. I mopped it anyway. A floor is a floor, wherever it ends up."),
+    ("Rooms/rm_bur_researcher", M3, 155, 55, 1.05, "skel", "Our latest object is a rubber duck. Harmless, you'd think. Every time somebody squeaks it, a different floor of the building vanishes. We've stopped squeaking it."),
+    ("Rooms/rm_bur_phone", M3, 100, 30, 0.85, "glitch", "Ring. Ring. Hello? This is the building. You're standing in the wrong room. All the rooms are the wrong room. Goodbye."),
+    ("Rooms/rm_bur_chair", M2, 140, 40, 1.0, "narr", "The office chair lifts off the floor, turns slowly, and hangs in the air, waiting for a meeting that never starts."),
+    ("Rooms/rm_bur_duck", M2, 140, 40, 1.0, "narr", "The rubber duck spins on its own. Somewhere above, a whole floor quietly disappears."),
+    ("Rooms/rm_bur_wall", M2, 140, 40, 1.0, "narr", "A concrete wall slides sideways with a deep grinding noise. Behind it, a corridor that wasn't there a moment ago."),
+    # the Dark Lake
+    ("Rooms/rm_lak_writer", M2, 125, 35, 0.9, "skel", "I came here on holiday to write. I woke up a week later with a manuscript I don't remember writing. Every page I find, comes true. So be careful what you read."),
+    ("Rooms/rm_lak_waitress", F1, 160, 65, 1.1, "skel", "Coffee? It's the best in the county. The lights flicker sometimes. When they do, just stay in the light and finish your pie."),
+    ("Rooms/rm_lak_radio", M3, 130, 40, 0.95, "skel", "Good evening, night owls. It's dark out there tonight. Darker than usual. Keep your lamps lit and your doors shut. And now, a song about fishing."),
+    ("Rooms/rm_lak_ranger", M2, 140, 40, 1.0, "skel", "Don't go out on the lake at night. Folks see things. Shapes. They stand at the edge of the light, waiting for it to go out."),
+    ("Rooms/rm_lak_flash", M2, 140, 40, 1.0, "narr", "The flashlight clicks on. The beam cuts the dark in two. Something at the edge of it steps back."),
+    ("Rooms/rm_lak_shadow", M2, 90, 15, 0.75, "glitch", "Stay. Stay in the dark with us. It's so quiet here. Turn off the light."),
+    ("Rooms/rm_lak_type", M2, 140, 40, 1.0, "narr", "The typewriter types by itself. Clack, clack, clack. The page says: and then a visitor pressed the typewriter."),
+    ("Rooms/rm_lak_lamp", M2, 140, 40, 1.0, "narr", "The lighthouse lamp swings round. For a moment the whole lake is lit, and the shadows on the shore are gone."),
+    # the Spectrum Squad
+    ("Rooms/rm_spe_red", M2, 150, 45, 1.0, "skel", "I'm Riley, the red one. I lead the squad. Mostly that means I shout let's go, and then we go."),
+    ("Rooms/rm_spe_blue", F1, 155, 60, 1.05, "skel", "I'm Bea, the blue one. I build the gadgets. The giant robot was my idea. The giant robot's cup holder was also my idea."),
+    ("Rooms/rm_spe_yellow", M3, 160, 60, 1.1, "skel", "Yusuf, yellow. I do the flips. Every fight, I do at least four flips. Nobody asked for the flips. The flips are free."),
+    ("Rooms/rm_spe_green", M2, 145, 40, 1.0, "skel", "Gil. Green. The new guy. I was evil for two weeks. It was a whole thing. We don't talk about it."),
+    ("Rooms/rm_spe_pink", F1, 165, 70, 1.15, "skel", "Pia, pink, team archer. I've never missed a shot. Well, once. The robot still has the arrow in its knee."),
+    ("Rooms/rm_spe_goons", M3, 140, 45, 1.0, "skel", "Hup! Hup! Hup! We are the clay goons! We are many! We fall over when you poke us! Hup!"),
+    ("Rooms/rm_spe_robot", M2, 140, 40, 1.0, "narr", "Five vehicles roar into the quarry and lock together, piece by piece, into one giant robot. It strikes a pose. A small rock falls off."),
+    ("Rooms/rm_spe_alarm", F1, 160, 55, 1.1, "skel", "Alert! Alert! A giant monster is attacking the city! Again! Third time this week! Squad, to the quarry!"),
+    ("Rooms/rm_spe_mentor", M2, 110, 25, 0.85, "glitch", "Squad. Remember: your colours make you strong, but your friendship makes you stronger. Also, please wipe your feet. This is a command centre."),
     ("Rooms/rm_orl_meteor", M2, 140, 40, 1.0, "narr", "A meteor shower. One of them is coming straight at the capsule. It misses by a whisker. The computer says oops."),
 ]
+
+
+# The new rooms' wings (Audio/More/mo_r*.ogg, so the expansion's own checks cover them)
+ROOMWINGS = [
+    ("More/mo_rcw_barman", M2, 135, 35, 0.92, "skel", "Same again? You always have the same again. Everyone here has the same again. It's that kind of bar."),
+    ("More/mo_rcw_duncan", M3, 160, 55, 1.1, "skel", "Hey there. Neighbour Duncan. I live next door. I'm always next door. Wherever you are, I'm next door to it."),
+    ("More/mo_rcw_officer", M2, 150, 45, 1.0, "skel", "I'm off duty. But if anyone starts trouble, I'll be on duty very quickly. I keep the badge in my drink."),
+    ("More/mo_rcw_jukebox", M2, 140, 40, 1.0, "narr", "The jukebox lights up and plays the only song it knows. All three regulars sigh at exactly the same time."),
+    ("More/mo_rcw_darts", M3, 160, 55, 1.1, "skel", "Bullseye! Wait. That's the bartender. Sorry, Hector!"),
+    ("More/mo_rcw_fight", M2, 140, 40, 1.0, "narr", "Cut to: two skeletons fighting in a car park for eleven minutes over a parking space. And we're back."),
+    ("More/mo_ryw_principal", M2, 135, 35, 0.92, "skel", "Welcome to Yellowville Elementary. Our test scores are average. Our fire drills are excellent. We get a lot of practice."),
+    ("More/mo_ryw_teacher", F1, 130, 40, 0.92, "skel", "Twenty years of teaching. I've seen every excuse. The dog ate it. The plant ate it. Yesterday, a boy told me the school ate it."),
+    ("More/mo_ryw_driver", M3, 165, 70, 1.15, "skel", "Everybody on the bus! Next stop: school! Or the beach. I haven't decided. Hold on to something!"),
+    ("More/mo_ryw_chalk", M3, 175, 80, 1.25, "skel", "I will not paint the principal's car yellow. I will not paint the principal's car yellow. I will not paint the principal's car yellow."),
+    ("More/mo_ryw_bell", M2, 140, 40, 1.0, "narr", "The school bell rings. Every door bursts open. Somewhere a teacher is trampled, gently."),
+    ("More/mo_ryw_volcano", M2, 140, 40, 1.0, "narr", "The science fair volcano erupts. Then it keeps erupting. The judges give it first prize from under a table."),
+    ("More/mo_rmw_mabel", F1, 150, 55, 1.0, "skel", "I make the ghost costumes. Sheets, glow paint, a little chain to rattle. Business is good. Everybody wants to scare somebody."),
+    ("More/mo_rmw_ned", M3, 170, 70, 1.2, "skel", "My uncle says the basement's off limits. That's how I know the good stuff is in the basement."),
+    ("More/mo_rmw_lou", M2, 150, 45, 1.0, "skel", "I was looking for the gift shop. Now I'm in a basement full of ghost costumes. Is this the gift shop?"),
+    ("More/mo_rmw_trapdoor", M2, 140, 40, 1.0, "narr", "The trap door snaps open under the rug. A shout, a thump, and a muffled voice: I'm fine!"),
+    ("More/mo_rmw_net", M2, 140, 40, 1.0, "narr", "A net drops from the ceiling. It catches a mop, two buckets and, for some reason, a ham."),
+    ("More/mo_rmw_rack", M3, 100, 30, 0.85, "glitch", "The costumes on the rack all turn to look at you. They were empty a second ago. They're still empty. Mostly."),
+    ("More/mo_rpw_counselor", M2, 135, 40, 0.95, "skel", "The town meeting will now come to order. First item: the giant cow. Second item: also the giant cow. There's only one item."),
+    ("More/mo_rpw_pe", F1, 160, 55, 1.1, "skel", "Dodgeball's tomorrow! Bring a helmet! Bring two! Bring a note from your mum!"),
+    ("More/mo_rpw_lumberjack", M2, 125, 30, 0.9, "skel", "I cut down paper trees. They're very easy to cut. Hard to stack, though. They blow away."),
+    ("More/mo_rpw_talent", M3, 180, 80, 1.3, "skel", "For my talent, I will recite the alphabet backwards while hopping. Z! Y! X! Ow, my ankle."),
+    ("More/mo_rpw_pinata", M2, 140, 40, 1.0, "narr", "The pinata bursts. Out fall sweets, confetti and the mayor's car keys. Nobody tells the mayor."),
+    ("More/mo_rpw_plane", M3, 180, 80, 1.3, "skel", "Watch my paper plane! It's going! It's going! It's going into the punch bowl!"),
+    ("More/mo_row_mc", M2, 150, 45, 1.0, "skel", "Welcome to the Acorn Festival! We've got music on the stage, rides for the kids, and the finest funnel cake in Johnston County!"),
+    ("More/mo_row_fern", F1, 155, 60, 1.05, "skel", "Funnel cake! Fried dough and a snowstorm of sugar. You'll be sticky till Thursday."),
+    ("More/mo_row_fiddler", M3, 140, 40, 0.95, "skel", "I've played this festival thirty years. Same fiddle, same three tunes. Nobody's complained yet. Nobody's listened, either."),
+    ("More/mo_row_float", M2, 140, 40, 1.0, "narr", "The parade float rolls by, covered in paper acorns. The festival queen waves. A wheel comes off. She keeps waving."),
+    ("More/mo_row_toss", M3, 160, 55, 1.1, "skel", "Acorn toss! Three acorns, one bucket! Win a prize! The prize is more acorns!"),
+    ("More/mo_row_pie", M2, 150, 45, 1.0, "skel", "Pie-eating contest, go! Mmmph. Mmmph. Is this sweet potato? This is sweet potato. I'm winning!"),
+    ("More/mo_rdw_faye", F1, 150, 55, 1.0, "skel", "I sew the dinosaur back together every night. He tears the tail on the doorframe. Every single night."),
+    ("More/mo_rdw_producer", M2, 130, 35, 0.92, "skel", "Ratings are up. The kids love the dinosaur. The dinosaur wants a raise. The dinosaur is not getting a raise."),
+    ("More/mo_rdw_gary", M2, 120, 30, 0.88, "skel", "I was the dinosaur for twelve years. Then they replaced me with a younger dinosaur. Show business."),
+    ("More/mo_rdw_head", M2, 140, 40, 1.0, "narr", "The spare dinosaur head spins round on its stand and smiles, a little too widely."),
+    ("More/mo_rdw_mirror", F1, 150, 55, 1.0, "skel", "Mirror, mirror, ring of bulbs. Who's the friendliest dinosaur of all? Not you, Gary. Sorry, Gary."),
+    ("More/mo_rdw_mail", M2, 140, 40, 1.0, "narr", "A sack of fan mail falls off the shelf. Thousands of crayon drawings of a dinosaur, every one of them with a heart."),
+    ("More/mo_rbw_pam", F1, 130, 40, 0.92, "skel", "I fix the pipes. There are miles of them. They don't go anywhere. They just go. I've stopped asking where."),
+    ("More/mo_rbw_dex", M3, 155, 55, 1.05, "skel", "I've got a parcel for level thirty-seven. I've been looking for level thirty-seven since spring. Sign here?"),
+    ("More/mo_rbw_echo", M2, 90, 15, 0.75, "glitch", "Hello. Hello. Is anyone there. Anyone there. There. I'm only repeating you. Aren't I."),
+    ("More/mo_rbw_valve", M2, 140, 40, 1.0, "narr", "The steam valve shrieks. A cloud of steam fills the corridor. When it clears, the corridor is a little longer."),
+    ("More/mo_rbw_door", M2, 140, 40, 1.0, "narr", "The door swings open onto a brick wall. On the brick wall, a little sign: nice try."),
+    ("More/mo_rbw_dark", M2, 90, 15, 0.75, "glitch", "Don't look at it. Don't run either. Just walk. Calmly. It likes it when you run."),
+    ("More/mo_rqw_mayor", M2, 130, 35, 0.92, "skel", "As mayor, I've declared Saturday a holiday. Every Saturday. It's been very popular."),
+    ("More/mo_rqw_clyde", M3, 160, 60, 1.1, "skel", "Fill her up? I can check your oil, wash your windows and tell you all the gossip. The gossip's free."),
+    ("More/mo_rqw_clara", F1, 145, 60, 1.0, "skel", "The choir practises on Wednesdays. I sing the high part. Sometimes higher than the high part. The dogs come running."),
+    ("More/mo_rqw_band", M2, 140, 40, 1.0, "narr", "The town band strikes up a march. The tuba is a half-beat behind. The tuba is always a half-beat behind."),
+    ("More/mo_rqw_cow", M3, 165, 65, 1.1, "skel", "Loose cow! Loose cow in the square! Somebody fetch the sheriff! And a rope! And a bigger rope!"),
+    ("More/mo_rqw_bell", M2, 140, 40, 1.0, "narr", "The church bell rings noon. Every clock in town is set by it. The bell is eight minutes slow."),
+    ("More/mo_rcaw_hermit", M2, 115, 30, 0.88, "skel", "I've lived on this side of the island for twenty years. Nobody told me there was another side. You have huts? Indoor huts?"),
+    ("More/mo_rcaw_scientist", F1, 150, 50, 1.0, "skel", "I came to study the volcano. It's dormant. Mostly. It rumbles when anyone says the word rescue. Don't say it."),
+    ("More/mo_rcaw_parrot", M3, 185, 95, 1.4, "skel", "My parrot says hello. Well. My parrot flew off. I say hello for him now. Hello! Pretty bird!"),
+    ("More/mo_rcaw_tiki", M2, 100, 25, 0.82, "glitch", "Who disturbs the idol. Oh. A tourist. Carry on. Mind the curse. It's mostly bad luck at cards."),
+    ("More/mo_rcaw_volcano", M2, 140, 40, 1.0, "narr", "The volcano coughs a ball of fire into the sky. It lands in the lagoon with a hiss. The fish are unimpressed."),
+    ("More/mo_rcaw_bottle", M3, 165, 70, 1.15, "skel", "A message in a bottle! It says: help, we're stuck on an island. It's our own message. It came back."),
+    ("More/mo_rww_queen", F1, 135, 60, 1.0, "skel", "Welcome to my castle in the clouds. The walls are cloud, the floors are cloud, the tea is cloud. It's very light."),
+    ("More/mo_rww_guard", M2, 130, 35, 0.92, "skel", "Halt. Who goes there. Oh, a visitor. Wipe your feet. The floor is a cloud and it stains."),
+    ("More/mo_rww_sprout", F1, 185, 95, 1.45, "skel", "I'm Sprout! I'm only this big! But one day I'll be as big as the castle! Mum says that's not how dragons work!"),
+    ("More/mo_rww_slide", M3, 175, 80, 1.3, "skel", "Down the rainbow! Red, orange, yellow, wheee! It's slippery! It's the best!"),
+    ("More/mo_rww_drum", M2, 140, 40, 1.0, "narr", "Boom. The thunder drum rolls. Far below, it starts to rain on the Wishing Hills."),
+    ("More/mo_rww_bed", M2, 140, 40, 1.0, "narr", "The cloud bed puffs up, soft and enormous. Somebody's already asleep in it, snoring tiny lightning bolts."),
+    ("More/mo_rkw_frost", M2, 130, 35, 0.92, "skel", "Keep the door shut. The vegetables need to stay crisp between shows. Last summer the lettuce wilted mid-song. It was a tragedy."),
+    ("More/mo_rkw_penny", F1, 150, 55, 1.0, "skel", "Props! I've got a tiny hat, a tiny sword, and a tiny pirate ship. Everything in this show is tiny. Except the egos."),
+    ("More/mo_rkw_lars", M3, 145, 45, 1.0, "skel", "I do the lights. Spotlight on the radish. Blue for the sad song. Green for the peas. Always green for the peas."),
+    ("More/mo_rkw_asparagus", M3, 175, 75, 1.25, "skel", "I can't go on. There are people out there. Looking at me. I'm a vegetable! I have stage fright and I'm a vegetable!"),
+    ("More/mo_rkw_cheese", M2, 130, 45, 0.95, "skel", "La la la! I'm a singing cheese! I have no lines in the show! I sing anyway!"),
+    ("More/mo_rkw_pickles", M3, 190, 95, 1.45, "skel", "We are the pickles! We're a bit sour! We sing in a jar! Doo wop!"),
+    ("More/mo_rclw_izzy", F1, 160, 65, 1.1, "skel", "I invent the gadgets! A spoon that's also a ladder! A ladder that's also a spoon! They're mostly the same gadget."),
+    ("More/mo_rclw_mo", M2, 140, 40, 1.0, "skel", "I keep the bubble car running. It runs on soap and enthusiasm. We're low on enthusiasm."),
+    ("More/mo_rclw_kip", M3, 175, 80, 1.3, "skel", "Delivery for the clubhouse! It's a box! What's in the box? Another, smaller box! Sign here!"),
+    ("More/mo_rclw_car", M3, 175, 80, 1.3, "skel", "Beep beep! The bubble car! Zero to wobbly in four seconds!"),
+    ("More/mo_rclw_toolbox", M2, 140, 40, 1.0, "narr", "The toolbox springs open. A hammer, a wrench, and a very small trombone."),
+    ("More/mo_rclw_pogo", M3, 180, 85, 1.35, "skel", "Rocket pogo stick! Up! Up! Up! How do I get down?"),
+    ("More/mo_rsw_indigo", M2, 145, 45, 1.0, "skel", "I did the fuel task. Twice. Somebody keeps emptying the tank. I'm not saying who. It's Maroon."),
+    ("More/mo_rsw_maroon", M3, 150, 50, 1.0, "skel", "It wasn't me. I was in the engine room. Alone. With nobody to confirm it. Which is suspicious, I admit."),
+    ("More/mo_rsw_rose", F1, 155, 60, 1.05, "skel", "I've been watching the cameras. I saw everything. I'm not going to tell anyone. I just like knowing."),
+    ("More/mo_rsw_fuel", M2, 140, 40, 1.0, "narr", "The fuel gauge fills up, slowly. Then empties. Then fills up again. The task bar does not move."),
+    ("More/mo_rsw_alarm", F1, 165, 60, 1.15, "skel", "Sabotage! The engines are failing! Everybody to the engine room! Walk, don't run! Running is suspicious!"),
+    ("More/mo_rsw_airlock", M2, 140, 40, 1.0, "narr", "The airlock hisses open onto the stars. Nobody's in it. This time."),
+    ("More/mo_rmmw_cashier", M3, 140, 40, 1.0, "skel", "That'll be ten bones. We take cash, card, and very good jokes."),
+    ("More/mo_rmmw_historian", M2, 125, 35, 0.9, "skel", "Every meme is a fossil. Studying them tells us what people found funny. Mostly cats, it turns out."),
+    ("More/mo_rmmw_zoe", F1, 185, 90, 1.4, "skel", "I collect the plushies! I've got the waiting skeleton, the trumpet skeleton and two galaxy bones! I need the surprised one!"),
+    ("More/mo_rmmw_plush", M2, 140, 40, 1.0, "narr", "The skeleton plushie squeaks when you squeeze it. It squeaks the trumpet note. Everybody turns around."),
+    ("More/mo_rmmw_postcards", M2, 140, 40, 1.0, "narr", "The postcard rack spins. Wish you were here, says every postcard, above a picture of a skeleton waiting."),
+    ("More/mo_rmmw_shirt", M3, 160, 60, 1.1, "skel", "I survived the Meme Museum! It's a t-shirt. It's extra small. It's the only size."),
+    ("More/mo_rolw_engineer", M2, 125, 30, 0.9, "skel", "I worked on rockets for thirty years. Watching one go up still makes my bones rattle. That might also be my age."),
+    ("More/mo_rolw_surfer", M3, 165, 65, 1.1, "skel", "Best waves on the east coast, dude. And every so often a rocket goes up behind you. Can't beat it."),
+    ("More/mo_rolw_watcher", F1, 150, 55, 1.0, "skel", "I come to every launch. I bring a chair, a sandwich, and binoculars. The launches are always late. The sandwich is always gone."),
+    ("More/mo_rolw_launch", M2, 140, 40, 1.0, "narr", "Three, two, one. The rocket climbs on a column of fire, and a few seconds later the rumble rolls across the beach."),
+    ("More/mo_rolw_turtle", M2, 140, 40, 1.0, "narr", "A sea turtle drags itself up the sand, looks at you, and very slowly heads back to the sea."),
+    ("More/mo_rolw_castle", M3, 170, 75, 1.2, "skel", "Look at my sand castle! It has towers! A moat! A launch pad! Oh no, the tide!"),
+    ("More/mo_rmsw_yuki", F1, 145, 60, 1.0, "skel", "The cold island monsters sing slower, but they sing louder. It keeps them warm. It doesn't keep me warm."),
+    ("More/mo_rmsw_ivo", M2, 130, 35, 0.92, "skel", "I fish through the ice. I've never caught a fish. I once caught a monster's tooth. It sang at me."),
+    ("More/mo_rmsw_edda", F1, 150, 55, 1.0, "skel", "I keep the eggs warm. I sit on them. Gently. It's a very important job and a very cold one."),
+    ("More/mo_rmsw_yeti", M2, 90, 20, 0.78, "skel", "Hrooooo. Hrooooo. Hroo. That's the low part. The ice cracks when I sing it right."),
+    ("More/mo_rmsw_chimes", M2, 140, 40, 1.0, "narr", "The icicles chime: tink, tink, tonk. One drops off and joins in on the floor."),
+    ("More/mo_rmsw_snowballs", M3, 190, 95, 1.5, "skel", "We're the snowball choir! Ooo! Ooo! We melt if we sing too fast! Ooo!"),
+    ("More/mo_rbuw_okafor", F1, 135, 45, 0.95, "skel", "We study the objects here. A lamp that shines darkness. A clock that runs sideways. And the fridge. Nobody studies the fridge."),
+    ("More/mo_rbuw_bram", M3, 160, 60, 1.1, "skel", "First week as an intern. They told me to file things. One of the things filed me. I spent Tuesday in a drawer."),
+    ("More/mo_rbuw_vega", M2, 130, 35, 0.92, "skel", "Security. Stay behind the yellow line. The line moves. Stay behind it anyway."),
+    ("More/mo_rbuw_box", M2, 140, 40, 1.0, "narr", "Something knocks inside the containment box. Three knocks. Then, politely, two more."),
+    ("More/mo_rbuw_fridge", M2, 140, 40, 1.0, "narr", "The fridge rises into the air and its door swings open. Inside, another corridor. With a light that comes on."),
+    ("More/mo_rbuw_projector", M2, 140, 40, 1.0, "narr", "The projector clicks to a new slide. It's a photograph of you, taken from behind, a few seconds ago."),
+    ("More/mo_rlkw_harlan", M2, 120, 30, 0.88, "skel", "Fished this lake fifty years. Never caught a thing after dark. Things caught me, once. I don't talk about it."),
+    ("More/mo_rlkw_quinn", F1, 140, 45, 0.95, "skel", "I'm investigating the writer. Missing week, missing pages, a lake that's deeper than the maps say. Nothing adds up."),
+    ("More/mo_rlkw_ida", F1, 130, 50, 0.95, "skel", "I keep the light burning every night. The day it goes out, the dark comes ashore. So it doesn't go out."),
+    ("More/mo_rlkw_page", M2, 140, 40, 1.0, "narr", "A manuscript page catches fire on its own. The words on it glow before they burn: the light went out."),
+    ("More/mo_rlkw_lamp", M2, 140, 40, 1.0, "narr", "The old lamp flares up bright. The shadows in the boathouse shrink back into the corners."),
+    ("More/mo_rlkw_boat", M2, 140, 40, 1.0, "narr", "The rowing boat rocks at its mooring. There's no wind. There's no wave. Just the boat, rocking."),
+    ("More/mo_rspw_empress", F1, 120, 35, 0.9, "skel", "Those wretched teenagers and their colours. Red, blue, yellow, green, pink. Would it kill them to wear black?"),
+    ("More/mo_rspw_henchbot", M2, 130, 25, 0.9, "skel", "Henchbot Three reporting. Henchbots One and Two were defeated by the yellow one. He did four flips."),
+    ("More/mo_rspw_toastasaur", M3, 150, 45, 1.0, "skel", "I am Toastasaur! Half dinosaur, half toaster! Fear my crumbs! I'm this week's monster."),
+    ("More/mo_rspw_telescope", F1, 120, 35, 0.9, "skel", "There they are, eating pizza in the youth centre. Again. Make my monster grow!"),
+    ("More/mo_rspw_growray", M2, 140, 40, 1.0, "narr", "The grow ray fires. The monster on the pad gets bigger, and bigger, and bumps its head on the ceiling."),
+    ("More/mo_rspw_goons", M3, 140, 45, 1.0, "skel", "Hup! Clay goons, reporting for duty! We're fresh out of the dispenser! We're still a bit wet!"),
+]
+
+
+def room_wing_lines():
+    for name, v, speed, pitch, rate, kind, text in ROOMWINGS:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
 
 
 def room_lines():
@@ -1252,7 +1412,7 @@ def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
     for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
-                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines(), room_lines()):
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines(), room_lines(), room_wing_lines()):
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
@@ -1339,7 +1499,7 @@ def main():
             render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
             return
         if "--rooms" in sys.argv:   # only the new rooms
-            render_only(tmp, list(room_lines()), "Rooms")
+            render_only(tmp, list(room_lines()) + list(room_wing_lines()), "Rooms")
             write_captions()
             return
         if "--more" in sys.argv:   # only the expansion's new wings

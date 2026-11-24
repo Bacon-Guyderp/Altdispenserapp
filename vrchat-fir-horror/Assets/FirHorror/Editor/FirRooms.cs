@@ -22,6 +22,8 @@ public static partial class FirCheckBuilder
         RoomCutaway(root); RoomYellow(root); RoomMansion(root); RoomPaper(root); RoomFourOaks(root);
         RoomDino(root); RoomBack(root); RoomQuiet(root); RoomCastaway(root); RoomWishing(root);
         RoomCounter(root); RoomClubhouse(root); RoomStarship(root); RoomMemes(root); RoomOrlando(root);
+        RoomMonsters(root); RoomBureau(root); RoomDarkLake(root); RoomSpectrum(root);
+        RoomWings(root);
         report.Add("The new rooms: " + rooms.Count + " more Station stops (" + string.Join(", ", roomStops) + "); " + roomRides + " rideable rides");
     }
 
@@ -259,20 +261,15 @@ public static partial class FirCheckBuilder
         foreach (float az in new[] { 40f, 56f }) { DPrim(PrimitiveType.Capsule, "Armour", g, V(3042f, 1f, az), V(0.6f, 1f, 0.5f), M("Metal")); DPrim(PrimitiveType.Sphere, "Helm", g, V(3042f, 2.2f, az), Vector3.one * 0.45f, M("Metal")); }
         Box(g, "Bookcase", V(3058f, 1.5f, 69.6f), V(4f, 3f, 0.6f), M("DoorWood"));
         for (int k = 0; k < 12; k++) Box(g, "Book", V(3056.4f + (k % 6) * 0.6f, 0.9f + (k / 6) * 1.1f, 69.25f), V(0.3f, 0.7f, 0.1f), M(new[] { "Book1", "Book2", "Book3" }[k % 3]), false);
-        // the dark ride: a black shed, a boarding platform, two carts, four lanes and things that jump out
-        var shed = DarkShed(g, "Mystery Ride", 3066f, 3088f, 34f, 68f, 6f, new[] { 3070f, 3084.5f }, "THE MYSTERY RIDE", "ride through the haunted wing. keep your hands inside. the ghost won't.", new Color(0.6f, 1f, 0.4f));
-        foreach (float px in new[] { 3072.5f, 3077.5f, 3082.3f }) Box(shed, "Partition", V(px, 2.5f, 51f), V(0.2f, 5f, 22f), M("WallDark"));
-        Box(g, "Ride platform", V(3077.5f, 0.15f, 29.3f), V(14f, 0.3f, 1.8f), M("DeskWood"));
-        var exit = Marker(g, "Mystery ride exit", V(3077.5f, 0.35f, 29.3f), 180f);
-        var route = new[] { V(3084f, 0, 31.2f), V(3071f, 0, 31.2f), V(3070f, 0, 35f), V(3070f, 0, 64f), V(3075f, 0, 65f), V(3075f, 0, 39f),
-                            V(3080f, 0, 38f), V(3080f, 0, 64f), V(3084.5f, 0, 65f), V(3084.5f, 0, 35f), V(3084.2f, 0, 32.5f) };
-        CartRide(g, "Mystery Ride cars", route, 2, 1.8f, exit, "VanTeal", "Mystery ride seat");
-        var sc = Group(shed, "Scares", Vector3.zero);
-        ParkScare(sc, "Mystery scare 1", V(3072.5f, 0, 67.4f), 180f, 2.6f, "scream1", 2.4f);
-        ParkScare(sc, "Mystery scare 2", V(3077.5f, 0, 34.6f), 0f, 4f, "scream2", 2.4f);
-        ParkScare(sc, "Mystery scare 3", V(3082.3f, 0, 67.4f), 180f, 2.8f, "scream3", 2.4f);
-        for (int k = 0; k < 6; k++) Prim(PrimitiveType.Sphere, "Ghost", shed, V(3072.5f + (k % 3) * 4.9f - 1.2f, 2.8f + (k % 2) * 0.6f, 44f + k * 3.3f), V(0.7f, 1f, 0.7f), M("GlowGhost"));
-        RideGag(RG(g, "The unmasking", V(3087.4f, 0, 50f), -90f, "man_unmask", "flip", PrimitiveType.Sphere, V(0.6f, 0.7f, 0.5f), "GlowGhost"), 2.9f).target.localPosition = V(0, 1.8f, 0);
+        // the haunted dining hall (east side)
+        Box(g, "Dining table", V(3077f, 0.45f, 52f), V(3f, 0.9f, 20f), M("DoorWood"));
+        Box(g, "Tablecloth", V(3077f, 0.91f, 52f), V(3.1f, 0.02f, 20.1f), M("CaneWhite"), false);
+        for (int k = 0; k < 8; k++) foreach (float sx in new[] { -2.2f, 2.2f }) Box(g, "Chair", V(3077f + sx, 0.5f, 44f + k * 2.3f), V(0.6f, 1f, 0.6f), M("DoorWood"));
+        for (int k = 0; k < 3; k++) { DPrim(PrimitiveType.Cylinder, "Candelabra", g, V(3077f, 1.25f, 45f + k * 7f), V(0.12f, 0.35f, 0.12f), M("Brass")); Prim(PrimitiveType.Sphere, "Candle flame", g, V(3077f, 1.7f, 45f + k * 7f), V(0.12f, 0.2f, 0.12f), M("GlowFlame")); }
+        for (int k = 0; k < 6; k++) Prim(PrimitiveType.Sphere, "Ghost", g, V(3071f + (k % 3) * 6f, 3.4f + (k % 2) * 0.8f, 40f + k * 4.5f), V(0.7f, 1f, 0.7f), M("GlowGhost"));
+        Box(g, "Fireplace", V(3089.4f, 1.2f, 52f), V(1.2f, 2.4f, 3f), M("BrickWall"));
+        Prim(PrimitiveType.Sphere, "Fire", g, V(3088.7f, 0.5f, 52f), V(0.8f, 0.6f, 1.4f), M("GlowFlame"));
+        RG(g, "The unmasking", V(3083f, 0, 40f), 180f, "man_unmask", "flip", PrimitiveType.Sphere, V(0.6f, 0.7f, 0.5f), "GlowGhost").target.localPosition = V(0, 1.8f, 0);
         RF(g, "Detective Dot", "#ffb74d", 9, V(3050f, 0, 42f), 90f, "man_dot");
         Hat("Detective Dot", PrimitiveType.Cube, V(0, 0.02f, 0.14f), V(0.24f, 0.06f, 0.02f), "Black");
         RF(g, "Hungry Hank", "#aed581", 11, V(3045f, 0, 37f), 90f, "man_hank");
@@ -285,7 +282,7 @@ public static partial class FirCheckBuilder
         var eyes = RG(g, "The portrait's eyes", V(3041.4f, 0, 62f), 90f, "man_portrait", "shake", PrimitiveType.Cube, V(1.2f, 1.4f, 0.06f), "Paper");
         eyes.target.localPosition = V(0, 1.6f, -0.5f);
         foreach (float ex in new[] { -0.2f, 0.2f }) Prim(PrimitiveType.Sphere, "Eye", eyes.target, V(ex, 1.0f, 0.05f), Vector3.one * 0.15f, M("GlowYellow"));
-        report.Add("The Spooky Mansion Case: the mystery van, a hallway of doors, suits of armour, a bookcase and THE MYSTERY RIDE (a dark ride: 2 cars, 4 lanes, 3 scares and an unmasking); 4 voiced people, 4 gags");
+        report.Add("The Spooky Mansion Case: the mystery van, a hallway of doors, suits of armour, a bookcase and a haunted dining hall; 4 voiced people, 4 gags");
     }
 
     // ================================================================================================ 4 Paper Mountain Town
@@ -294,8 +291,8 @@ public static partial class FirCheckBuilder
     {
         var g = Room(root, "Paper Mountain Town", 3110f, 3160f, 70f, 20f, "Snow", "PixelSky", "Sky",
                      "PAPER MOUNTAIN TOWN", new Color(1f, 1f, 1f), "a quiet little mountain town, cut out of construction paper. nothing happens here. constantly.", "PAPER MOUNTAIN");
-        for (int k = 0; k < 4; k++)
-            DPrim(PrimitiveType.Cube, "Paper mountain", g, V(3116f + k * 12.5f, 0, 69.4f), V(15f, 15f, 0.3f), M(k % 2 == 0 ? "CaneWhite" : "LabGrey"), Quaternion.Euler(0, 0, 45));
+        foreach (float mx in new[] { 3115f, 3125f, 3145f, 3155f })   // a pass in the middle, where the wing's doorway is
+            DPrim(PrimitiveType.Cube, "Paper mountain", g, V(mx, 0, 69.4f), V(10f, 10f, 0.3f), M(mx % 20f < 10f ? "CaneWhite" : "LabGrey"), Quaternion.Euler(0, 0, 45));
         string[] wall = { "GiftBlue", "GiftGreen", "CaneRed", "GlowYellow" };
         for (int k = 0; k < 4; k++)
         {
@@ -344,17 +341,8 @@ public static partial class FirCheckBuilder
         DPrim(PrimitiveType.Sphere, "Tank top", g, V(3228f, 16.4f, 70f), V(8f, 2f, 8f), M("LabWhite"));
         Text("TowerName", g, V(3228f, 14.2f, 65.9f), Face(Vector3.back), V2(7f, 1.4f), 1.1f, "<b>FOUR OAKS</b>").color = new Color(0.1f, 0.3f, 0.15f);
         Oak(g, V(3204f, 0, 73f), 1.1f); Oak(g, V(3216f, 0, 73f), 1f); Oak(g, V(3205f, 0, 52f), 1f); Oak(g, V(3226f, 0, 54f), 1.15f);
-        // the railroad: a little train you can ride round the cotton field
-        Box(g, "Platform", V(3226f, 0.15f, 28.2f), V(10f, 0.3f, 1.6f), M("Concrete"));
-        var exit = Marker(g, "Train exit", V(3226f, 0.35f, 28.2f), 180f);
-        var route = new[] { V(3216f, 0, 30f), V(3236f, 0, 30f), V(3238f, 0, 32f), V(3238f, 0, 44f), V(3236f, 0, 46f), V(3216f, 0, 46f), V(3214f, 0, 44f), V(3214f, 0, 32f) };
-        for (int i = 0; i < route.Length; i++)
-        {
-            var a = route[i]; var b = route[(i + 1) % route.Length]; var d = b - a;
-            Box(g, "Rail bed", (a + b) / 2f + V(0, 0.02f, 0), V(1.6f, 0.04f, d.magnitude + 1.6f), M("TrimDark"), false).transform.localRotation = Quaternion.LookRotation(d.normalized);
-        }
-        var train = CartRide(g, "Little train", route, 2, 2.2f, exit, "GiftGreen", "Train seat");
-        foreach (var c in train.carts) { DPrim(PrimitiveType.Cylinder, "Boiler", c, V(0, 0.9f, 1.4f), V(0.9f, 0.6f, 0.9f), M("Black"), Quaternion.Euler(90, 0, 0)); DPrim(PrimitiveType.Cylinder, "Stack", c, V(0, 1.6f, 1.7f), V(0.3f, 0.35f, 0.3f), M("Black")); }
+        // the old depot, where the railroad built the town
+        House(g, "The old depot", V(3228f, 0, 26.5f), V(9f, 4f, 4f), "DeskWood", "TrimDark", "FOUR OAKS DEPOT", Vector3.back);
         Scatter(g, "Cotton", 40, 3217f, 3235f, 33f, 43f, PrimitiveType.Sphere, V(0.35f, 0.35f, 0.35f), new[] { "CaneWhite" }, 0.7f);
         Scatter(g, "Cotton plant", 40, 3217f, 3235f, 33f, 43f, PrimitiveType.Cylinder, V(0.08f, 0.3f, 0.08f), new[] { "GiftGreen" });
         var sweet = Stall(g, "SWEET TEA", V(3201f, 0, 30f), 90f, "GiftGreen", "CaneWhite");
@@ -373,14 +361,14 @@ public static partial class FirCheckBuilder
         RF(g, "Festival Queen Darlene", "#f48fb1", 4, V(3199.5f, 0, 60f), 90f, "oak_queen");
         Hat("Festival Queen Darlene", PrimitiveType.Cylinder, V(0, 0.14f, 0), V(0.22f, 0.06f, 0.22f), "GlowGold");
         RF(g, "Sweet Tea Sue", "#ffe082", 9, V(3201f, 0, 29.7f), 90f, "oak_tea");
-        RF(g, "Depot Master Hollis", "#b0bec5", 20, V(3231.5f, 0.3f, 28.2f), 0f, "oak_depot");
+        RF(g, "Depot Master Hollis", "#b0bec5", 20, V(3222f, 0, 30f), 180f, "oak_depot");
         Hat("Depot Master Hollis", PrimitiveType.Cylinder, V(0, 0.12f, 0), V(0.3f, 0.08f, 0.3f), "PoliceBlue");
         var acorn = RG(g, "The giant acorn", V(3199.5f, 0, 66f), 90f, "oak_acorn", "drop", PrimitiveType.Sphere, V(1.4f, 1.8f, 1.4f), "Trunk", 4f);
         Prim(PrimitiveType.Sphere, "Cap", acorn.target, V(0, 1.6f, 0), V(1.55f, 0.7f, 1.55f), M("TrimDark"));
         var tractor = RG(g, "The tractor", V(3214f, 0, 62f), 90f, "oak_tractor", "slide", PrimitiveType.Cube, V(1.6f, 1.4f, 2.6f), "GiftGreen", 4f);
         foreach (float tz in new[] { -0.9f, 0.9f }) Prim(PrimitiveType.Cylinder, "Wheel", tractor.target, V(0.9f, 0.6f, tz), V(1.2f, 0.12f, 1.2f), M("Black")).transform.localRotation = Quaternion.Euler(0, 0, 90);
         RG(g, "The squirrel", V(3207.5f, 0, 54f), 180f, "oak_squirrel", "pop", PrimitiveType.Capsule, V(0.3f, 0.5f, 0.3f), "TurfGrey", 1.2f);
-        report.Add("Four Oaks, NC: Main Street (town hall, hardware, diner, barber, antiques), the water tower, four oaks, a cotton field, the Bentonville marker, the I-95 sign, a sweet tea stand, 10 acorns, and a little train you can ride; 4 voiced people, 3 gags");
+        report.Add("Four Oaks, NC: Main Street (town hall, hardware, diner, barber, antiques), the water tower, four oaks, a cotton field, the Bentonville marker, the I-95 sign, a sweet tea stand, the old depot and 10 acorns to collect; 4 voiced people, 3 gags");
     }
 
     // ================================================================================================ 6 the Dino Sing-Along Studio
@@ -625,7 +613,7 @@ public static partial class FirCheckBuilder
     {
         float cx = 3705f, cz = 54f;
         var g = Room(root, "The Clubhouse on the Hill", 3680f, 3730f, 70f, 20f, "Grass", "PixelSky", "Sky",
-                     "THE CLUBHOUSE ON THE HILL", new Color(1f, 0.25f, 0.2f), "a round red clubhouse, a gadget for every problem, and a little car to ride around it", "CLUBHOUSE");
+                     "THE CLUBHOUSE ON THE HILL", new Color(1f, 0.25f, 0.2f), "a round red clubhouse on a hill, and a gadget for every problem", "CLUBHOUSE");
         DPrim(PrimitiveType.Sphere, "The hill", g, V(cx, -3f, 70f), V(40f, 12f, 6f), M("GiftGreen"));
         DPrim(PrimitiveType.Cylinder, "Clubhouse", g, V(cx, 3f, cz), V(11f, 3f, 11f), M("GlowYellow"));
         DPrim(PrimitiveType.Sphere, "Clubhouse roof", g, V(cx, 6.5f, cz), V(12f, 6f, 12f), M("CaneRed"));
@@ -634,13 +622,6 @@ public static partial class FirCheckBuilder
         DPrim(PrimitiveType.Cylinder, "Antenna", g, V(cx, 10.5f, cz), V(0.2f, 1.5f, 0.2f), M("GlowYellow"));
         DPrim(PrimitiveType.Sphere, "Antenna ball", g, V(cx, 12.2f, cz), Vector3.one * 0.6f, M("GlowRed"));
         Scatter(g, "Garden flower", 24, 3721f, 3729f, 26f, 40f, PrimitiveType.Sphere, V(0.4f, 0.4f, 0.4f), new[] { "GemPink", "GlowYellow", "GiftBlue" }, 0.6f);
-        // the toon car ride: a loop round the clubhouse
-        Box(g, "Car stop", V(cx, 0.15f, cz - 15.2f), V(6f, 0.3f, 1.4f), M("GlowYellow"));
-        var exit = Marker(g, "Toon car exit", V(cx, 0.35f, cz - 15.2f), 180f);
-        var route = new Vector3[16];
-        for (int k = 0; k < 16; k++) { float a = -90f + k * 22.5f; route[k] = V(cx + Mathf.Cos(a * Mathf.Deg2Rad) * 13f, 0, cz + Mathf.Sin(a * Mathf.Deg2Rad) * 13f); }
-        for (int k = 0; k < 16; k++) { var a = route[k]; var b = route[(k + 1) % 16]; Box(g, "Road", (a + b) / 2f + V(0, 0.015f, 0), V(1.8f, 0.03f, (b - a).magnitude + 0.6f), M("TurfGrey"), false).transform.localRotation = Quaternion.LookRotation((b - a).normalized); }
-        var cars = CartRide(g, "Toon cars", route, 2, 2f, exit, "CaneRed", "Toon car seat", 0.4f);
         RF(g, "Clubhouse Host Clover", "#fff59d", 18, V(cx, 0, 35.5f), 180f, "clu_host");
         Hat("Clubhouse Host Clover", PrimitiveType.Cube, V(0, 0.14f, 0), V(0.36f, 0.12f, 0.08f), "GemPink");
         RF(g, "Handyman Hal", "#90a4ae", 16, V(3722f, 0, 42f), 220f, "clu_hal");
@@ -650,7 +631,7 @@ public static partial class FirCheckBuilder
         for (int k = 0; k < 3; k++) Prim(PrimitiveType.Sphere, "Gizmo", picker.target, V(-0.35f + k * 0.35f, 0.8f, 0), Vector3.one * 0.25f, M(new[] { "GlowRed", "GlowYellow", "GlowGreen" }[k]));
         var door = RG(g, "The magic word door", V(3697f, 0, 34f), 180f, "clu_door", "flip", PrimitiveType.Cube, V(1.2f, 2.2f, 0.1f), "GemPurple");
         RG(g, "The clubhouse slide", V(3690f, 0, 30f), 90f, "clu_slide", "slide", PrimitiveType.Capsule, V(0.5f, 0.5f, 0.5f), "GlowYellow", 4f);
-        report.Add("The Clubhouse on the Hill: a round clubhouse, a hill, a garden, and a toon car ride (2 cars) round it; 4 voiced people, 3 gags");
+        report.Add("The Clubhouse on the Hill: a round clubhouse, a hill, and a garden; 4 voiced people, 3 gags");
     }
 
     // ================================================================================================ 13 the Suspicious Starship

@@ -1052,7 +1052,7 @@ public static class SimCheck {
   static void RoomsTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The new rooms");
     var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("The new rooms:"));
-    Check(line != null && line.Contains("15 more Station stops"), line != null ? Plain(line) : "no rooms line in the build log");
+    Check(line != null && line.Contains("19 more Station stops"), line != null ? Plain(line) : "no rooms line in the build log");
     Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems (coaster tracks clear of themselves)" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
     foreach (var l in Sim.BuildLog.Where(l => l.Contains("roller coaster")).Distinct()) Console.WriteLine("        " + Plain(l).Replace("Fir Warning systems check: ", ""));
     var rooms = FirCheckBuilder.rooms;
@@ -1072,7 +1072,7 @@ public static class SimCheck {
       foreach (var f in floors) if (overlap(rooms[i].Value, f.Value)) clash.Add(rooms[i].Key + " / " + f.Key);
       for (int j = i + 1; j < rooms.Count; j++) if (overlap(rooms[i].Value, rooms[j].Value)) clash.Add(rooms[i].Key + " / " + rooms[j].Key);
     }
-    Check(rooms.Count == 15 && clash.Count == 0, rooms.Count + " rooms, none overlapping anything else (" + floors.Count + " areas and wings checked)" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
+    Check(rooms.Count == 19 && clash.Count == 0, rooms.Count + " rooms, none overlapping anything else (" + floors.Count + " areas and wings checked)" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
     // the Station takes you to each one; you can walk in from the arrival spot; a button takes you home
     int ok = 0; var bad = new List<string>();
     for (int i = 0; i < rooms.Count; i++) {
@@ -1091,15 +1091,15 @@ public static class SimCheck {
     }
     var board = All<FirTeleport>(A).Where(t => t.transform.parent != null && t.transform.parent.name == "Station").ToList();
     bool tidy = board.All(t => board.All(u => u == t || Vector3.Distance(t.transform.position, u.transform.position) > 0.15f));
-    Check(ok == rooms.Count && board.Count >= 57 && tidy, ok + " of " + rooms.Count + " rooms: the Station sends you there, the way in is clear, and a button takes you home; the board has " + board.Count + " stops, none overlapping" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
+    Check(ok == rooms.Count && board.Count >= 61 && tidy, ok + " of " + rooms.Count + " rooms: the Station sends you there, the way in is clear, and a button takes you home; the board has " + board.Count + " stops, none overlapping" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
     // the people: voiced and captioned
     var folk = All<FirRainbowSkeleton>(A).Where(k => k.voice != null && k.voice.clip != null && k.voice.clip.name.StartsWith("rm_")).ToList();
-    Check(folk.Count >= 55 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned");
+    Check(folk.Count >= 70 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned");
     int gagN; var gagBad = new List<string>();
     gagSet = "rm";
     int gagOk = RunGags(B, g => true, out gagN, gagBad);
     gagSet = "";
-    Check(gagN >= 55 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
+    Check(gagN >= 70 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     // the coasters: ride a whole lap of each
     foreach (var cname in new[] { "Gator Gulch", "The Storm Chaser" }) {
       var ride = All<FirRide>(A).First(x => x.name == cname);
@@ -1115,7 +1115,7 @@ public static class SimCheck {
       for (int f = 0; f < 20 * 150; f++) {
         Sim.Step();
         var p = A.player.pos;
-        maxY = Mathf.Max(maxY, p.y); maxV = Mathf.Max(maxV, Vector3.Distance(p, last) / Time.deltaTime); last = p;
+        maxY = Mathf.Max(maxY, p.y); if (f > 2) maxV = Mathf.Max(maxV, Vector3.Distance(p, last) / Time.deltaTime); last = p;
         var fw = seat.transform.forward; maxPitch = Mathf.Max(maxPitch, Mathf.Abs(90f - Vector3.Angle(fw, Vector3.up)));
         var rt = seat.transform.rotation * Vector3.right; maxRoll = Mathf.Max(maxRoll, Mathf.Abs(90f - Vector3.Angle(rt, Vector3.up)));
         float dmin = 99f; foreach (var q in ride.route) dmin = Mathf.Min(dmin, Vector3.Distance(q, ride.carts[0].position)); off = Mathf.Max(off, dmin);
@@ -1124,13 +1124,13 @@ public static class SimCheck {
         if (f % 100 == 0 && Vector3.Distance(ride.carts[0].position, rideB.carts[0].position) > 0.5f) bobOk = false;
         if (f > 400 && Vector3.Distance(p, station) < 3f && ride.carts[0].position.y < 1f) break;
       }
-      Check(seated && stayed && bobOk && maxY > (cname == "Gator Gulch" ? 13f : 29f) && maxV > (cname == "Gator Gulch" ? 11f : 17f) && maxPitch > 20f && maxRoll > 10f && off < 2.5f,
+      Check(seated && stayed && bobOk && maxY > (cname == "Gator Gulch" ? 13f : 29f) && maxV > (cname == "Gator Gulch" ? 11f : 17f) && maxV < 25f && maxPitch > 20f && maxRoll > 10f && off < 2.5f,
             "Alice rides " + cname + ": up to " + maxY.ToString("F1") + " m, " + (maxV * 3.6f).ToString("F0") + " km/h at the bottom of the drop, pitched up to " + maxPitch.ToString("F0") + " degrees and banked " + maxRoll.ToString("F0") + " into the turns, " + far.ToString("F0") + " m from the station, on the track all the way; Bob sees the same train" + (stayed ? "" : " | she fell off") + (bobOk ? "" : " | Bob's train is elsewhere"));
       Check(Vector3.Distance(A.player.pos, station) < 3f, "...and she comes back into the station (" + Flat(A.player.pos, station).ToString("F1") + " m away)");
       Sim.With(A, () => seat.station.ExitStation(A.player));
     }
     // the dark rides: things jump out as you ride past
-    foreach (var dr in new[] { new { cart = "Grove seat 0a", deep = 61f, room = "Haunted Orange Grove" }, new { cart = "Capsule seat 0a", deep = 93f, room = "Mission: Space Coast" }, new { cart = "Mystery ride seat 0a", deep = 64f, room = "the Mystery Ride" } }) {
+    foreach (var dr in new[] { new { cart = "Grove seat 0a", deep = 61f, room = "Haunted Orange Grove" }, new { cart = "Capsule seat 0a", deep = 93f, room = "Mission: Space Coast" } }) {
       var seat = All<FirSeat>(A).First(x => x.name == dr.cart);
       Sim.Press(A, seat); Sim.Events.Clear();
       float maxZ = 0f;
@@ -1140,17 +1140,18 @@ public static class SimCheck {
       Sim.With(A, () => seat.station.ExitStation(A.player));
     }
     // the gentle rides: sit down and get carried
-    foreach (var name in new[] { "Swan seat 0a", "Wheel gondola seat 0", "Train seat 0a", "Toon car seat 0a" }) {
+    foreach (var name in new[] { "Swan seat 0a", "Wheel gondola seat 0" }) {
       var seat = All<FirSeat>(A).First(x => x.name == name);
-      Sim.Press(A, seat); var p0 = A.player.pos; float moved = 0f;
+      Sim.Press(A, seat); Sim.Step(); var p0 = A.player.pos; float moved = 0f;
       for (int f = 0; f < 20 * 25; f++) { Sim.Step(); moved = Mathf.Max(moved, Vector3.Distance(A.player.pos, p0)); }
       Check(Sim.Seated(A.player) && moved > 4f, name.Replace(" seat 0a", "").Replace(" seat 0", "") + ": Alice sits down and is carried " + moved.ToString("F0") + " m in 25 s");
       Sim.With(A, () => seat.station.ExitStation(A.player));
     }
     var wheel = All<FirRide>(A).First(r => r.rotor != null && r.rotor.parent != null && r.rotor.parent.name == "Observation Wheel");
     Check(wheel.upright.All(u => Quaternion.Angle(u.rotation, Quaternion.identity) < 1f), "the observation wheel's gondolas stay level");
-    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 2895f);
-    Check(seats >= 60, seats + " ride seats in the new rooms");
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 3875f && st.transform.position.x < 4045f);
+    int elsewhere = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 2895f && (st.transform.position.x < 3875f || st.transform.position.x > 4045f));
+    Check(seats >= 40 && elsewhere == 0, seats + " ride seats in Orlando, and none in the other new rooms (" + elsewhere + ")");
   }
 
   // ======================================================================== the remaster: shading, bevels, trees untouched

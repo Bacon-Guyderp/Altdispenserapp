@@ -604,6 +604,120 @@ mo_pzk_dishes|I wash the dishes. Every night, the dishes come back dirty. Every 
 mo_pzk_dough|The dough spins up into the air, round and round. It lands perfectly. The chef bows.
 mo_pzk_driver|Thirty minutes or it's free! I've never made it in thirty minutes. Everybody's pizza is free. I'm very popular.
 mo_pzk_oven|Whoomph! The oven flares up. The pizza is done. And so is the oven glove.
+mo_rbuw_box|Something knocks inside the containment box. Three knocks. Then, politely, two more.
+mo_rbuw_bram|First week as an intern. They told me to file things. One of the things filed me. I spent Tuesday in a drawer.
+mo_rbuw_fridge|The fridge rises into the air and its door swings open. Inside, another corridor. With a light that comes on.
+mo_rbuw_okafor|We study the objects here. A lamp that shines darkness. A clock that runs sideways. And the fridge. Nobody studies the fridge.
+mo_rbuw_projector|The projector clicks to a new slide. It's a photograph of you, taken from behind, a few seconds ago.
+mo_rbuw_vega|Security. Stay behind the yellow line. The line moves. Stay behind it anyway.
+mo_rbw_dark|Don't look at it. Don't run either. Just walk. Calmly. It likes it when you run.
+mo_rbw_dex|I've got a parcel for level thirty-seven. I've been looking for level thirty-seven since spring. Sign here?
+mo_rbw_door|The door swings open onto a brick wall. On the brick wall, a little sign: nice try.
+mo_rbw_echo|Hello. Hello. Is anyone there. Anyone there. There. I'm only repeating you. Aren't I.
+mo_rbw_pam|I fix the pipes. There are miles of them. They don't go anywhere. They just go. I've stopped asking where.
+mo_rbw_valve|The steam valve shrieks. A cloud of steam fills the corridor. When it clears, the corridor is a little longer.
+mo_rcaw_bottle|A message in a bottle! It says: help, we're stuck on an island. It's our own message. It came back.
+mo_rcaw_hermit|I've lived on this side of the island for twenty years. Nobody told me there was another side. You have huts? Indoor huts?
+mo_rcaw_parrot|My parrot says hello. Well. My parrot flew off. I say hello for him now. Hello! Pretty bird!
+mo_rcaw_scientist|I came to study the volcano. It's dormant. Mostly. It rumbles when anyone says the word rescue. Don't say it.
+mo_rcaw_tiki|Who disturbs the idol. Oh. A tourist. Carry on. Mind the curse. It's mostly bad luck at cards.
+mo_rcaw_volcano|The volcano coughs a ball of fire into the sky. It lands in the lagoon with a hiss. The fish are unimpressed.
+mo_rclw_car|Beep beep! The bubble car! Zero to wobbly in four seconds!
+mo_rclw_izzy|I invent the gadgets! A spoon that's also a ladder! A ladder that's also a spoon! They're mostly the same gadget.
+mo_rclw_kip|Delivery for the clubhouse! It's a box! What's in the box? Another, smaller box! Sign here!
+mo_rclw_mo|I keep the bubble car running. It runs on soap and enthusiasm. We're low on enthusiasm.
+mo_rclw_pogo|Rocket pogo stick! Up! Up! Up! How do I get down?
+mo_rclw_toolbox|The toolbox springs open. A hammer, a wrench, and a very small trombone.
+mo_rcw_barman|Same again? You always have the same again. Everyone here has the same again. It's that kind of bar.
+mo_rcw_darts|Bullseye! Wait. That's the bartender. Sorry, Hector!
+mo_rcw_duncan|Hey there. Neighbour Duncan. I live next door. I'm always next door. Wherever you are, I'm next door to it.
+mo_rcw_fight|Cut to: two skeletons fighting in a car park for eleven minutes over a parking space. And we're back.
+mo_rcw_jukebox|The jukebox lights up and plays the only song it knows. All three regulars sigh at exactly the same time.
+mo_rcw_officer|I'm off duty. But if anyone starts trouble, I'll be on duty very quickly. I keep the badge in my drink.
+mo_rdw_faye|I sew the dinosaur back together every night. He tears the tail on the doorframe. Every single night.
+mo_rdw_gary|I was the dinosaur for twelve years. Then they replaced me with a younger dinosaur. Show business.
+mo_rdw_head|The spare dinosaur head spins round on its stand and smiles, a little too widely.
+mo_rdw_mail|A sack of fan mail falls off the shelf. Thousands of crayon drawings of a dinosaur, every one of them with a heart.
+mo_rdw_mirror|Mirror, mirror, ring of bulbs. Who's the friendliest dinosaur of all? Not you, Gary. Sorry, Gary.
+mo_rdw_producer|Ratings are up. The kids love the dinosaur. The dinosaur wants a raise. The dinosaur is not getting a raise.
+mo_rkw_asparagus|I can't go on. There are people out there. Looking at me. I'm a vegetable! I have stage fright and I'm a vegetable!
+mo_rkw_cheese|La la la! I'm a singing cheese! I have no lines in the show! I sing anyway!
+mo_rkw_frost|Keep the door shut. The vegetables need to stay crisp between shows. Last summer the lettuce wilted mid-song. It was a tragedy.
+mo_rkw_lars|I do the lights. Spotlight on the radish. Blue for the sad song. Green for the peas. Always green for the peas.
+mo_rkw_penny|Props! I've got a tiny hat, a tiny sword, and a tiny pirate ship. Everything in this show is tiny. Except the egos.
+mo_rkw_pickles|We are the pickles! We're a bit sour! We sing in a jar! Doo wop!
+mo_rlkw_boat|The rowing boat rocks at its mooring. There's no wind. There's no wave. Just the boat, rocking.
+mo_rlkw_harlan|Fished this lake fifty years. Never caught a thing after dark. Things caught me, once. I don't talk about it.
+mo_rlkw_ida|I keep the light burning every night. The day it goes out, the dark comes ashore. So it doesn't go out.
+mo_rlkw_lamp|The old lamp flares up bright. The shadows in the boathouse shrink back into the corners.
+mo_rlkw_page|A manuscript page catches fire on its own. The words on it glow before they burn: the light went out.
+mo_rlkw_quinn|I'm investigating the writer. Missing week, missing pages, a lake that's deeper than the maps say. Nothing adds up.
+mo_rmmw_cashier|That'll be ten bones. We take cash, card, and very good jokes.
+mo_rmmw_historian|Every meme is a fossil. Studying them tells us what people found funny. Mostly cats, it turns out.
+mo_rmmw_plush|The skeleton plushie squeaks when you squeeze it. It squeaks the trumpet note. Everybody turns around.
+mo_rmmw_postcards|The postcard rack spins. Wish you were here, says every postcard, above a picture of a skeleton waiting.
+mo_rmmw_shirt|I survived the Meme Museum! It's a t-shirt. It's extra small. It's the only size.
+mo_rmmw_zoe|I collect the plushies! I've got the waiting skeleton, the trumpet skeleton and two galaxy bones! I need the surprised one!
+mo_rmsw_chimes|The icicles chime: tink, tink, tonk. One drops off and joins in on the floor.
+mo_rmsw_edda|I keep the eggs warm. I sit on them. Gently. It's a very important job and a very cold one.
+mo_rmsw_ivo|I fish through the ice. I've never caught a fish. I once caught a monster's tooth. It sang at me.
+mo_rmsw_snowballs|We're the snowball choir! Ooo! Ooo! We melt if we sing too fast! Ooo!
+mo_rmsw_yeti|Hrooooo. Hrooooo. Hroo. That's the low part. The ice cracks when I sing it right.
+mo_rmsw_yuki|The cold island monsters sing slower, but they sing louder. It keeps them warm. It doesn't keep me warm.
+mo_rmw_lou|I was looking for the gift shop. Now I'm in a basement full of ghost costumes. Is this the gift shop?
+mo_rmw_mabel|I make the ghost costumes. Sheets, glow paint, a little chain to rattle. Business is good. Everybody wants to scare somebody.
+mo_rmw_ned|My uncle says the basement's off limits. That's how I know the good stuff is in the basement.
+mo_rmw_net|A net drops from the ceiling. It catches a mop, two buckets and, for some reason, a ham.
+mo_rmw_rack|The costumes on the rack all turn to look at you. They were empty a second ago. They're still empty. Mostly.
+mo_rmw_trapdoor|The trap door snaps open under the rug. A shout, a thump, and a muffled voice: I'm fine!
+mo_rolw_castle|Look at my sand castle! It has towers! A moat! A launch pad! Oh no, the tide!
+mo_rolw_engineer|I worked on rockets for thirty years. Watching one go up still makes my bones rattle. That might also be my age.
+mo_rolw_launch|Three, two, one. The rocket climbs on a column of fire, and a few seconds later the rumble rolls across the beach.
+mo_rolw_surfer|Best waves on the east coast, dude. And every so often a rocket goes up behind you. Can't beat it.
+mo_rolw_turtle|A sea turtle drags itself up the sand, looks at you, and very slowly heads back to the sea.
+mo_rolw_watcher|I come to every launch. I bring a chair, a sandwich, and binoculars. The launches are always late. The sandwich is always gone.
+mo_row_fern|Funnel cake! Fried dough and a snowstorm of sugar. You'll be sticky till Thursday.
+mo_row_fiddler|I've played this festival thirty years. Same fiddle, same three tunes. Nobody's complained yet. Nobody's listened, either.
+mo_row_float|The parade float rolls by, covered in paper acorns. The festival queen waves. A wheel comes off. She keeps waving.
+mo_row_mc|Welcome to the Acorn Festival! We've got music on the stage, rides for the kids, and the finest funnel cake in Johnston County!
+mo_row_pie|Pie-eating contest, go! Mmmph. Mmmph. Is this sweet potato? This is sweet potato. I'm winning!
+mo_row_toss|Acorn toss! Three acorns, one bucket! Win a prize! The prize is more acorns!
+mo_rpw_counselor|The town meeting will now come to order. First item: the giant cow. Second item: also the giant cow. There's only one item.
+mo_rpw_lumberjack|I cut down paper trees. They're very easy to cut. Hard to stack, though. They blow away.
+mo_rpw_pe|Dodgeball's tomorrow! Bring a helmet! Bring two! Bring a note from your mum!
+mo_rpw_pinata|The pinata bursts. Out fall sweets, confetti and the mayor's car keys. Nobody tells the mayor.
+mo_rpw_plane|Watch my paper plane! It's going! It's going! It's going into the punch bowl!
+mo_rpw_talent|For my talent, I will recite the alphabet backwards while hopping. Z! Y! X! Ow, my ankle.
+mo_rqw_band|The town band strikes up a march. The tuba is a half-beat behind. The tuba is always a half-beat behind.
+mo_rqw_bell|The church bell rings noon. Every clock in town is set by it. The bell is eight minutes slow.
+mo_rqw_clara|The choir practises on Wednesdays. I sing the high part. Sometimes higher than the high part. The dogs come running.
+mo_rqw_clyde|Fill her up? I can check your oil, wash your windows and tell you all the gossip. The gossip's free.
+mo_rqw_cow|Loose cow! Loose cow in the square! Somebody fetch the sheriff! And a rope! And a bigger rope!
+mo_rqw_mayor|As mayor, I've declared Saturday a holiday. Every Saturday. It's been very popular.
+mo_rspw_empress|Those wretched teenagers and their colours. Red, blue, yellow, green, pink. Would it kill them to wear black?
+mo_rspw_goons|Hup! Clay goons, reporting for duty! We're fresh out of the dispenser! We're still a bit wet!
+mo_rspw_growray|The grow ray fires. The monster on the pad gets bigger, and bigger, and bumps its head on the ceiling.
+mo_rspw_henchbot|Henchbot Three reporting. Henchbots One and Two were defeated by the yellow one. He did four flips.
+mo_rspw_telescope|There they are, eating pizza in the youth centre. Again. Make my monster grow!
+mo_rspw_toastasaur|I am Toastasaur! Half dinosaur, half toaster! Fear my crumbs! I'm this week's monster.
+mo_rsw_airlock|The airlock hisses open onto the stars. Nobody's in it. This time.
+mo_rsw_alarm|Sabotage! The engines are failing! Everybody to the engine room! Walk, don't run! Running is suspicious!
+mo_rsw_fuel|The fuel gauge fills up, slowly. Then empties. Then fills up again. The task bar does not move.
+mo_rsw_indigo|I did the fuel task. Twice. Somebody keeps emptying the tank. I'm not saying who. It's Maroon.
+mo_rsw_maroon|It wasn't me. I was in the engine room. Alone. With nobody to confirm it. Which is suspicious, I admit.
+mo_rsw_rose|I've been watching the cameras. I saw everything. I'm not going to tell anyone. I just like knowing.
+mo_rww_bed|The cloud bed puffs up, soft and enormous. Somebody's already asleep in it, snoring tiny lightning bolts.
+mo_rww_drum|Boom. The thunder drum rolls. Far below, it starts to rain on the Wishing Hills.
+mo_rww_guard|Halt. Who goes there. Oh, a visitor. Wipe your feet. The floor is a cloud and it stains.
+mo_rww_queen|Welcome to my castle in the clouds. The walls are cloud, the floors are cloud, the tea is cloud. It's very light.
+mo_rww_slide|Down the rainbow! Red, orange, yellow, wheee! It's slippery! It's the best!
+mo_rww_sprout|I'm Sprout! I'm only this big! But one day I'll be as big as the castle! Mum says that's not how dragons work!
+mo_ryw_bell|The school bell rings. Every door bursts open. Somewhere a teacher is trampled, gently.
+mo_ryw_chalk|I will not paint the principal's car yellow. I will not paint the principal's car yellow. I will not paint the principal's car yellow.
+mo_ryw_driver|Everybody on the bus! Next stop: school! Or the beach. I haven't decided. Hold on to something!
+mo_ryw_principal|Welcome to Yellowville Elementary. Our test scores are average. Our fire drills are excellent. We get a lot of practice.
+mo_ryw_teacher|Twenty years of teaching. I've seen every excuse. The dog ate it. The plant ate it. Yesterday, a boy told me the school ate it.
+mo_ryw_volcano|The science fair volcano erupts. Then it keeps erupting. The judges give it first prize from under a table.
 mo_scb_cube|S C B nine fifty seven. A cube that counts. It has been counting since nineteen sixty. It's on four. Nobody knows what happens at five.
 mo_scb_door|S C B nine fifty. A door that only opens if you say please. If you say thank you, it closes again, very proudly.
 mo_scb_researcher|Containment Wing B. Three anomalies, all perfectly safe. That's what the paperwork says. I wrote the paperwork.
@@ -816,6 +930,13 @@ rm_bak_light|A light panel drops out of the ceiling and swings. For a second, in
 rm_bak_moss|I maintain the lights. Six hundred million fluorescent tubes. They all hum in B flat. I can't hear anything else anymore.
 rm_bak_water|Drink the water. It tastes like almonds. Nobody knows why. Nobody knows who leaves it here. Drink it anyway.
 rm_bak_wes|I clipped through a wall in nineteen ninety-four. Been walking ever since. The hallways repeat. The carpet's always damp. I've stopped asking why.
+rm_bur_chair|The office chair lifts off the floor, turns slowly, and hangs in the air, waiting for a meeting that never starts.
+rm_bur_director|I'm the director. I didn't apply for the job. The building chose me. It does that. Please don't stare at the pyramid; it stares back.
+rm_bur_duck|The rubber duck spins on its own. Somewhere above, a whole floor quietly disappears.
+rm_bur_janitor|Ah, a visitor. Mind the floor, I just mopped it. The corridor moved again last night. I mopped it anyway. A floor is a floor, wherever it ends up.
+rm_bur_phone|Ring. Ring. Hello? This is the building. You're standing in the wrong room. All the rooms are the wrong room. Goodbye.
+rm_bur_researcher|Our latest object is a rubber duck. Harmless, you'd think. Every time somebody squeaks it, a different floor of the building vanishes. We've stopped squeaking it.
+rm_bur_wall|A concrete wall slides sideways with a deep grinding noise. Behind it, a corridor that wasn't there a moment ago.
 rm_cas_captain|It was meant to be an afternoon boat trip. A quick look at the reef, back for tea. That was nine years ago. I still have the tea.
 rm_cas_car|Pedal powered! Coconut wheels! Top speed: a brisk walk. Mind the palm tree. Mind the palm tree!
 rm_cas_hammock|Just a quick nap in the hammock. Nothing could possibly - whoa! Ow. The sand is hard.
@@ -854,6 +975,14 @@ rm_din_kayla|Dudley's my best friend. He's very big, and very soft, and I don't 
 rm_din_marcus|When the cameras turn off, Dudley sits down and says, my back. Every single day. My back.
 rm_flux|The thingamaflux. Everyone has one. Nobody can explain it. You turn the handle, and it goes thwup. That's all it does. It's essential.
 rm_genius|Listen. I built a portal to every dimension there is. Most of them are worse. One of them is just this garage. But pink.
+rm_lak_flash|The flashlight clicks on. The beam cuts the dark in two. Something at the edge of it steps back.
+rm_lak_lamp|The lighthouse lamp swings round. For a moment the whole lake is lit, and the shadows on the shore are gone.
+rm_lak_radio|Good evening, night owls. It's dark out there tonight. Darker than usual. Keep your lamps lit and your doors shut. And now, a song about fishing.
+rm_lak_ranger|Don't go out on the lake at night. Folks see things. Shapes. They stand at the edge of the light, waiting for it to go out.
+rm_lak_shadow|Stay. Stay in the dark with us. It's so quiet here. Turn off the light.
+rm_lak_type|The typewriter types by itself. Clack, clack, clack. The page says: and then a visitor pressed the typewriter.
+rm_lak_waitress|Coffee? It's the best in the county. The lights flicker sometimes. When they do, just stay in the light and finish your pie.
+rm_lak_writer|I came here on holiday to write. I woke up a week later with a manuscript I don't remember writing. Every page I find, comes true. So be careful what you read.
 rm_man_alex|Let's split up, gang. I'll go with the pretty one. That's me. I'm the pretty one.
 rm_man_chase|A ghost goes in one door and comes out another. Then a skeleton. Then the ghost again, chasing the skeleton. Then the skeleton, chasing the ghost.
 rm_man_dot|My glasses! Never mind, found them. Now, notice the footprints. They're muddy. The groundskeeper's boots are muddy. Coincidence? I think not.
@@ -870,6 +999,13 @@ rm_mem_guide|On your left, the waiting skeleton, our oldest piece. Some say he's
 rm_mem_surprised|Wait. That's what I look like inside? That's what everyone looks like inside? Nobody told me!
 rm_mem_trumpet|Doot! Doot doot! That's all I play. One note. The world loved it. Doot!
 rm_mem_wait|Ninety-eight percent. It's been at ninety-eight percent since the nineties. Any day now.
+rm_msm_bass|Doooom. Doooom. Dum, dum, dooom. I am a rock. I sing the low part. I have been singing it for ten thousand years.
+rm_msm_breeder|Put two monsters in the arch, wait a few hours, and out comes an egg. Sometimes it's a new monster. Sometimes it's just a very confused rock.
+rm_msm_coins|The monsters make coins when they sing. Don't ask me how. I just pick them up. My pockets are very heavy.
+rm_msm_fizz|Bloop! Bip! Bloop bloop! Pop! I sing in bubbles. You have to catch the notes before they pop!
+rm_msm_hoot|Hoo-weee-ooo! Hoo-weee! Hoo! That's my part. It's the high bit. Everybody hums it in the shower.
+rm_msm_keeper|Welcome to the island! Every monster here sings one part. One drums, one whistles, one hums like a mountain. Press them all and you'll hear the whole song.
+rm_msm_thump|Boom. Boom. Ba-boom. Boom. Thumpkin keeps the beat with his whole belly.
 rm_oak_acorn|A giant acorn falls from nowhere. It lands with a thunk. Somewhere, a very proud squirrel.
 rm_oak_depot|The railroad built this town. Trains used to stop right here. Now the little one goes round the cotton field. All aboard, it leaves when it leaves.
 rm_oak_farmer|Been farming this ground forty years. Tobacco, cotton, sweet potatoes. Now I mostly grow tired. Y'all come back for the festival, hear?
@@ -919,6 +1055,15 @@ rm_shp_teal|I did my tasks. All of them. Wires, scan, trash. I'm very innocent. 
 rm_shp_vent|Oh. Hello. I was just, er, cleaning the vent. Crew do that. Normal crew things. Please don't vote.
 rm_shp_wires|Red to red. Blue to blue. Yellow to - the panel sparks. The lights go out. Somebody screams. The lights come back on.
 rm_sideways|Welcome to the sideways dimension. The floor is the wall. Your coffee is everywhere.
+rm_spe_alarm|Alert! Alert! A giant monster is attacking the city! Again! Third time this week! Squad, to the quarry!
+rm_spe_blue|I'm Bea, the blue one. I build the gadgets. The giant robot was my idea. The giant robot's cup holder was also my idea.
+rm_spe_goons|Hup! Hup! Hup! We are the clay goons! We are many! We fall over when you poke us! Hup!
+rm_spe_green|Gil. Green. The new guy. I was evil for two weeks. It was a whole thing. We don't talk about it.
+rm_spe_mentor|Squad. Remember: your colours make you strong, but your friendship makes you stronger. Also, please wipe your feet. This is a command centre.
+rm_spe_pink|Pia, pink, team archer. I've never missed a shot. Well, once. The robot still has the arrow in its knee.
+rm_spe_red|I'm Riley, the red one. I lead the squad. Mostly that means I shout let's go, and then we go.
+rm_spe_robot|Five vehicles roar into the quarry and lock together, piece by piece, into one giant robot. It strikes a pose. A small rock falls off.
+rm_spe_yellow|Yusuf, yellow. I do the flips. Every fight, I do at least four flips. Nobody asked for the flips. The flips are free.
 rm_tv1|Channel ninety: celebrity housewives of the sun. They're all on fire. Nobody minds.
 rm_tv2|Channel twelve: a cooking show where the food cooks the chef.
 rm_tv3|Channel three: a man shouting the weather at a goat. The goat disagrees.

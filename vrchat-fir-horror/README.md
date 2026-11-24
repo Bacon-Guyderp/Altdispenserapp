@@ -384,7 +384,7 @@ The Kitchen (Pine Pete's) · The Old Ruins (Pixel Hollow) · The Observation Dec
 
 ## The new rooms (and rideable rides)
 
-Fifteen more Station stops (`Editor/FirRooms.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
+Nineteen more Station stops (`Editor/FirRooms.cs`, `Editor/FirRooms2.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
 ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is six across now. The
 cartoon rooms are original takes on a kind of show: new names, new characters and new jokes, with no logos,
 theme songs or catchphrases. Every person is voiced and captioned, and every gag speaks.
@@ -392,24 +392,35 @@ theme songs or catchphrases. Every person is voiced and captioned, and every gag
 * **The Cutaway House** (a cartoon family sitcom): the living room, a scheming baby, a dog writing a novel, a
   giant rooster and a cutaway.
 * **Yellowville** (a yellow cartoon town): the family house, a power plant, the tavern, a donut shop, a couch gag.
-* **The Spooky Mansion Case** (teen mystery-solvers and a van): a hallway of doors, and **the Mystery Ride**, a
-  dark ride with two cars, four lanes, three scares and an unmasking.
+* **The Spooky Mansion Case** (teen mystery-solvers and a van): a hallway of doors, a haunted dining hall, an unmasking.
 * **Paper Mountain Town** (a cut-out paper mountain town): paper houses, a bus stop, an angry mob, a cardboard cow.
 * **Four Oaks, NC**: Main Street, the water tower, four oaks, a cotton field, the Bentonville Battlefield marker,
-  the I-95 sign, sweet tea, ten acorns to collect, and a **little train** to ride round the field.
+  the I-95 sign, sweet tea, the old depot and ten acorns to collect.
 * **The Dino Sing-Along Studio** (a kids' TV dinosaur show): Dudley the Dinosaur, a treehouse, a toy chest.
 * **The Back Rooms**: 60 by 60 metres of yellow wallpaper, damp carpet and humming lights in a maze.
 * **The Quiet Town, 1962** (a black-and-white small-town sheriff show): the sheriff's office, the barber, a pond.
 * **Castaway Island** (shipwrecked castaways): the wreck of the S.S. Sardine, huts, a coconut radio, a bamboo car.
 * **The Wishing Hills** (friendly storybook dragons): a wishing stone, a rainbow, a castle on a cloud.
 * **The Kitchen Counter Theatre** (singing vegetables): a radish, a squash, a pea choir and an onion on a giant counter.
-* **The Clubhouse on the Hill** (a cartoon clubhouse): a gizmo picker, a garden, and **toon cars** to ride round it.
+* **The Clubhouse on the Hill** (a cartoon clubhouse): a gizmo picker and a garden.
 * **The Suspicious Starship** (a crew with one impostor): the emergency button, vents, wiring, a medbay scan.
 * **The Meme Museum**: five skeleton memes behind velvet ropes and a statue of the first meme.
 * **Orlando, Florida**: two **roller coasters** (Gator Gulch, the family one, and the Storm Chaser: a 30 m
   lift, about 70 km/h at the bottom of the drop), two **dark rides** (the Haunted Orange Grove, with trees that
   jump out, and Mission: Space Coast), **swan boats** on the lake, an **observation wheel**, an orange grove, a
-  gator pond and the I-4.
+  gator pond and the I-4. Orlando is the only room with rides.
+* **Monster Choir Island** (singing monsters): four monsters on singing pads, each with its own part, a castle, eggs.
+* **The Shifting Bureau** (a brutalist bureau of strange objects): floating desks, a black pyramid, a red phone.
+* **The Dark Lake** (a writer lost in a lakeside town at night): the diner, a lighthouse, shadow figures, ten
+  manuscript pages to find.
+* **The Spectrum Squad** (five colour-coded teen heroes): the command centre, the mentor in a tube, clay goons, and
+  a statue of their five-vehicle giant robot.
+
+Every one of the nineteen has a wing through its far wall, like the expansion's (3 voiced people and 3 gags each,
+`Audio/More/mo_r*`): the Salty Barnacle, Yellowville Elementary, the Secret Basement, the Community Center, the
+Acorn Festival, the Dressing Room, Level Two: the Pipes, the Town Square, the Other Side of the Island, the Cloud
+Castle, Backstage in the Fridge, the Gadget Garage, the Engine Room, the Gift Shop, the Rocket Garden, the Cold
+Island, the Research Sector, the Old Boathouse and the Villains' Moon Base.
 
 The coasters use a new kind of `FirRide` (kind 3): the cars follow a 3D track, pitch up and down with it, bank
 into
