@@ -382,6 +382,42 @@ new anomalies) · The Invention Shed (Garage) · The Wave Pool and Lazy River (W
 The Kitchen (Pine Pete's) · The Old Ruins (Pixel Hollow) · The Observation Deck (Test Annex) · The Mines
 (Blocklands) · The Mead Hall (the Cold North, through a tunnel in the mountain) · The Deep Woods (Mystery Hut).
 
+## The new rooms (and rideable rides)
+
+Fifteen more Station stops (`Editor/FirRooms.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
+ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is six across now. The
+cartoon rooms are original takes on a kind of show: new names, new characters and new jokes, with no logos,
+theme songs or catchphrases. Every person is voiced and captioned, and every gag speaks.
+
+* **The Cutaway House** (a cartoon family sitcom): the living room, a scheming baby, a dog writing a novel, a
+  giant rooster and a cutaway.
+* **Yellowville** (a yellow cartoon town): the family house, a power plant, the tavern, a donut shop, a couch gag.
+* **The Spooky Mansion Case** (teen mystery-solvers and a van): a hallway of doors, and **the Mystery Ride**, a
+  dark ride with two cars, four lanes, three scares and an unmasking.
+* **Paper Mountain Town** (a cut-out paper mountain town): paper houses, a bus stop, an angry mob, a cardboard cow.
+* **Four Oaks, NC**: Main Street, the water tower, four oaks, a cotton field, the Bentonville Battlefield marker,
+  the I-95 sign, sweet tea, ten acorns to collect, and a **little train** to ride round the field.
+* **The Dino Sing-Along Studio** (a kids' TV dinosaur show): Dudley the Dinosaur, a treehouse, a toy chest.
+* **The Back Rooms**: 60 by 60 metres of yellow wallpaper, damp carpet and humming lights in a maze.
+* **The Quiet Town, 1962** (a black-and-white small-town sheriff show): the sheriff's office, the barber, a pond.
+* **Castaway Island** (shipwrecked castaways): the wreck of the S.S. Sardine, huts, a coconut radio, a bamboo car.
+* **The Wishing Hills** (friendly storybook dragons): a wishing stone, a rainbow, a castle on a cloud.
+* **The Kitchen Counter Theatre** (singing vegetables): a radish, a squash, a pea choir and an onion on a giant counter.
+* **The Clubhouse on the Hill** (a cartoon clubhouse): a gizmo picker, a garden, and **toon cars** to ride round it.
+* **The Suspicious Starship** (a crew with one impostor): the emergency button, vents, wiring, a medbay scan.
+* **The Meme Museum**: five skeleton memes behind velvet ropes and a statue of the first meme.
+* **Orlando, Florida**: two **roller coasters** (Gator Gulch, the family one, and the Storm Chaser: a 30 m
+  lift, about 70 km/h at the bottom of the drop), two **dark rides** (the Haunted Orange Grove, with trees that
+  jump out, and Mission: Space Coast), **swan boats** on the lake, an **observation wheel**, an orange grove, a
+  gator pond and the I-4.
+
+The coasters use a new kind of `FirRide` (kind 3): the cars follow a 3D track, pitch up and down with it, bank
+into
+the turns, crawl through the station and up the lift chain, and speed up the further below the top of the lift
+they are. As with every ride, the motion comes from the server clock, so everyone sees the same train in the same
+place without syncing. Sit in any seat to ride; jump to get off, and you land back on the platform. The builder
+checks that each coaster's track never runs through itself.
+
 ## The remaster
 
 Everything except the talking trees' models and the voices has been remastered:
@@ -446,7 +482,7 @@ cd tools
 python make_audio.py       # numpy + ffmpeg: writes Assets/FirHorror/Audio/*.ogg
 python make_textures.py    # numpy + Pillow: writes the source PNGs to tools/textures/
 python bake_textures.py    # packs them into Assets/FirHorror/Data/textures_baked.txt (run after any texture change)
-python make_voices.py      # espeak-ng + mbrola: skeleton voices (add --rainbow / --combo for those lines)
+python make_voices.py      # espeak-ng + mbrola: skeleton voices (add --rainbow / --combo / --more / --rooms for those lines)
 python make_unitypackage.py
 ```
 

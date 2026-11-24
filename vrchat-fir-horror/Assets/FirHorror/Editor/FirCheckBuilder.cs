@@ -241,6 +241,7 @@ public static partial class FirCheckBuilder
         BuildWaterPark(root);
         BuildChrisAndTripp(root);
         BuildExpansions(root);
+        BuildRooms(root);
         BuildShare(root);
         {
             int verts = 0, objs = 0;
@@ -6910,7 +6911,7 @@ public static partial class FirCheckBuilder
     static void StationStop(string title, Transform arrive, Transform backParent, Vector3 backPos, Vector3 backNormal)
     {
         int i = stationSlots++;
-        var b = TeleportButton(stationBoard, title, new Vector3(-1.32f + (i % 5) * 0.66f, 2.17f - (i / 5) * 0.18f, -0.03f), Vector3.back, arrive, new Vector3(0.64f, 0.15f, 0.06f));   // 5 across, up to 50 stops
+        var b = TeleportButton(stationBoard, title, new Vector3(-1.375f + (i % 6) * 0.55f, 2.17f - (i / 6) * 0.165f, -0.03f), Vector3.back, arrive, new Vector3(0.53f, 0.15f, 0.06f));   // 6 across, up to 60 stops
         TeleportButton(backParent, "Back to the lobby", backPos, backNormal, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
     }
 

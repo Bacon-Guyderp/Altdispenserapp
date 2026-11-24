@@ -32,6 +32,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "ct") { ChrisTrippTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "remaster") { RemasterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "rooms") { RoomsTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "expand") { ExpansionTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -256,6 +257,7 @@ public static class SimCheck {
     ChrisTrippTests(A, B);
     RemasterTests(A, B);
     ExpansionTests(A, B);
+    RoomsTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -954,13 +956,13 @@ public static class SimCheck {
   }
 
   // ======================================================================== the Mystery Hut
-  static bool wingGags;   // the expansion's wing gags (mo_ clips) are counted only by the expansion's own test
+  static string gagSet = "";   // the expansion's wing gags (mo_ clips) and the new rooms' gags (rm_ clips) are counted only by their own tests
   static int RunGags(Sim.Client B, Func<FirGag, bool> keep, out int gagN, List<string> gagBad) {
   var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
   int gagOk = 0; gagN = 0;
   foreach (var gag in All<FirGag>(B)) {
-    bool isWing = gag.voice != null && gag.voice.clip != null && gag.voice.clip.name.StartsWith("mo_");
-    if (isWing != wingGags) continue;
+    string cn = gag.voice != null && gag.voice.clip != null ? gag.voice.clip.name : "";
+    if ((cn.StartsWith("mo_") ? "mo" : cn.StartsWith("rm_") ? "rm" : "") != gagSet) continue;
     if (!keep(gag) || gag.scare || gag.bubble == null || gag.name.StartsWith("Proctor")) continue;   // jump scares (no line), and PROCTOR's announcements (a voice, nothing moves)
     gagN++;
     Sim.Events.Clear();
@@ -1038,12 +1040,117 @@ public static class SimCheck {
     Check(folk.Count == wings.Count * 3 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned (3 a wing)");
     // the new gags: each one moves, speaks and shows its caption
     int gagN; var gagBad = new List<string>();
-    wingGags = true;
+    gagSet = "mo";
     int gagOk = RunGags(B, g => true, out gagN, gagBad);
-    wingGags = false;
+    gagSet = "";
     Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags (3 a wing) move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
     Check(boards >= 3, boards + " wings have something to collect");
+  }
+
+  // ======================================================================== the new rooms, and their rides
+  static void RoomsTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The new rooms");
+    var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("The new rooms:"));
+    Check(line != null && line.Contains("15 more Station stops"), line != null ? Plain(line) : "no rooms line in the build log");
+    Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems (coaster tracks clear of themselves)" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
+    foreach (var l in Sim.BuildLog.Where(l => l.Contains("roller coaster")).Distinct()) Console.WriteLine("        " + Plain(l).Replace("Fir Warning systems check: ", ""));
+    var rooms = FirCheckBuilder.rooms;
+    // no room overlaps another area, wing or room
+    var floors = new List<KeyValuePair<string, float[]>>();
+    var root = All<FirTeleport>(A).First().transform; while (root.parent != null) root = root.parent;
+    for (int ci = 0; ci < root.childCount; ci++) { var area = root.GetChild(ci);
+      if (rooms.Any(r => r.Key == area.name)) continue;
+      var fl = area.Find("Floor"); if (fl == null) continue;
+      var bc = fl.GetComponent<BoxCollider>(); if (bc == null) continue;
+      var c = fl.position; floors.Add(new KeyValuePair<string, float[]>(area.name, new[] { c.x - bc.size.x / 2f, c.z - bc.size.z / 2f, c.x + bc.size.x / 2f, c.z + bc.size.z / 2f }));
+    }
+    floors.AddRange(FirCheckBuilder.wings);
+    var clash = new List<string>();
+    Func<float[], float[], bool> overlap = (a, b) => a[0] < b[2] - 0.05f && b[0] < a[2] - 0.05f && a[1] < b[3] - 0.05f && b[1] < a[3] - 0.05f;
+    for (int i = 0; i < rooms.Count; i++) {
+      foreach (var f in floors) if (overlap(rooms[i].Value, f.Value)) clash.Add(rooms[i].Key + " / " + f.Key);
+      for (int j = i + 1; j < rooms.Count; j++) if (overlap(rooms[i].Value, rooms[j].Value)) clash.Add(rooms[i].Key + " / " + rooms[j].Key);
+    }
+    Check(rooms.Count == 15 && clash.Count == 0, rooms.Count + " rooms, none overlapping anything else (" + floors.Count + " areas and wings checked)" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
+    // the Station takes you to each one; you can walk in from the arrival spot; a button takes you home
+    int ok = 0; var bad = new List<string>();
+    for (int i = 0; i < rooms.Count; i++) {
+      var r = rooms[i].Value; float cx = (r[0] + r[2]) / 2f; string stop = FirCheckBuilder.roomStops[i];
+      var go = All<FirTeleport>(A).FirstOrDefault(t => t.name == stop && t.transform.position.x < 100f);
+      if (go == null) { bad.Add(stop + " (not on the Station board)"); continue; }
+      A.player.pos = new Vector3(-4f, 0.05f, -1f);
+      Sim.Press(A, go); Sim.Run(0.5f);
+      bool there = Flat(A.player.pos, new Vector3(cx, 0, 22f)) < 0.4f;
+      string what;
+      bool walk = !Blocked(A, new[] { new Vector3(cx, 0, 22f), new Vector3(cx, 0, 27f) }, out what);
+      var home = All<FirTeleport>(A).FirstOrDefault(t => t.name == "Back to the lobby" && t.transform.position.x > r[0] && t.transform.position.x < r[2] && t.transform.position.z < 21f);
+      bool back = false;
+      if (home != null) { Sim.Press(A, home); Sim.Run(0.5f); back = Flat(A.player.pos, new Vector3(0, 0, -2.6f)) < 0.4f; }
+      if (there && walk && back) ok++; else bad.Add(stop + (there ? "" : " (missed: " + A.player.pos + ")") + (walk ? "" : " (blocked: " + what + ")") + (back ? "" : " (no way home)"));
+    }
+    var board = All<FirTeleport>(A).Where(t => t.transform.parent != null && t.transform.parent.name == "Station").ToList();
+    bool tidy = board.All(t => board.All(u => u == t || Vector3.Distance(t.transform.position, u.transform.position) > 0.15f));
+    Check(ok == rooms.Count && board.Count >= 57 && tidy, ok + " of " + rooms.Count + " rooms: the Station sends you there, the way in is clear, and a button takes you home; the board has " + board.Count + " stops, none overlapping" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
+    // the people: voiced and captioned
+    var folk = All<FirRainbowSkeleton>(A).Where(k => k.voice != null && k.voice.clip != null && k.voice.clip.name.StartsWith("rm_")).ToList();
+    Check(folk.Count >= 55 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned");
+    int gagN; var gagBad = new List<string>();
+    gagSet = "rm";
+    int gagOk = RunGags(B, g => true, out gagN, gagBad);
+    gagSet = "";
+    Check(gagN >= 55 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
+    // the coasters: ride a whole lap of each
+    foreach (var cname in new[] { "Gator Gulch", "The Storm Chaser" }) {
+      var ride = All<FirRide>(A).First(x => x.name == cname);
+      var rideB = All<FirRide>(B).First(x => x.name == cname);
+      var seat = All<FirSeat>(A).First(x => x.name == cname + " seat 0.0a");
+      var station = ride.route[0];
+      // wait for train 0 to come into the station, then get on
+      int wait = 0;
+      while (Vector3.Distance(seat.transform.position, station) > 8f || ride.carts[0].position.y > 1.2f) { Sim.Step(); if (++wait > 20 * 200) break; }
+      Sim.Press(A, seat);
+      bool seated = Sim.Seated(A.player);
+      float maxY = 0f, maxV = 0f, maxPitch = 0f, maxRoll = 0f, off = 0f; var last = A.player.pos; bool stayed = true, bobOk = true; float far = 0f;
+      for (int f = 0; f < 20 * 150; f++) {
+        Sim.Step();
+        var p = A.player.pos;
+        maxY = Mathf.Max(maxY, p.y); maxV = Mathf.Max(maxV, Vector3.Distance(p, last) / Time.deltaTime); last = p;
+        var fw = seat.transform.forward; maxPitch = Mathf.Max(maxPitch, Mathf.Abs(90f - Vector3.Angle(fw, Vector3.up)));
+        var rt = seat.transform.rotation * Vector3.right; maxRoll = Mathf.Max(maxRoll, Mathf.Abs(90f - Vector3.Angle(rt, Vector3.up)));
+        float dmin = 99f; foreach (var q in ride.route) dmin = Mathf.Min(dmin, Vector3.Distance(q, ride.carts[0].position)); off = Mathf.Max(off, dmin);
+        far = Mathf.Max(far, Flat(p, station));
+        if (!Sim.Seated(A.player)) stayed = false;
+        if (f % 100 == 0 && Vector3.Distance(ride.carts[0].position, rideB.carts[0].position) > 0.5f) bobOk = false;
+        if (f > 400 && Vector3.Distance(p, station) < 3f && ride.carts[0].position.y < 1f) break;
+      }
+      Check(seated && stayed && bobOk && maxY > (cname == "Gator Gulch" ? 13f : 29f) && maxV > (cname == "Gator Gulch" ? 11f : 17f) && maxPitch > 20f && maxRoll > 10f && off < 2.5f,
+            "Alice rides " + cname + ": up to " + maxY.ToString("F1") + " m, " + (maxV * 3.6f).ToString("F0") + " km/h at the bottom of the drop, pitched up to " + maxPitch.ToString("F0") + " degrees and banked " + maxRoll.ToString("F0") + " into the turns, " + far.ToString("F0") + " m from the station, on the track all the way; Bob sees the same train" + (stayed ? "" : " | she fell off") + (bobOk ? "" : " | Bob's train is elsewhere"));
+      Check(Vector3.Distance(A.player.pos, station) < 3f, "...and she comes back into the station (" + Flat(A.player.pos, station).ToString("F1") + " m away)");
+      Sim.With(A, () => seat.station.ExitStation(A.player));
+    }
+    // the dark rides: things jump out as you ride past
+    foreach (var dr in new[] { new { cart = "Grove seat 0a", deep = 61f, room = "Haunted Orange Grove" }, new { cart = "Capsule seat 0a", deep = 93f, room = "Mission: Space Coast" }, new { cart = "Mystery ride seat 0a", deep = 64f, room = "the Mystery Ride" } }) {
+      var seat = All<FirSeat>(A).First(x => x.name == dr.cart);
+      Sim.Press(A, seat); Sim.Events.Clear();
+      float maxZ = 0f;
+      for (int f = 0; f < 20 * 75; f++) { Sim.Step(); maxZ = Mathf.Max(maxZ, A.player.pos.z); }
+      int screams = Sim.Events.Count(e => e.StartsWith("Alice sound") && (e.Contains("scream") || e.Contains("rm_")));
+      Check(Sim.Seated(A.player) && maxZ > dr.deep && screams >= 3, "Alice rides " + dr.room + " to the back of the building (z " + maxZ.ToString("F0") + ") and " + screams + " things happen as she passes");
+      Sim.With(A, () => seat.station.ExitStation(A.player));
+    }
+    // the gentle rides: sit down and get carried
+    foreach (var name in new[] { "Swan seat 0a", "Wheel gondola seat 0", "Train seat 0a", "Toon car seat 0a" }) {
+      var seat = All<FirSeat>(A).First(x => x.name == name);
+      Sim.Press(A, seat); var p0 = A.player.pos; float moved = 0f;
+      for (int f = 0; f < 20 * 25; f++) { Sim.Step(); moved = Mathf.Max(moved, Vector3.Distance(A.player.pos, p0)); }
+      Check(Sim.Seated(A.player) && moved > 4f, name.Replace(" seat 0a", "").Replace(" seat 0", "") + ": Alice sits down and is carried " + moved.ToString("F0") + " m in 25 s");
+      Sim.With(A, () => seat.station.ExitStation(A.player));
+    }
+    var wheel = All<FirRide>(A).First(r => r.rotor != null && r.rotor.parent != null && r.rotor.parent.name == "Observation Wheel");
+    Check(wheel.upright.All(u => Quaternion.Angle(u.rotation, Quaternion.identity) < 1f), "the observation wheel's gondolas stay level");
+    int seats = All<VRC.SDK3.Components.VRCStation>(A).Count(st => st.transform.position.x > 2895f);
+    Check(seats >= 60, seats + " ride seats in the new rooms");
   }
 
   // ======================================================================== the remaster: shading, bevels, trees untouched

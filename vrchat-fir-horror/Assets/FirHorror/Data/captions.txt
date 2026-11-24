@@ -809,18 +809,135 @@ res_rust|Welcome to the snack shack! Today's special is soup. It goes right thro
 res_sky|I'm writing a song! It's called Ribcage Rock. It's mostly xylophone.
 rm_alien|Welcome to the galactic market! Three eyes, two prices, and one refund policy: no.
 rm_anxious|Oh boy. Oh no. Are we going through the portal again? I left some of my bones in the last dimension. The important ones.
+rm_bak_entity|You are not supposed to be here. Neither am I. Nobody is. That's what makes it so cosy.
+rm_bak_exit|The exit sign flickers. The door beneath it opens onto a hallway with yellow wallpaper and another exit sign.
+rm_bak_holly|Have you seen an exit? A real one? There's a sign that says exit but it leads to another hallway. Every time. Every single time.
+rm_bak_light|A light panel drops out of the ceiling and swings. For a second, in the dark, something tall walks past.
+rm_bak_moss|I maintain the lights. Six hundred million fluorescent tubes. They all hum in B flat. I can't hear anything else anymore.
+rm_bak_water|Drink the water. It tastes like almonds. Nobody knows why. Nobody knows who leaves it here. Drink it anyway.
+rm_bak_wes|I clipped through a wall in nineteen ninety-four. Been walking ever since. The hallways repeat. The carpet's always damp. I've stopped asking why.
+rm_cas_captain|It was meant to be an afternoon boat trip. A quick look at the reef, back for tea. That was nine years ago. I still have the tea.
+rm_cas_car|Pedal powered! Coconut wheels! Top speed: a brisk walk. Mind the palm tree. Mind the palm tree!
+rm_cas_hammock|Just a quick nap in the hammock. Nothing could possibly - whoa! Ow. The sand is hard.
+rm_cas_inventor|I can build a radio from two coconuts and a seashell. I can build a car from bamboo. I cannot build a boat. Don't ask me why. I've tried.
+rm_cas_mate|Sorry, Captain! Sorry about the boat! And the radio! And the rescue raft! And the other rescue raft!
+rm_cas_plane|A plane! Hey! Down here! Help! We're right - and it's gone. Again. Seventeen this year.
+rm_cas_radio|The coconut radio crackles. A voice says: and the search for the castaways has been called off. Then, the weather.
+rm_cas_star|Darling, I was famous. Seven films. They're probably still looking for me. Any minute now. Any minute.
+rm_clu_door|The door opens only for the magic word. The magic word is please. Nobody ever tries please.
+rm_clu_gizmo|Oh, gizmo picker! We need something to fix the bridge! A ladder, a magnet, or a giant rubber duck! It's the duck. It's always the duck.
+rm_clu_gwen|My flowers sing in the morning. Little songs. Off key. I love them anyway.
+rm_clu_hal|If it's broke, I'll fix it. If it's not broke, I'll fix it anyway. Then it's broke. Then I fix it again. Job security.
+rm_clu_host|Hiya, everybody! Welcome to the clubhouse! Today we've got a problem to solve, and a gadget to solve it! Let's go!
+rm_clu_pickles|I'm a pup pal! Woof! I'm actually a skeleton! But I'm a very good boy! Throw a bone! Not mine!
+rm_clu_slide|Down the slide! Wheee! That's the best part of the clubhouse! The rest is mostly cupboards!
+rm_cou_critic|I've reviewed this show eleven times. Five stars, every time. The radish carries the whole thing.
+rm_cou_onion|Back in my day we didn't have stories with morals. We had a turnip and a stick. And we were grateful. Don't cry. Everyone cries near me.
+rm_cou_peas|We are the peas! We sing in harmony! Mostly! Five peas, one pod, zero rehearsal!
+rm_cou_radish|Hello, everyone! I'm a radish! I don't have any hands, so I can't wave! I'm waving on the inside!
+rm_cou_sage|Two minutes to curtain! Has anyone seen the asparagus? He's got stage fright again. He's hiding in the fridge.
+rm_cou_squash|Good evening. I shall now perform a silly song about a lost sock. It is a very serious silly song.
+rm_cou_usher|Programme? Tonight it's a story about being kind to your neighbour, then a silly song about a sock. Please silence your bones.
+rm_cut_baby|Silence, fool. My weather machine is nearly complete. Then the whole world shall bow before me. But first, a nap. A short one.
+rm_cut_cutaway|Meanwhile, in a completely unrelated place, a skeleton explains the plot of a film nobody has seen. And we're back.
+rm_cut_dad|Lorraine! Lorraine! I got us a boat. Well, it's a bathtub. But it floats. Mostly. This is just like the time I wrestled a giant rooster. You don't remember? Hold on, let me show you.
+rm_cut_dog|I'm writing a novel, you know. Four hundred pages. Every one of them is about how misunderstood I am. Pour me another, would you?
+rm_cut_knee|Ahhh! My knee! Ahhhh! Ssss! Ahhhh! It's fine. No, it isn't. Ahhhh!
+rm_cut_mom|Gus, put the bathtub back. Kids, dinner's ready. Baby, please stop building that death ray in the high chair.
+rm_cut_rooster|You again! Round seven hundred! Put 'em up, Gus! This time I'm going through the kitchen, the attic, and a passing airship!
+rm_din_bubbles|The bubble machine starts up. Bubbles everywhere. One of them has a tiny skeleton inside, waving.
+rm_din_chest|The toy chest opens. Inside: blocks, a drum, a rubber duck, and the costume of the dinosaur who was here before Dudley.
+rm_din_dudley|Hi there, friends! I'm Dudley! Today we're going to learn about sharing, caring, and why you should never feed a dinosaur after midnight. Just kidding. Snacks any time!
+rm_din_fran|Places, everybody! Dudley, tail in. Kids, big smiles. And the bubble machine needs bubbles this time, not soup.
+rm_din_hug|Group hug! Everybody in! Come on, closer! Closer! Oh no. Someone's stuck in my tummy pouch. I don't have a tummy pouch.
+rm_din_kayla|Dudley's my best friend. He's very big, and very soft, and I don't think he's a real dinosaur. Don't tell him.
+rm_din_marcus|When the cameras turn off, Dudley sits down and says, my back. Every single day. My back.
 rm_flux|The thingamaflux. Everyone has one. Nobody can explain it. You turn the handle, and it goes thwup. That's all it does. It's essential.
 rm_genius|Listen. I built a portal to every dimension there is. Most of them are worse. One of them is just this garage. But pink.
+rm_man_alex|Let's split up, gang. I'll go with the pretty one. That's me. I'm the pretty one.
+rm_man_chase|A ghost goes in one door and comes out another. Then a skeleton. Then the ghost again, chasing the skeleton. Then the skeleton, chasing the ghost.
+rm_man_dot|My glasses! Never mind, found them. Now, notice the footprints. They're muddy. The groundskeeper's boots are muddy. Coincidence? I think not.
+rm_man_gribble|Ghost? What ghost? There's no ghost here. Ha. Ha. Run along now. Nothing to see in the east wing. Especially not on the ride.
+rm_man_hank|I'm not scared, I'm just hungry. And a little scared. Mostly hungry. Is that a ghost or a really tall sandwich?
+rm_man_portrait|The eyes in the painting move. They follow you. They are not judging you. They are judging your shoes.
+rm_man_sandwich|Bread, cheese, pickles, ham, cheese, more cheese, a whole cake, and bread. Perfect. Don't look at me like that.
+rm_man_unmask|The ghost is unmasked. It was the groundskeeper all along. Underneath that, another mask. Underneath that, a slightly smaller groundskeeper.
+rm_mem_buttons|Two buttons. One says sleep. One says one more video. I've been sweating here for nine years.
+rm_mem_curator|Welcome to the Meme Museum. Every exhibit here was once the funniest thing on earth, for about a fortnight. We preserve them in the dark, like fine wine.
+rm_mem_galaxy|Skull. Glowing skull. Shining skull. A skull so enlightened it has become a small sun.
+rm_mem_guard|Do not touch the memes. Do not take a picture of the memes. Do not make a meme of the memes. That's how it starts.
+rm_mem_guide|On your left, the waiting skeleton, our oldest piece. Some say he's still waiting. Some say the update is still downloading.
+rm_mem_surprised|Wait. That's what I look like inside? That's what everyone looks like inside? Nobody told me!
+rm_mem_trumpet|Doot! Doot doot! That's all I play. One note. The world loved it. Doot!
+rm_mem_wait|Ninety-eight percent. It's been at ninety-eight percent since the nineties. Any day now.
+rm_oak_acorn|A giant acorn falls from nowhere. It lands with a thunk. Somewhere, a very proud squirrel.
+rm_oak_depot|The railroad built this town. Trains used to stop right here. Now the little one goes round the cotton field. All aboard, it leaves when it leaves.
+rm_oak_farmer|Been farming this ground forty years. Tobacco, cotton, sweet potatoes. Now I mostly grow tired. Y'all come back for the festival, hear?
+rm_oak_queen|Welcome to Four Oaks! I'm this year's Acorn Festival queen. There's a parade, a street fair, and more fried things than you can count.
+rm_oak_squirrel|Mine! The acorns are mine! All four oaks are mine! I'm the fifth oak now!
+rm_oak_tea|Sweet tea, honey? It's got about a pound of sugar in it. That's how you know it's right.
+rm_oak_tractor|Hold on, she's warming up. She's been warming up since nineteen seventy-eight.
+rm_orl_countdown|T minus ten. Nine. Eight. Seven. We have ignition. We have liftoff. We have, slightly, a fire.
+rm_orl_gator|Two eyes rise out of the pond. Then a snout. Then a whole alligator, smiling, which is worse.
+rm_orl_ghost|Pick an orange. Go on. Pick one. They're so juicy. They're so fresh. They're so looking at you.
+rm_orl_meteor|A meteor shower. One of them is coming straight at the capsule. It misses by a whisker. The computer says oops.
+rm_orl_moonwalk|Welcome to the moon! Population: me! Gift shop's on your left! Please don't step on the flag!
+rm_orl_ray|The Storm Chaser! Thirty metres up, and a drop straight into the weather. Hold onto your skull. Seriously, we have a bin of lost skulls.
+rm_orl_retiree|Moved down from New Jersey in nineteen ninety. The winters are lovely. The summers try to kill you. I wouldn't live anywhere else.
+rm_orl_rhonda|Welcome to Gator Gulch! Keep your arms, legs and bones inside the car at all times. Yes, the gators are real. No, they don't bite. Usually.
+rm_orl_storm|Three o'clock. A thunderstorm rolls in, on time, like it does every afternoon. Twenty minutes later the sun is out and everyone is steaming.
+rm_orl_tourist|Four parks in one day! I'm sunburnt, I've lost my hat, and I've eaten a turkey leg the size of my arm. Best holiday ever!
+rm_orl_traffic|This is the I-4. I've been in this lane since Tuesday. I can see my exit. I've been able to see it since Tuesday.
+rm_orl_wade|Every pond in Florida's got a gator in it. Every golf course. Every swimming pool, some mornings. You learn to look first.
+rm_pap_bus|Get on the bus. Get on the bus. I don't care. Get on the bus.
+rm_pap_chef|Children. Come to the kitchen. I'll make you my famous chili. And then I'll tell you the truth about life. Mostly the chili.
+rm_pap_cow|A cardboard cow pops up. It moos. Every adult in town panics and forms a committee.
+rm_pap_mayor|As your mayor, I promise to do absolutely nothing about the giant cow situation. Vote for me again!
+rm_pap_mob|They took our jobs! Well, not our jobs. The paper towels. They took our paper towels! Get them!
+rm_pap_petey|This town is so boring. Last week a giant paper robot ate the mall. Before that, the aliens. Before that, a really big cow. So boring.
+rm_pap_snowball|Snowball fight! Wait. Is this snow? This is paper. It's all paper. Aaah, paper cut!
+rm_pap_wendell|Our teacher says we learned something today. I didn't learn anything. I think I un-learned something.
 rm_pink|It's the garage again. But pink. The skeletons here are pink too. They seem happier.
 rm_plaque|An interdimensional garage, inspired by cartoons about a cranky genius dragging his family through portals. Everyone here is a skeleton. In every dimension.
 rm_portal|Portal opened! Please mind the green.
+rm_qui_aunt|I've baked a pie for the county fair. Pickles, raisins, and a little bit of love. The judges always leave in a hurry.
+rm_qui_bullet|The deputy's one bullet falls out of his pocket, rolls across the floor, and drops through a crack. He's unarmed again.
+rm_qui_deputy|I'm the deputy. Fully armed. One bullet. In my shirt pocket. Where I can reach it in an emergency. If I remember which pocket.
+rm_qui_fish|I got one! I got one! It's a boot! It's a boot with a fish in it!
+rm_qui_keys|Don't touch the cell keys! I locked myself in last Tuesday. The prisoner had to let me out.
+rm_qui_ollie|Paw says if you sit by the pond long enough, the fish come to you. I've been sitting here since breakfast. The fish have not come.
+rm_qui_pie|Leave that pie on the sill, dear. It's cooling. The whole town knows not to touch it. It's that bad.
+rm_qui_sheriff|Well now. Nobody needs a gun in this town. Most trouble you can talk out of, if you're patient. The rest you can wait out on the porch.
 rm_sandwich|I'm a sandwich. Everyone here is a sandwich. Please don't look at me like that.
 rm_saucer|The saucer takes off! It flies in a circle. It has never flown in anything but a circle.
+rm_shp_button|Emergency meeting! Everybody to the table! Where's Lime? Lime was in electrical. Lime is always in electrical!
+rm_shp_coral|Captain's log. Day nine. Three crew have vanished. Two others keep popping out of the vents. I'm starting to have doubts.
+rm_shp_lime|Electrical's empty. It's always empty. Nobody ever comes in here. That's why I'm standing in it. For no reason.
+rm_shp_ochre|The reactor's melting down again. I'd fix it, but somebody keeps calling meetings.
+rm_shp_scan|Medbay scan complete. Height: tall. Weight: not much. Organs: none. You're a skeleton. Next!
+rm_shp_teal|I did my tasks. All of them. Wires, scan, trash. I'm very innocent. Why is everyone looking at me?
+rm_shp_vent|Oh. Hello. I was just, er, cleaning the vent. Crew do that. Normal crew things. Please don't vote.
+rm_shp_wires|Red to red. Blue to blue. Yellow to - the panel sparks. The lights go out. Somebody screams. The lights come back on.
 rm_sideways|Welcome to the sideways dimension. The floor is the wall. Your coffee is everywhere.
 rm_tv1|Channel ninety: celebrity housewives of the sun. They're all on fire. Nobody minds.
 rm_tv2|Channel twelve: a cooking show where the food cooks the chef.
 rm_tv3|Channel three: a man shouting the weather at a goat. The goat disagrees.
 rm_tv4|Channel infinity: an advert for a car that is also a dog. It runs on treats.
+rm_wis_flight|A green dragon takes off from the hill, does a loop the loop, and waves on the way past.
+rm_wis_juno|I touched the stone and wished, and now I'm here! My mum thinks I'm in my room. I think I'm in a story.
+rm_wis_pip|Hi! I'm Pip! I'm learning to fly! I can do up! I can't do down yet! Down is the tricky part!
+rm_wis_quill|Gather round, little ones. Every story here begins with a wish and ends with a lesson. Today's lesson: never wish for more homework.
+rm_wis_sneeze|The sleeping dragon sneezes. Gold sparkles everywhere. It does not wake up.
+rm_wis_stone|I wish, I wish, with all my heart, to fly with dragons, way up high, where the clouds begin.
+rm_wis_twins|I'm Twiddle. And I'm Twaddle. We share one body. She always wants to go left. He always wants to go right. So we go in circles.
+rm_yel_boss|Delightful. Another glorious day of profit. Release the hounds. Oh, we sold the hounds? Release the slightly cross hamster.
+rm_yel_couch|The family runs in for the couch gag. The couch is already sitting on the family. Nobody can explain it.
+rm_yel_dad|Safety inspector at the power plant. Eight years. Never inspected a thing. Have you tried the pink donuts? They're the best part of the job. They're the only part of the job.
+rm_yel_donut|Our donut is so big it has its own weather. Pink frosting. Sprinkles the size of your arm. One per customer, please.
+rm_yel_kid|I wrote my name on the school roof. In spray paint. In letters you can see from space. Nobody can prove it was me. Except the letters.
+rm_yel_mom|Hmmmm. I don't like it when the plant glows at night. But the light is nice for reading.
+rm_yel_rod|A glowing green rod falls out of a lunchbox. Somewhere, a meter goes click, click, click, click.
+rm_yel_skate|Coming through! Skateboard! No brakes! I never got the brakes! Brakes are for losers! Waaah!
 rt_hitch|Anyone heading west? I can pay you. I have a penny. Or exposure. Mostly the penny.
 rt_jar|The donation jar! Every penny helps. This one is mostly buttons. The buttons help too.
 rt_plaque|A fan room, inspired by Ryan Trahan's videos: penny challenges, trading up, and very long road trips. An unofficial tribute. Not affiliated.

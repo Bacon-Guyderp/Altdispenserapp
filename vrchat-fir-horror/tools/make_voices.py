@@ -1085,6 +1085,149 @@ AREAS3 += [
 ]
 
 
+# The new rooms: fifteen more Station stops (Audio/Rooms/rm_<room>_<who>.ogg)
+ROOMS = [
+    # the Cutaway House
+    ("Rooms/rm_cut_dad", M2, 150, 35, 0.95, "skel", "Lorraine! Lorraine! I got us a boat. Well, it's a bathtub. But it floats. Mostly. This is just like the time I wrestled a giant rooster. You don't remember? Hold on, let me show you."),
+    ("Rooms/rm_cut_mom", F1, 150, 60, 1.05, "skel", "Gus, put the bathtub back. Kids, dinner's ready. Baby, please stop building that death ray in the high chair."),
+    ("Rooms/rm_cut_baby", M3, 165, 85, 1.3, "skel", "Silence, fool. My weather machine is nearly complete. Then the whole world shall bow before me. But first, a nap. A short one."),
+    ("Rooms/rm_cut_dog", M2, 140, 40, 0.95, "skel", "I'm writing a novel, you know. Four hundred pages. Every one of them is about how misunderstood I am. Pour me another, would you?"),
+    ("Rooms/rm_cut_cutaway", M2, 140, 40, 1.0, "narr", "Meanwhile, in a completely unrelated place, a skeleton explains the plot of a film nobody has seen. And we're back."),
+    ("Rooms/rm_cut_rooster", M3, 120, 25, 0.85, "skel", "You again! Round seven hundred! Put 'em up, Gus! This time I'm going through the kitchen, the attic, and a passing airship!"),
+    ("Rooms/rm_cut_knee", M3, 150, 50, 1.0, "skel", "Ahhh! My knee! Ahhhh! Ssss! Ahhhh! It's fine. No, it isn't. Ahhhh!"),
+    # Yellowville
+    ("Rooms/rm_yel_dad", M2, 140, 30, 0.92, "skel", "Safety inspector at the power plant. Eight years. Never inspected a thing. Have you tried the pink donuts? They're the best part of the job. They're the only part of the job."),
+    ("Rooms/rm_yel_mom", F1, 140, 45, 0.95, "skel", "Hmmmm. I don't like it when the plant glows at night. But the light is nice for reading."),
+    ("Rooms/rm_yel_kid", M3, 175, 75, 1.2, "skel", "I wrote my name on the school roof. In spray paint. In letters you can see from space. Nobody can prove it was me. Except the letters."),
+    ("Rooms/rm_yel_boss", M3, 110, 25, 0.82, "skel", "Delightful. Another glorious day of profit. Release the hounds. Oh, we sold the hounds? Release the slightly cross hamster."),
+    ("Rooms/rm_yel_couch", M2, 140, 40, 1.0, "narr", "The family runs in for the couch gag. The couch is already sitting on the family. Nobody can explain it."),
+    ("Rooms/rm_yel_rod", M2, 140, 40, 1.0, "narr", "A glowing green rod falls out of a lunchbox. Somewhere, a meter goes click, click, click, click."),
+    ("Rooms/rm_yel_donut", F1, 150, 55, 1.0, "skel", "Our donut is so big it has its own weather. Pink frosting. Sprinkles the size of your arm. One per customer, please."),
+    ("Rooms/rm_yel_skate", M3, 175, 75, 1.2, "skel", "Coming through! Skateboard! No brakes! I never got the brakes! Brakes are for losers! Waaah!"),
+    # the Spooky Mansion Case
+    ("Rooms/rm_man_dot", F1, 160, 55, 1.05, "skel", "My glasses! Never mind, found them. Now, notice the footprints. They're muddy. The groundskeeper's boots are muddy. Coincidence? I think not."),
+    ("Rooms/rm_man_hank", M2, 165, 60, 1.1, "skel", "I'm not scared, I'm just hungry. And a little scared. Mostly hungry. Is that a ghost or a really tall sandwich?"),
+    ("Rooms/rm_man_alex", M3, 145, 50, 1.0, "skel", "Let's split up, gang. I'll go with the pretty one. That's me. I'm the pretty one."),
+    ("Rooms/rm_man_gribble", M2, 115, 25, 0.88, "skel", "Ghost? What ghost? There's no ghost here. Ha. Ha. Run along now. Nothing to see in the east wing. Especially not on the ride."),
+    ("Rooms/rm_man_unmask", M2, 140, 40, 1.0, "narr", "The ghost is unmasked. It was the groundskeeper all along. Underneath that, another mask. Underneath that, a slightly smaller groundskeeper."),
+    ("Rooms/rm_man_chase", M2, 140, 40, 1.0, "narr", "A ghost goes in one door and comes out another. Then a skeleton. Then the ghost again, chasing the skeleton. Then the skeleton, chasing the ghost."),
+    ("Rooms/rm_man_sandwich", M2, 165, 60, 1.1, "skel", "Bread, cheese, pickles, ham, cheese, more cheese, a whole cake, and bread. Perfect. Don't look at me like that."),
+    ("Rooms/rm_man_portrait", M3, 100, 30, 0.85, "glitch", "The eyes in the painting move. They follow you. They are not judging you. They are judging your shoes."),
+    # Paper Mountain Town
+    ("Rooms/rm_pap_petey", M3, 180, 80, 1.3, "skel", "This town is so boring. Last week a giant paper robot ate the mall. Before that, the aliens. Before that, a really big cow. So boring."),
+    ("Rooms/rm_pap_wendell", M2, 180, 75, 1.28, "skel", "Our teacher says we learned something today. I didn't learn anything. I think I un-learned something."),
+    ("Rooms/rm_pap_chef", M2, 120, 25, 0.85, "skel", "Children. Come to the kitchen. I'll make you my famous chili. And then I'll tell you the truth about life. Mostly the chili."),
+    ("Rooms/rm_pap_mayor", F1, 140, 50, 1.0, "skel", "As your mayor, I promise to do absolutely nothing about the giant cow situation. Vote for me again!"),
+    ("Rooms/rm_pap_bus", F1, 120, 30, 0.9, "skel", "Get on the bus. Get on the bus. I don't care. Get on the bus."),
+    ("Rooms/rm_pap_cow", M2, 140, 40, 1.0, "narr", "A cardboard cow pops up. It moos. Every adult in town panics and forms a committee."),
+    ("Rooms/rm_pap_mob", M3, 150, 50, 1.0, "skel", "They took our jobs! Well, not our jobs. The paper towels. They took our paper towels! Get them!"),
+    ("Rooms/rm_pap_snowball", M3, 180, 80, 1.3, "skel", "Snowball fight! Wait. Is this snow? This is paper. It's all paper. Aaah, paper cut!"),
+    # Four Oaks, NC
+    ("Rooms/rm_oak_farmer", M2, 135, 35, 0.92, "skel", "Been farming this ground forty years. Tobacco, cotton, sweet potatoes. Now I mostly grow tired. Y'all come back for the festival, hear?"),
+    ("Rooms/rm_oak_queen", F1, 155, 60, 1.05, "skel", "Welcome to Four Oaks! I'm this year's Acorn Festival queen. There's a parade, a street fair, and more fried things than you can count."),
+    ("Rooms/rm_oak_tea", F1, 145, 55, 1.0, "skel", "Sweet tea, honey? It's got about a pound of sugar in it. That's how you know it's right."),
+    ("Rooms/rm_oak_depot", M3, 130, 40, 0.95, "skel", "The railroad built this town. Trains used to stop right here. Now the little one goes round the cotton field. All aboard, it leaves when it leaves."),
+    ("Rooms/rm_oak_acorn", M2, 140, 40, 1.0, "narr", "A giant acorn falls from nowhere. It lands with a thunk. Somewhere, a very proud squirrel."),
+    ("Rooms/rm_oak_tractor", M2, 135, 35, 0.92, "skel", "Hold on, she's warming up. She's been warming up since nineteen seventy-eight."),
+    ("Rooms/rm_oak_squirrel", M3, 190, 95, 1.4, "skel", "Mine! The acorns are mine! All four oaks are mine! I'm the fifth oak now!"),
+    # the Dino Sing-Along Studio
+    ("Rooms/rm_din_dudley", M2, 135, 50, 0.95, "skel", "Hi there, friends! I'm Dudley! Today we're going to learn about sharing, caring, and why you should never feed a dinosaur after midnight. Just kidding. Snacks any time!"),
+    ("Rooms/rm_din_kayla", F1, 180, 90, 1.35, "skel", "Dudley's my best friend. He's very big, and very soft, and I don't think he's a real dinosaur. Don't tell him."),
+    ("Rooms/rm_din_marcus", M3, 180, 85, 1.32, "skel", "When the cameras turn off, Dudley sits down and says, my back. Every single day. My back."),
+    ("Rooms/rm_din_fran", F1, 140, 45, 0.95, "skel", "Places, everybody! Dudley, tail in. Kids, big smiles. And the bubble machine needs bubbles this time, not soup."),
+    ("Rooms/rm_din_chest", M2, 140, 40, 1.0, "narr", "The toy chest opens. Inside: blocks, a drum, a rubber duck, and the costume of the dinosaur who was here before Dudley."),
+    ("Rooms/rm_din_bubbles", M2, 140, 40, 1.0, "narr", "The bubble machine starts up. Bubbles everywhere. One of them has a tiny skeleton inside, waving."),
+    ("Rooms/rm_din_hug", M2, 135, 50, 0.95, "skel", "Group hug! Everybody in! Come on, closer! Closer! Oh no. Someone's stuck in my tummy pouch. I don't have a tummy pouch."),
+    # the Back Rooms
+    ("Rooms/rm_bak_wes", M3, 120, 35, 0.9, "skel", "I clipped through a wall in nineteen ninety-four. Been walking ever since. The hallways repeat. The carpet's always damp. I've stopped asking why."),
+    ("Rooms/rm_bak_holly", F1, 150, 55, 1.0, "skel", "Have you seen an exit? A real one? There's a sign that says exit but it leads to another hallway. Every time. Every single time."),
+    ("Rooms/rm_bak_moss", M2, 115, 30, 0.88, "skel", "I maintain the lights. Six hundred million fluorescent tubes. They all hum in B flat. I can't hear anything else anymore."),
+    ("Rooms/rm_bak_entity", M2, 90, 15, 0.75, "glitch", "You are not supposed to be here. Neither am I. Nobody is. That's what makes it so cosy."),
+    ("Rooms/rm_bak_exit", M2, 140, 40, 1.0, "narr", "The exit sign flickers. The door beneath it opens onto a hallway with yellow wallpaper and another exit sign."),
+    ("Rooms/rm_bak_water", M3, 120, 35, 0.9, "skel", "Drink the water. It tastes like almonds. Nobody knows why. Nobody knows who leaves it here. Drink it anyway."),
+    ("Rooms/rm_bak_light", M2, 140, 40, 1.0, "narr", "A light panel drops out of the ceiling and swings. For a second, in the dark, something tall walks past."),
+    # the Quiet Town, 1962
+    ("Rooms/rm_qui_sheriff", M2, 125, 35, 0.92, "skel", "Well now. Nobody needs a gun in this town. Most trouble you can talk out of, if you're patient. The rest you can wait out on the porch."),
+    ("Rooms/rm_qui_deputy", M3, 165, 65, 1.1, "skel", "I'm the deputy. Fully armed. One bullet. In my shirt pocket. Where I can reach it in an emergency. If I remember which pocket."),
+    ("Rooms/rm_qui_aunt", F1, 135, 55, 1.0, "skel", "I've baked a pie for the county fair. Pickles, raisins, and a little bit of love. The judges always leave in a hurry."),
+    ("Rooms/rm_qui_ollie", M3, 175, 85, 1.3, "skel", "Paw says if you sit by the pond long enough, the fish come to you. I've been sitting here since breakfast. The fish have not come."),
+    ("Rooms/rm_qui_bullet", M2, 140, 40, 1.0, "narr", "The deputy's one bullet falls out of his pocket, rolls across the floor, and drops through a crack. He's unarmed again."),
+    ("Rooms/rm_qui_pie", F1, 135, 55, 1.0, "skel", "Leave that pie on the sill, dear. It's cooling. The whole town knows not to touch it. It's that bad."),
+    ("Rooms/rm_qui_fish", M3, 175, 85, 1.3, "skel", "I got one! I got one! It's a boot! It's a boot with a fish in it!"),
+    ("Rooms/rm_qui_keys", M3, 165, 65, 1.1, "skel", "Don't touch the cell keys! I locked myself in last Tuesday. The prisoner had to let me out."),
+    # Castaway Island
+    ("Rooms/rm_cas_captain", M2, 140, 30, 0.9, "skel", "It was meant to be an afternoon boat trip. A quick look at the reef, back for tea. That was nine years ago. I still have the tea."),
+    ("Rooms/rm_cas_mate", M3, 165, 70, 1.15, "skel", "Sorry, Captain! Sorry about the boat! And the radio! And the rescue raft! And the other rescue raft!"),
+    ("Rooms/rm_cas_inventor", F1, 145, 50, 1.0, "skel", "I can build a radio from two coconuts and a seashell. I can build a car from bamboo. I cannot build a boat. Don't ask me why. I've tried."),
+    ("Rooms/rm_cas_star", F1, 140, 65, 1.05, "skel", "Darling, I was famous. Seven films. They're probably still looking for me. Any minute now. Any minute."),
+    ("Rooms/rm_cas_radio", M2, 140, 40, 1.0, "narr", "The coconut radio crackles. A voice says: and the search for the castaways has been called off. Then, the weather."),
+    ("Rooms/rm_cas_plane", M3, 165, 70, 1.15, "skel", "A plane! Hey! Down here! Help! We're right - and it's gone. Again. Seventeen this year."),
+    ("Rooms/rm_cas_hammock", M3, 165, 70, 1.15, "skel", "Just a quick nap in the hammock. Nothing could possibly - whoa! Ow. The sand is hard."),
+    ("Rooms/rm_cas_car", F1, 145, 50, 1.0, "skel", "Pedal powered! Coconut wheels! Top speed: a brisk walk. Mind the palm tree. Mind the palm tree!"),
+    # the Wishing Hills
+    ("Rooms/rm_wis_quill", F1, 125, 45, 0.92, "skel", "Gather round, little ones. Every story here begins with a wish and ends with a lesson. Today's lesson: never wish for more homework."),
+    ("Rooms/rm_wis_pip", F1, 175, 85, 1.3, "skel", "Hi! I'm Pip! I'm learning to fly! I can do up! I can't do down yet! Down is the tricky part!"),
+    ("Rooms/rm_wis_twins", M3, 170, 70, 1.2, "skel", "I'm Twiddle. And I'm Twaddle. We share one body. She always wants to go left. He always wants to go right. So we go in circles."),
+    ("Rooms/rm_wis_juno", F1, 180, 90, 1.35, "skel", "I touched the stone and wished, and now I'm here! My mum thinks I'm in my room. I think I'm in a story."),
+    ("Rooms/rm_wis_stone", F1, 125, 45, 0.92, "skel", "I wish, I wish, with all my heart, to fly with dragons, way up high, where the clouds begin."),
+    ("Rooms/rm_wis_flight", M2, 140, 40, 1.0, "narr", "A green dragon takes off from the hill, does a loop the loop, and waves on the way past."),
+    ("Rooms/rm_wis_sneeze", M2, 140, 40, 1.0, "narr", "The sleeping dragon sneezes. Gold sparkles everywhere. It does not wake up."),
+    # the Kitchen Counter Theatre
+    ("Rooms/rm_cou_sage", M2, 145, 40, 1.0, "skel", "Two minutes to curtain! Has anyone seen the asparagus? He's got stage fright again. He's hiding in the fridge."),
+    ("Rooms/rm_cou_usher", F1, 140, 50, 1.0, "skel", "Programme? Tonight it's a story about being kind to your neighbour, then a silly song about a sock. Please silence your bones."),
+    ("Rooms/rm_cou_critic", M3, 125, 35, 0.9, "skel", "I've reviewed this show eleven times. Five stars, every time. The radish carries the whole thing."),
+    ("Rooms/rm_cou_radish", F1, 175, 85, 1.3, "skel", "Hello, everyone! I'm a radish! I don't have any hands, so I can't wave! I'm waving on the inside!"),
+    ("Rooms/rm_cou_squash", M2, 135, 40, 0.95, "skel", "Good evening. I shall now perform a silly song about a lost sock. It is a very serious silly song."),
+    ("Rooms/rm_cou_peas", M3, 190, 95, 1.45, "skel", "We are the peas! We sing in harmony! Mostly! Five peas, one pod, zero rehearsal!"),
+    ("Rooms/rm_cou_onion", M3, 120, 30, 0.88, "skel", "Back in my day we didn't have stories with morals. We had a turnip and a stick. And we were grateful. Don't cry. Everyone cries near me."),
+    # the Clubhouse on the Hill
+    ("Rooms/rm_clu_host", F1, 160, 80, 1.2, "skel", "Hiya, everybody! Welcome to the clubhouse! Today we've got a problem to solve, and a gadget to solve it! Let's go!"),
+    ("Rooms/rm_clu_hal", M2, 145, 45, 1.0, "skel", "If it's broke, I'll fix it. If it's not broke, I'll fix it anyway. Then it's broke. Then I fix it again. Job security."),
+    ("Rooms/rm_clu_gwen", F1, 145, 55, 1.0, "skel", "My flowers sing in the morning. Little songs. Off key. I love them anyway."),
+    ("Rooms/rm_clu_pickles", M3, 170, 70, 1.2, "skel", "I'm a pup pal! Woof! I'm actually a skeleton! But I'm a very good boy! Throw a bone! Not mine!"),
+    ("Rooms/rm_clu_gizmo", F1, 160, 80, 1.2, "skel", "Oh, gizmo picker! We need something to fix the bridge! A ladder, a magnet, or a giant rubber duck! It's the duck. It's always the duck."),
+    ("Rooms/rm_clu_door", M2, 140, 40, 1.0, "narr", "The door opens only for the magic word. The magic word is please. Nobody ever tries please."),
+    ("Rooms/rm_clu_slide", M3, 170, 70, 1.2, "skel", "Down the slide! Wheee! That's the best part of the clubhouse! The rest is mostly cupboards!"),
+    # the Suspicious Starship
+    ("Rooms/rm_shp_teal", F1, 155, 60, 1.05, "skel", "I did my tasks. All of them. Wires, scan, trash. I'm very innocent. Why is everyone looking at me?"),
+    ("Rooms/rm_shp_lime", M3, 160, 65, 1.1, "skel", "Electrical's empty. It's always empty. Nobody ever comes in here. That's why I'm standing in it. For no reason."),
+    ("Rooms/rm_shp_coral", F1, 140, 45, 0.95, "skel", "Captain's log. Day nine. Three crew have vanished. Two others keep popping out of the vents. I'm starting to have doubts."),
+    ("Rooms/rm_shp_ochre", M2, 135, 35, 0.92, "skel", "The reactor's melting down again. I'd fix it, but somebody keeps calling meetings."),
+    ("Rooms/rm_shp_button", F1, 160, 55, 1.1, "skel", "Emergency meeting! Everybody to the table! Where's Lime? Lime was in electrical. Lime is always in electrical!"),
+    ("Rooms/rm_shp_vent", M3, 150, 55, 1.0, "skel", "Oh. Hello. I was just, er, cleaning the vent. Crew do that. Normal crew things. Please don't vote."),
+    ("Rooms/rm_shp_wires", M2, 140, 40, 1.0, "narr", "Red to red. Blue to blue. Yellow to - the panel sparks. The lights go out. Somebody screams. The lights come back on."),
+    ("Rooms/rm_shp_scan", F1, 140, 45, 0.95, "skel", "Medbay scan complete. Height: tall. Weight: not much. Organs: none. You're a skeleton. Next!"),
+    # the Meme Museum
+    ("Rooms/rm_mem_curator", M2, 125, 35, 0.9, "skel", "Welcome to the Meme Museum. Every exhibit here was once the funniest thing on earth, for about a fortnight. We preserve them in the dark, like fine wine."),
+    ("Rooms/rm_mem_guide", F1, 160, 60, 1.1, "skel", "On your left, the waiting skeleton, our oldest piece. Some say he's still waiting. Some say the update is still downloading."),
+    ("Rooms/rm_mem_guard", M2, 115, 30, 0.88, "skel", "Do not touch the memes. Do not take a picture of the memes. Do not make a meme of the memes. That's how it starts."),
+    ("Rooms/rm_mem_wait", M3, 110, 30, 0.85, "skel", "Ninety-eight percent. It's been at ninety-eight percent since the nineties. Any day now."),
+    ("Rooms/rm_mem_trumpet", M3, 160, 60, 1.1, "skel", "Doot! Doot doot! That's all I play. One note. The world loved it. Doot!"),
+    ("Rooms/rm_mem_galaxy", M2, 140, 40, 1.0, "narr", "Skull. Glowing skull. Shining skull. A skull so enlightened it has become a small sun."),
+    ("Rooms/rm_mem_buttons", M3, 150, 55, 1.0, "skel", "Two buttons. One says sleep. One says one more video. I've been sweating here for nine years."),
+    ("Rooms/rm_mem_surprised", M3, 170, 70, 1.2, "skel", "Wait. That's what I look like inside? That's what everyone looks like inside? Nobody told me!"),
+    # Orlando, Florida
+    ("Rooms/rm_orl_tourist", F1, 165, 65, 1.1, "skel", "Four parks in one day! I'm sunburnt, I've lost my hat, and I've eaten a turkey leg the size of my arm. Best holiday ever!"),
+    ("Rooms/rm_orl_retiree", F1, 130, 50, 0.95, "skel", "Moved down from New Jersey in nineteen ninety. The winters are lovely. The summers try to kill you. I wouldn't live anywhere else."),
+    ("Rooms/rm_orl_rhonda", F1, 150, 55, 1.0, "skel", "Welcome to Gator Gulch! Keep your arms, legs and bones inside the car at all times. Yes, the gators are real. No, they don't bite. Usually."),
+    ("Rooms/rm_orl_ray", M2, 150, 40, 1.0, "skel", "The Storm Chaser! Thirty metres up, and a drop straight into the weather. Hold onto your skull. Seriously, we have a bin of lost skulls."),
+    ("Rooms/rm_orl_wade", M2, 135, 30, 0.92, "skel", "Every pond in Florida's got a gator in it. Every golf course. Every swimming pool, some mornings. You learn to look first."),
+    ("Rooms/rm_orl_gator", M2, 140, 40, 1.0, "narr", "Two eyes rise out of the pond. Then a snout. Then a whole alligator, smiling, which is worse."),
+    ("Rooms/rm_orl_storm", M2, 140, 40, 1.0, "narr", "Three o'clock. A thunderstorm rolls in, on time, like it does every afternoon. Twenty minutes later the sun is out and everyone is steaming."),
+    ("Rooms/rm_orl_traffic", M3, 140, 45, 0.95, "skel", "This is the I-4. I've been in this lane since Tuesday. I can see my exit. I've been able to see it since Tuesday."),
+    ("Rooms/rm_orl_ghost", M3, 100, 30, 0.85, "glitch", "Pick an orange. Go on. Pick one. They're so juicy. They're so fresh. They're so looking at you."),
+    ("Rooms/rm_orl_countdown", M2, 140, 40, 1.0, "narr", "T minus ten. Nine. Eight. Seven. We have ignition. We have liftoff. We have, slightly, a fire."),
+    ("Rooms/rm_orl_moonwalk", M3, 170, 80, 1.25, "skel", "Welcome to the moon! Population: me! Gift shop's on your left! Please don't step on the flag!"),
+    ("Rooms/rm_orl_meteor", M2, 140, 40, 1.0, "narr", "A meteor shower. One of them is coming straight at the capsule. It misses by a whisker. The computer says oops."),
+]
+
+
+def room_lines():
+    for name, v, speed, pitch, rate, kind, text in ROOMS:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
 def more_lines():
     for name, v, speed, pitch, rate, kind, text in AREAS3:
         filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
@@ -1109,7 +1252,7 @@ def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
     for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
-                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines()):
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines(), room_lines()):
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
@@ -1194,6 +1337,10 @@ def main():
             return
         if "--moregags" in sys.argv:   # only the later areas' gags (ids starting I and J)
             render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
+            return
+        if "--rooms" in sys.argv:   # only the new rooms
+            render_only(tmp, list(room_lines()), "Rooms")
+            write_captions()
             return
         if "--more" in sys.argv:   # only the expansion's new wings
             render_only(tmp, list(more_lines()), "More")

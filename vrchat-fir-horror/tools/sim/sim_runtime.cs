@@ -134,6 +134,7 @@ namespace UnityEngine {
     public static float Dot(Vector3 a, Vector3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
     public static float Angle(Vector3 a, Vector3 b) { float d = a.magnitude * b.magnitude; if (d < 1e-6f) return 0f; return (float)(Math.Acos(Math.Max(-1.0, Math.Min(1.0, Dot(a, b) / d))) * 180.0 / Math.PI); }
     public static Vector3 Cross(Vector3 a, Vector3 b) { return new Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
+    public static float SignedAngle(Vector3 a, Vector3 b, Vector3 axis) { float an = Angle(a, b); return Dot(axis, Cross(a, b)) < 0f ? -an : an; }
     public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { t = Mathf.Clamp01(t); return a + (b - a) * t; }
     public static Vector3 MoveTowards(Vector3 a, Vector3 b, float d) { var v = b - a; float m = v.magnitude; return m <= d || m < 1e-6f ? b : a + v / m * d; }
     public override string ToString() { return string.Format("({0:F1}, {1:F1}, {2:F1})", x, y, z); }
