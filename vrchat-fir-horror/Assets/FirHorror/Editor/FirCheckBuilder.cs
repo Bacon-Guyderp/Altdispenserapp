@@ -17,7 +17,7 @@ using Object = UnityEngine.Object;
 /// writes PASS or FAIL on itself. Boards in the world also show the UdonSharp and SDK versions and
 /// what the builder found, so one photo of the lobby says everything.
 /// </summary>
-public static class FirCheckBuilder
+public static partial class FirCheckBuilder
 {
     const string Root = "Assets/FirHorror";
     const string Gen = Root + "/Generated";
@@ -240,6 +240,7 @@ public static class FirCheckBuilder
         BuildPortalGarage(root);
         BuildWaterPark(root);
         BuildChrisAndTripp(root);
+        BuildExpansions(root);
         BuildShare(root);
         {
             int verts = 0, objs = 0;

@@ -32,6 +32,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "ct") { ChrisTrippTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "remaster") { RemasterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "expand") { ExpansionTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -254,6 +255,7 @@ public static class SimCheck {
     WaterParkTests(A, B);
     ChrisTrippTests(A, B);
     RemasterTests(A, B);
+    ExpansionTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -952,10 +954,13 @@ public static class SimCheck {
   }
 
   // ======================================================================== the Mystery Hut
+  static bool wingGags;   // the expansion's wing gags (mo_ clips) are counted only by the expansion's own test
   static int RunGags(Sim.Client B, Func<FirGag, bool> keep, out int gagN, List<string> gagBad) {
   var gf = typeof(FirGag).GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
   int gagOk = 0; gagN = 0;
   foreach (var gag in All<FirGag>(B)) {
+    bool isWing = gag.voice != null && gag.voice.clip != null && gag.voice.clip.name.StartsWith("mo_");
+    if (isWing != wingGags) continue;
     if (!keep(gag) || gag.scare || gag.bubble == null || gag.name.StartsWith("Proctor")) continue;   // jump scares (no line), and PROCTOR's announcements (a voice, nothing moves)
     gagN++;
     Sim.Events.Clear();
@@ -986,6 +991,59 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  // ======================================================================== the expansion: a new wing for every Station area
+  static void ExpansionTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The expansion");
+    var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("The expansion:"));
+    Check(line != null, line != null ? Plain(line) : "no expansion line in the build log");
+    Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
+    var wings = FirCheckBuilder.wings;
+    // no wing overlaps another area or another wing
+    var floors = new List<KeyValuePair<string, float[]>>();
+    var root = All<FirTeleport>(A).First().transform; while (root.parent != null) root = root.parent;
+    for (int ci = 0; ci < root.childCount; ci++) { var area = root.GetChild(ci);
+      var fl = area.Find("Floor"); if (fl == null) continue;
+      var bc = fl.GetComponent<BoxCollider>(); if (bc == null) continue;
+      var c = fl.position; floors.Add(new KeyValuePair<string, float[]>(area.name, new[] { c.x - bc.size.x / 2f, c.z - bc.size.z / 2f, c.x + bc.size.x / 2f, c.z + bc.size.z / 2f }));
+    }
+    var clash = new List<string>();
+    Func<float[], float[], bool> overlap = (a, b) => a[0] < b[2] - 0.05f && b[0] < a[2] - 0.05f && a[1] < b[3] - 0.05f && b[1] < a[3] - 0.05f;
+    for (int i = 0; i < wings.Count; i++) {
+      foreach (var f in floors) if (overlap(wings[i].Value, f.Value)) clash.Add(wings[i].Key + "'s wing / " + f.Key);
+      for (int j = i + 1; j < wings.Count; j++) if (overlap(wings[i].Value, wings[j].Value)) clash.Add(wings[i].Key + " / " + wings[j].Key);
+    }
+    Check(clash.Count == 0, wings.Count + " wings, none overlapping another area or wing" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
+    // every wing: the shortcut from the area's entrance, the walk back out through the doorway, the way home
+    int ok = 0; var bad = new List<string>();
+    foreach (var wn in FirCheckBuilder.wingNames.Select((n, i) => new { n, w = wings[i] })) {
+      var b = wn.w.Value; float cx = (b[0] + b[2]) / 2f, zw = b[1], dx = b[4];
+      var sc = All<FirTeleport>(A).FirstOrDefault(t => t.name == "To " + wn.n);
+      if (sc == null) { bad.Add(wn.n + " (no shortcut)"); continue; }
+      A.player.pos = new Vector3(cx, 0.05f, 21f);
+      Sim.Press(A, sc); Sim.Run(0.5f);
+      bool there = Flat(A.player.pos, new Vector3(dx, 0, zw + 2.2f)) < 0.4f;
+      string what, what2;
+      bool door = !Blocked(A, new[] { new Vector3(dx, 0, zw + 2.2f), new Vector3(dx, 0, zw - 2.5f) }, out what);
+      bool inside = !Blocked(A, new[] { new Vector3(dx, 0, zw + 2.2f), new Vector3(dx, 0, zw + 5f) }, out what2);
+      var home = All<FirTeleport>(A).FirstOrDefault(t => t.name == "Back to the entrance" && Mathf.Abs(t.transform.position.z - (zw + 0.35f)) < 0.1f && Mathf.Abs(t.transform.position.x - (cx + 3.4f)) < 0.1f);
+      bool back = false;
+      if (home != null) { Sim.Press(A, home); Sim.Run(0.5f); back = Flat(A.player.pos, new Vector3(cx, 0, 22f)) < 0.4f; }
+      if (there && door && inside && back) ok++; else bad.Add(wn.n + (there ? "" : " (shortcut missed)") + (door ? "" : " (doorway blocked: " + what + ")") + (inside ? "" : " (blocked inside: " + what2 + ")") + (back ? "" : " (no way back)"));
+    }
+    Check(ok == wings.Count, ok + " of " + wings.Count + " wings: the shortcut takes you in, the doorway walks back out, and a button takes you back to the entrance" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
+    // the new people: every one voiced and captioned
+    var folk = All<FirRainbowSkeleton>(A).Where(k => k.voice != null && k.voice.clip != null && k.voice.clip.name.StartsWith("mo_")).ToList();
+    Check(folk.Count == wings.Count * 3 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned (3 a wing)");
+    // the new gags: each one moves, speaks and shows its caption
+    int gagN; var gagBad = new List<string>();
+    wingGags = true;
+    int gagOk = RunGags(B, g => true, out gagN, gagBad);
+    wingGags = false;
+    Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
+    int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
+    Check(boards >= 3, boards + " wings have something to collect");
   }
 
   // ======================================================================== the remaster: shading, bevels, trees untouched

@@ -410,6 +410,78 @@ mk_plaque|A fan room, inspired by Markiplier's videos: let's plays, horror game 
 mk_scare|Jump scare! The streamer screamed so hard his jaw came off. It's fine. It clicks back on.
 mk_streamer|Okay. Okay. Nothing is going to jump out. Nothing is going to... AAAAH! I'm fine. I'm fine. My bones left my body for a second.
 mk_vault|The heist was a success! We stole: nothing. The vault was empty. Great teamwork, everyone.
+mo_cir_cannon|Ladies and gentlebones! The human cannonball! Fire! Wheee! I'll be back in about a minute!
+mo_cir_exit|The exit door swings open. Behind it: bricks. Just bricks. The door closes, as if nothing happened.
+mo_cir_glitch|Error. Error. This prop has stopped responding. Would you like to wait? Waiting. Waiting. It's fine now.
+mo_cir_hand|Staff only, pal. I move the scenery. Sometimes the scenery moves me. We take turns.
+mo_cir_juggle|Three balls! Four balls! Five! Six! I don't know where they come from! I just keep juggling! Please send help!
+mo_cir_understudy|I'm the understudy for every act. I've been waiting four hundred years for someone to call in sick. Nobody here can get sick.
+mo_crn_avalanche|Cleanup on aisle two! A tower of cereal boxes comes crashing down.
+mo_crn_fountain|The milk fountain sprays a fountain of milk. It's for the cereal. And for your bones.
+mo_crn_knight|I am Sir Flakes a Lot, defender of breakfast! I have sworn to protect the crunch. The soggy shall not pass!
+mo_crn_milk|Milk delivery! Great for your bones. Trust me. Look at my bones. All milk.
+mo_crn_prize|Free toy inside! It's me! I'm the toy! Collect all one of us!
+mo_crn_shopper|Corn flakes, or corn flakes? Or maybe corn flakes. Oh, I can never decide. I've been in this aisle since nineteen fifty.
+mo_crt_angler|Fishing in an underground lake takes patience. I've been here thirty years. One boot. One more boot. Then two more boots.
+mo_crt_bat|A Puffbat swoops down out of the dark! It's very fluffy. It's very confused. It flies back up.
+mo_crt_boot|I've got a bite! It's big! It's... a boot. Another boot. I'll start a shop.
+mo_crt_caver|Deep down, past the crystals, there's a critter nobody's ever caught. I haven't caught it either. I did catch a cold.
+mo_crt_hiker|I've been hiking this cave for weeks! I've seen bats, I've seen rocks, I've seen rocks that were bats. Bring a torch.
+mo_crt_pebble|A wild Pebblet rolls past! It's not attacking. It just can't stop rolling.
+mo_drd_alarm|Warning. Core temperature rising. Warning. Please evacuate. Or don't. The core has been doing this all week.
+mo_drd_bot|Maintenance unit M zero. Status: sweeping. Status: still sweeping. This floor has been sweeping me back for years.
+mo_drd_doctor|The core is perfectly stable. Ninety nine percent stable. Ninety eight. Please don't touch anything.
+mo_drd_jelly|A glowing jelly floats over to say hello. It wants to give you a hug. Do not accept the hug.
+mo_drd_lift|The cargo lift rattles all the way up to the ceiling with one orange crate. The crate looks thrilled.
+mo_drd_pirate|We came to steal the reactor. Then we saw how heavy it was. Now we just work here. The dental plan is great.
+mo_gem_bubbles|The bubbled gems float up into the dark, safe in their little bubbles.
+mo_gem_hand|The giant stone hand waves at you. Slowly. Politely. Wave back. It's only polite.
+mo_gem_keeper|This temple has stood for five thousand years. It was built by gems. It was dusted by me. Mostly by me.
+mo_gem_sculptor|I carve statues out of crystal. Big ones, small ones, one of my cousin. He says it doesn't look like him. It's better.
+mo_gem_statue|The statue's gem begins to glow and turn. Something ancient wakes up. It yawns. It goes back to sleep.
+mo_gem_tourist|Excuse me, is this the gift shop? I took a wrong warp pad. Then another. Then about nine. Where am I?
+mo_ink_band|The band kicks in! Drums, guitar, and a lot of very enthusiastic splatting.
+mo_ink_blast|The speaker stack goes boom. Everybody's bones rattle in time.
+mo_ink_dj|Turn it up! Louder! Louder! The bass is so deep you can hear it in your bones. Especially here. We're all bones.
+mo_ink_merch|Band tees! Ink-stained, pre-splatted, one size fits all. That's a lie. One size fits skeletons.
+mo_ink_rain|It's raining ink! Orange and blue drops splash all over the plaza. Bring an umbrella. Bring two.
+mo_ink_ref|I'm the referee. I count who inked the most floor. Tonight the winner is everybody. Also the floor.
+mo_inn_ball|The mirror ball comes down and spins. A hundred tiny skeletons dance on the walls.
+mo_inn_chandelier|The chandelier drops. It stops one inch above the dance floor. It does that every night. Nobody knows who taught it.
+mo_inn_dancer|Five, six, seven, eight! Step, turn, dip! Careful on the dip. Last week I dipped and my spine went on without me.
+mo_inn_host|Welcome to the Grand Ballroom, darling. Dress code is formal. Flesh is optional. Most of us opted out.
+mo_inn_spa|Our signature treatment is the bone polish. Thirty minutes of buffing and you'll shine like a new tooth.
+mo_inn_tub|Ahh. Do you mind? I'm soaking. Well. I'm soaking through. That's the trouble with being all gaps.
+mo_nc_beam|The lighthouse beam sweeps over the sea. Somewhere out there, a ship says thank you.
+mo_nc_flight|The flying machine lifts off the sand. Twelve whole seconds in the air! History is made. And then it lands in a dune.
+mo_nc_horses|Wild horses gallop along the beach. They've lived on these islands for hundreds of years. They don't care about you at all.
+mo_nc_keeper|I've kept this lighthouse lit for two hundred years. Ships stay off the shoals. Seagulls stay off my head. Mostly.
+mo_nc_kite|Best wind on the whole coast! People came here to learn to fly. I came here to fly a kite. I'm winning.
+mo_nc_pirate|Arr! These waters were full of pirates once. Now it's mostly me and a very confused crab. The crab is my first mate.
+mo_plt_block|Bonk! A coin pops out of the block. The block looks pleased with itself.
+mo_plt_cloud|Welcome to the Cloud Kingdom! The platforms are solid. The clouds are not. Please do not stand on the clouds. We lose a tourist a week.
+mo_plt_guard|Halt! Who goes there? Oh. A visitor. The princess is in another castle. Actually, there's no princess. Just me. I'm lonely.
+mo_plt_merchant|Mushrooms! Get your mushrooms! Red ones make you taller. Green ones make you happier. Purple ones, I'm not allowed to talk about.
+mo_plt_pipe|Surprise! I live in a pipe! I'm a plant! I bite! Please water me.
+mo_plt_slab|Grr! I'm the grumpy slab! I fall on things! It's not personal. It's just gravity and a bad attitude.
+mo_shd_book|A book flaps up off the table and circles the room. Overdue books are like that.
+mo_shd_librarian|Shh. This is a library. The books are sleeping. If you wake the encyclopedias, they won't stop talking.
+mo_shd_monitor|Hall pass? No hall pass, no hall. Rules are rules. I made the rules. I'm very proud of the rules.
+mo_shd_secret|Pull the right book, and the whole bookcase swings open. Behind it: more books. It's a very thorough library.
+mo_shd_sleepy|Five more minutes. Five more centuries. Is the bell? Did the bell? Wake me up for lunch.
+mo_shd_vend|Clunk. The vending machine drops a can of soda. Nobody put any money in. It just likes you.
+mo_skt_bin|The idea bin is full of ideas. All of them are crumpled. One of them was genius. We'll never know which.
+mo_skt_coffee|The coffee machine gurgles, shakes, and produces one single drop. The writers cheer.
+mo_skt_gary|What if, and hear me out, the door is a window. No? What if the window is a door. I've got about forty of these.
+mo_skt_head|Okay team, we need a skit by Friday. It's Friday. We need a skit by now. Anyone? Anyone at all?
+mo_skt_intern|I'm just the intern! I fetch coffee, I fetch paper, and once they sent me to fetch the punchline. I'm still looking.
+mo_skt_laugh|Ha ha ha ha ha! The laugh track plays. Nobody said anything funny. The machine doesn't care.
+mo_spd_blur|Something blue goes past. You hear the word cool. It is already gone.
+mo_spd_boulder|Rock coming through! Don't worry. It's a friendly rock. It just doesn't know how to stop.
+mo_spd_mech|New tyres, new spokes, new shoelaces. You're good to go. Try not to go faster than your own skeleton this time.
+mo_spd_racer|Loops? I love loops. Upside down is just right side up for people who are fast enough.
+mo_spd_spring|Boing! The spring launches nothing at all, very, very high.
+mo_spd_time|Your lap time was four point two seconds. The record is four point one. The record holder is a very determined squirrel.
 my_dad|I came for the mysteries. I've paid forty dollars to see a rock. It's a good rock.
 my_detector|Beep. Beep. Weirdness level: yes.
 my_gnome|You didn't see me. I'm a garden ornament. Garden ornaments don't talk. Bye.

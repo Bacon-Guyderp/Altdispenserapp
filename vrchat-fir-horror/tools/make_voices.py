@@ -776,6 +776,102 @@ COMBO += [
 ]
 
 
+# The expansion: each Station area's new wing (Audio/More/mo_<area>_<who>.ogg)
+F1, M2, M3 = "mb-us1", "mb-us2", "mb-us3"
+AREAS3 = [
+    # the Inn's Grand Ballroom
+    ("More/mo_inn_host", F1, 140, 55, 1.0, "skel", "Welcome to the Grand Ballroom, darling. Dress code is formal. Flesh is optional. Most of us opted out."),
+    ("More/mo_inn_dancer", M3, 165, 70, 1.1, "skel", "Five, six, seven, eight! Step, turn, dip! Careful on the dip. Last week I dipped and my spine went on without me."),
+    ("More/mo_inn_spa", F1, 125, 45, 0.95, "skel", "Our signature treatment is the bone polish. Thirty minutes of buffing and you'll shine like a new tooth."),
+    ("More/mo_inn_chandelier", M2, 140, 40, 1.0, "narr", "The chandelier drops. It stops one inch above the dance floor. It does that every night. Nobody knows who taught it."),
+    ("More/mo_inn_ball", M2, 140, 40, 1.0, "narr", "The mirror ball comes down and spins. A hundred tiny skeletons dance on the walls."),
+    ("More/mo_inn_tub", M3, 130, 50, 0.95, "skel", "Ahh. Do you mind? I'm soaking. Well. I'm soaking through. That's the trouble with being all gaps."),
+    # the Speed Zone's Loop Canyon
+    ("More/mo_spd_mech", M2, 150, 35, 0.95, "skel", "New tyres, new spokes, new shoelaces. You're good to go. Try not to go faster than your own skeleton this time."),
+    ("More/mo_spd_time", F1, 175, 70, 1.1, "skel", "Your lap time was four point two seconds. The record is four point one. The record holder is a very determined squirrel."),
+    ("More/mo_spd_racer", M3, 160, 60, 1.05, "skel", "Loops? I love loops. Upside down is just right side up for people who are fast enough."),
+    ("More/mo_spd_blur", M2, 140, 40, 1.0, "narr", "Something blue goes past. You hear the word cool. It is already gone."),
+    ("More/mo_spd_spring", M2, 140, 40, 1.0, "narr", "Boing! The spring launches nothing at all, very, very high."),
+    ("More/mo_spd_boulder", M3, 150, 55, 1.0, "skel", "Rock coming through! Don't worry. It's a friendly rock. It just doesn't know how to stop."),
+    # the Platform World's Cloud Kingdom
+    ("More/mo_plt_cloud", F1, 150, 70, 1.1, "skel", "Welcome to the Cloud Kingdom! The platforms are solid. The clouds are not. Please do not stand on the clouds. We lose a tourist a week."),
+    ("More/mo_plt_merchant", M3, 155, 65, 1.05, "skel", "Mushrooms! Get your mushrooms! Red ones make you taller. Green ones make you happier. Purple ones, I'm not allowed to talk about."),
+    ("More/mo_plt_guard", M2, 120, 30, 0.9, "skel", "Halt! Who goes there? Oh. A visitor. The princess is in another castle. Actually, there's no princess. Just me. I'm lonely."),
+    ("More/mo_plt_block", M2, 140, 40, 1.0, "narr", "Bonk! A coin pops out of the block. The block looks pleased with itself."),
+    ("More/mo_plt_slab", M3, 110, 20, 0.85, "skel", "Grr! I'm the grumpy slab! I fall on things! It's not personal. It's just gravity and a bad attitude."),
+    ("More/mo_plt_pipe", M3, 180, 85, 1.25, "skel", "Surprise! I live in a pipe! I'm a plant! I bite! Please water me."),
+    # North Carolina's Outer Banks
+    ("More/mo_nc_keeper", M2, 125, 30, 0.9, "skel", "I've kept this lighthouse lit for two hundred years. Ships stay off the shoals. Seagulls stay off my head. Mostly."),
+    ("More/mo_nc_kite", F1, 165, 75, 1.15, "skel", "Best wind on the whole coast! People came here to learn to fly. I came here to fly a kite. I'm winning."),
+    ("More/mo_nc_pirate", M3, 125, 25, 0.9, "skel", "Arr! These waters were full of pirates once. Now it's mostly me and a very confused crab. The crab is my first mate."),
+    ("More/mo_nc_flight", M2, 140, 40, 1.0, "narr", "The flying machine lifts off the sand. Twelve whole seconds in the air! History is made. And then it lands in a dune."),
+    ("More/mo_nc_horses", M2, 140, 40, 1.0, "narr", "Wild horses gallop along the beach. They've lived on these islands for hundreds of years. They don't care about you at all."),
+    ("More/mo_nc_beam", M2, 140, 40, 1.0, "narr", "The lighthouse beam sweeps over the sea. Somewhere out there, a ship says thank you."),
+    # the Digital Circus's Backstage
+    ("More/mo_cir_hand", M2, 135, 35, 0.95, "skel", "Staff only, pal. I move the scenery. Sometimes the scenery moves me. We take turns."),
+    ("More/mo_cir_juggle", M3, 175, 80, 1.2, "skel", "Three balls! Four balls! Five! Six! I don't know where they come from! I just keep juggling! Please send help!"),
+    ("More/mo_cir_understudy", F1, 145, 60, 1.0, "skel", "I'm the understudy for every act. I've been waiting four hundred years for someone to call in sick. Nobody here can get sick."),
+    ("More/mo_cir_exit", M2, 140, 40, 1.0, "glitch", "The exit door swings open. Behind it: bricks. Just bricks. The door closes, as if nothing happened."),
+    ("More/mo_cir_glitch", M2, 140, 40, 1.0, "glitch", "Error. Error. This prop has stopped responding. Would you like to wait? Waiting. Waiting. It's fine now."),
+    ("More/mo_cir_cannon", M3, 180, 85, 1.25, "skel", "Ladies and gentlebones! The human cannonball! Fire! Wheee! I'll be back in about a minute!"),
+    # the Skits' Writers' Room
+    ("More/mo_skt_head", M2, 135, 35, 0.95, "skel", "Okay team, we need a skit by Friday. It's Friday. We need a skit by now. Anyone? Anyone at all?"),
+    ("More/mo_skt_gary", M3, 145, 55, 1.0, "skel", "What if, and hear me out, the door is a window. No? What if the window is a door. I've got about forty of these."),
+    ("More/mo_skt_intern", F1, 170, 80, 1.15, "skel", "I'm just the intern! I fetch coffee, I fetch paper, and once they sent me to fetch the punchline. I'm still looking."),
+    ("More/mo_skt_coffee", M2, 140, 40, 1.0, "narr", "The coffee machine gurgles, shakes, and produces one single drop. The writers cheer."),
+    ("More/mo_skt_laugh", M2, 140, 40, 1.0, "narr", "Ha ha ha ha ha! The laugh track plays. Nobody said anything funny. The machine doesn't care."),
+    ("More/mo_skt_bin", M2, 140, 40, 1.0, "narr", "The idea bin is full of ideas. All of them are crumpled. One of them was genius. We'll never know which."),
+    # the Corn Flakes Room's Cereal Aisle
+    ("More/mo_crn_milk", M2, 130, 35, 0.95, "skel", "Milk delivery! Great for your bones. Trust me. Look at my bones. All milk."),
+    ("More/mo_crn_knight", M3, 150, 50, 1.05, "skel", "I am Sir Flakes a Lot, defender of breakfast! I have sworn to protect the crunch. The soggy shall not pass!"),
+    ("More/mo_crn_shopper", F1, 145, 60, 1.0, "skel", "Corn flakes, or corn flakes? Or maybe corn flakes. Oh, I can never decide. I've been in this aisle since nineteen fifty."),
+    ("More/mo_crn_avalanche", M2, 140, 40, 1.0, "narr", "Cleanup on aisle two! A tower of cereal boxes comes crashing down."),
+    ("More/mo_crn_fountain", M2, 140, 40, 1.0, "narr", "The milk fountain sprays a fountain of milk. It's for the cereal. And for your bones."),
+    ("More/mo_crn_prize", M3, 180, 85, 1.25, "skel", "Free toy inside! It's me! I'm the toy! Collect all one of us!"),
+    # Crystal Cove's Moon Temple
+    ("More/mo_gem_keeper", F1, 125, 50, 0.95, "skel", "This temple has stood for five thousand years. It was built by gems. It was dusted by me. Mostly by me."),
+    ("More/mo_gem_sculptor", M3, 150, 60, 1.05, "skel", "I carve statues out of crystal. Big ones, small ones, one of my cousin. He says it doesn't look like him. It's better."),
+    ("More/mo_gem_tourist", M2, 155, 45, 1.0, "skel", "Excuse me, is this the gift shop? I took a wrong warp pad. Then another. Then about nine. Where am I?"),
+    ("More/mo_gem_statue", M2, 140, 40, 1.0, "narr", "The statue's gem begins to glow and turn. Something ancient wakes up. It yawns. It goes back to sleep."),
+    ("More/mo_gem_bubbles", M2, 140, 40, 1.0, "narr", "The bubbled gems float up into the dark, safe in their little bubbles."),
+    ("More/mo_gem_hand", M2, 140, 40, 1.0, "narr", "The giant stone hand waves at you. Slowly. Politely. Wave back. It's only polite."),
+    # Critter Meadow's Critter Cave
+    ("More/mo_crt_hiker", M3, 150, 55, 1.0, "skel", "I've been hiking this cave for weeks! I've seen bats, I've seen rocks, I've seen rocks that were bats. Bring a torch."),
+    ("More/mo_crt_caver", F1, 150, 65, 1.05, "skel", "Deep down, past the crystals, there's a critter nobody's ever caught. I haven't caught it either. I did catch a cold."),
+    ("More/mo_crt_angler", M2, 115, 25, 0.88, "skel", "Fishing in an underground lake takes patience. I've been here thirty years. One boot. One more boot. Then two more boots."),
+    ("More/mo_crt_pebble", M2, 140, 40, 1.0, "narr", "A wild Pebblet rolls past! It's not attacking. It just can't stop rolling."),
+    ("More/mo_crt_bat", M2, 140, 40, 1.0, "narr", "A Puffbat swoops down out of the dark! It's very fluffy. It's very confused. It flies back up."),
+    ("More/mo_crt_boot", M2, 115, 25, 0.88, "skel", "I've got a bite! It's big! It's... a boot. Another boot. I'll start a shop."),
+    # the Shadow Below's School Library
+    ("More/mo_shd_librarian", F1, 115, 40, 0.9, "skel", "Shh. This is a library. The books are sleeping. If you wake the encyclopedias, they won't stop talking."),
+    ("More/mo_shd_monitor", M3, 160, 60, 1.05, "skel", "Hall pass? No hall pass, no hall. Rules are rules. I made the rules. I'm very proud of the rules."),
+    ("More/mo_shd_sleepy", M3, 95, 40, 0.9, "skel", "Five more minutes. Five more centuries. Is the bell? Did the bell? Wake me up for lunch."),
+    ("More/mo_shd_secret", M2, 140, 40, 1.0, "narr", "Pull the right book, and the whole bookcase swings open. Behind it: more books. It's a very thorough library."),
+    ("More/mo_shd_vend", M2, 140, 40, 1.0, "narr", "Clunk. The vending machine drops a can of soda. Nobody put any money in. It just likes you."),
+    ("More/mo_shd_book", M2, 140, 40, 1.0, "narr", "A book flaps up off the table and circles the room. Overdue books are like that."),
+    # Ink Plaza's Ink Tower Stage
+    ("More/mo_ink_dj", M3, 160, 60, 1.05, "skel", "Turn it up! Louder! Louder! The bass is so deep you can hear it in your bones. Especially here. We're all bones."),
+    ("More/mo_ink_merch", F1, 160, 70, 1.1, "skel", "Band tees! Ink-stained, pre-splatted, one size fits all. That's a lie. One size fits skeletons."),
+    ("More/mo_ink_ref", M2, 140, 35, 0.95, "skel", "I'm the referee. I count who inked the most floor. Tonight the winner is everybody. Also the floor."),
+    ("More/mo_ink_band", M2, 140, 40, 1.0, "narr", "The band kicks in! Drums, guitar, and a lot of very enthusiastic splatting."),
+    ("More/mo_ink_rain", M2, 140, 40, 1.0, "narr", "It's raining ink! Orange and blue drops splash all over the plaza. Bring an umbrella. Bring two."),
+    ("More/mo_ink_blast", M2, 140, 40, 1.0, "narr", "The speaker stack goes boom. Everybody's bones rattle in time."),
+    # the Dread Depths' Reactor Core
+    ("More/mo_drd_doctor", F1, 130, 45, 0.95, "skel", "The core is perfectly stable. Ninety nine percent stable. Ninety eight. Please don't touch anything."),
+    ("More/mo_drd_bot", M2, 120, 20, 0.85, "radio", "Maintenance unit M zero. Status: sweeping. Status: still sweeping. This floor has been sweeping me back for years."),
+    ("More/mo_drd_pirate", M3, 135, 30, 0.9, "skel", "We came to steal the reactor. Then we saw how heavy it was. Now we just work here. The dental plan is great."),
+    ("More/mo_drd_alarm", M2, 140, 40, 1.0, "radio", "Warning. Core temperature rising. Warning. Please evacuate. Or don't. The core has been doing this all week."),
+    ("More/mo_drd_jelly", M2, 140, 40, 1.0, "narr", "A glowing jelly floats over to say hello. It wants to give you a hug. Do not accept the hug."),
+    ("More/mo_drd_lift", M2, 140, 40, 1.0, "narr", "The cargo lift rattles all the way up to the ceiling with one orange crate. The crate looks thrilled."),
+]
+
+
+def more_lines():
+    for name, v, speed, pitch, rate, kind, text in AREAS3:
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
 def area2_lines():
     for name, v, speed, pitch, rate, kind, text in AREAS2:
         filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
@@ -794,7 +890,7 @@ def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
     for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
-                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines()):
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines()):
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
@@ -879,6 +975,10 @@ def main():
             return
         if "--moregags" in sys.argv:   # only the later areas' gags (ids starting I and J)
             render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
+            return
+        if "--more" in sys.argv:   # only the expansion's new wings
+            render_only(tmp, list(more_lines()), "More")
+            write_captions()
             return
         if "--captions" in sys.argv:
             write_captions()
