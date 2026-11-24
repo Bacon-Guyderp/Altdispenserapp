@@ -239,6 +239,7 @@ public static class FirCheckBuilder
         BuildContainment(root);
         BuildPortalGarage(root);
         BuildWaterPark(root);
+        BuildChrisAndTripp(root);
         BuildShare(root);
 
         // ---- copy everything into Udon, then check what UdonSharp stored
@@ -3799,6 +3800,122 @@ public static class FirCheckBuilder
         Gear("Sunny", 2, PrimitiveType.Cube, new Vector3(0, 0.05f, 0.15f), new Vector3(0.26f, 0.06f, 0.04f), "Black");
         foreach (var pp in new[] { new Vector3(2713f, 0, 25f), new Vector3(2713f, 0, 86f), new Vector3(2787f, 0, 86f), new Vector3(2742f, 0, 58f), new Vector3(2750f, 0, 26f) }) PalmTree(g, pp, 5f);
         report.Add("Splashbone Water Park: the Bone Bowl (a tower, a tube, a striped bowl you spiral round, a drop through the middle, a splash pool; 3 rafts to ride), a wave pool, a lazy river with 6 tubes to ride, a giant tipping bucket, a snack shack; 4 voiced skeletons and 3 gags");
+    }
+
+    // =================================================================== The Chris and Tripp Show, Episode 1 (the episode's five scenes, with its own dialogue)
+
+    /// <summary>The one in the skeleton shirt (with the cleaver), or the blond one in the white T-shirt, dressed onto a skeleton.</summary>
+    static void DressCT(string who, bool shirt)
+    {
+        if (!rigs.TryGetValue(who, out var r)) { report.Add("problem: no " + who + " to dress"); return; }
+        if (shirt)
+        {
+            Prim(PrimitiveType.Cube, "Shirt", r[1], new Vector3(0, 0.1f, 0), new Vector3(0.46f, 0.62f, 0.3f), M("Black"));
+            for (int k = 0; k < 4; k++) Prim(PrimitiveType.Cube, "PrintedRib", r[1], new Vector3(0, 0.25f - k * 0.1f, 0.155f), new Vector3(0.3f - k * 0.03f, 0.035f, 0.01f), M("CaneWhite"));
+            Prim(PrimitiveType.Cube, "PrintedSpine", r[1], new Vector3(0, 0.1f, 0.156f), new Vector3(0.04f, 0.4f, 0.01f), M("CaneWhite"));
+            Prim(PrimitiveType.Sphere, "DarkHair", r[2], new Vector3(0, 0.1f, -0.03f), new Vector3(0.3f, 0.14f, 0.32f), M("Black"));
+            var cleaver = Group(r[2], "Cleaver", new Vector3(0.02f, 0.2f, 0));
+            cleaver.localRotation = Quaternion.Euler(0, 0, -25);
+            Prim(PrimitiveType.Cube, "Blade", cleaver, new Vector3(0, 0.08f, 0), new Vector3(0.22f, 0.16f, 0.015f), M("Metal"));
+            Prim(PrimitiveType.Cube, "Handle", cleaver, new Vector3(-0.16f, 0.12f, 0), new Vector3(0.12f, 0.035f, 0.03f), M("Black"));
+            Prim(PrimitiveType.Sphere, "Blood", r[2], new Vector3(0.02f, 0.17f, 0), new Vector3(0.12f, 0.05f, 0.1f), M("GlowRed"));
+        }
+        else
+        {
+            Prim(PrimitiveType.Cube, "TShirt", r[1], new Vector3(0, 0.1f, 0), new Vector3(0.46f, 0.62f, 0.3f), M("CaneWhite"));
+            Prim(PrimitiveType.Sphere, "BlondHair", r[2], new Vector3(0, 0.11f, -0.01f), new Vector3(0.32f, 0.16f, 0.34f), M("PixelSand"));
+            Prim(PrimitiveType.Cube, "Fringe", r[2], new Vector3(-0.04f, 0.1f, 0.14f), new Vector3(0.22f, 0.06f, 0.06f), M("PixelSand")).transform.localRotation = Quaternion.Euler(0, 0, 10);
+            foreach (int leg in new[] { 7, 8 }) Prim(PrimitiveType.Cube, "Jeans", r[leg], new Vector3(0, -0.4f, 0), new Vector3(0.14f, 0.8f, 0.14f), M("InkBlue"));
+        }
+    }
+
+    static void BuildChrisAndTripp(Transform root)
+    {
+        var g = AreaShell(root, "The Chris and Tripp Show", 2810f, 2870f, 20f, 60f, 6f, "Floor2", "WallDark", "Ceiling",
+                          "THE CHRIS AND TRIPP SHOW", new Color(1f, 0.85f, 0.3f), "episode 1: five scenes, in order, with the episode's own dialogue. press PLAY SCENE on each set", "CHRIS AND TRIPP");
+        // the script on the wall: every line, as it's said
+        Box(g, "ScriptBoard", new Vector3(2869.9f, 3f, 40f), new Vector3(0.05f, 5f, 12f), M("Paper"), false);
+        Text("Script", g, new Vector3(2869.85f, 3f, 40f), Face(Vector3.left), new Vector2(11.4f, 4.8f), 0.16f,
+             "<b>THE CHRIS AND TRIPP SHOW - EPISODE 1</b>  <size=80%>(the script)</size>\n\n" +
+             "<b>THE KITCHEN (on fire)</b>  \"I want a cat.\"  \"The house is on fire.\"  \"Oh my gosh.\"  \"Smoke so dee dee em dee.\"  \"Foss gains.\"  \"F.\"  \"F R E T G.\"\n\n" +
+             "<b>THE CRIME SCENE</b>  \"What happened here?\"  \"Someone got murdered.\"\n\n" +
+             "<b>THE OFFICE</b>  \"You do it for him and you would do it again you do it for her.\"  \"That is to say you'll do it for him.\"  \"Keep your stance wide.\"  \"Keep your body lowered.\"  \"As you're moving forward balance is the key right foot left foot.\"  \"But, now go even faster and as you're moving backwards keep your eyes on me.\"  \"You are weird.\"\n\n" +
+             "<b>THE DARK</b>  \"Diamonds.\"  \"Diamonds.\"  \"Diamonds.\"\n\n" +
+             "<b>THE COUCH</b>  \"That was a weird show.\"  \"I agree.\"").color = new Color(0.1f, 0.1f, 0.15f);
+        // ---- the sets, along the room (each with its own PLAY SCENE button)
+        var scenes = new[] {
+            new { name = "kitchen", title = "SCENE 1: THE KITCHEN", x = 2818f, clips = new[] { "ct_01", "ct_02", "ct_03", "ct_04", "ct_05", "ct_06", "ct_07" }, who = new[] { "B", "B", "S", "S", "S", "S", "S" } },
+            new { name = "crime scene", title = "SCENE 2: THE CRIME SCENE", x = 2830f, clips = new[] { "ct_08", "ct_09" }, who = new[] { "S", "B" } },
+            new { name = "office", title = "SCENE 3: THE OFFICE", x = 2842f, clips = new[] { "ct_10", "ct_11", "ct_12", "ct_13", "ct_14", "ct_15", "ct_16" }, who = new[] { "S", "S", "S", "S", "S", "S", "B" } },
+            new { name = "dark", title = "SCENE 4: THE DARK", x = 2854f, clips = new[] { "ct_17", "ct_18", "ct_19" }, who = new[] { "S", "B", "B" } },
+            new { name = "couch", title = "SCENE 5: THE COUCH", x = 2836f, clips = new[] { "ct_20", "ct_21" }, who = new[] { "S", "B" } } };
+        int slot = 0;
+        foreach (var sc in scenes)
+        {
+            bool couch = sc.name == "couch";
+            float cz = couch ? 53f : 36f, sx = sc.x;
+            var set = Group(g, "Set: " + sc.name, Vector3.zero);
+            if (!couch)
+            {
+                Box(set, "Back", new Vector3(sx, 2.5f, cz + 5f), new Vector3(11f, 5f, 0.2f), M(sc.name == "kitchen" ? "WallGreen" : sc.name == "crime scene" ? "NightSky" : sc.name == "office" ? "LabWhite" : "Black"));
+                Box(set, "Floor", new Vector3(sx, 0.01f, cz + 1f), new Vector3(11f, 0.02f, 8f), M(sc.name == "kitchen" ? "DeskWood" : sc.name == "crime scene" ? "Dirt" : sc.name == "office" ? "BonePink" : "Black"), false);
+            }
+            Text("SetTitle", set, new Vector3(sx, 4.6f, cz + 4.85f), Face(Vector3.back), new Vector2(10f, 0.5f), 0.35f, "<b>" + sc.title + "</b>").color = new Color(1f, 0.85f, 0.3f);
+            if (sc.name == "kitchen")
+            {
+                Box(set, "Table", new Vector3(sx - 2f, 0.4f, cz + 1f), new Vector3(2f, 0.8f, 1.2f), M("DeskWood"));
+                Box(set, "Fridge", new Vector3(sx - 4.6f, 1f, cz + 4.2f), new Vector3(1f, 2f, 0.8f), M("CaneWhite"));
+                Box(set, "Counter", new Vector3(sx + 2.5f, 0.45f, cz + 4.4f), new Vector3(5f, 0.9f, 0.8f), M("Wainscot"));
+                for (int k = 0; k < 9; k++) DPrim(PrimitiveType.Sphere, "Fire", set, new Vector3(sx + 0.6f + k * 0.5f, 1.2f + (k % 3) * 0.35f, cz + 4.4f), new Vector3(0.5f, 1f + (k % 3) * 0.4f, 0.5f), M(k % 2 == 0 ? "GlowFlame" : "GlowYellow"));
+                DPrim(PrimitiveType.Sphere, "Smoke", set, new Vector3(sx + 2.5f, 4.3f, cz + 4f), new Vector3(5f, 0.8f, 1.6f), M("Mist"));
+                DPrim(PrimitiveType.Cylinder, "Pendant", set, new Vector3(sx - 2f, 4.4f, cz + 1f), new Vector3(0.6f, 0.15f, 0.6f), M("GlowWarm"));
+            }
+            if (sc.name == "crime scene")
+            {
+                foreach (float tx in new[] { -1f, 1f }) Box(set, "Tape", new Vector3(sx, 0.9f, cz + 1f + tx * 3.5f), new Vector3(10f, 0.08f, 0.02f), M("GlowYellow"), false);
+                DPrim(PrimitiveType.Cube, "OutlineBody", set, new Vector3(sx + 1.5f, 0.025f, cz + 1f), new Vector3(0.35f, 0.01f, 1.1f), M("CaneWhite"));
+                DPrim(PrimitiveType.Cylinder, "OutlineHead", set, new Vector3(sx + 1.5f, 0.025f, cz + 1.75f), new Vector3(0.35f, 0.005f, 0.35f), M("CaneWhite"));
+                foreach (float ax in new[] { -1f, 1f }) { DPrim(PrimitiveType.Cube, "OutlineArm", set, new Vector3(sx + 1.5f + ax * 0.45f, 0.025f, cz + 1.2f), new Vector3(0.12f, 0.01f, 0.7f), M("CaneWhite"), Quaternion.Euler(0, ax * 35f, 0)); DPrim(PrimitiveType.Cube, "OutlineLeg", set, new Vector3(sx + 1.5f + ax * 0.2f, 0.025f, cz + 0.1f), new Vector3(0.12f, 0.01f, 0.8f), M("CaneWhite"), Quaternion.Euler(0, ax * 10f, 0)); }
+                for (int k = 0; k < 4; k++) DPrim(PrimitiveType.Cube, "EvidenceMarker", set, new Vector3(sx - 1f + k * 1.1f, 0.1f, cz - 0.5f + (k % 2)), new Vector3(0.15f, 0.2f, 0.1f), M("GlowYellow"));
+                Box(set, "Bench", new Vector3(sx - 3f, 0.42f, cz + 3.6f), new Vector3(1.8f, 0.08f, 0.5f), M("DeskWood"));
+                DPrim(PrimitiveType.Cylinder, "StreetLamp", set, new Vector3(sx + 4.5f, 2f, cz + 4f), new Vector3(0.1f, 2f, 0.1f), M("Black"));
+                DPrim(PrimitiveType.Sphere, "LampGlow", set, new Vector3(sx + 4.5f, 4.1f, cz + 4f), Vector3.one * 0.4f, M("GlowWarm"));
+                DPrim(PrimitiveType.Sphere, "Moon", set, new Vector3(sx + 3.5f, 4f, cz + 4.85f), new Vector3(0.6f, 0.6f, 0.05f), M("GlowYellow"));
+            }
+            if (sc.name == "office")
+            {
+                Box(set, "Stripe", new Vector3(sx, 0.9f, cz + 4.85f), new Vector3(11f, 0.5f, 0.05f), M("BonePink"), false);
+                Box(set, "Door", new Vector3(sx + 1f, 1.1f, cz + 4.85f), new Vector3(1f, 2.2f, 0.06f), M("DoorWood"), false);
+                Box(set, "OfficeChair", new Vector3(sx - 1.5f, 0.25f, cz + 1.5f), new Vector3(0.7f, 0.5f, 0.7f), M("Black"));
+                Box(set, "ChairBack", new Vector3(sx - 1.5f, 0.85f, cz + 1.85f), new Vector3(0.7f, 0.9f, 0.1f), M("Black"), false);
+                for (int k = 0; k < 3; k++) Box(set, "Box", new Vector3(sx - 3.6f + (k % 2) * 0.6f, 0.25f + (k / 2) * 0.5f, cz + 2.6f), new Vector3(0.55f, 0.5f, 0.5f), M("Cardboard"));
+                DPrim(PrimitiveType.Sphere, "Plant", set, new Vector3(sx - 4.4f, 0.8f, cz + 3.2f), new Vector3(0.6f, 0.9f, 0.6f), M("Hedge"));
+                DPrim(PrimitiveType.Cube, "CeilingLight", set, new Vector3(sx, 4.9f, cz + 1f), new Vector3(2f, 0.05f, 0.4f), M("GlowWarm"));
+            }
+            if (couch)
+            {
+                Box(set, "Backdrop", new Vector3(sx, 2.5f, 59.8f), new Vector3(14f, 5f, 0.1f), M("InkBlue"), false);
+                for (int k = 0; k < 2; k++) { Box(set, "Bookshelf", new Vector3(sx + (k == 0 ? -5.5f : 5.5f), 1.5f, 59.4f), new Vector3(2f, 3f, 0.6f), M("DeskWood")); for (int b = 0; b < 8; b++) DPrim(PrimitiveType.Cube, "Book", set, new Vector3(sx + (k == 0 ? -6.3f : 4.7f) + b * 0.22f, 1.3f + (b % 2) * 0.9f, 59.15f), new Vector3(0.16f, 0.5f, 0.3f), M(b % 3 == 0 ? "InkBlue" : "Book1")); }
+                Box(set, "Couch", new Vector3(sx, 0.25f, 56.5f), new Vector3(4f, 0.5f, 1.1f), M("PoliceBlue"));
+                Box(set, "CouchBack", new Vector3(sx, 0.8f, 57.1f), new Vector3(4f, 1f, 0.25f), M("PoliceBlue"), false);
+                Box(set, "CoffeeTable", new Vector3(sx, 0.3f, 54.6f), new Vector3(3f, 0.6f, 1f), M("DeskWood"));
+                DPrim(PrimitiveType.Sphere, "Chips", set, new Vector3(sx - 0.7f, 0.7f, 54.6f), new Vector3(0.6f, 0.3f, 0.6f), M("GlowGold"));
+                DPrim(PrimitiveType.Sphere, "Popcorn", set, new Vector3(sx + 0.7f, 0.7f, 54.6f), new Vector3(0.6f, 0.3f, 0.6f), M("InkBlue"));
+                DPrim(PrimitiveType.Sphere, "Lamp", set, new Vector3(sx - 2.8f, 1.6f, 57f), new Vector3(0.5f, 0.6f, 0.5f), M("GlowWarm"));
+            }
+            // the two of them (named for this set, so each set has its own pair)
+            string sName = "Skeleton Shirt (" + sc.name + ")", bName = "Blondie (" + sc.name + ")";
+            var sPos = couch ? new Vector3(sx - 0.8f, 0.5f, 56.2f) : sc.name == "office" ? new Vector3(sx - 1.5f, 0.5f, cz + 1.3f) : new Vector3(sx - 0.8f, 0, cz + 1f);
+            var bPos = couch ? new Vector3(sx + 0.8f, 0.5f, 56.2f) : new Vector3(sx + 0.8f, 0, cz + 0.4f);
+            string firstS = sc.clips[Array.IndexOf(sc.who, "S")], firstB = sc.clips[Array.IndexOf(sc.who, "B")];
+            Folk(set, sName, "#e0e0e0", 0, sPos, couch ? 180f : sc.name == "office" ? 180f : 120f, "Combo/" + firstS);
+            Folk(set, bName, "#ffe0b2", 0, bPos, couch ? 180f : 240f, "Combo/" + firstB);
+            DressCT(sName, true); DressCT(bName, false);
+            var console = Console(g, "Scene console " + (slot + 1), new Vector3(sx + (couch ? 4f : 4.5f), 1.25f, couch ? 51f : cz - 2.5f), Vector3.back, "<size=80%>PLAY SCENE " + (slot + 1) + "</size>");
+            ComboAct(console, 0, 9, sc.title, new[] { sName, bName }, sc.clips, sc.who.Select(w => w == "S" ? 0 : 1).ToArray(), 1.2f);
+            slot++;
+        }
+        report.Add("The Chris and Tripp Show: episode 1's five scenes (the kitchen on fire, the crime scene, the office, the dark, the couch), each with a PLAY SCENE button that replays its dialogue (21 lines, cut from the episode itself), and the script on the wall");
     }
 
     // =================================================================== the second batch of Station stops: helpers

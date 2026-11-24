@@ -286,6 +286,11 @@ act out whatever is on: the news, a cowboy show, a cooking show and a dance part
   * A wave pool, a lazy river with inner tubes to ride, a giant tipping bucket, a snack shack and a
     lifeguard.
 
+* **The Chris and Tripp Show:** a room recreating Episode 1's five scenes (the kitchen on fire, the crime
+  scene, the office, the dark, the couch), with the episode's own dialogue. Every line is cut from the
+  episode's audio (`tools/make_chris_tripp.py`) and captioned. Each set has a PLAY SCENE button, and the
+  whole script is on the wall.
+
 ## 40 new skeletons and 15 new moves
 
 There are 40 more skeletons, each with its own colour and voiced gag:

@@ -782,6 +782,14 @@ def area2_lines():
         yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
 
 
+def chris_tripp_lines():
+    """The Chris and Tripp Show's lines (clips cut from the episode by make_chris_tripp.py): captions only, never re-voiced."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("ct", os.path.join(os.path.dirname(os.path.abspath(__file__)), "make_chris_tripp.py"))
+    ct = importlib.util.module_from_spec(spec); spec.loader.exec_module(ct)
+    return [(name, text) for name, a, b, who, text in ct.LINES]
+
+
 def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
@@ -790,6 +798,8 @@ def write_captions():
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
+        rows[name] = text
+    for name, text in chris_tripp_lines():
         rows[name] = text
     path = os.path.join(os.path.dirname(OUT), "Data", "captions.txt")
     with open(path, "w", encoding="utf-8") as f:

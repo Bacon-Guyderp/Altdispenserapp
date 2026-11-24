@@ -93,6 +93,27 @@ cr_nurse|Your critters are fully healed! Please don't ask how. It's mostly hugs.
 cr_prof|Ah, a new trainer! Pick a critter! Not that one. That one bites. They all bite.
 cr_rival|Smell you later! ...I don't have a nose. Smell you never!
 cr_trainer|I challenge you to a critter battle! My critter is a rock. It's undefeated. It's never moved.
+ct_01|I want a cat.
+ct_02|The house is on fire.
+ct_03|Oh my gosh.
+ct_04|Smoke so dee dee em dee.
+ct_05|Foss gains.
+ct_06|F.
+ct_07|F R E T G.
+ct_08|What happened here?
+ct_09|Someone got murdered.
+ct_10|You do it for him and you would do it again you do it for her.
+ct_11|That is to say you'll do it for him.
+ct_12|Keep your stance wide.
+ct_13|Keep your body lowered.
+ct_14|As you're moving forward balance is the key right foot left foot.
+ct_15|But, now go even faster and as you're moving backwards keep your eyes on me.
+ct_16|You are weird.
+ct_17|Diamonds.
+ct_18|Diamonds.
+ct_19|Diamonds.
+ct_20|That was a weird show.
+ct_21|I agree.
 dg_dragon|I'm a purple dragon skeleton! I breathe fire! I also breathe out of my ribs. Lots of drafts.
 dg_elder|Long ago, all the dragons were turned to crystal. We've been very still. Very, very still.
 dg_fly|I'm the dragonfly! I follow you around and change colour when you get hurt. Mostly, I buzz.

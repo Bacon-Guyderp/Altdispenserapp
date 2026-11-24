@@ -28,6 +28,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "scp") { ScpTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rm") { PortalGarageTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "ct") { ChrisTrippTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "lab") { LabTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "pixel") { PixelTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -248,6 +249,7 @@ public static class SimCheck {
     ScpTests(A, B);
     PortalGarageTests(A, B);
     WaterParkTests(A, B);
+    ChrisTrippTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -974,6 +976,30 @@ public static class SimCheck {
     int want = (int)(h / 24f * day);
     int cur = ((now % day) + day) % day;
     VRC.SDKBase.Networking.ServerOffsetMs += ((want - cur) % day + day) % day;
+  }
+
+  static void ChrisTrippTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== The Chris and Tripp Show");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "CHRIS AND TRIPP")); Sim.Run(1f);
+    Check(Flat(A.player.pos, new Vector3(2840f, 0, 22f)) < 0.3f, "the Station sends Alice to the Chris and Tripp Show");
+    var acts = All<FirSkeletonCombo>(A).Where(c => c.title.StartsWith("SCENE ")).OrderBy(c => c.title).ToList();
+    Check(acts.Count == 5 && acts.Sum(c => c.lines.Length) == 21, acts.Count + " scenes, " + acts.Sum(c => c.lines.Length) + " lines: " + string.Join(", ", acts.Select(c => c.title + " (" + c.lines.Length + ")")));
+    var expected = new[] { "I want a cat.", "The house is on fire.", "Oh my gosh.", "Smoke so dee dee em dee.", "Foss gains.", "F.", "F R E T G.", "What happened here?", "Someone got murdered.",
+      "You do it for him and you would do it again you do it for her.", "That is to say you'll do it for him.", "Keep your stance wide.", "Keep your body lowered.",
+      "As you're moving forward balance is the key right foot left foot.", "But, now go even faster and as you're moving backwards keep your eyes on me.", "You are weird.",
+      "Diamonds.", "Diamonds.", "Diamonds.", "That was a weird show.", "I agree." };
+    var got = acts.SelectMany(c => c.lineText).ToArray();
+    Check(got.SequenceEqual(expected), "the captions are the episode's exact dialogue, in order" + (got.SequenceEqual(expected) ? "" : " | got: " + string.Join(" / ", got)));
+    Check(acts.SelectMany(c => c.lines).All(l => l.clip != null && l.clip.name.StartsWith("ct_") && l.clip.length > 0.3f), "every line plays a clip cut from the episode");
+    var kitchen = acts[0];
+    Sim.Events.Clear();
+    Sim.Press(A, kitchen); Sim.Run(kitchen.length + 0.5f);
+    int heard = kitchen.lines.Count(l => Sim.Events.Any(e => e.Contains("sound:") && e.Contains(l.clip.name)));
+    Check(heard == 7, "PLAY SCENE 1 plays the kitchen's " + heard + " lines, captioned on the button");
+    Check(All<TMPro.TextMeshPro>(A).Any(t => t.name == "Script" && Plain(t.text).Contains("F R E T G.") && Plain(t.text).Contains("I agree.")), "the script is on the wall");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 2805f)); Sim.Run(1f);
+    Check(Vector3.Distance(A.player.pos, new Vector3(0, 0.05f, -2.6f)) < 1f, "...and back to the lobby");
   }
 
   static void WaterParkTests(Sim.Client A, Sim.Client B) {
