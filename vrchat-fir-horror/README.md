@@ -384,8 +384,8 @@ The Kitchen (Pine Pete's) · The Old Ruins (Pixel Hollow) · The Observation Dec
 
 ## The new rooms (and rideable rides)
 
-Nineteen more Station stops (`Editor/FirRooms.cs`, `Editor/FirRooms2.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
-ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is six across now. The
+Twenty-eight more Station stops (`Editor/FirRooms.cs`, `Editor/FirRooms2.cs`, `Editor/FirRooms3.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
+ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is seven across now (70 stops). The
 cartoon rooms are original takes on a kind of show: new names, new characters and new jokes, with no logos,
 theme songs or catchphrases. Every person is voiced and captioned, and every gag speaks.
 
@@ -415,8 +415,20 @@ theme songs or catchphrases. Every person is voiced and captioned, and every gag
   manuscript pages to find.
 * **The Spectrum Squad** (five colour-coded teen heroes): the command centre, the mentor in a tube, clay goons, and
   a statue of their five-vehicle giant robot.
+* **The Bone Dry Cafe**: a counter, an espresso machine, pastries, tables, a sofa. Wing: the Roastery.
+* **The Dreamy Star Hills** (a round puffball hero): round hills, a little castle, a warp star, a cake. Wing: the Cloud Kitchen.
+* **The Brawl Arena** (an everyone-versus-everyone fighting game): a floating stage, platforms, stands, items. Wing: the Trophy Hall.
+* **The Glitch Show** (a cartoon being eaten by a glitch): a bright set, glitch blocks, a small hero with a sock
+  puppet. Wing: the Corrupted Set.
+* **The Rhythm Battle Stage** (arrow-rhythm rap battles): giant speakers, four arrows, a rapper versus a rock-star dad.
+  Wing: the Back Alley Stage.
+* **The Pony Meadow** (talking ponies): a library tree, a cloud house, three ponies. Wing: the Sparkle Castle.
+* **The Four Element Isles** (element masters): water, earth, fire and air isles and their masters. Wing: the Spirit Forest.
+* **The Gorilla Chase Forest** (arm-running gorilla tag): giant trees, platforms, a lava gorilla. Wing: the Cave.
+* **Sunny Bay City** (a sunny crime-caper city): a boulevard, the bank, a car dealership, a police car, the wanted
+  stars. Wing: the Beach Pier.
 
-Every one of the nineteen has a wing through its far wall, like the expansion's (3 voiced people and 3 gags each,
+Every one of the twenty-eight has a wing through its far wall, like the expansion's (3 voiced people and 3 gags each,
 `Audio/More/mo_r*`): the Salty Barnacle, Yellowville Elementary, the Secret Basement, the Community Center, the
 Acorn Festival, the Dressing Room, Level Two: the Pipes, the Town Square, the Other Side of the Island, the Cloud
 Castle, Backstage in the Fridge, the Gadget Garage, the Engine Room, the Gift Shop, the Rocket Garden, the Cold

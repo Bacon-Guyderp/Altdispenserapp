@@ -6911,7 +6911,7 @@ public static partial class FirCheckBuilder
     static void StationStop(string title, Transform arrive, Transform backParent, Vector3 backPos, Vector3 backNormal)
     {
         int i = stationSlots++;
-        var b = TeleportButton(stationBoard, title, new Vector3(-1.375f + (i % 6) * 0.55f, 2.17f - (i / 6) * 0.165f, -0.03f), Vector3.back, arrive, new Vector3(0.53f, 0.15f, 0.06f));   // 6 across, up to 66 stops
+        var b = TeleportButton(stationBoard, title, new Vector3(-1.41f + (i % 7) * 0.47f, 2.17f - (i / 7) * 0.165f, -0.03f), Vector3.back, arrive, new Vector3(0.455f, 0.15f, 0.06f));   // 7 across, up to 77 stops
         TeleportButton(backParent, "Back to the lobby", backPos, backNormal, lobbyArrive, new Vector3(1.0f, 0.3f, 0.1f));
     }
 
