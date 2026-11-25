@@ -5,7 +5,7 @@ cropped to North Carolina's outline. This fits it to NC's real extent, then
 resamples it into the map's own frame (linear lon/lat over NC_BOUNDS, 4096x2048)
 so pins and scoring line up. The background stays white.
 
-  python warp_outline_map.py [--src art/nc_county_outlines.png]
+  python warp_outline_map.py [--src art/nc_county_outlines_v2.png]
 """
 import argparse, math, os
 import numpy as np
@@ -52,7 +52,7 @@ def fit(img, W, H):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default=os.path.join(HERE, "art", "nc_county_outlines.png"))
+    ap.add_argument("--src", default=os.path.join(HERE, "art", "nc_county_outlines_v2.png"))
     ap.add_argument("--width", type=int, default=4096)
     a = ap.parse_args()
 
