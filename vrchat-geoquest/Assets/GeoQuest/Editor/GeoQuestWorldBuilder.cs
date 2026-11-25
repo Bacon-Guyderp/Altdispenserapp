@@ -690,10 +690,16 @@ public class GeoQuestWorldBuilder : EditorWindow
                 for (int x = 0; x < GW; x++)
                     grid[y * GW + x] = px[(y * idTex.height / GH) * idTex.width + (x * idTex.width / GW)].r;
         }
+        mgr.selectionTexture = selTex;
         if (names == null || grid == null)
         {
-            mgr.countyNames = new string[0];
-            Debug.LogWarning("GeoQuest: county data missing, so the county picker is off.");
+            // No counties.json or grid: use the game's built-in county list and match places by their label.
+            mgr.countyNames = mgr.BuiltInCounties();
+            mgr.countyGrid = new byte[0];
+            mgr.gridW = 0;
+            mgr.gridH = 0;
+            for (int i = 0; i < locs.Length; i++) mgr.locCounty[i] = mgr.CountyIndex(locs[i].country);
+            Debug.Log("GeoQuest: county lookup grid not found, so places are matched to counties by name.");
             return;
         }
         mgr.countyNames = names;

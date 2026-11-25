@@ -123,6 +123,7 @@ public class GeoGameManager : UdonSharpBehaviour
             if (IsFlat(i)) _flatCount++;
             else _panoCount++;
         }
+        EnsureCountyData();
         _nCounties = countyNames == null ? 0 : countyNames.Length;
         _countyCount = new int[_nCounties + 1];
         if (photoScreen != null) photoScreen.gameObject.SetActive(false);
@@ -132,6 +133,60 @@ public class GeoGameManager : UdonSharpBehaviour
     }
 
     // ================================================================ counties
+
+    /// <summary>North Carolina's 100 counties, A to Z, built into the game so the county menu
+    /// always has them, even if the scene was built before Unity had imported counties.json.</summary>
+    public string[] BuiltInCounties()
+    {
+        return new string[]
+        {
+            "Alamance", "Alexander", "Alleghany", "Anson", "Ashe", "Avery", "Beaufort", "Bertie",
+            "Bladen", "Brunswick", "Buncombe", "Burke", "Cabarrus", "Caldwell", "Camden", "Carteret",
+            "Caswell", "Catawba", "Chatham", "Cherokee", "Chowan", "Clay", "Cleveland", "Columbus",
+            "Craven", "Cumberland", "Currituck", "Dare", "Davidson", "Davie", "Duplin", "Durham",
+            "Edgecombe", "Forsyth", "Franklin", "Gaston", "Gates", "Graham", "Granville", "Greene",
+            "Guilford", "Halifax", "Harnett", "Haywood", "Henderson", "Hertford", "Hoke", "Hyde",
+            "Iredell", "Jackson", "Johnston", "Jones", "Lee", "Lenoir", "Lincoln", "Macon",
+            "Madison", "Martin", "McDowell", "Mecklenburg", "Mitchell", "Montgomery", "Moore", "Nash",
+            "New Hanover", "Northampton", "Onslow", "Orange", "Pamlico", "Pasquotank", "Pender", "Perquimans",
+            "Person", "Pitt", "Polk", "Randolph", "Richmond", "Robeson", "Rockingham", "Rowan",
+            "Rutherford", "Sampson", "Scotland", "Stanly", "Stokes", "Surry", "Swain", "Transylvania",
+            "Tyrrell", "Union", "Vance", "Wake", "Warren", "Washington", "Watauga", "Wayne",
+            "Wilkes", "Wilson", "Yadkin", "Yancey",
+        };
+    }
+
+    /// <summary>Fills in the county list, and each place's county from its label ("Wake County, NC"),
+    /// when the scene was built without them.</summary>
+    private void EnsureCountyData()
+    {
+        if (countyNames == null || countyNames.Length == 0) countyNames = BuiltInCounties();
+        int n = urls == null ? 0 : urls.Length;
+        if (locCounty != null && locCounty.Length == n)
+        {
+            for (int i = 0; i < n; i++) if (locCounty[i] >= 0) return;   // already filled in by the builder
+        }
+        if (countries == null) return;
+        locCounty = new int[n];
+        for (int i = 0; i < n; i++) locCounty[i] = i < countries.Length ? CountyIndex(countries[i]) : -1;
+    }
+
+    /// <summary>"Wake County, NC" -> index of "Wake" (binary search; the names are in A-Z order).</summary>
+    public int CountyIndex(string label)
+    {
+        const string suffix = " County, NC";
+        if (label == null || countyNames == null || !label.EndsWith(suffix)) return -1;
+        string name = label.Substring(0, label.Length - suffix.Length);
+        int lo = 0, hi = countyNames.Length - 1;
+        while (lo <= hi)
+        {
+            int mid = (lo + hi) / 2;
+            int c = string.CompareOrdinal(countyNames[mid], name);
+            if (c == 0) return mid;
+            if (c < 0) lo = mid + 1; else hi = mid - 1;
+        }
+        return -1;
+    }
 
     private int CountyOf(int loc)
     {
