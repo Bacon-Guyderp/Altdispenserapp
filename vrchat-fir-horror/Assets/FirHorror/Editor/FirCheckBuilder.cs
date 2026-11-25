@@ -7684,7 +7684,9 @@ public static partial class FirCheckBuilder
 
     static Material BoneMat(string name, string hex)
     {
-        string n = "Bone" + name;
+        // one material per colour, not per skeleton: skeletons of the same colour look identical and can be batched
+        // together (the horror game still gets its own copies of whatever it darkens)
+        string n = "BoneC" + hex.TrimStart('#').ToLowerInvariant() + (name == "Neon" ? "Neon" : "");
         if (mats.TryGetValue(n, out var m)) return m;
         var c = Hex(hex);
         AddMat(n, "skeleton", new Color(c.r * 1.05f + 0.05f, c.g * 1.05f + 0.05f, c.b * 1.05f + 0.05f), 1, c * (name == "Neon" ? 0.45f : 0.15f));

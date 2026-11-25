@@ -59,7 +59,13 @@ Shader "FirHorror/Lantern"
             float4 _LanColor;
             float _Remaster;
 
-            float hash2(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            // a sine-free hash (cheap on Quest's GPU, and steady at large world coordinates); same look as before
+            float hash2(float2 p)
+            {
+                float3 p3 = frac(float3(p.xyx) * 0.1031);
+                p3 += dot(p3, p3.yzx + 33.33);
+                return frac((p3.x + p3.y) * p3.z);
+            }
             float vnoise(float2 p)
             {
                 float2 c = floor(p);
@@ -85,6 +91,8 @@ Shader "FirHorror/Lantern"
                 float3 wpos : TEXCOORD1;
                 float3 wn : TEXCOORD2;
                 float4 color : TEXCOORD3;
+                float4 shade : TEXCOORD4;   // rgb: the remaster's form and warm/cool shading; a: the sky term
+                float3 grainUV : TEXCOORD5; // xy: the grain's plane coordinates; z: the rim
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -99,6 +107,18 @@ Shader "FirHorror/Lantern"
                 o.wpos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.wn = UnityObjectToWorldNormal(v.normal);
                 o.color = v.color;
+                // the remaster's shading depends only on the surface's facing, so it's worked out per vertex (on the
+                // world's flat faces that's exactly the per-pixel result; on round props it's indistinguishable)
+                float3 n = normalize(o.wn);
+                float key = saturate(dot(n, float3(0.42, 0.78, 0.46)));
+                float sky = n.y * 0.5 + 0.5;
+                float form = 0.68 + 0.22 * key + 0.14 * sky;
+                float3 warmCool = lerp(float3(0.93, 0.96, 1.04), float3(1.04, 1.0, 0.95), key);
+                o.shade = float4(form * warmCool, sky);
+                float3 an = abs(n);
+                o.grainUV.xy = an.x > an.y ? (an.x > an.z ? o.wpos.zy : o.wpos.xy) : (an.y > an.z ? o.wpos.xz : o.wpos.xy);
+                float3 vdir = normalize(o.wpos - _WorldSpaceCameraPos.xyz);
+                o.grainUV.z = pow(1.0 - saturate(dot(n, -vdir)), 4.0) * 0.07;
                 return o;
             }
 
@@ -110,41 +130,46 @@ Shader "FirHorror/Lantern"
                 float4 albedo = tex2D(_MainTex, i.uv) * _Color * lerp(float4(1.0, 1.0, 1.0, 1.0), i.color, _VertexColor);
                 float3 toSurf = i.wpos - _WorldSpaceCameraPos.xyz;
                 float d = max(length(toSurf), 0.0001);
-                float3 dir = toSurf / d;
-                float reach = max(_Reach, 0.5);
-                float fall = saturate(1.0 - d / reach);
-                fall = fall * fall;
-                float3 camFwd = -normalize(UNITY_MATRIX_V[2].xyz);
-                float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
-                float facing = saturate(dot(normalize(i.wn), -dir)) * 0.6 + 0.4;
 
-                float3 lanCol = _LanColor.rgb;
-                float3 ambCol = _AmbColor.rgb;
+                // the grain: fine world-space noise, faded out by 30 m (so it isn't worked out beyond that)
+                float grain = 1.0;
+                if (_Remaster > 0.001 && d < 30.0)
+                {
+                    float gn = vnoise(i.grainUV.xy * 2.3) * 0.6 + vnoise(i.grainUV.xy * 9.7) * 0.4;
+                    grain = 1.0 + (gn - 0.5) * 0.16 * (1.0 - d / 30.0);
+                }
 
-                float3 light = float3(1.0, 1.0, 1.0) * (0.006 + _Ambient)
-                             + ambCol * (0.6 + 0.4 * facing)
-                             + lanCol * (fall * facing * (0.3 + 0.9 * cone));
-                light = light * (1.0 - saturate(_Dark));
-
-                // ---- the remaster: form shading, grain and a rim, all from the surface normal and world position
-                float3 n = normalize(i.wn);
-                float3 keyDir = float3(0.42, 0.78, 0.46);                  // a soft key light from up and to one side
-                float key = saturate(dot(n, keyDir));
-                float sky = n.y * 0.5 + 0.5;                                 // sky above, bounce from the ground below
-                float form = 0.68 + 0.22 * key + 0.14 * sky;
-                float3 an = abs(n);
-                float2 gp = an.x > an.y ? (an.x > an.z ? i.wpos.zy : i.wpos.xy) : (an.y > an.z ? i.wpos.xz : i.wpos.xy);
-                float gn = vnoise(gp * 2.3) * 0.6 + vnoise(gp * 9.7) * 0.4;
-                float grain = 1.0 + (gn - 0.5) * 0.16 * saturate(1.0 - d / 30.0);
-                float3 warmCool = lerp(float3(0.93, 0.96, 1.04), float3(1.04, 1.0, 0.95), key);
-                float rim = pow(1.0 - saturate(dot(n, -dir)), 4.0) * 0.07;
-                float3 fullShade = lerp(float3(1.0, 1.0, 1.0), form * grain * warmCool, _Remaster);
-                float3 lanShade = lerp(float3(1.0, 1.0, 1.0), grain * (0.9 + 0.1 * sky) * float3(1.0, 1.0, 1.0), _Remaster);
-
-                float3 lit = albedo.rgb * light * lanShade;
-                float3 full = albedo.rgb * fullShade + rim * _Remaster * float3(0.85, 0.9, 1.0);
-                float3 col = lerp(lit, full, _Fullbright) + _Glow.rgb;
-                return float4(col, 1.0);
+                float3 col;
+                if (_Fullbright > 0.999)
+                {
+                    // fullbright surfaces (almost all of the world): no lantern to work out
+                    float3 fullShade = lerp(float3(1.0, 1.0, 1.0), i.shade.rgb * grain, _Remaster);
+                    col = albedo.rgb * fullShade + i.grainUV.z * _Remaster * float3(0.85, 0.9, 1.0);
+                }
+                else
+                {
+                    float3 dir = toSurf / d;
+                    float reach = max(_Reach, 0.5);
+                    float fall = saturate(1.0 - d / reach);
+                    fall = fall * fall;
+                    float3 camFwd = -normalize(UNITY_MATRIX_V[2].xyz);
+                    float cone = smoothstep(0.55, 0.92, dot(dir, camFwd));
+                    float facing = saturate(dot(normalize(i.wn), -dir)) * 0.6 + 0.4;
+                    float3 light = float3(1.0, 1.0, 1.0) * (0.006 + _Ambient)
+                                 + _AmbColor.rgb * (0.6 + 0.4 * facing)
+                                 + _LanColor.rgb * (fall * facing * (0.3 + 0.9 * cone));
+                    light = light * (1.0 - saturate(_Dark));
+                    float3 lanShade = lerp(float3(1.0, 1.0, 1.0), grain * (0.9 + 0.1 * i.shade.a) * float3(1.0, 1.0, 1.0), _Remaster);
+                    float3 lit = albedo.rgb * light * lanShade;
+                    if (_Fullbright > 0.001)
+                    {
+                        float3 fullShade = lerp(float3(1.0, 1.0, 1.0), i.shade.rgb * grain, _Remaster);
+                        float3 full = albedo.rgb * fullShade + i.grainUV.z * _Remaster * float3(0.85, 0.9, 1.0);
+                        lit = lerp(lit, full, _Fullbright);
+                    }
+                    col = lit;
+                }
+                return float4(col + _Glow.rgb, 1.0);
             }
             ENDCG
         }

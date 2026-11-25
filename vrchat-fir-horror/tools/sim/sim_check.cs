@@ -51,6 +51,11 @@ public static class SimCheck {
       foreach (var r in rows.OrderByDescending(r => int.Parse(r.Split('|')[2])).Take(8)) Console.WriteLine("STAT " + r);
       Console.WriteLine("STAT TOTAL|" + tm + "|" + tv + "|" + ts);
       return 0; }
+    if (args.Length > 0 && args[0] == "awake") {   // which per-frame scripts still run in the lobby with the culler on
+      var cu0 = All<FirCuller>(A).First(); cu0.enabled = true; A.player.pos = new Vector3(-4f, 0.05f, -1f); Sim.Run(1f);
+      var tk = All<UdonSharp.UdonSharpBehaviour>(A).Where(b => b.gameObject.activeInHierarchy && b.enabled && b.GetType().GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly) != null).ToList();
+      foreach (var grp in tk.GroupBy(b => { var t = b.transform; while (t.parent != null && t.parent.parent != null) t = t.parent; return b.GetType().Name + " in " + t.name; }).OrderByDescending(x => x.Count()).Take(15)) Console.WriteLine("AWAKE " + grp.Count() + " " + grp.Key);
+      return 0; }
     if (args.Length > 0 && args[0] == "cull") { CullTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rooms") { RoomsTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "expand") { ExpansionTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }

@@ -482,6 +482,12 @@ and crew only.
   lobby, 422 of the world's 3,002 per-frame scripts run instead of all of them.
 * **Draw distance.** The world's reference camera stops drawing at 300 m. Every area is walled in, and nothing
   inside one is that far away, so nothing visible is lost.
+* **A cheaper shader for Quest.** The remaster's shading depends only on which way a surface faces, so it's now
+  worked out per vertex instead of per pixel (on the world's flat faces that gives exactly the same result). The
+  grain uses a sine-free hash and isn't worked out beyond 30 m, where it had already faded out. Fullbright surfaces
+  (nearly all of the world) skip the lantern maths entirely. Nothing looks different.
+* **One material per skeleton colour.** Skeletons used to get a material each (about 1,500 of them); skeletons of the
+  same colour now share one, so Unity can batch them. The horror game still gets its own copies of whatever it darkens.
 * **Static batching.** Every mesh that never moves is marked static (25,000 of them), so Unity can draw them in far
   fewer batches. Anything a script moves or points at is left dynamic (this also fixes a few moving props that were
   marked static). They're also marked as occluders, so occlusion culling can be baked in Unity
