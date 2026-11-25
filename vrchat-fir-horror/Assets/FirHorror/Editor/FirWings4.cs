@@ -18,6 +18,42 @@ public static partial class FirCheckBuilder
 {
     static readonly Dictionary<string, int> chainCount = new Dictionary<string, int>();
 
+    /// <summary>
+    /// Where to put the doorway in a wing's far wall: the east end if the way to it is clear, else the west end, the
+    /// quarters or the middle: the first spot with nothing solid in the 3 m in front of it.
+    /// </summary>
+    static float ClearDoorX(Transform ag, float x0, float x1, float zWall)
+    {
+        var cols = ag.GetComponentsInChildren<BoxCollider>(true);
+        // scan the far wall from the east end to the west in 1 m steps; take the first spot with a clear 3 m in front
+        for (float dx = x1 - 3.5f; dx >= x0 + 2.4f; dx -= 1f)
+            if (DoorBlockers(cols, dx, zWall).Count == 0) return dx;
+        // nothing clear the whole way along (a ridge, say): make a pass at the east end by taking out what's in the way
+        float d = x1 - 3.5f;
+        var gone = DoorBlockers(cols, d, zWall);
+        foreach (var c in gone) Object.DestroyImmediate(c.gameObject);
+        report.Add(ag.name + ": made a pass for the next wing's doorway through " + string.Join(", ", gone.Select(c => c.name).Distinct()));
+        return d;
+    }
+
+    static List<BoxCollider> DoorBlockers(BoxCollider[] cols, float dx, float zWall)
+    {
+        var hit = new List<BoxCollider>();
+        foreach (var c in cols)
+        {
+            if (c == null) continue;
+            var t = c.transform; var h = c.size * 0.5f;
+            float mnx = 1e9f, mxx = -1e9f, mny = 1e9f, mxy = -1e9f, mnz = 1e9f, mxz = -1e9f;
+            for (int k = 0; k < 8; k++)
+            {
+                var p = t.TransformPoint(c.center + new Vector3((k & 1) == 0 ? -h.x : h.x, (k & 2) == 0 ? -h.y : h.y, (k & 4) == 0 ? -h.z : h.z));
+                mnx = Mathf.Min(mnx, p.x); mxx = Mathf.Max(mxx, p.x); mny = Mathf.Min(mny, p.y); mxy = Mathf.Max(mxy, p.y); mnz = Mathf.Min(mnz, p.z); mxz = Mathf.Max(mxz, p.z);
+            }
+            if (mxx > dx - 0.9f && mnx < dx + 0.9f && mxz > zWall - 3.2f && mnz < zWall - 0.25f && mxy > 0.2f && mny < 2.2f) hit.Add(c);
+        }
+        return hit;
+    }
+
     /// <summary>Opens a doorway in the far wall of `prevTitle` (the area's last wing) and builds the next wing beyond it.</summary>
     static Transform ChainWing(Transform root, string area, string prevTitle, int link, float x0, float x1, float zWall, float depth, float h,
                                string floor, string wall, string ceil, string title, Color col, string sub)
@@ -25,7 +61,7 @@ public static partial class FirCheckBuilder
         var ag = root.Find(area);
         var prev = ag != null ? ag.Find(prevTitle) : null;
         if (prev == null) { report.Add("problem: no wing " + prevTitle + " in " + area + " to build on"); return null; }
-        float cx = (x0 + x1) / 2f, w = x1 - x0, z2 = zWall + depth, cz = (zWall + z2) / 2f, dx = x1 - 3.5f;
+        float cx = (x0 + x1) / 2f, w = x1 - x0, z2 = zWall + depth, cz = (zWall + z2) / 2f, dx = ClearDoorX(ag, x0, x1, zWall);
         var old = prev.Find("WallN");
         Material prevWall = M(wall); float prevH = h;
         if (old != null)

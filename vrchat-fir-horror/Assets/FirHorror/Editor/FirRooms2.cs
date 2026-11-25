@@ -282,7 +282,7 @@ public static partial class FirCheckBuilder
                  "the cast waits in here between scenes. it's four degrees. bring a coat.", 3653f,
                  new[] { "Fridge Manager Frost|#b3e5fc|3|rkw_frost", "Props Master Penny|#ffccbc|9|rkw_penny", "Lighting Tech Lars|#c5e1a5|20|rkw_lars" },
                  new[] { "The nervous asparagus|rkw_asparagus|shake|cap|0.3,1.4,0.3|GiftGreen|2", "The singing cheese|rkw_cheese|spin|cube|0.8,0.6,0.6|CornYellow|2", "The pickle chorus|rkw_pickles|grow|cap|0.4,0.7,0.4|PixelGreenDark|2" },
-                 (g, cx, z) => { for (int k = 0; k < 4; k++) Box(g, "Fridge shelf", V(cx, 0.8f + k * 1.2f, z + 21.2f), V(30f, 0.08f, 1.2f), M("Glass")); },
+                 (g, cx, z) => { for (int k = 0; k < 4; k++) Box(g, "Fridge shelf", V(cx - 3f, 0.8f + k * 1.2f, z + 21.2f), V(24f, 0.08f, 1.2f), M("Glass")); },
                  "glass fridge shelves");
         RoomWing(root, "The Clubhouse on the Hill", 3680f, 3730f, 70f, 24f, 10f, "Grass", "PixelSky", "Sky", "THE GADGET GARAGE", new Color(1f, 0.25f, 0.2f),
                  "where the clubhouse keeps its gadgets, and its spare gadgets, and its gadget for finding gadgets", 3727f,

@@ -11,7 +11,11 @@ def load(name):
     m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m
 def main():
     rows, n, k = ["# three more wings for every room (written by tools/wings4/gen.py)"], 0, 0
+    # titles must be unique across every wing in the world (the shortcut buttons are found by name)
+    import re, glob
     titles = set()
+    for f in glob.glob(os.path.join(HERE, "..", "..", "Assets", "FirHorror", "Editor", "*.cs")):
+        titles |= set(re.findall(r'Wing\(root, "[^"]+", [^"]*"[^"]*", "[^"]*", "[^"]*",\s*"([^"]+)"', open(f, encoding="utf-8").read()))
     for b in ("a", "b", "c", "d"):
         if not os.path.exists(os.path.join(HERE, b + ".py")): continue
         m = load(b)

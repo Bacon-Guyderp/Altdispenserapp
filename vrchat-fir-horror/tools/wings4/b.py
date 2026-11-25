@@ -277,7 +277,7 @@ AREAS = [
     ("The goggles", "spin", "cyl", "GiftBlue", "M3k", "Those are mine! Those are my goggles! With the shark! I found them!")]),
 ]),
 ("The Chris and Tripp Show", ("Floor2", "WallDark", "Ceiling", 6), [
-  ("THE WRITERS' ROOM", "an unofficial tribute: crew and fans only. where the crew pitch ideas for the show", "office", "GlowYellow",
+  ("THE WRITING ROOM", "an unofficial tribute: crew and fans only. where the crew pitch ideas for the show", "office", "GlowYellow",
    [("Head Writer Harriet", "F1s", "Every idea goes on the board. Good ones, bad ones, and the one about the goat. Always the goat."),
     ("Junior Writer Jules", "M3s", "What if the whole episode happens in a lift? What if the lift is on a boat? What if the boat is a goat?"),
     ("Runner Rudy", "M3k", "I bring the snacks! The writers eat them in four seconds! I'm going back out!")],
