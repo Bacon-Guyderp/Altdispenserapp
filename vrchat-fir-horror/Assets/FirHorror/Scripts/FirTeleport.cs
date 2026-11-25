@@ -8,12 +8,14 @@ public class FirTeleport : UdonSharpBehaviour
 {
     public Transform destination;
     public AudioSource sfx;
+    public FirCuller culler;   // wakes the area you're going to before you land in it
 
     public override void Interact()
     {
         VRCPlayerApi lp = Networking.LocalPlayer;
         if (!Utilities.IsValid(lp) || destination == null) return;
         if (sfx != null) sfx.Play();
+        if (culler != null) culler.WakeAt(destination.position);
         lp.TeleportTo(destination.position, destination.rotation);
     }
 }

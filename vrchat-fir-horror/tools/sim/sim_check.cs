@@ -1075,6 +1075,9 @@ public static class SimCheck {
     Console.WriteLine("\n== Optimising");
     var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("Optimised:"));
     Check(line != null, line != null ? Plain(line) : "no optimising line in the build log");
+    var desc = All<VRC.SDK3.Components.VRCSceneDescriptor>(A).FirstOrDefault();
+    var cam = desc != null && desc.ReferenceCamera != null ? desc.ReferenceCamera.GetComponent<Camera>() : null;
+    Check(cam != null && Mathf.Abs(cam.farClipPlane - 300f) < 0.1f, "the world's reference camera stops drawing at 300 m (every area is walled in well within that)");
     var cu = All<FirCuller>(A).First();
     var root = cu.transform.parent;
     Func<UdonSharp.UdonSharpBehaviour, bool> ticks = b => b.GetType().GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly) != null;
@@ -1089,7 +1092,14 @@ public static class SimCheck {
     Func<Transform, bool> contentsOn = t => { for (int i = 0; i < t.childCount; i++) { var c = t.GetChild(i); if (partSet.Contains(c.gameObject)) return c.gameObject.activeSelf; } return true; };
     bool floorsOn = zoo.Find("Floor").gameObject.activeInHierarchy && orl.Find("Floor").gameObject.activeInHierarchy;
     Check(!contentsOn(zoo) && !contentsOn(orl) && floorsOn && inLobby < all / 3, "in the lobby, the Station areas sleep: " + inLobby + " of " + all + " per-frame scripts still running, floors and walls still there");
-    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "ZOO" && t.transform.position.x < 100f)); Sim.Run(0.6f);
+    var town = root.Find("Bonetown");
+    Check(town != null && !contentsOn(town), "Bonetown sleeps too while you're in the lobby; it wakes as you head down the corridor");
+    A.player.pos = new Vector3(-6f, 0.05f, 4f); Sim.Run(0.6f);
+    Check(contentsOn(town), "...walking to the lobby's west door wakes Bonetown before you can see into it");
+    A.player.pos = new Vector3(-4f, 0.05f, -1f); Sim.Run(0.6f);
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "ZOO" && t.transform.position.x < 100f));
+    Check(contentsOn(zoo), "pressing the Station's zoo button wakes the zoo before you land in it");
+    Sim.Run(0.6f);
     int atZoo = awakeScripts();
     Check(contentsOn(zoo) && !contentsOn(orl) && atZoo > inLobby, "at the zoo, the zoo wakes up (" + atZoo + " per-frame scripts running) and Orlando stays asleep");
     var wing = All<FirTeleport>(A).First(t => t.name == "To THE NIGHT HOUSE");

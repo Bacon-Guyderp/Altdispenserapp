@@ -17,6 +17,7 @@ public class FirCuller : UdonSharpBehaviour
     public float interval = 0.2f;
 
     bool[] awake;
+    float[] holdUntil;
     float next;
     bool inited;
 
@@ -27,6 +28,7 @@ public class FirCuller : UdonSharpBehaviour
         if (inited) return;
         inited = true;
         awake = new bool[ax0.Length];
+        holdUntil = new float[ax0.Length];
         for (int a = 0; a < awake.Length; a++) awake[a] = true;   // everything starts on (as saved); the first check puts the rest to sleep
     }
 
@@ -40,11 +42,27 @@ public class FirCuller : UdonSharpBehaviour
         Vector3 p = lp.GetPosition();
         for (int a = 0; a < awake.Length; a++)
         {
-            bool inside = p.x > ax0[a] && p.x < ax1[a] && p.z > az0[a] && p.z < az1[a];
-            if (inside == awake[a]) continue;
-            awake[a] = inside;
-            for (int i = 0; i < parts.Length; i++) if (partArea[i] == a && parts[i] != null) parts[i].SetActive(inside);
+            bool inside = (p.x > ax0[a] && p.x < ax1[a] && p.z > az0[a] && p.z < az1[a]) || Time.time < holdUntil[a];
+            if (inside != awake[a]) Set(a, inside);
         }
+    }
+
+    void Set(int a, bool on)
+    {
+        awake[a] = on;
+        for (int i = 0; i < parts.Length; i++) if (partArea[i] == a && parts[i] != null) parts[i].SetActive(on);
+    }
+
+    /// <summary>A teleport is about to land here: wake whatever area this is now, and keep it awake for a moment.</summary>
+    public void WakeAt(Vector3 p)
+    {
+        Init();
+        for (int a = 0; a < awake.Length; a++)
+            if (p.x > ax0[a] && p.x < ax1[a] && p.z > az0[a] && p.z < az1[a])
+            {
+                holdUntil[a] = Time.time + 1.5f;
+                if (!awake[a]) Set(a, true);
+            }
     }
 
     /// <summary>For the tests: is this area awake?</summary>

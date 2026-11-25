@@ -2063,6 +2063,13 @@ public static partial class FirCheckBuilder
         if (desc == null) desc = new GameObject("VRCWorld").AddComponent<VRCSceneDescriptor>();
         desc.spawns = new[] { spawn };
         desc.RespawnHeightY = -20f;
+        // the reference camera: nothing in any area is ever more than ~260 m away in a straight line, and every area is
+        // walled in, so drawing stops at 300 m and nothing visible is lost
+        var camGo = desc.ReferenceCamera != null ? desc.ReferenceCamera : GameObject.Find("ReferenceCamera");
+        if (camGo == null) camGo = new GameObject("ReferenceCamera");
+        var cam = camGo.GetComponent<Camera>(); if (cam == null) cam = camGo.AddComponent<Camera>();
+        cam.nearClipPlane = 0.03f; cam.farClipPlane = 300f; cam.enabled = false;
+        desc.ReferenceCamera = camGo;
         EditorUtility.SetDirty(desc);
     }
 

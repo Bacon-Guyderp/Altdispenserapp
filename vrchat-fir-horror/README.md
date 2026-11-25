@@ -473,11 +473,15 @@ and crew only.
 
 ## Optimising (nothing looks or sounds different)
 
-* **Only the area you're in is awake.** A `FirCuller` switches off each Station area's contents (people, gags, props,
-  rides, and its wings' contents) while you're not inside it, so their scripts stop and they aren't drawn. Floors,
-  walls, ceilings and doors always stay on, so arriving anywhere is safe. Everything that moves runs off the server
-  clock, so an area wakes with everything already in the right place. In the lobby, 851 of the world's 3,002
-  per-frame scripts run instead of all of them. The lobby, Bonetown and the horror game are never switched off.
+* **Only the area you're in is awake.** A `FirCuller` switches off the contents of every area you're not in: the
+  Station rooms and their wings, Bonetown, the Marrow Arms, the park and the rest. Their scripts stop and they aren't
+  drawn. Floors, walls, ceilings and doors always stay on, and so does anything synced (the voxel world, throwables,
+  the shared-press system). The lobby and the horror game's areas are never switched off. Every teleport button wakes
+  the place it's sending you to before you land, and walking toward Bonetown wakes it before you can see in.
+  Everything that moves runs off the server clock, so an area wakes with everything in the right place. In the
+  lobby, 422 of the world's 3,002 per-frame scripts run instead of all of them.
+* **Draw distance.** The world's reference camera stops drawing at 300 m. Every area is walled in, and nothing
+  inside one is that far away, so nothing visible is lost.
 * **Static batching.** Every mesh that never moves is marked static (25,000 of them), so Unity can draw them in far
   fewer batches. Anything a script moves or points at is left dynamic (this also fixes a few moving props that were
   marked static). They're also marked as occluders, so occlusion culling can be baked in Unity
