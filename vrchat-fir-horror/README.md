@@ -471,6 +471,21 @@ file, `Data/wings_more.txt`, written from `tools/wings4/a.py` to `d.py` by `tool
 `make_voices.py --wings4` (which records on every core at once) both read that file. The fan rooms' wings are fans
 and crew only.
 
+## Optimising (nothing looks or sounds different)
+
+* **Only the area you're in is awake.** A `FirCuller` switches off each Station area's contents (people, gags, props,
+  rides, and its wings' contents) while you're not inside it, so their scripts stop and they aren't drawn. Floors,
+  walls, ceilings and doors always stay on, so arriving anywhere is safe. Everything that moves runs off the server
+  clock, so an area wakes with everything already in the right place. In the lobby, 851 of the world's 3,002
+  per-frame scripts run instead of all of them. The lobby, Bonetown and the horror game are never switched off.
+* **Static batching.** Every mesh that never moves is marked static (25,000 of them), so Unity can draw them in far
+  fewer batches. Anything a script moves or points at is left dynamic (this also fixes a few moving props that were
+  marked static). They're also marked as occluders, so occlusion culling can be baked in Unity
+  (Window > Rendering > Occlusion Culling > Bake) for a further gain.
+* **Audio loading.** The voice lines load in the background when first needed rather than all at start-up
+  (`Editor/FirAudioImport.cs`). Their quality is untouched, and sound effects and music keep Unity's defaults so
+  scares are never late.
+
 ## The remaster
 
 Everything except the talking trees' models and the voices has been remastered:

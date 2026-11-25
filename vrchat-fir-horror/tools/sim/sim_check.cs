@@ -16,6 +16,8 @@ public static class SimCheck {
     Sim.SceneBuilder = c => { if (!FirCheckBuilder.Build(true)) Sim.Fail("Build Systems Check returned false"); return null; };
     var A = Sim.Join("Alice", new Vector3(0, 0.05f, -4));
     var B = Sim.Join("Bob", new Vector3(1, 0.05f, -4));
+    // the area culler sleeps areas nobody local is in; the tests press things all over the world, so it's off for them (its own test turns it on)
+    foreach (var c in new[] { A, B }) foreach (var cu in All<FirCuller>(c)) cu.enabled = false;
     if (args.Length > 0 && args[0] == "mystery") { MysteryTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "later") { LaterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "town") { TownTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -38,6 +40,18 @@ public static class SimCheck {
       gagSet = "mo"; int gOk = RunGags(B, g => (gi++ % shares) == which, out gN, gb); gagSet = "";
       Check(gOk == gN && gN > 0, gOk + " of " + gN + " wing gags (share " + which + " of " + shares + ") move, speak and show their caption" + (gb.Count > 0 ? " | " + string.Join(", ", gb.Take(6)) : ""));
       Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "stats") {   // what each area costs: meshes, vertices, per-frame scripts
+      var rt = All<FirTeleport>(A).First().transform; while (rt.parent != null) rt = rt.parent;
+      int tv = 0, tm = 0, ts = 0;
+      var rows = new List<string>();
+      for (int i = 0; i < rt.childCount; i++) { var a = rt.GetChild(i); int v = 0, m = 0, sc = 0;
+        foreach (var mf in a.GetComponentsInChildren<MeshFilter>(true)) if (mf.sharedMesh != null) { v += mf.sharedMesh.vertexCount; m++; }
+        foreach (var b in a.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true)) if (b.GetType().GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly) != null) sc++;
+        tv += v; tm += m; ts += sc; rows.Add(a.name + "|" + m + "|" + v + "|" + sc); }
+      foreach (var r in rows.OrderByDescending(r => int.Parse(r.Split('|')[2])).Take(8)) Console.WriteLine("STAT " + r);
+      Console.WriteLine("STAT TOTAL|" + tm + "|" + tv + "|" + ts);
+      return 0; }
+    if (args.Length > 0 && args[0] == "cull") { CullTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rooms") { RoomsTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "expand") { ExpansionTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -265,6 +279,7 @@ public static class SimCheck {
     ExpansionTests(A, B);
     RoomsTests(A, B);
     TownInsideTests(A, B);
+    CullTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -1053,6 +1068,48 @@ public static class SimCheck {
     Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags (3 a wing) move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
     Check(boards >= 3, boards + " wings have something to collect");
+  }
+
+  // ======================================================================== optimising: only the area you're in is awake
+  static void CullTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Optimising");
+    var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("Optimised:"));
+    Check(line != null, line != null ? Plain(line) : "no optimising line in the build log");
+    var cu = All<FirCuller>(A).First();
+    var root = cu.transform.parent;
+    Func<UdonSharp.UdonSharpBehaviour, bool> ticks = b => b.GetType().GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly) != null;
+    Func<int> awakeScripts = () => All<UdonSharp.UdonSharpBehaviour>(A).Count(b => ticks(b) && b.gameObject.activeInHierarchy && b.enabled);
+    int all = awakeScripts();
+    cu.enabled = true;
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
+    Sim.Run(1f);
+    int inLobby = awakeScripts();
+    var zoo = root.Find("The Bonetown Zoo"); var orl = root.Find("Orlando");
+    var partSet = new HashSet<GameObject>(cu.parts.Where(x => x != null));
+    Func<Transform, bool> contentsOn = t => { for (int i = 0; i < t.childCount; i++) { var c = t.GetChild(i); if (partSet.Contains(c.gameObject)) return c.gameObject.activeSelf; } return true; };
+    bool floorsOn = zoo.Find("Floor").gameObject.activeInHierarchy && orl.Find("Floor").gameObject.activeInHierarchy;
+    Check(!contentsOn(zoo) && !contentsOn(orl) && floorsOn && inLobby < all / 3, "in the lobby, the Station areas sleep: " + inLobby + " of " + all + " per-frame scripts still running, floors and walls still there");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "ZOO" && t.transform.position.x < 100f)); Sim.Run(0.6f);
+    int atZoo = awakeScripts();
+    Check(contentsOn(zoo) && !contentsOn(orl) && atZoo > inLobby, "at the zoo, the zoo wakes up (" + atZoo + " per-frame scripts running) and Orlando stays asleep");
+    var wing = All<FirTeleport>(A).First(t => t.name == "To THE NIGHT HOUSE");
+    Sim.Press(A, wing); Sim.Run(0.6f);
+    var gag = All<FirGag>(A).First(g => g.name == "The elephant's spray");
+    Check(contentsOn(zoo) && gag.gameObject.activeInHierarchy, "in the zoo's wing, the zoo stays awake");
+    var keeper = All<FirRainbowSkeleton>(A).First(k => k.name.StartsWith("Head Keeper Hattie"));
+    A.player.pos = keeper.transform.position + new Vector3(0, 0, -1.2f); Sim.Run(0.4f);
+    Sim.Events.Clear(); Sim.Press(A, keeper); Sim.Run(1f);
+    Check(Sim.Events.Any(e => e.Contains("rm_zoo_hattie")), "and its people still talk when pressed");
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "Back to the lobby" && t.transform.position.x > 4970f)); Sim.Run(0.6f);
+    Check(!contentsOn(zoo), "back in the lobby, the zoo goes back to sleep");
+    // Orlando's rides pick up where the clock says when Orlando wakes
+    Sim.Press(A, All<FirTeleport>(A).First(t => t.name == "ORLANDO, FL" && t.transform.position.x < 100f)); Sim.Run(0.6f);
+    var ride = All<FirRide>(A).First(r => r.name == "The Storm Chaser"); var rideB = All<FirRide>(B).First(r => r.name == "The Storm Chaser");
+    Sim.Run(1f);
+    Check(Vector3.Distance(ride.carts[0].position, rideB.carts[0].position) < 0.5f, "Orlando wakes with its coaster exactly where it is for everyone else (" + Vector3.Distance(ride.carts[0].position, rideB.carts[0].position).ToString("F2") + " m)");
+    cu.enabled = false;
+    foreach (var t in cu.parts) if (t != null) t.SetActive(true);
+    A.player.pos = new Vector3(-4f, 0.05f, -1f);
   }
 
   // ======================================================================== Bonetown, inside

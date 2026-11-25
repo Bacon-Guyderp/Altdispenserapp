@@ -244,6 +244,7 @@ public static partial class FirCheckBuilder
         BuildExpansions(root);
         BuildRooms(root);
         BuildShare(root);
+        BuildOptimize(root);
         {
             int verts = 0, objs = 0;
             foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true)) if (mf.sharedMesh != null) { verts += mf.sharedMesh.vertexCount; objs++; }
@@ -2067,7 +2068,7 @@ public static partial class FirCheckBuilder
 
     // =================================================================== UdonSharp glue (reflection keeps this working across U# versions)
 
-    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel", "FirCodeLock", "FirBoost", "FirResident", "FirInkTurf", "FirChannels" };   // (the Root Cellar reuses FirHunt and FirStalker)
+    static readonly string[] Scripts = { "FirCheckHub", "FirCheckButton", "FirCheckTyped", "FirCheckSkeleton", "FirCheckTree", "FirRainbowSkeleton", "FirSkeletonCombo", "FirGag", "FirSkeletonGag", "FirCloset", "FirThrowable", "FirShare", "FirHunt", "FirHuntButton", "FirStalker", "FirWanderer", "FirTicker", "FirRide", "FirSeat", "FirTeleport", "FirNight", "FirEncounter", "FirTiles", "FirSay", "FirPortal", "FirPad", "FirVoxel", "FirCodeLock", "FirBoost", "FirResident", "FirInkTurf", "FirChannels", "FirCuller" };   // (the Root Cellar reuses FirHunt and FirStalker)
 
     static bool EnsureProgramAssets()
     {
