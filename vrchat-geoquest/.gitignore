@@ -3,3 +3,5 @@ tools/__pycache__/
 site/
 GeoQuestNC.unitypackage
 GeoQuestNC-folder.zip
+# Your own round music: kept out of the public repo/site (may be copyrighted)
+Assets/GeoQuest/Audio/
