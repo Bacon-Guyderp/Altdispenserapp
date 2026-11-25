@@ -27,6 +27,7 @@ public static partial class FirCheckBuilder
         RoomZoo(root);
         RoomWings(root);
         RoomWings3(root);
+        BuildMoreWings(root);
         report.Add("The new rooms: " + rooms.Count + " more Station stops (" + string.Join(", ", roomStops) + "); " + roomRides + " rideable rides");
     }
 

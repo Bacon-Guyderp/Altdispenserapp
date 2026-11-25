@@ -1523,6 +1523,53 @@ def room_wing_lines():
         yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
 
 
+# Four wings a room: the three chained wings per room (Data/wings_more.txt, written by tools/wings4/gen.py)
+WING4_VOICES = {"F1s": (F1, 150, 55, 1.0, "skel"), "M2s": (M2, 140, 40, 0.95, "skel"), "M3s": (M3, 160, 60, 1.1, "skel"),
+                "M2n": (M2, 140, 40, 1.0, "narr"), "M2g": (M2, 100, 25, 0.85, "glitch"), "F1k": (F1, 180, 90, 1.35, "skel"),
+                "M3k": (M3, 180, 85, 1.3, "skel"), "M2o": (M2, 120, 30, 0.88, "skel"), "F1o": (F1, 125, 45, 0.92, "skel")}
+
+
+def wings4_lines():
+    path = os.path.join(os.path.dirname(OUT), "Data", "wings_more.txt")
+    if not os.path.exists(path):
+        return
+    n, fi, gi = -1, 0, 0
+    for line in open(path, encoding="utf-8"):
+        p = line.rstrip("\n").split("|")
+        if not p or p[0] not in ("W", "F", "G"):
+            continue
+        if p[0] == "W":
+            n, fi, gi = n + 1, 0, 0
+            continue
+        voice, text = (p[4], p[5]) if p[0] == "F" else (p[8], p[9])
+        name = f"More/mo_x{n:03d}" + (f"f{fi}" if p[0] == "F" else f"g{gi}")
+        if p[0] == "F": fi += 1
+        else: gi += 1
+        v, speed, pitch, rate, kind = WING4_VOICES[voice]
+        filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
+        yield (name, v, speed, pitch, text, f"asetrate=16000*{rate},aresample=22050," + filt)
+
+
+def _render_one(args):
+    tmp, (name, voice, speed, pitch, text, filt) = args
+    wav = os.path.join(tmp, name.replace("/", "_") + ".wav")
+    subprocess.run(["espeak-ng", "-v", voice, "-s", str(speed), "-p", str(pitch), "-w", wav, text], check=True)
+    out = os.path.join(OUT, name + ".ogg")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af", filt + ",apad=pad_dur=0.25",
+                    "-ac", "1", "-c:a", "libvorbis", "-q:a", "4", out], check=True)
+    os.remove(wav)
+    return name
+
+
+def render_parallel(tmp, lines, folder):
+    """render_only, on every core at once."""
+    import multiprocessing
+    os.makedirs(os.path.join(OUT, folder), exist_ok=True)
+    with multiprocessing.Pool() as pool:
+        done = pool.map(_render_one, [(tmp, l) for l in lines], chunksize=8)
+    print(len(done), "lines ->", folder)
+
+
 def room_lines():
     for name, v, speed, pitch, rate, kind, text in ROOMS:
         filt = AREA_FILTERS[kind].replace("{v:.3f}", f"{1.8 * SKELETON_BOOST:.3f}")
@@ -1553,7 +1600,7 @@ def write_captions():
     """Data/captions.txt: clip name|what is said, for every voiced line (the builder shows them as captions)."""
     rows = {}
     for gen in (list(LINES), gag_lines(), skeleton_lines(), rainbow_lines(), town_lines(), extra_lines(), park_lines(), cop_lines(),
-                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines(), room_lines(), room_wing_lines()):
+                pizza_lines(), pixel_lines(), lab_lines(), north_lines(), mystery_lines(), area_lines(), apart_lines(), area2_lines(), more_lines(), room_lines(), room_wing_lines(), wings4_lines()):
         for row in gen:
             rows[row[0].split("/")[-1]] = row[4]
     for name, _, text in COMBO:
@@ -1638,6 +1685,10 @@ def main():
             return
         if "--moregags" in sys.argv:   # only the later areas' gags (ids starting I and J)
             render_only(tmp, [g for g in gag_lines() if g[0].startswith(("Gags/gag_I", "Gags/gag_J"))], "Gags")
+            return
+        if "--wings4" in sys.argv:   # only the three chained wings per room
+            render_parallel(tmp, list(wings4_lines()), "More")
+            write_captions()
             return
         if "--rooms" in sys.argv:   # only the new rooms
             render_only(tmp, list(room_lines()) + list(room_wing_lines()), "Rooms")

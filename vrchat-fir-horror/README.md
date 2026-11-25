@@ -461,6 +461,16 @@ they are. As with every ride, the motion comes from the server clock, so everyon
 place without syncing. Sit in any seat to ride; jump to get off, and you land back on the platform. The builder
 checks that each coaster's track never runs through itself.
 
+## Four wings a room
+
+Every Station area and every new room has 4 wings: its first wing, then 3 more chained north, each through a
+doorway at the east end of the far wall of the one before (`Editor/FirWings4.cs`). Each has its own shortcut
+button by the room's entrance (stacked above the first wing's), and buttons back to the entrance and the lobby. That's 213
+more wings, each with 3 voiced, captioned people and 3 voiced gags (1,278 new lines). Their contents are in one data
+file, `Data/wings_more.txt`, written from `tools/wings4/a.py` to `d.py` by `tools/wings4/gen.py`. The builder and
+`make_voices.py --wings4` (which records on every core at once) both read that file. The fan rooms' wings are fans
+and crew only.
+
 ## The remaster
 
 Everything except the talking trees' models and the voices has been remastered:

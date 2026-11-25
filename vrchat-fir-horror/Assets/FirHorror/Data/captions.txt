@@ -833,6 +833,1284 @@ mo_wsp_pin|You could hear a pin drop in here. Listen. There. You just did.
 mo_wsp_shush|Shhhhhh.
 mo_wsp_sneeze|Ah. Ah. Ahh. Choo! Sorry! Sorry. Sorry. That was so loud. Everyone's looking at me.
 mo_wsp_wilma|Psst. Welcome to the whisper room. Next door they scream. In here, we whisper. It's a lot easier on the jaw.
+mo_x000f0|Towel? Lounger? Cocktail with a little umbrella that's already on fire? Everything up here is on fire. It's a theme.
+mo_x000f1|I've been working on my tan for three hundred years. I'm a skeleton. It's not going well.
+mo_x000f2|Perfect dive! Two and a half twists! Shame you landed in the lava pool. Common mistake.
+mo_x000g0|The diving board springs, flings a rubber duck into the air, and catches it again on the way down.
+mo_x000g1|The pool hisses and a cloud of steam rolls out over the loungers. Somebody's sunglasses fog up.
+mo_x000g2|My inflatable! It's drifting off! It's drifting into the hot end! Goodbye, Mister Floaty!
+mo_x001f0|Tonight's special is a soup that looks back at you. Very fresh. Very judgemental.
+mo_x001f1|Table nine wants their eggs scrambled. Table nine is a ghost. I don't know where to put them.
+mo_x001f2|Ten thousand plates a day. Not one of them has had food on it. I still wash them. Standards.
+mo_x001g0|The pan bursts into flames. The chef nods. That's exactly how it's supposed to look.
+mo_x001g1|The soup is watching. The soup is always watching. Please finish your soup.
+mo_x001g2|The dumbwaiter drops three floors with a crash and arrives, somehow, with the tray perfectly level.
+mo_x002f0|The penthouse has a hot tub, a grand piano and a balcony over the fire lake. The piano only plays minor keys.
+mo_x002f1|I carried seventeen suitcases up here. Every one of them had another suitcase inside it.
+mo_x002f2|I've stayed in this suite since eighteen ninety. I keep meaning to check out. The bill frightens me.
+mo_x002g0|The piano plays a little waltz by itself. Every note is very slightly wrong, on purpose.
+mo_x002g1|Pop! The cork flies across the suite, bounces off the chandelier and lands in the bellhop's hat.
+mo_x002g2|The curtains sweep open on their own to show the fire lake, glowing orange, all the way to the horizon.
+mo_x003f0|New shoes, new laces, a squirt of oil in every joint. Go! Go! You're slower than a sneeze!
+mo_x003f1|I change tyres. Runners don't have tyres. I change their socks very, very fast.
+mo_x003f2|Three point nine seconds. A new pit record. The runner forgot to leave. Start again.
+mo_x003g0|Brrrrrrt! Brrrt! There. Your shoelaces are now tightened to factory specification.
+mo_x003g1|The checkered flag waves. Somebody has won. Nobody saw who. They were too fast.
+mo_x003g2|A red boot launches off the bench, laps the room twice, and lands back exactly where it was.
+mo_x004f0|Up the ramp! Spin! Spin! Land! Fall over! Get up! That's a ten!
+mo_x004f1|I made the ramp taller. Then taller. Then they asked for a loop. I'm not a miracle worker. Here's a loop.
+mo_x004f2|I've been judging tricks for forty years. I give everything a seven. It saves time.
+mo_x004g0|Kickflip! Heelflip! No flip! The board's gone without me again!
+mo_x004g1|A gold ring spins in the air, chimes once, and waits for someone fast enough to grab it.
+mo_x004g2|Boing! The bounce pad pops up and launches a pebble clean out of the room.
+mo_x005f0|Here: the first shoe to break the sound barrier. It was not wearing a foot at the time.
+mo_x005f1|In my day we ran uphill both ways, and we liked it. We were very confused, but we liked it.
+mo_x005f2|Can I touch the fast shoe? Can I? Can I? I'll be really quick!
+mo_x005g0|The rocket skates rattle in their case. One of them clearly still wants to go.
+mo_x005g1|A jar holds a small blue blur. It's been going round and round inside since nineteen ninety-one.
+mo_x005g2|First place, the hundred metre dash. Time: zero point four seconds. Second place: still running.
+mo_x006f0|Every pipe goes somewhere. Most go somewhere wet. One goes to a room full of coins, but I'm not telling you which.
+mo_x006f1|I'm a mushroom! I walk left. Only left. I've never seen what's to the right.
+mo_x006f2|I hang here and drop on people's heads. It's my whole career. I'm very good at it.
+mo_x006g0|A head pops out of the warp pipe, looks around, says wrong level, and goes back down.
+mo_x006g1|Bonk! A coin flies out. Then another. Then the block runs out and just looks embarrassed.
+mo_x006g2|Left! Left! Left! Wall! Turn around! Right! Oh, it's lovely over here!
+mo_x007f0|Halt! The boss is having a nap. Come back after level eight. Or level nine. He naps a lot.
+mo_x007f1|Thank you for rescuing me! Unfortunately, I'm in another castle. This is just my holiday castle.
+mo_x007f2|I spin. Round and round. Fire on a stick. People jump over me. I've never caught anyone. It's humbling.
+mo_x007g0|The fire bar swings round, crackling, just high enough to jump and just low enough to worry about.
+mo_x007g1|Someone touches the axe. The bridge drops. The big turtle falls in the lava, very slowly, looking cross.
+mo_x007g2|A stone block with an angry face slams down. It waits. It rises. It glares. It slams down again.
+mo_x008f0|Collect all the stars and something wonderful happens. I'm not allowed to say what. It's a cake.
+mo_x008f1|I follow you around on my little cloud. I film everything. I'm a documentary maker.
+mo_x008f2|Saved the kingdom twelve times. Never got so much as a thank you card. Got a lot of cake, though.
+mo_x008g0|The star spins, chimes, and hums a little tune that will be stuck in your head for a week.
+mo_x008g1|Extra life! I've got an extra life! I've got ninety-nine extra lives! I'm unstoppable!
+mo_x008g2|A smiling cloud drifts by, sighs happily, and rains a little on someone's head.
+mo_x009f0|Look at that orange! And that red! I've taken four thousand photos of this one tree.
+mo_x009f1|Speed limit's forty-five. Nobody minds. Everybody's driving at ten, looking at the trees.
+mo_x009f2|Hiked from Georgia to here. My boots are done. My knees are done. The view's worth it.
+mo_x009g0|The fog lifts off the valley and the whole ridge turns blue, ridge behind ridge, all the way out.
+mo_x009g1|A gust shakes the trees and a whole flurry of orange leaves comes spinning down.
+mo_x009g2|A black bear stands up behind a picnic table, sniffs, and wanders off with somebody's sandwich.
+mo_x010f0|Whole hog, slow smoked, vinegar sauce. That's barbecue. Anything else is just meat with ideas.
+mo_x010f1|Tomato in the sauce. Shoulder, not the whole hog. Come at me.
+mo_x010f2|I make the hush puppies. Little balls of fried cornbread. People come for the pork and leave talking about me.
+mo_x010g0|The smoker puffs out a cloud that smells like a Sunday afternoon in July.
+mo_x010g1|Vinegar! Tomato! Vinegar! Tomato! This has been going on since nineteen fifty-two!
+mo_x010g2|The pitcher pours a glass of sweet tea so sweet a passing bee faints.
+mo_x011f0|Turn left. Turn left again. Keep turning left. That's the whole strategy. It's worked for seventy years.
+mo_x011f1|Two hundred laps. Two hundred left turns. My neck only turns left now. I can't look right. It's fine.
+mo_x011f2|I've been to every race since nineteen eighty. Same seat, same cooler, same cheering.
+mo_x011g0|Vroom! The engine roars. Every window in the shop rattles. Somebody's coffee falls off a shelf.
+mo_x011g1|A stack of tyres topples over and rolls in every direction except the useful one.
+mo_x011g2|Winner! Winner! I turned left better than anyone has ever turned left!
+mo_x012f0|I went to find the bathroom. That was three weeks ago. There are a lot of doors. None of them is the bathroom.
+mo_x012f1|There's an exit somewhere. I've seen it. It was a painting of an exit. I walked into it. Ow.
+mo_x012f2|Juggle. Juggle. Juggle. My balls are juggling me now. I don't remember when that started.
+mo_x012g0|The door opens onto the same hallway. And another door. And the same hallway. The door closes, smugly.
+mo_x012g1|Error. Error. You are not supposed to be here. Neither am I. Let's both pretend.
+mo_x012g2|A bright green exit sign pops up. It is painted on a wall. The wall is laughing.
+mo_x013f0|Rubber chickens, cannon, a box of unicycles, and one very angry jack-in-the-box. Mind that last one.
+mo_x013f1|These weights are cardboard. Don't tell anyone. My muscles are also cardboard.
+mo_x013f2|I can do a backflip, a frontflip and a sideflip. I can't do stairs. Nobody knows why.
+mo_x013g0|Hello! Hello! Did I scare you? I scare everyone! Nobody plays with me any more!
+mo_x013g1|The circus cannon rumbles, coughs, and fires a single, sad, rubber chicken.
+mo_x013g2|A unicycle rolls out of its box, does a lap of the room on its own, and falls over.
+mo_x014f0|The ringmaster is in a meeting. The meeting is with himself. He's winning.
+mo_x014f1|Tickets sold: zero. Tickets printed: nine million. It's a digital circus. Nobody can leave to buy one.
+mo_x014f2|I make the coffee! The coffee is digital. It tastes like the colour blue.
+mo_x014g0|Ka-thunk! The stamp comes down on a form. It says APPROVED. The form bursts into confetti.
+mo_x014g1|The ringmaster's chair spins slowly round to face you, as if somebody important were sitting in it. Nobody is.
+mo_x014g2|The filing cabinet rattles. Something inside is filing itself. Do not open drawer three.
+mo_x015f0|I edit the bloopers. There are more bloopers than skits. Some skits are only bloopers.
+mo_x015f1|I forgot my line forty times. On the forty-first, I forgot I was in a skit and went home.
+mo_x015f2|I held the microphone in the shot every take. Every one. My arm's in more skits than the actors.
+mo_x015g0|The take counter clicks over. Take three hundred and four. Everybody sighs.
+mo_x015g1|Ah. Ah. Ah. Nope. Ah. Ah. Ahhhh. Nope. Sorry. Go again.
+mo_x015g2|A wall of the set falls flat on its face. The actor standing in the window is completely fine.
+mo_x016f0|I write the jokes. Then I explain the jokes. Then I remove the jokes. Then it's just a skit about a man.
+mo_x016f1|What if there was a skit where nothing happens? We did that one. It was called Tuesday.
+mo_x016f2|The pigeons are my best ideas. That one there. He's a genius. He's a pigeon.
+mo_x016g0|A balloon with the word IDEA on it floats up off the roof and away. Nobody tries to catch it.
+mo_x016g1|A pigeon walks the length of the roof wall with enormous confidence and falls off the end.
+mo_x016g2|Clack clack clack ding! I've written it! It's the same skit again, but with a hat!
+mo_x017f0|Every skit needs a moustache. We have eight hundred moustaches. We have four noses.
+mo_x017f1|I'm the front of the horse. The back of the horse quit. I've been a very short horse for a year.
+mo_x017f2|Blonde, brunette, ginger, a beehive and one shaped like a small dog. I wear them all. On my skull.
+mo_x017g0|The wig stand turns slowly round. The wig on it is wearing a slightly better wig.
+mo_x017g1|Hello? Is anyone in the back half? I can feel someone in the back half!
+mo_x017g2|A drawer pops open and a hundred fake moustaches spill out across the floor like startled caterpillars.
+mo_x018f0|Fresh milk, every morning. Cold, white, and good for your bones. Look at me. I'm all bone.
+mo_x018f1|Moo. I'm a skeleton cow. I make skeleton milk. It's mostly calcium. You're welcome.
+mo_x018f2|I test every bottle. Too warm. Too cold. Just right. Oh, I've drunk it.
+mo_x018g0|The churn shakes and gurgles and produces, eventually, a single pat of butter.
+mo_x018g1|A bottle tips over. The milk spreads. And spreads. Nobody cries. That's the rule.
+mo_x018g2|Clang! The cow bell rings. Daisy looks up, sighs, and goes back to her calcium.
+mo_x019f0|Two hundred million spoons. Teaspoons, soup spoons, a spoon shaped like a duck. All lost. All mine now.
+mo_x019f1|I fell behind the radiator in nineteen sixty-seven. They found me last week. I've missed so much cereal.
+mo_x019f2|I'm technically a spoon. A very large spoon. The others don't let me sit with them.
+mo_x019g0|A drawer slides open and a waterfall of spoons comes clattering out.
+mo_x019g1|This spoon was bent by the power of the mind. Probably. Or someone sat on it.
+mo_x019g2|In a velvet case: the golden spoon. Used once, by a king, for a single corn flake.
+mo_x020f0|Fold, glue, fold, glue. Ten thousand boxes a day. Not one of them ever opens the right way.
+mo_x020f1|I make the free toy. It's a tiny plastic skeleton. It's the same toy as last year. Nobody's noticed.
+mo_x020f2|I write the maze on the back of the box. There's no way out. It's a metaphor.
+mo_x020g0|Ka-chunk! A box is stamped, folded and filled in one motion. Then the machine takes a little bow.
+mo_x020g1|I found the free toy! It's in my bowl! It's in my mouth! I found it!
+mo_x020g2|A box slides along the conveyor, past the end, and onto the floor. Then another. Then another.
+mo_x021f0|Look closely. Anemones, sea snails, a starfish regrowing an arm. And a crab giving orders to a rock.
+mo_x021f1|I am the king of this pool! Bow! Bow to the king! You're very tall. Please stop stepping near my pool.
+mo_x021f2|I've got a hundred shells! Two of them are crabs! They keep walking out of my bucket!
+mo_x021g0|The starfish turns very slowly. It has been turning for a week. It's going somewhere.
+mo_x021g1|Sideways! Always sideways! Forwards is for the common people!
+mo_x021g2|The anemone opens like a flower, waves its little arms, and closes again, offended.
+mo_x022f0|These crystals grow a little every night. Pink in the spring, purple in the autumn. Blue when they're grumpy.
+mo_x022f1|I carry the lamp. The crystals glow on their own. I'm not sure what I'm for.
+mo_x022f2|La la la! La la la! The cave sings back. It's a better singer than me.
+mo_x022g0|The crystal hums a low, sweet note. All the others join in, one by one.
+mo_x022g1|An empty mine cart rolls past on its own, rattles round a corner and is gone.
+mo_x022g2|A crystal sprouts from the floor, grows to the height of a skeleton, and stops, pleased.
+mo_x023f0|Forty years I've kept the light. Every ship that passed. I've waved at all of them. Two waved back.
+mo_x023f1|I'm the cat. I'm also a skeleton. I sleep on the warm bit of the lamp. That's my job.
+mo_x023f2|I paint the lighthouse every summer. I've painted it four hundred times. It's never stood still.
+mo_x023g0|Boooooom. The foghorn sounds across the cove. Somewhere out in the fog, a boat booms back.
+mo_x023g1|The ship in the bottle rocks on a tiny sea, sails full, going absolutely nowhere.
+mo_x023g2|A whale! Off the point! Oh. No. That's a rock. It's always a rock.
+mo_x024f0|These burrows go for miles. We have a kitchen, a library and eleven thousand bedrooms.
+mo_x024f1|I dig. All day. Every day. Sometimes I come up in the wrong field. Hello, farm.
+mo_x024f2|I'm a mole. I took a wrong turn. These rabbits are very nice but they keep counting me.
+mo_x024g0|A carrot pops up out of the floor. Then another. Then the whole winter store tumbles out.
+mo_x024g1|Somebody steps on a soft patch and drops into a rabbit hole, waving, all the way down.
+mo_x024g2|A heap of sleeping rabbits twitches all at once, dreaming the same dream about lettuce.
+mo_x025f0|Stand very still and one might land on you. Stand very still for an hour and they'll build a nest.
+mo_x025f1|I'm going to be a butterfly! Any day now! I've been saying that for a month!
+mo_x025f2|I've catalogued every butterfly in the meadow. Two hundred species. One of them is a moth in disguise.
+mo_x025g0|A cloud of butterflies lifts off the flowers, circles once, and settles on a bald skull.
+mo_x025g1|I'm changing! I'm changing! Oh. I'm a slightly bigger caterpillar.
+mo_x025g2|A flower opens, enormous and yellow, and every butterfly in the house heads straight for it.
+mo_x026f0|Shh! A lesser spotted warbler. Or a greater spotted warbler. It's a warbler. It's spotted.
+mo_x026f1|Hoo. I'm the owl. I sit in the hide. The birdwatchers watch me. I watch them. Nobody blinks.
+mo_x026f2|I can see a bird! It's far away! It's a speck! It's a lovely speck!
+mo_x026g0|Rat-a-tat-tat! The woodpecker hammers on the hide. Everybody inside jumps.
+mo_x026g1|Three tiny heads pop up out of a nest, beaks wide open, demanding worms.
+mo_x026g2|A grey heron stalks across the reeds, so slowly you could make a cup of tea in between steps.
+mo_x027f0|I keep the boiler running. It's older than the school. It's older than the town. It's older than me.
+mo_x027f1|I came down here looking for my ball. The pipes said my name. I'm going back up now.
+mo_x027f2|Listen. Listen to the pipes. They're saying something. They're saying turn the heating down.
+mo_x027g0|The boiler shudders, clanks and roars, and every radiator in the building upstairs hisses at once.
+mo_x027g1|The valve spins by itself. A jet of steam shoots out and draws a little smiley face in the air.
+mo_x027g2|A shadow walks along the wall. There's nobody there to cast it. It waves.
+mo_x028f0|You'll stay here until you've learned your lesson. I've been here since nineteen fifty-two. I haven't learned mine.
+mo_x028f1|I threw a paper aeroplane. Forty years ago. I'm still in detention. It was a really good aeroplane.
+mo_x028f2|The clock says three o'clock. It always says three o'clock. School never ends.
+mo_x028g0|The chalk writes on its own: I will not haunt the school. I will not haunt the school.
+mo_x028g1|The clock hands spin round and round and round and stop, again, at three o'clock.
+mo_x028g2|Wheee! Still got it! Oh no. It hit the teacher. Another forty years.
+mo_x029f0|The roots grow a few inches every night. Toward the warm. Toward the people. Just a coincidence.
+mo_x029f1|I prune them. They grow back. I prune them. They grow back angrier.
+mo_x029f2|I came down the roots from the tree! It's very dark! Where are my acorns?
+mo_x029g0|A root curls down from the ceiling, taps a shoulder, and pulls back up before anyone turns round.
+mo_x029g1|A drop of sap glows green on the end of a root, swells, and falls with a soft plip.
+mo_x029g2|There's a face in the knot of the root. It yawns. It goes back to sleep.
+mo_x030f0|Orange ink, blue ink. We make both. They fight in the vats. Orange is ahead this week.
+mo_x030f1|I stir the vats. Clockwise for blue, anticlockwise for orange. I get dizzy a lot.
+mo_x030f2|I swim in the ink! I'm a kid! I'm a squid! I'm a kid squid! Look at me!
+mo_x030g0|The vat bubbles and a big orange splash leaps out, paints a wall and drips down slowly.
+mo_x030g1|Roll it! Roll it! Paint the whole floor blue! Blue wins! Blue wins!
+mo_x030g2|A tank of blue ink drops from a hook and bursts. The floor is blue now. Everybody's feet are blue.
+mo_x031f0|This hat is very fresh. That one is fresher. That one over there is the freshest thing in the plaza.
+mo_x031f1|Orange shoes with a blue hat? Bold. Wrong, but bold.
+mo_x031f2|I can't afford anything. I just come in to smell the new shoes.
+mo_x031g0|The hat rack spins and every hat on it changes colour at the same time.
+mo_x031g1|A tower of shoe boxes wobbles, wobbles, and stays up, against all odds.
+mo_x031g2|Looking fresh. Very fresh. Too fresh? There's no such thing as too fresh.
+mo_x032f0|Twelve floors. Every floor's harder than the last. The twelfth floor is just a very angry crab.
+mo_x032f1|I climbed the whole tower in four minutes. I was mostly ink by the end. Totally worth it.
+mo_x032f2|I got to floor two! Then I slipped on my own ink! I'm going again!
+mo_x032g0|A gold medal shaped like a squid spins on a ribbon. It's slightly sticky.
+mo_x032g1|A bomb pops up and bursts in a perfect orange circle. Everyone in the circle is now orange.
+mo_x032g2|Up! Up! Grab that one! No, the other one! Waaah!
+mo_x033f0|I check the tanks every night. Every night something knocks back. Three knocks. I don't knock any more.
+mo_x033f1|Pressure's holding. Mostly. The groaning sound is normal. The singing sound is not.
+mo_x033f2|I'm not supposed to be down here. I hid in a crate. The crate was full of fish. I smell terrible.
+mo_x033g0|Knock. Knock. Knock. Something on the other side of the tank wall would like to come in.
+mo_x033g1|The needle on the pressure gauge swings into the red, hovers, and creeps back. For now.
+mo_x033g2|A huge bubble rises out of the black water, floats up to the ceiling and pops with a hollow boom.
+mo_x034f0|Every creature here came up from the trench. This one has three eyes. This one has none. This one is my lunch.
+mo_x034f1|I label the jars. Some of them blink when I write the label. I write very fast.
+mo_x034f2|Is that one moving? That one's moving! That one just waved!
+mo_x034g0|Inside the jar, one large eye opens, looks at you, and very slowly closes again.
+mo_x034g1|A light flickers on in the dark tank. Behind it, a mouth full of teeth, smiling.
+mo_x034g2|A tentacle slides out of a drain, feels around the floor, finds a pencil, and takes it.
+mo_x035f0|Twelve pods, twelve seats. Nobody's ever used one. Nobody wants to be the first to find out.
+mo_x035f1|If the station floods, I'm in pod four. I've packed a sandwich. I've packed eleven sandwiches.
+mo_x035f2|In all my years under the sea, I've never abandoned ship. Mostly because I can't find the button.
+mo_x035g0|Someone presses the big red button. A light goes green. The pod door opens and a mop falls out.
+mo_x035g1|An escape pod slides along its rail, stops at the hatch, and slides back. Not today.
+mo_x035g2|Hull breach. Hull breach. Just kidding. Please return to your stations. Mostly kidding.
+mo_x036f0|A good sword takes a month. A great sword takes a year. A legendary sword takes a lot of shouting.
+mo_x036f1|I hit the metal. She shouts. I hit it harder. She shouts louder. I think I'm learning.
+mo_x036f2|I need a sword! A big one! To slay a dragon! Or at least a fairly big lizard!
+mo_x036g0|Clang! Clang! Clang! Sparks fly off the anvil in every direction. Somebody's eyebrows are gone.
+mo_x036g1|The bellows puff and the forge roars white hot. Every shadow in the room jumps back.
+mo_x036g2|The sword lifts off the rack, glowing, turns in the air, and settles back. Not you. Not yet.
+mo_x037f0|Who throws coins at a fairy? Really? You wake me up for a coin? Fine. Here's a heart.
+mo_x037f1|I catch fairies in bottles. Then I let them go. They don't like the bottles. I just like the glow.
+mo_x037f2|I came in here for firewood. That was a week ago. The fountain keeps healing me. I keep walking into trees.
+mo_x037g0|A tiny fairy zips out of the fountain, circles your head three times, and heals a paper cut.
+mo_x037g1|A coin drops into the fountain with a plink. The water glows. Nothing else happens. Wish pending.
+mo_x037g2|The lilies on the fountain open and glow blue, one after another, all the way round.
+mo_x038f0|Every heart here belonged to a hero. Every one is still beating. Gently. Like a lot of tiny drums.
+mo_x038f1|I sing the songs of the heroes. Mostly about walking into rooms and finding things in chests.
+mo_x038f2|I open chests. Ta-daaa! It's a key. It's always a key. One day it'll be a sandwich.
+mo_x038g0|The heart on the plinth beats, glows, and beats again. You feel a little bit braver.
+mo_x038g1|Ta-daaa! It's a small key! Again! Who keeps putting small keys in chests?
+mo_x038g2|A clay pot wobbles. Every hero in history would like to smash it. Every hero in history has.
+mo_x039f0|I am the queen. I have ten thousand children and every one of them wants a snack.
+mo_x039f1|Nobody gets near the queen without a reason. Or a flower. Flowers work.
+mo_x039f2|I make the royal jelly. Only the queen gets it. I've never tasted it. I lick the spoon. Don't tell.
+mo_x039g0|A pot of royal jelly glows gold on its stand. Every bee in the hall turns to look at it.
+mo_x039g1|The honeycomb throne hums. Ten thousand tiny wings are holding it up.
+mo_x039g2|A crown made of wax spins gently above the throne, dripping, just a little.
+mo_x040f0|Clover honey, heather honey, and our special: honey honey. It's honey, made from honey.
+mo_x040f1|Toast with honey. Toast with more honey. Honey with a bit of toast. That's the menu.
+mo_x040f2|I'm sticky! My hands are sticky! My feet are sticky! I'm stuck to the bench!
+mo_x040g0|The honey dipper turns slowly in the jar. A thread of gold winds round and round it.
+mo_x040g1|A honey jar fills, and fills, and overflows down the counter in a slow golden waterfall.
+mo_x040g2|A swarm of bees lifts off a jar, buzzes once round the market, and goes back to work.
+mo_x041f0|Flower, flower, flower, flower, hive. Flower, flower, flower, flower, hive. I love my job. I'm very tired.
+mo_x041f1|I plant the flowers. The bees visit them. Then they visit me. I'm not a flower. They don't care.
+mo_x041f2|I wear the suit, the hat, the gloves. The bees don't mind me. They mind the suit. It's a terrible suit.
+mo_x041g0|A sunflower turns to face you, slowly, as if you were the sun. You're flattered.
+mo_x041g1|A puff of pollen bursts off a flower. Somebody sneezes. Somebody else sneezes. Everybody sneezes.
+mo_x041g2|Buzz! Coming through! Heavy load! Very heavy pollen! Make way!
+mo_x042f0|Five hundred years I've guarded this gold. I've never spent a coin. I'm not sure what money's for.
+mo_x042f1|Eleven million coins. Four thousand gems. One teapot. The dragon loves the teapot most.
+mo_x042f2|I'm just looking. I'm not taking anything. That's my bag. It's always been full of gold.
+mo_x042g0|The gold pile shifts with a clink. Something underneath it is breathing.
+mo_x042g1|Touch my teapot and you'll be toast. Literally. I'll toast you. Then I'll have tea.
+mo_x042g2|A huge yellow eye opens in the dark at the back of the cave. It's not angry. It's curious. That's worse.
+mo_x043f0|Feed them, brush them, put out any small fires. That's the job. Mostly the fires.
+mo_x043f1|I've ridden dragons since I was six. I've fallen off since I was six. I still love it.
+mo_x043f2|A dragon saddle has to be fireproof, comfortable and very, very well fastened. Very well.
+mo_x043g0|A dragon shifts in its sleep and snores a little puff of smoke that smells like toast.
+mo_x043g1|A saddle falls off the rack and lands perfectly upright on a hay bale.
+mo_x043g2|A bucket of fish drops into the trough. Six dragon heads come up from six stalls at once.
+mo_x044f0|Arr. A dragon sank my ship. I've been waiting on this beach for a hundred years to complain.
+mo_x044f1|Pieces of eight! Pieces of eight! Pieces of a dragon! Pieces of me!
+mo_x044f2|Bottles, buttons, a cannonball and a boot. Every tide brings something. Usually a boot.
+mo_x044g0|The old cannon fires one last time and a seagull flies out of the barrel, looking annoyed.
+mo_x044g1|Me treasure! Me lovely treasure! It's sand. It's all sand. It was always sand.
+mo_x044g2|A wave rolls up the beach, takes somebody's hat, and brings it back a minute later, folded.
+mo_x045f0|Today's simulation: a giant robot, a meteor and a very rude man with a jetpack. Begin.
+mo_x045f1|I can fly! A little! Up to my knees! I'm working on it!
+mo_x045f2|I am a hologram. I am defeated forty times a day. I have feelings. Holographic feelings.
+mo_x045g0|A green hologram villain pops up, laughs a big villain laugh, and flickers out mid-laugh.
+mo_x045g1|The dummy takes a punch, wobbles, and stays standing out of pure stubbornness.
+mo_x045g2|A simulated meteor drops from the ceiling and stops one inch above the floor. Simulation paused.
+mo_x046f0|Every hero needs a suit. Fireproof, bulletproof, and machine washable. The capes are a safety nightmare.
+mo_x046f1|I test the capes. I've been sucked into eleven jet engines. I'm against capes now.
+mo_x046f2|A mask has to hide your face and still let you see. And breathe. And sneeze. Sneezing is hard.
+mo_x046g0|A red cape lifts off its hanger, flaps heroically in a wind that isn't there, and drops.
+mo_x046g1|A mask turns on its stand. For a second you'd swear it looked surprised.
+mo_x046g2|A blue suit puffs up on its hanger as if an invisible hero had just stepped into it.
+mo_x047f0|Bank robbery on Fifth, cat in a tree on Ninth, and the giant octopus is back. Send someone with a ladder.
+mo_x047f1|Hero, go! Hero, go! I just say hero, go. Over and over. I'm very good at it.
+mo_x047f2|In my day we didn't have screens. We just flew round the city until somebody screamed.
+mo_x047g0|The red light spins. Every screen in the room shows the same giant octopus.
+mo_x047g1|Hero hotline! Yes? A cat? In a tree? We'll send our very best hero.
+mo_x047g2|The city map lights up, block by block, until one red dot starts flashing.
+mo_x048f0|Tea, sir? Or perhaps a cup of grim determination? We have both. The tea's better.
+mo_x048f1|The car does two hundred, turns on a coin, and has a cup holder. That took the longest.
+mo_x048f2|There are four thousand bats down here. I've named all of them. That one's Kevin.
+mo_x048g0|The giant computer bleeps, whirs, and prints out a single slip of paper. It says: crime.
+mo_x048g1|A cloud of bats bursts out of the dark, swirls round the cave and settles back on the ceiling.
+mo_x048g2|The car on the turntable rotates slowly, gleaming, waiting for the night.
+mo_x049f0|I've sat on this roof for two hundred years. Rain, wind, pigeons. Mostly pigeons.
+mo_x049f1|I grow flowers that only bloom at midnight. Black roses. Grey tulips. Very gloomy. Very pretty.
+mo_x049f2|I run across the rooftops every night. Not for any reason. It's just good exercise.
+mo_x049g0|The gargoyle's stone eyes slide sideways to look at you. Then back. Did that happen?
+mo_x049g1|The searchlight swings round and throws a big bat shape onto the clouds. Somewhere, someone sighs.
+mo_x049g2|A black rose opens at the stroke of midnight and smells, unexpectedly, of strawberries.
+mo_x050f0|Eighty cells, eighty villains, and one very tired warden. The jokes never stop. Never.
+mo_x050f1|I'm their therapist. Session one: why do you dress like a question mark? Session two: why are there so many questions?
+mo_x050f2|I bring them lunch. One of them wants his lunch in riddle form. Every day. I'm running out of riddles.
+mo_x050g0|A cell door slides open. Everyone freezes. It slides shut again. A mechanical fault. Probably.
+mo_x050g1|A green cloud puffs out of a vent. Somebody giggles. Somebody else giggles. Hold your breath.
+mo_x050g2|What has keys but can't open a lock? The answer is written in green: this asylum.
+mo_x051f0|Forty years on this pier. Caught a shark, a crab and a lawn chair. The lawn chair was the best fight.
+mo_x051f1|Shrimp, squid, and a bucket of worms named Gerald. Gerald's not for sale.
+mo_x051f2|A seagull took my hot dog. Then my bun. Then my hat. Then it came back for my sunglasses.
+mo_x051g0|The fishing rod bends double. Something big is on the line. It's a lawn chair.
+mo_x051g1|A seagull swoops in, steals a whole basket of fries, and flies off screaming in triumph.
+mo_x051g2|The bait bucket rattles. Gerald the worm is making a break for it.
+mo_x052f0|Hit it through the gorilla's legs, over the bridge, into the volcano. Par three. Nobody's ever done it in three.
+mo_x052f1|Hole in one! Hole in one! Wait. That's the wrong hole. Still counts!
+mo_x052f2|I've been playing every summer since nineteen seventy. I always lose. I always have a lovely time.
+mo_x052g0|The fibreglass gorilla's arms swing down and knock a golf ball straight back to the tee.
+mo_x052g1|The volcano rumbles and coughs a golf ball high into the air. It lands in the pond.
+mo_x052g2|The windmill turns, and turns, and blocks the hole at exactly the wrong moment, every time.
+mo_x053f0|Shot glass, shell necklace, a t-shirt that says I went to the beach and all I got was this t-shirt.
+mo_x053f1|Hermit crabs! Painted shells! This one's got a little palm tree on it! It's very proud.
+mo_x053f2|I've bought eleven t-shirts. Same shirt, eleven colours. I'm going to wear them all at once.
+mo_x053g0|The giant shark's mouth opens wide over the doorway. A family walks through it, smiling, holding beach balls.
+mo_x053g1|Free t-shirt! Free t-shirt! Catch it! It's extra large! It's always extra large!
+mo_x053g2|A hermit crab in a painted shell scuttles across the counter and out of the door. Freedom.
+mo_x054f0|Boots off at the door. Hot chocolate's on the stove. Somebody's socks are on fire. Again.
+mo_x054f1|Pizza! French fries! Pizza! That's how we stop and go. I've said pizza ten thousand times today.
+mo_x054f2|I fell over forty times. Forty! I'm going up again! My knees are ice!
+mo_x054g0|The fire crackles higher and every pair of wet socks on the hearth starts to steam.
+mo_x054g1|A mug of hot chocolate wobbles under a mountain of marshmallows. One falls off. Then another.
+mo_x054g2|A slab of snow slides off the lodge roof and lands, whump, on someone who was just leaving.
+mo_x055f0|Thirty kinds of apple. Sweet ones, sour ones, one that tastes like a pear. That one's a pear.
+mo_x055f1|Press the apples, strain the juice, warm it up with cinnamon. That's mountain cider.
+mo_x055f2|I picked a hundred apples! I ate forty! My stomach's an orchard now!
+mo_x055g0|The apple tree shakes in the wind and drops three apples, one after another, on the same skull.
+mo_x055g1|The press turns and a stream of golden cider pours into a jug. The whole orchard smells sweet.
+mo_x055g2|A basket of apples tips over and they roll all the way down the hill, toward town.
+mo_x056f0|I've played banjo every Friday night since I was nine. I'm ninety. That's a lot of Fridays.
+mo_x056f1|Faster, Bertie, faster! The dancers aren't tired yet! They will be!
+mo_x056f2|Clack clack clack clack! That's clogging! My shoes are very loud! My feet are very tired!
+mo_x056g0|Somebody blows across the top of the jug. Whooo, whooo. It's the bass part. It's surprisingly good.
+mo_x056g1|Scritch scratch scritch scratch. The washboard keeps the rhythm with two thimbles.
+mo_x056g2|The dance floor bounces. Every board creaks in time. The whole hall is dancing now.
+mo_x057f0|A long dog takes three times as long to wash. Front end, middle end, back end. The middle end bites.
+mo_x057f1|My Frankie hates baths. He's hiding under the sink. All of him except the middle.
+mo_x057f2|I've been splashed four hundred times today. I'm wetter than the dogs.
+mo_x057g0|The bath tub sloshes and a soaking wet dachshund shakes itself, covering everybody in the room.
+mo_x057g1|The hair dryer roars and a damp dachshund puffs up into a long, angry cloud.
+mo_x057g2|A pink bow spins on the counter. Somewhere in the next room, a dachshund growls.
+mo_x058f0|I judge on posture, coat and length. The longest dog always wins. It's an unfair advantage.
+mo_x058f1|Stand, Biscuit! Stand! Not lie down! Stand! Oh, he's asleep. He's asleep on the stage.
+mo_x058f2|First, second, third, and a special rosette for the dog who barked at the judge.
+mo_x058g0|A gold rosette spins on its pin. The winner is too short to see it.
+mo_x058g1|The judge pulls out a measuring tape. It keeps going. And going. And going. Longest dog yet.
+mo_x058g2|The winner's podium rises up. A very long dog lies across all three places.
+mo_x059f0|This bed is four metres long. It's our best seller. We also sell a bed shaped like a hot dog bun.
+mo_x059f1|My dog sleeps eighteen hours a day. I need the most comfortable bed in the world. For me. He sleeps on me.
+mo_x059f2|I test the beds. I've tested all of them. Twice. Wake me up if anyone buys one.
+mo_x059g0|The hot dog bun bed puffs up and a dachshund climbs in and becomes the sausage.
+mo_x059g1|A tower of dog pillows topples over. Three dachshunds appear out of nowhere and claim them all.
+mo_x059g2|Squeak! Every dog in the building stops, ears up, and turns to look.
+mo_x060f0|Nine reindeer, one sleigh, every chimney in the world in one night. They train all year. They eat a lot of carrots.
+mo_x060f1|I pull at the front. I've been at the front for nine hundred years. Nobody else wants the wind in their face.
+mo_x060f2|I muck out the stables. Reindeer make a lot of mess. Magic mess. It sparkles. It still smells.
+mo_x060g0|A reindeer shakes its antlers and a bell on its harness rings, clear and cold.
+mo_x060g1|A sack of carrots tips into the trough. Nine heads come up at once.
+mo_x060g2|A sleigh bell spins on its strap, ringing, and the whole stable smells of pine.
+mo_x061f0|I've wrapped forty thousand presents today. I've wrapped my own hand four times. It's festive.
+mo_x061f1|Where's the end of the tape? There's never an end to the tape! It's a circle! It's always a circle!
+mo_x061f2|To Timmy, from Santa. To Tammy, from Santa. To Tommy, from Santa. My hand has stopped working.
+mo_x061g0|A mountain of presents topples over and buries an elf. A small hand waves from the top. I'm fine!
+mo_x061g1|Found the end! Found it! Lost it! Found it again! Lost it forever!
+mo_x061g2|The bow machine pops out a perfect red bow, then another, then four hundred more.
+mo_x062f0|Nice, nice, naughty, nice, very naughty, nice. I check it twice. Then I check it again. Then I need a nap.
+mo_x062f1|I watch for naughtiness. Somebody ate a cookie before dinner. Into the book you go.
+mo_x062f2|I hand out the coal. One lump each. I've been doing it two hundred years. Nobody's pleased to see me.
+mo_x062g0|The list unrolls across the floor, out of the office, down the corridor, and out of the door.
+mo_x062g1|The coal bin rattles. One lump hops out on its own and looks around, guiltily.
+mo_x062g2|Ka-chunk! NICE. The stamp comes down. Somewhere in the world, a child sleeps well.
+mo_x063f0|Twenty years for stealing a spoon. I've stolen two more since. I'm going for a set.
+mo_x063f1|One hour in the yard, then back inside. Nobody tunnels on my watch. Nobody tunnels very fast, anyway.
+mo_x063f2|I've been in here since nineteen forty. I don't remember what for. I think it was jaywalking.
+mo_x063g0|An inmate lifts a rock above his head, very proudly. It's a small rock.
+mo_x063g1|The searchlight sweeps the yard and finds a rabbit, which freezes, guiltily.
+mo_x063g2|A basketball arcs toward the hoop, hits the rim, and bounces over the wall. That's the third one today.
+mo_x064f0|Today's menu: grey stew. Tomorrow: grey stew with a bit of beige. Saturday's special.
+mo_x064f1|I peel the potatoes. Ten thousand potatoes. I've carved a key out of one. Don't tell anyone.
+mo_x064f2|I taste everything first. In case it's poisoned. It's never poisoned. It's just very bad.
+mo_x064g0|The stew pot bubbles. Something surfaces, looks around, and sinks back down.
+mo_x064g1|My potato key! It fits the lock! It's turning! It's mashed. Oh no.
+mo_x064g2|A food tray slides down the counter, past every inmate, and off the end onto the floor.
+mo_x065f0|Thirty years, one spoon. Every night, one inch. I've reached the warden's sofa. I'm not sure what next.
+mo_x065f1|I whistle if the guards come. I've never whistled. I can't whistle. I just say whistle.
+mo_x065f2|I live in the tunnel! It's lovely! They've been bringing me crumbs for years!
+mo_x065g0|The famous spoon scrapes at the end of the tunnel. A little more dirt falls. One more inch.
+mo_x065g1|A poster of a beach flips up to reveal the hole behind it. And behind that, another poster of a beach.
+mo_x065g2|A clump of earth drops from the ceiling. Everybody freezes. Then everyone keeps digging.
+mo_x066f0|I made a sign out of a pizza box. It took eleven hours. The glitter will never come out of my carpet.
+mo_x066f1|I came by train, bus, ferry and one very confused donkey. Worth it. Totally worth it.
+mo_x066f2|Name badges on the left, snacks on the right, screaming in the corner, please. We've set aside a corner.
+mo_x066g0|A homemade cardboard sign wobbles above the crowd. It's covered in glitter. So is everyone near it.
+mo_x066g1|Pop! A confetti popper goes off and the whole meetup is red and black for the rest of the day.
+mo_x066g2|Everybody squeeze in! Closer! Closer! Somebody's standing on my foot! Smile!
+mo_x067f0|I've made a compilation of every jump scare reaction. It's nine hours long. It's my masterpiece.
+mo_x067f1|The secret to a good thumbnail: big eyes, big mouth, big red arrow pointing at nothing.
+mo_x067f2|I write the subtitles. Most of them just say screaming. In brackets.
+mo_x067g0|The render bar crawls across the screen. Ninety-nine percent. Ninety-nine percent. Ninety-nine percent.
+mo_x067g1|Fourth coffee. Three in the morning. I can hear colours. Keep editing.
+mo_x067g2|A big red arrow appears on the screen, pointing at absolutely nothing at all. Perfect thumbnail.
+mo_x068f0|I've played every scary game in here. I've screamed at every one. I've won none.
+mo_x068f1|I don't flinch. I never flinch. I flinched. Don't tell anyone I flinched.
+mo_x068f2|Ten tokens a go. Most people get as far as the first corridor. Then they need a lie down.
+mo_x068g0|The screen goes black. Then a face fills it, screaming. Everybody in the arcade jumps.
+mo_x068g1|The game's battery meter drains to nothing. The screen flickers. Something breathes in the dark.
+mo_x068g2|The high score board flashes a new top score. The name entered is just AAAAAAA.
+mo_x069f0|I built an obstacle course! It's got lava, spinning bars and a door that's a lie!
+mo_x069f1|I've tested Bryn's course forty times. I've fallen in the lava forty times. Forty-one now.
+mo_x069f2|My avatar has a pink hat, a pink cape and one tiny pink shoe. The other shoe is a hot dog.
+mo_x069g0|Lava! Don't touch the lava! You touched the lava! Back to the start!
+mo_x069g1|The spinning bar sweeps round and knocks a tiny figure off the course, very gently.
+mo_x069g2|The door opens! It's a wall! Ha! The door was a lie! The whole course is a lie!
+mo_x070f0|There are ten thousand notes on this wall. Nine thousand of them just say the funniest thing they've heard all week.
+mo_x070f1|I read every note. Some are jokes. Some are drawings. One is a shopping list. Somebody needed eggs.
+mo_x070f2|I wrote a note! It says hello! It's in pink pen! It's the best note!
+mo_x070g0|A corner of the wall gives way and a thousand sticky notes flutter down like yellow snow.
+mo_x070g1|A pink pen spins on the table and points, when it stops, at the funniest note on the wall.
+mo_x070g2|The little speaker on the wall plays a laugh track. Then a louder laugh track. Then a goose.
+mo_x071f0|I do eight voices. A grandma, a robot, a cowboy, and five different kinds of very angry man.
+mo_x071f1|Turn it down. Turn it down. You're shouting into the microphone. It's a very sensitive microphone.
+mo_x071f2|Listen to my robot voice! Beep boop! I am a robot! I am also hungry!
+mo_x071g0|The microphone picks up a whisper, a sneeze, and a very loud crisp packet.
+mo_x071g1|The foam on the walls squishes inward, as if it's trying very hard to absorb a very loud voice.
+mo_x071g2|Turn it up! I sound like a mouse! Turn it down! I sound like a giant! Again!
+mo_x072f0|A penny a day. A train ticket is forty pounds. That's a lot of days. I've started walking.
+mo_x072f1|If we go through this town, and that town, and swim this bit, we save eleven pounds.
+mo_x072f2|Two-for-one, buy one get one free, and a voucher for a free soup that expired in nineteen ninety.
+mo_x072g0|The piggy bank rattles. One single coin. It's a very confident coin.
+mo_x072g1|Look at the map! We're here! We need to be there! That's the whole country! Let's go!
+mo_x072g2|A penny spins on the desk for a very long time. It's working out where to go.
+mo_x073f0|I challenge you to eat nothing but cereal for a week. I did it. I am now mostly cereal.
+mo_x073f1|Rules are rules. No help, no money, no sleeping in the shop. Last time someone slept in the shop.
+mo_x073f2|Ten seconds! Nine! Eight! Hurry up! Seven! Keep going! Six!
+mo_x073g0|The challenge wheel spins, clicks, slows, and lands on walk to the next town. Everybody groans.
+mo_x073g1|Day seven of cereal! I can't feel my teeth! I am a breakfast now!
+mo_x073g2|Time's up! Time's up! You did it! You did it by one second!
+mo_x074f0|I've stayed in forty hostels. Every one had a man snoring in the top bunk. Same man, I think.
+mo_x074f1|I don't snore. I breathe enthusiastically. Through my nose. At volume.
+mo_x074f2|Dear Mum, I'm alive. Mostly. Send money. Love, me. That's every postcard.
+mo_x074g0|A backpack bulges, strains, and pops open. Out spill socks, a kettle and a small cactus.
+mo_x074g1|Someone climbs into the top bunk. The bunk complains, loudly, but holds.
+mo_x074g2|Zzzzzzz. Hnnnnnk. Zzzzzzz. Hnnnnnnnnk. Whu? I wasn't asleep.
+mo_x075f0|Whisper against the wall here, and someone over there hears every word. So be careful what you say.
+mo_x075f1|I told the wall a secret. The wall told everyone. I'm not talking to the wall any more.
+mo_x075f2|Hello. Hello. Hello. It's still echoing. It's been echoing since Tuesday.
+mo_x075g0|A whisper travels round the wall: psst. psst. you left the oven on.
+mo_x075g1|The echo stone hums the last word anyone said in the room, over and over, softer each time.
+mo_x075g2|A sign pops up that just says shh. It's the loudest sign in the building.
+mo_x076f0|From the belly! From the soul! Again! That was a squeak! I want a scream!
+mo_x076f1|I wear three pairs of ear defenders. I can still hear every one of them.
+mo_x076f2|Ahh. Ahhh. Aaaah? Was that good? That was a yawn. Sorry.
+mo_x076g0|The microphone takes a scream so loud the needle on the meter bends and snaps off.
+mo_x076g1|Someone opens a jar. A scream from nineteen fifty-four comes out, startled to be free.
+mo_x076g2|The applause sign lights up. Everybody claps. Then everybody screams. Wrong sign.
+mo_x077f0|Shh. Sit. Have a biscuit. A soft one. We don't allow crunchy biscuits here.
+mo_x077f1|I screamed in four hundred films. I'm done now. I just want a cup of tea and a nap.
+mo_x077f2|Breathe in. Breathe out. Breathe in. Breathe out. I'm bored. Breathe in.
+mo_x077g0|The teapot whistles very, very quietly, so as not to disturb anyone.
+mo_x077g1|A cushion puffs up and settles with a long, satisfied sigh.
+mo_x077g2|Someone drops a crunchy biscuit. The crunch echoes round the room. Everyone turns to stare.
+mo_x078f0|Today we're building a rocket! Tomorrow, a submarine! The day after, a submarine rocket!
+mo_x078f1|I've drawn the blueprints! They're on a napkin! It's a very detailed napkin!
+mo_x078f2|Every day, something launches off that roof. Yesterday it was a sofa. I was sitting on it.
+mo_x078g0|Three! Two! One! Liftoff! It's going up! It's going sideways! It's in Wilbur's garden!
+mo_x078g1|The blueprint unrolls on the table. It is mostly crayon, but the maths is perfect.
+mo_x078g2|A platypus in a little hat strolls across the roof, checks a tiny watch, and slides down a drainpipe.
+mo_x079f0|I don't know what they're building. I don't want to know. I just keep the first aid kit stocked.
+mo_x079f1|Spanner! Hammer! Duct tape! More duct tape! The whole thing's duct tape now!
+mo_x079f2|I'm telling Mum. I'm always telling Mum. Mum never sees it. It's always gone by then.
+mo_x079g0|A roll of duct tape spins off the bench and wraps itself around a chair leg. Fixed.
+mo_x079g1|The half-built car coughs, splutters and starts. It has no wheels. It's very proud.
+mo_x079g2|Mum! Mum! Come and look! Oh. It's gone. It's always gone when you look.
+mo_x080f0|Password? Correct! Welcome to the club! The club is me and a jar of biscuits.
+mo_x080f1|We have four pounds, two marbles and a button. We're very rich.
+mo_x080f2|I've been spying on the club for months. They know I'm here. They give me biscuits.
+mo_x080g0|The rope ladder drops down from the treehouse and a small hand waves from the top. Come up!
+mo_x080g1|The club flag runs up the pole. It shows a biscuit wearing sunglasses.
+mo_x080g2|Hello? Hello? Can you hear me? I can hear you without the phone. You're right there.
+mo_x081f0|Running in the corridors? In my school? Detention. Also, please stop being so slow.
+mo_x081f1|Sit down. The principal will see you now. He's always seen you. He sees everything.
+mo_x081f2|I got sent here for drawing in my notebook. The whole school is a notebook! It's not fair!
+mo_x081g0|A detention slip flies off the desk, circles the room, and sticks to the forehead of the nearest skull.
+mo_x081g1|Slap! The ruler comes down on the desk. Everybody sits up straight.
+mo_x081g2|The pencil sharpener grinds away. The pencil gets shorter. And shorter. And it's gone.
+mo_x082f0|One, two, three, four! Jump! Jump! I've been jumping since break started! It's been four hours!
+mo_x082f1|No running, no pushing, no drawing on the slide. It's already drawn. Don't add to it.
+mo_x082f2|Give me your lunch money. Oh, you haven't got any? Here, have some of mine.
+mo_x082g0|Turn it faster! Faster! I can do a hundred! I can do a thousand! Ow!
+mo_x082g1|The swing, drawn in pencil, swings itself higher and higher and loops right over the top.
+mo_x082g2|A ball flies over the fence and lands on the roof of the school. It joins forty other balls.
+mo_x083f0|Today: a volcano made of baking soda. Please don't make it bigger. Please. Don't.
+mo_x083f1|My volcano's the biggest! It's taller than me! It's rumbling! Is it meant to rumble?
+mo_x083f2|I'm the classroom skeleton. I'm a real skeleton. Nobody believes me. They think I'm plastic.
+mo_x083g0|The volcano erupts with a whoosh of foam that fills the bench, the floor, and the teacher's shoes.
+mo_x083g1|A beaker bubbles green, then blue, then pink, then makes a little noise like a burp.
+mo_x083g2|The model of the solar system spins on its stand. One planet falls off. It wasn't a real planet.
+mo_x084f0|Flip! Flip! Flip! I've flipped nine million burgers. Every one perfect. I'm very happy.
+mo_x084f1|A burger costs three shells. A napkin costs four. Ketchup is a whole separate conversation.
+mo_x084f2|Welcome to the diner. Can I take your order. Please don't order. I'm on my break.
+mo_x084g0|Ha ha! Burger flipped! Burger flipped again! Burger on the ceiling!
+mo_x084g1|Ka-ching! Ka-ching! The most beautiful sound in the sea!
+mo_x084g2|A burger spins on a plate, glowing slightly. Nobody knows what's in it. Nobody asks.
+mo_x085f0|Swish! Got one! Let it go! Swish! Got another! Let it go! It's catch and release.
+mo_x085f1|Each jellyfish is ninety-five percent water and five percent attitude.
+mo_x085f2|I touched one. It buzzed. It's buzzing still. I'm buzzing still.
+mo_x085g0|A pink jellyfish drifts up out of the kelp, pulses once, and floats away humming.
+mo_x085g1|Swoosh! The net comes down. Empty. The jellyfish are behind you, laughing in bubbles.
+mo_x085g2|Bzzzzt! A jellyfish zaps the net. Everyone's hair would stand on end, if anyone had hair.
+mo_x086f0|Lived in this anchor forty years. Fell off a ship, landed upside down, very roomy. Rent's cheap.
+mo_x086f1|I play the tuba. Badly. Very badly. The neighbours have moved. All of them.
+mo_x086f2|I'm a starfish! I live in a big shell! The shell's very nice! It's my best friend!
+mo_x086g0|The tuba lets out a parp so terrible three fish swim straight into the wall.
+mo_x086g1|Through the porthole, a whole shoal of fish turns at the same time and stares in.
+mo_x086g2|A bubble wobbles out of the chimney and floats up toward the surface, taking a tiny crab with it.
+mo_x087f0|Stack them, paint them, hit them with a pickaxe until loot falls out. It's a strange farm.
+mo_x087f1|Three bandages, a shield potion and a single shoe. That's what this pinata had. Weird pinata.
+mo_x087f2|I found a gold one! A gold one! I don't know what it does! It's very shiny!
+mo_x087g0|The purple pinata wobbles, cracks open, and a shower of loot spills across the grass.
+mo_x087g1|A golden chest hums and glows. It opens with a little choir noise. Inside: a bandage.
+mo_x087g2|A crate drops out of the sky on a balloon and lands with a thump. Everyone runs toward it.
+mo_x088f0|Wall! Ramp! Floor! Wall! Ramp! I've built a tower! I've built a tower to nowhere!
+mo_x088f1|I just chop wood. All day. They use it all in four seconds. I don't mind. I like chopping.
+mo_x088f2|Whoever's higher wins. That's the rule. I've been on top of this tower since lunch.
+mo_x088g0|A wooden wall appears out of nowhere in half a second. Then another. Then a staircase. Then a tower.
+mo_x088g1|Thwack! Thwack! The pickaxe chops a whole tree into building wood in three swings.
+mo_x088g2|Higher! Higher! I'm above the clouds! How do I get down?
+mo_x089f0|Number one! Last one standing! I won with a frying pan and a lot of luck!
+mo_x089f1|Arms up, swing left, swing right, wiggle. That's the floss. No, that's the other one.
+mo_x089f2|I have four hundred dances. I don't know how to dance. I just press buttons.
+mo_x089g0|A golden crown trophy spins on its pedestal. It's slightly too heavy to lift.
+mo_x089g1|The dance floor lights up in squares and everybody on it does the same silly dance at once.
+mo_x089g2|A purple storm creeps in at the edges of the room. Everybody shuffles toward the middle.
+mo_x090f0|Anomaly C-1: a coat hanger that hangs things in the past. Hang a coat on it, and it was always there.
+mo_x090f1|Stay behind the line. The line keeps moving. That's one of the anomalies too.
+mo_x090f2|I've been assigned to watch the jar. Just watch it. If I look away, it gets bigger. I haven't blinked in an hour.
+mo_x090g0|Anomaly C-1. A hat appears on the coat hanger. Everyone remembers it being there all along.
+mo_x090g1|Anomaly C-2. The jar is bigger than it was. You looked away. Everybody looks away.
+mo_x090g2|Anomaly C-3. The door opens only when asked nicely. It has been very offended this week.
+mo_x091f0|The kettle boils in exactly four seconds. Every time. We've stopped asking why.
+mo_x091f1|Twelve hours watching a chair that moves when no one's looking. I've never seen it move. It's moved forty times.
+mo_x091f2|The biscuits disappear from the tin. Every day. We think it's an anomaly. It's me.
+mo_x091g0|The kettle boils in four seconds flat. The water is the right temperature for exactly the tea you wanted.
+mo_x091g1|The biscuits are gone! The anomaly strikes again! Don't look at my pockets!
+mo_x091g2|The vending machine drops a can. Then another. Nobody has put any money in for three years.
+mo_x092f0|Form twenty-seven B: an anomaly ate my form. Form twenty-seven C: an anomaly ate my form twenty-seven B.
+mo_x092f1|Approved. Denied. Approved. Eaten. Approved. That last one just ate my stamp.
+mo_x092f2|I filed something in the wrong drawer. It's growling now.
+mo_x092g0|A filing cabinet tips over and ten thousand forms flood across the floor in alphabetical order.
+mo_x092g1|Ka-chunk! REDACTED. The stamp comes down on everything. It's stamped the desk.
+mo_x092g2|Drawer forty rattles and growls. Something has been misfiled. Something big.
+mo_x093f0|Welcome to our dimension. Please sit on me. It's the polite thing to do here.
+mo_x093f1|I am the mayor. I recline. That is my policy.
+mo_x093f2|I stepped through a portal for a sandwich. Now I'm surrounded by chairs. None of them is a sandwich.
+mo_x093g0|It begins to rain chairs. Little ones. Everybody puts up a table.
+mo_x093g1|Ooh. Ow. Mind the legs. Thank you. You may sit.
+mo_x093g2|A green portal swirls open in the middle of the room. Something on the other side waves.
+mo_x094f0|I'm a mountain. Made of pizza. People keep eating my slopes. I'm getting shorter.
+mo_x094f1|I'm a fizzy river. I'm always bubbling. It's not excitement. It's carbonation.
+mo_x094f2|I licked the ground. It's toffee. I licked a tree. It's broccoli. Disappointing.
+mo_x094g0|A slice of pizza peels itself off the mountain and floats away, cheese stretching behind it.
+mo_x094g1|A geyser of cola bursts out of the ground and showers everyone in sticky fizz.
+mo_x094g2|The jelly hill wobbles. And wobbles. It's been wobbling since the last earthquake, in nineteen eighty.
+mo_x095f0|I am the smartest version of me. Obviously. All the other versions agree. Except all the other versions.
+mo_x095f1|I'm the version who wears a hat. It's a big difference. It's the only difference.
+mo_x095f2|I'm every assistant's assistant. I fetch the coffee for all the geniuses. There are ten thousand of them.
+mo_x095g0|The round table turns slowly. At every seat, the same face, arguing with itself.
+mo_x095g1|The dimension blaster hums, flickers green, and opens a tiny portal that's just big enough for a sandwich.
+mo_x095g2|A glowing map of every dimension blooms over the table. Most of them are labelled: avoid.
+mo_x096f0|The fountains go off at random. Even I don't know when. I'm soaked. I'm always soaked.
+mo_x096f1|Water! Water! Water! It's coming out of the ground! Again! Again!
+mo_x096f2|I'm just going to stand here and stay dry. I'm just going to - oh. Oh, I'm wet.
+mo_x096g0|A fountain bursts out of the ground right under the person who just said they'd stay dry.
+mo_x096g1|Fire the water cannon! Fire it! Got him! Got Dad!
+mo_x096g2|The little bucket fills, tips, and dumps on a toddler, who is delighted.
+mo_x097f0|Another drink, madam? With an umbrella? Two umbrellas? We have a drink that's just umbrellas.
+mo_x097f1|I paid extra for this cabana. I've been in it all day. I haven't seen any water. It's perfect.
+mo_x097f2|I fold the towels into swans. Swans, dolphins, a little towel elephant. Nobody uses them.
+mo_x097g0|A towel folded into a swan turns slowly on the lounger. It's honestly very impressive.
+mo_x097g1|The drink sprouts another tiny umbrella. And another. And another. It's mostly umbrella now.
+mo_x097g2|Someone leans back on the sun lounger. It folds up around them like a sandwich.
+mo_x098f0|Four thousand flip flops. None of them match. Every single one is a left foot.
+mo_x098f1|I lost my goggles! They're blue! They've got a shark on them! Is that them? No, that's a sock.
+mo_x098f2|I find everything. In the pool, under the slides, on the roof somehow. Here's a goldfish. Somebody lost a goldfish.
+mo_x098g0|The whale-shaped dinghy inflates by itself and fills half the office.
+mo_x098g1|A shelf gives way and a waterfall of left flip flops pours onto the floor.
+mo_x098g2|Those are mine! Those are my goggles! With the shark! I found them!
+mo_x099f0|Every idea goes on the board. Good ones, bad ones, and the one about the goat. Always the goat.
+mo_x099f1|What if the whole episode happens in a lift? What if the lift is on a boat? What if the boat is a goat?
+mo_x099f2|I bring the snacks! The writers eat them in four seconds! I'm going back out!
+mo_x099g0|The idea board is covered in sticky notes. One in the middle just says goat, underlined three times.
+mo_x099g1|Snacks! Snacks are here! Snacks are gone! Snacks were here for four seconds!
+mo_x099g2|A red pen spins on the table and crosses out the goat idea. Then writes it back in.
+mo_x100f0|Letters, drawings, a crochet hat and one entire cake. The cake didn't travel well.
+mo_x100f1|I've written a hundred letters! They're all in this sack! The sack is also a letter!
+mo_x100f2|Three sacks a day for the show. My back's not what it was. My heart's never been happier.
+mo_x100g0|A mail sack drops on the table and a hundred letters fan out across it, every one decorated.
+mo_x100g1|A crocheted hat sent by a fan turns slowly on a stand. It has ear holes. Very thoughtful.
+mo_x100g2|The wall of fan drawings gets one more, then another, then it's floor to ceiling crayon.
+mo_x101f0|Rubber chicken, giant pencil, a cardboard car and a trophy for best moustache. All labelled.
+mo_x101f1|I glue things back together. Mostly the cardboard car. The cardboard car has been through a lot.
+mo_x101f2|Is that the giant pencil? From the pencil sketch? Can I hold it? I'm holding it. I'm so happy.
+mo_x101g0|The giant pencil floats off its shelf, writes a little smiley face in the air, and floats back.
+mo_x101g1|The cardboard car rolls three feet on its own and loses a wheel. Very in character.
+mo_x101g2|The trophy for best moustache spins on its plinth. It's wearing a small moustache.
+mo_x102f0|Tokens! Two for a pound! The claw machine is broken. It's always been broken. It's a tradition.
+mo_x102f1|I've won the big bear from the claw machine. Once. In nineteen ninety-eight. I'm still trying again.
+mo_x102f2|I've got four thousand tickets! That's enough for a rubber! Or a pencil! I'm saving for the pencil!
+mo_x102g0|The claw drops, grabs the bear, lifts it, and lets go at the very last second, as always.
+mo_x102g1|The coin pusher shoves forward. The heap of coins hangs over the edge. It does not fall.
+mo_x102g2|Tickets! Tickets! They're coming out! It's a hundred tickets! It's three tickets!
+mo_x103f0|Mind the wobbly floor. And the tilted room. And the mirror that makes you look like a noodle.
+mo_x103f1|In this mirror I'm four metres tall! In this one I'm a tiny ball! In this one I'm just me. I don't like that one.
+mo_x103f2|I've been through the spinning barrel six times. I can't find the exit. I can't find my feet.
+mo_x103g0|The barrel turns round and round. Someone inside is trying to walk straight. They are not.
+mo_x103g1|The funhouse mirror stretches every reflection up to the ceiling. Everybody laughs at everybody.
+mo_x103g2|A jet of air blasts up from the floor. Somebody's hat goes straight up and doesn't come down.
+mo_x104f0|Big bears, little bears, inflatable bananas and eleven hundred goldfish in bags. Everyone wins something.
+mo_x104f1|I look after the goldfish until someone takes them home. I've named them all. They're all called Goldie.
+mo_x104f2|I won the giant bear. It's bigger than me. I can't get it through the gate. We live here now.
+mo_x104g0|The giant prize bear slumps forward and squashes the person trying to carry it.
+mo_x104g1|A goldfish in a bag goes round and round, looking at the world, slightly alarmed.
+mo_x104g2|An inflatable banana slips free of its string and floats off over the park, shining in the sun.
+mo_x105f0|These fingerprints match. They match the officer who picked up the evidence. Again.
+mo_x105f1|I dusted for prints. I dusted the whole room. I dusted the captain. He's not pleased.
+mo_x105f2|I looked through the microscope for an hour. It was a tiny picture of a duck. Someone's taped it in.
+mo_x105g0|The forensics officer leans into the microscope, gasps, and announces: it's a hair. It's my hair.
+mo_x105g1|An evidence bag drops on the table. Inside: a single sandwich. Exhibit A. Partly eaten.
+mo_x105g2|A puff of fingerprint powder fills the room. Every surface shows the same thumb.
+mo_x106f0|Suspect's still in the building. Has been for four days. We're starting to think it's his house.
+mo_x106f1|I brought sandwiches. For four days. We're down to the crusts.
+mo_x106f2|I've been listening in on the suspect. He's been singing in the shower. It's actually very good.
+mo_x106g0|The binoculars swing round and focus on the suspect's window. He waves.
+mo_x106g1|Day five sandwiches! Crusts only! I've made a crust sandwich! It's a crust in a crust!
+mo_x106g2|Shh. Shh. He's doing the high note. Here it comes. Oh, that's beautiful.
+mo_x107f0|Lesson one: the door. Push, or pull. Read the sign. The sign says push. Everybody pulls.
+mo_x107f1|I've passed every exam except the one about not tripping over the cones.
+mo_x107f2|I've been arrested four thousand times. Never once read my rights. I know them by heart now.
+mo_x107g0|A stack of traffic cones topples. Every cadet in the room trips over at least one.
+mo_x107g1|Push! The sign says push! You're pulling! Why is everyone pulling?
+mo_x107g2|Phweeeee! The whistle blows. Every cadet stops, salutes, and walks into each other.
+mo_x108f0|Happy birthday! Make a wish! Blow out the candles! Don't look at the band!
+mo_x108f1|I'm eight! This is the best day ever! Why is the bear looking at me like that?
+mo_x108f2|Fourteen children, one pizza, and a bear that won't stop staring. I'm having a lovely time.
+mo_x108g0|The birthday cake's candles flicker. All at once, they go out. Nobody blew them.
+mo_x108g1|My party hat! It flew off! It's on the bear! The bear's wearing my hat!
+mo_x108g2|The curtain slides open a few inches. Three shapes stand behind it, very still. It slides shut.
+mo_x109f0|Five nights. Every night, the doors. Every night, the cameras. Every night, a bear in the hallway.
+mo_x109f1|I do days. Nothing happens in the day. I don't know why Norman looks like that.
+mo_x109f2|Hi there. This is a recorded message for the night shift. Check the cameras. And the vents. Especially the vents.
+mo_x109g0|The security door slams down. Something on the other side bumps into it, gently, and walks away.
+mo_x109g1|The monitor flickers. Camera three. Empty. Camera three again. Not empty.
+mo_x109g2|The little desk fan whirs round, the only friendly thing in the room.
+mo_x110f0|I fix the animatronics. Wires, gears, servos. And I put the eyes back in. They keep falling out. Toward me.
+mo_x110f1|Left arms in that box, right arms in this one, and heads on the shelf. Don't turn your back on the shelf.
+mo_x110f2|I'm the costume mascot. I'm just a person in a suit. I promise. Mostly a person.
+mo_x110g0|A spare animatronic head turns on its shelf to face you. Its eyes light up. Then off.
+mo_x110g1|A box of servos whirs and clicks all at once, like a room full of clocks.
+mo_x110g2|A metal arm on the bench lifts, waves, and lies back down.
+mo_x111f0|Welcome, traveller! Swords, armour and cinnamon buns. Mostly cinnamon buns.
+mo_x111f1|I'm on sentry duty. Mostly I nap at my post. Nothing ever comes this way. Except you.
+mo_x111f2|Take a piece of me with you, traveller! A piece of snowman! Take it far away! Please!
+mo_x111g0|A pixelated snowball arcs through the air and lands with a soft crunch on a sentry's head.
+mo_x111g1|Huh? What? I wasn't asleep. I was guarding with my eyes closed.
+mo_x111g2|A cinnamon bun spins on the counter. It restores all your health. And some of your spirit.
+mo_x112f0|Whisper to the flowers and they'll whisper it back. Somebody whispered a joke once. They're still laughing.
+mo_x112f1|I fish in the glowing river. I've never caught a fish. I've caught eleven old shoes. They're glowing too.
+mo_x112f2|Zzzz. Oh, hi. I'm a ghost. I'm just lying here. I'm feeling pretty down. Zzz.
+mo_x112g0|The echo flower whispers back the last thing anyone said nearby. It was: is that flower talking?
+mo_x112g1|The glowing river flows past, carrying a single glowing shoe on its way somewhere.
+mo_x112g2|A seed pops open on the water and blooms into a flower big enough to walk across.
+mo_x113f0|Would you like a cup of tea? I'd rather be gardening than ruling. The flowers are much better company.
+mo_x113f1|I-I-I made a robot. It's very good. It's very loud. Please don't tell anyone it's my fault.
+mo_x113f2|Darlings! The show must go on! Tonight, a cooking show! The ingredients are your enthusiasm!
+mo_x113g0|The golden flowers turn toward the window and open, all at once, in a wave.
+mo_x113g1|Golden flower tea? It's my own recipe. It tastes like sunshine. A bit of soil.
+mo_x113g2|Spotlight! On me! Always on me! Darlings, the ratings!
+mo_x114f0|Jump through the orange portal, fly out of the blue one, land on the button. I've done it once. Out of four hundred.
+mo_x114f1|Excellent work. Your time was four hours. The average is four minutes. Excellent.
+mo_x114f2|This cube is my friend. It has a smiley face on it. We go everywhere together. It doesn't talk. That's fine.
+mo_x114g0|A blob of blue gel splats on the floor. Somebody steps on it and bounces straight up out of view.
+mo_x114g1|A weighted cube drops out of a tube onto the button. A door opens. Everyone claps politely.
+mo_x114g2|Target spotted. Just kidding. I'm a friendly turret. I only fire confetti.
+mo_x115f0|Note: subject has walked into a wall for the fifth time. Note: give subject a cake.
+mo_x115f1|I bake the cake. It's a real cake. It's a black forest cake. Nobody ever believes me.
+mo_x115f2|I've watched forty tests today. I've learnt nothing. I've eaten a lot of cake.
+mo_x115g0|A real, actual cake rises on its plate. It has a single candle. It's delicious. Really.
+mo_x115g1|The scientists tap the one-way glass. On the other side, a test subject taps back.
+mo_x115g2|Subject seventeen: failed. Again. Ninety-nine percent successful at failing. Remarkable.
+mo_x116f0|Each sphere has a personality. One's curious, one loves the stars, one just shouts facts. Very loudly.
+mo_x116f1|This one wants to see the stars. It's said so four thousand times. I'd let it go if I could.
+mo_x116f2|Fact: the room you are in is a room. Fact: you are a skeleton. Fact: this is a fact.
+mo_x116g0|Up! Up! I want to see the stars! Oh, I've hit the ceiling. Up!
+mo_x116g1|Fact: bananas are curved. Fact: this ball is shaking. Fact: please stop shaking the ball.
+mo_x116g2|The curious sphere spins to look at everything in the room, one thing at a time, asking ooh, what's that?
+mo_x117f0|Iron, gold, diamonds and a lot of very ordinary stone. Mostly stone. It's all stone.
+mo_x117f1|Torch, torch, torch. Every few blocks, a torch. Leave a trail so you can find your way back.
+mo_x117f2|I dug straight down. I know. I know. I'm in a lava lake. It's a very warm lesson.
+mo_x117g0|A diamond block glints in the torchlight. Every miner in the cave turns to look at it.
+mo_x117g1|Lava! I found lava! I found it with my feet! Ow! Ow! Ow!
+mo_x117g2|A minecart rolls down the tracks, full of stone, and keeps going straight into a wall.
+mo_x118f0|Hmm. Hmm. Emeralds for bread. Hmm. Emeralds for books. Hmm. Hmm.
+mo_x118f1|Hmm. I have an enchanted book. Hmm. It costs every emerald you own. Hmm.
+mo_x118f2|I carry the trader's stuff. I spit. I don't know why I spit. I just do.
+mo_x118g0|An emerald spins on the market stall. Every villager in the village says hmm at the same time.
+mo_x118g1|Hmm. Bread. Hmm. Good trade. Hmm.
+mo_x118g2|Ptoo! Sorry. Reflex. Ptoo! Sorry again.
+mo_x119f0|If you hear a hiss, run. Don't stop to look. Looking takes too long.
+mo_x119f1|Somebody's house blew up again. I'm putting it back. Block by block. Third time this week.
+mo_x119f2|Hssss. Ha! I'm doing the hiss! Everyone runs! It's the best prank! Hsss!
+mo_x119g0|Ssssssssss. A tall green shape appears right behind you. It's very close. It's very quiet.
+mo_x119g1|Boom. There's a crater where the vegetable patch used to be. The carrots are in the next field.
+mo_x119g2|Done! The house is back! Don't hiss near it! Somebody hissed near it!
+mo_x120f0|Step lightly. The ice sings when you walk on it. The ice also cracks when you walk on it.
+mo_x120f1|I live in the ice. I'm made of ice. I'm cold. I'm always cold. Have you got a scarf?
+mo_x120f2|There's a chest frozen in the wall. I've been chipping at it for a week. It contains a smaller chest.
+mo_x120g0|The chest in the ice shudders. A crack runs up the wall. Then stops. Patience.
+mo_x120g1|An icicle snaps off the ceiling and spears the ground right between somebody's feet.
+mo_x120g2|An ice crystal grows out of the floor, branch by branch, glittering, until it's taller than you.
+mo_x121f0|Lesson one: every song is about a dragon. Lesson two: rhyme dragon with wagon. Lesson three: see lesson one.
+mo_x121f1|I wrote a song about a dragon. It's eighty verses. The dragon doesn't show up until verse seventy-nine.
+mo_x121f2|I tune the lutes. They go out of tune in the cold. It's always cold. I tune lutes forever.
+mo_x121g0|A lute plays three chords and a long, wavering note about a dragon.
+mo_x121g1|Boom. Boom. Boom boom boom. The drum keeps time for a song nobody can stop singing.
+mo_x121g2|Page one: dragons. Page two: more dragons. Page three: a dragon in a wagon. Brilliant.
+mo_x122f0|A potion for strength, a potion for speed, and one that makes you speak only in rhyme. Mind that one.
+mo_x122f1|Snowberries, frost salts, and the wing of a butterfly that was already sad. Don't ask.
+mo_x122f2|I drank the rhyme potion. Now I talk all the time. It's quite a fine time. I'm doing just fine.
+mo_x122g0|The cauldron bubbles purple and a puff of smoke shaped like a small goat floats out.
+mo_x122g1|A potion bottle spins on the shelf, glowing. The label says: do not spin.
+mo_x122g2|A jar of frost salt pops open and a little flurry of snow falls on the bench.
+mo_x123f0|Everything here is one hundred percent genuine. Mostly. Some of it's glue.
+mo_x123f1|I bought a jar of fog. It's just an empty jar. But it was very cheap.
+mo_x123f2|Is that a real bigfoot footprint? It's huge! It's a size eleven trainer!
+mo_x123g0|A giant footprint pops up on the floor. It's made of plaster. It says made in the shed on the bottom.
+mo_x123g1|The jar of fog swirls. There's a face in it. It's your reflection. Probably.
+mo_x123g2|Ka-ching! That'll be twenty dollars. For a rock. A mystery rock.
+mo_x124f0|I built a machine. I shouldn't have built it. I built a second one to fix it. I shouldn't have built that one either.
+mo_x124f1|I'm a gnome! I live under the lab! We have a gnome king! He's very short!
+mo_x124f2|I cracked the code! It was one two three four! I'm a genius!
+mo_x124g0|The machine hums, sparks, and opens a tiny hole in the air for exactly one second.
+mo_x124g1|The vending machine swings open like a door. Behind it, stairs down. And a light, flickering.
+mo_x124g2|Boo! I'm a gnome! I scared you! I'm very small but very scary!
+mo_x125f0|I've cracked forty codes! One said beware! One said look behind you! One said buy milk!
+mo_x125f1|I knitted a jumper with a code on it! The code says I knitted this! Nobody's cracked it yet!
+mo_x125f2|Oink. I'm a pig. I live in the attic. I've seen everything. I'm saying nothing. Oink.
+mo_x125g0|The cipher wheel clicks round, letter by letter, and spells out the word: hello.
+mo_x125g1|A note! Behind the painting! It says look behind the other painting!
+mo_x125g2|The black light flicks on and every wall glows with hidden writing. Most of it is a list of snacks.
+mo_x126f0|Who wants a burger? Nobody? I've made forty. I'll eat them myself. I always eat them myself.
+mo_x126f1|I climbed over the fence again! Your garden's better! You've got a paddling pool and a weird dog!
+mo_x126f2|I'm a gnome. I stand here. People talk to me when they think nobody's listening. I've heard everything.
+mo_x126g0|The barbecue flares up and three burgers become three small pieces of charcoal. Dad says they're perfect.
+mo_x126g1|The paddling pool fills and fills and overflows across the patio and into the kitchen.
+mo_x126g2|Meanwhile, a skeleton in a canoe explains why he never trusts geese. And we're back in the garden.
+mo_x127f0|Seat belts on. Snacks in the bag. Nobody touch the radio. Nobody ask if we're there yet.
+mo_x127f1|Are we there yet? Are we there yet? We're in the garage. Are we there yet?
+mo_x127f2|This car shouldn't run. The engine is held together with a belt and a prayer. It runs. Don't ask me how.
+mo_x127g0|The horn plays the first four notes of a song and then gives up halfway, with a little wheeze.
+mo_x127g1|The roof box flips open and a whole holiday's worth of suitcases tumbles out onto the drive.
+mo_x127g2|A hubcap falls off and rolls all the way down the road, round the corner, and out of sight.
+mo_x128f0|My time machine works! I went back five minutes! I had the same sandwich twice!
+mo_x128f1|I've lived in this attic for a century. Nobody notices me. Then again, they don't notice the dog's novel either.
+mo_x128f2|I came for Christmas in nineteen eighty-five. They forgot I was up here. I've been very comfortable.
+mo_x128g0|The fridge time machine hums and flashes and a slightly older version of a sandwich appears inside.
+mo_x128g1|The photo album falls open on a picture of the family at the beach. Every single person is mid-sneeze.
+mo_x128g2|An old rocking horse rocks by itself in the corner. Creak. Creak. Creak.
+mo_x129f0|Watch this! I'm going to do a triple flip! I did a triple fall! That counts!
+mo_x129f1|No skating on the benches, no skating on the bins, no skating on the warden.
+mo_x129f2|I painted a mural on the half-pipe. It's a picture of the half-pipe. Very meta.
+mo_x129g0|A skateboard rolls down one side of the half-pipe and up the other, and back, with nobody on it.
+mo_x129g1|Psssht! Look at that! A perfect yellow smiley! On the warden's back!
+mo_x129g2|A trophy! For me? For the most falls in one day? I'll take it!
+mo_x130f0|I watch the dials. The dials watch me. One of us is going to fall asleep first. It's me.
+mo_x130f1|Days without an accident: zero. Days without two accidents: also zero. We're working on it.
+mo_x130f2|I live in the cooling pond. I've got three eyes. I can see three things at once. Mostly the pond.
+mo_x130g0|Somebody leans on the big red button. Every light in town flickers. Nobody admits anything.
+mo_x130g1|A glowing green rod rolls across the desk and the Geiger counter starts ticking like a woodpecker.
+mo_x130g2|Somebody's eaten all the donuts. Who ate all the donuts? Oh. It was me. In my sleep.
+mo_x131f0|That issue? Worst issue ever. That one? Worst issue ever. Every issue is the worst issue ever.
+mo_x131f1|I've got issue one! It's in a bag! I'll never take it out! I don't know what's in it!
+mo_x131f2|I made this costume out of foil and a colander. I'm a robot. Or a casserole. I'm not sure yet.
+mo_x131g0|A rare comic spins in its glass case. It's worth more than the shop. Nobody's allowed to breathe near it.
+mo_x131g1|An action figure pops out of its box, strikes a heroic pose, and falls over.
+mo_x131g2|Worst rack ever. Squeaks. Wobbles. I love it. Don't tell anyone.
+mo_x132f0|Shh! This is a library! Even when the books are flying around your head. Especially then.
+mo_x132f1|There's got to be a kitchen in this mansion somewhere. I checked behind the bookcase. It was another bookcase.
+mo_x132f2|I've found a secret passage behind every third book. This mansion is mostly passages.
+mo_x132g0|A book shoots off the shelf, flaps its pages like wings, and lands on someone's head.
+mo_x132g1|A candle floats across the library on its own, flickering, then blows itself out.
+mo_x132g2|Someone pulls a book. The bookcase swings round, taking them with it, and swings back without them.
+mo_x133f0|The plants here have been growing unchecked for thirty years. One of them is called Kevin. He bites.
+mo_x133f1|Footprints in the soil. Size ten boots. Very muddy. The gardener wears size ten boots. Interesting.
+mo_x133f2|The fog machine's been on since nineteen seventy. Nobody knows where the switch is. It's very atmospheric.
+mo_x133g0|Good evening. I'm a plant. I eat flies. And sometimes sandwiches. You don't have a sandwich, do you?
+mo_x133g1|The fog machine coughs out a huge cloud of fog. Somewhere inside it, somebody screams, then laughs.
+mo_x133g2|The watering can tips itself over and waters the floor. A flower grows instantly. It waves.
+mo_x134f0|Okay, gang. The ghost walks in here, trips on the rope, the net drops, the bucket tips, and we've got him. Simple.
+mo_x134f1|I've been caught in the net eleven times. The ghost has been caught zero times. I'm noticing a pattern.
+mo_x134f2|I'm the bait. They put me in a ghost costume and wait. I just eat the snacks they leave for the ghost.
+mo_x134g0|The net drops perfectly. It catches the trap builder. Again.
+mo_x134g1|Someone trips over the rope. A bucket tips. A conveyor belt starts. A bowling ball rolls. Nothing else happens.
+mo_x134g2|A cage drops from the ceiling and lands, with a clang, around a single potted plant.
+mo_x135f0|Sit down. Sit down. I don't care who sits where. Just sit down and stop licking the windows.
+mo_x135f1|I sit at the back! The back is the best! It's the bumpiest! I bump my head every day!
+mo_x135f2|I'm new! Where do I sit? Not there? Not there either? I'll stand.
+mo_x135g0|The bus horn honks. Every paper kid in town drops what they're doing and runs.
+mo_x135g1|Bump! I hit my head! Bump! Again! This is the best seat!
+mo_x135g2|The little stop sign flips out from the side of the bus. A paper squirrel stops, obediently.
+mo_x136f0|Point of order! Point of order! Nobody knows what a point of order is but I love saying it.
+mo_x136f1|Something's happened! I don't know what! But I'm furious about it!
+mo_x136f2|Pitchforks! Torches! Banners! Get your angry mob supplies here! Bulk discounts!
+mo_x136g0|The microphone squeals. Everybody covers their ears. The mayor taps it. It squeals louder.
+mo_x136g1|Pitchforks! Ten percent off! Riots every Tuesday!
+mo_x136g2|The vote box pops open. Every vote says: blame the cow. Nobody knows which cow.
+mo_x137f0|Pool's closed. Why? There's a goose in it. A big goose. He's not leaving. I've asked.
+mo_x137f1|I just want to swim! It's been closed all summer! First the shark, then the goose!
+mo_x137f2|Honk. Honk. This is my pool now. Honk.
+mo_x137g0|The goose glides across the pool, staring at everyone. It will not be moved. Honk.
+mo_x137g1|The diving board springs. A paper kid flies up, waves, and lands in the snow outside.
+mo_x137g2|A big CLOSED sign pops up in front of the pool. Again. It's always closed.
+mo_x138f0|These barns cured tobacco for a hundred years. Hot, hard work. Families worked them together, every summer.
+mo_x138f1|I strung tobacco on sticks when I was eight. My fingers were stained for a month. Good money, though.
+mo_x138f2|And this, children, is how farms worked before machines. Lots of hands. Lots of sweat.
+mo_x138g0|A row of tobacco sticks hanging from the rafters sways in the warm air.
+mo_x138g1|The old barn fan turns slowly, the same way it did seventy summers ago.
+mo_x138g2|That's me. Second from the left. Look at that hat. I loved that hat.
+mo_x139f0|Coffee, hon? It's the same pot it's been since six. It's very strong by now.
+mo_x139f1|Same stool, same breakfast, same jokes, forty years. Grits, eggs, and the town news.
+mo_x139f2|Two eggs, over easy! Biscuit and gravy! Stack of hotcakes! I don't stop. I can't stop.
+mo_x139g0|The coffee pot glugs. It has been on the warmer since six. It is now technically a solid.
+mo_x139g1|The hotcake stack grows, and grows, and the syrup races down the sides like a waterfall.
+mo_x139g2|The jukebox spins up a country song. Every regular in the diner sings along, badly.
+mo_x140f0|This model railroad is the whole line, mile for mile. Took me nineteen years. The trains run on time.
+mo_x140f1|A ticket to Raleigh, two dollars and ten cents, in nineteen fifty. Imagine that.
+mo_x140f2|My grandpa was the conductor. He gave me his cap. I wear it every day. It's two sizes too big.
+mo_x140g0|The model train chugs round its little track, through a little tunnel, past a little Four Oaks.
+mo_x140g1|Ding ding! The station bell rings, just like it did when the trains came through every day.
+mo_x140g2|All aboard! That's what he used to say! All aboard!
+mo_x141f0|Today we're making a dinosaur out of a paper plate. And glitter. And more glitter. Glitter is forever.
+mo_x141f1|I glued my hands together! And then to the table! And then to Clementine!
+mo_x141f2|I clean up the glitter after every show. I've been cleaning since nineteen ninety-two. It's still everywhere.
+mo_x141g0|The glitter jar pops open. The studio is now pink and sparkly forever.
+mo_x141g1|A paper plate dinosaur with googly eyes spins on the table. It's beautiful. It's mostly glue.
+mo_x141g2|The glue stick wobbles. Everything it touches sticks to everything else.
+mo_x142f0|This week's song: brushing your teeth. Last week's song: brushing your teeth, the remix.
+mo_x142f1|I play the same four chords for every song. Nobody's noticed in thirty years.
+mo_x142f2|Shake shake shake! I'm in the band! I'm the loudest! I'm the only one with a tambourine!
+mo_x142g0|The piano plays four cheerful chords. The same four. Forever.
+mo_x142g1|Chink chink chink! Chink! Chink! I'm keeping the beat! I've lost the beat!
+mo_x142g2|A giant toothbrush prop flips over and brushes a giant set of prop teeth.
+mo_x143f0|Shh. Quiet time. Lie down. Close your eyes. Stop wiggling. You're wiggling.
+mo_x143f1|Zzzzz. Hnnnk. Zzz. Five more minutes. Then I'll be friendly again.
+mo_x143f2|I'm not tired! I'm not tired at all! I'm the least tired kid in the world! Zzzz.
+mo_x143g0|The pillow fort grows taller and taller. Somebody inside has added a second floor.
+mo_x143g1|The little night light turns slowly, throwing stars across the ceiling.
+mo_x143g2|The music box plays a tiny lullaby. Even the dinosaur costume yawns.
+mo_x144f0|I sat at a desk to rest. The computer said: welcome back. I've never been here before.
+mo_x144f1|The printer's been jammed since I got here. I fix it. It jams. I fix it. It jams.
+mo_x144f2|Please return to your desk. Please return to your desk. You don't have a desk. Please return to it.
+mo_x144g0|The printer whirs and prints a single page. It's a map. It's a map of this room.
+mo_x144g1|The monitor turns to face you. The screen says: we've been expecting you.
+mo_x144g2|The water cooler glugs. The water is slightly yellow. Like everything else here.
+mo_x145f0|It's so peaceful here. Tiles, water, soft light. I've been here six months. I'm not sure I want to leave.
+mo_x145f1|One million, two hundred thousand and four tiles. I've counted them all. I'll count them again.
+mo_x145f2|I swam into a tunnel and came out in the same pool. Twice. It's a very circular pool.
+mo_x145g0|The water rises, very gently, to ankle height, and stays there. Nobody minds.
+mo_x145g1|Splash. Splash. Splash. Somebody else is in here. You're the only one in here.
+mo_x145g2|A wet tile slides out from the wall, across the floor, and into the pool. Plop.
+mo_x146f0|We've played the same waltz since nineteen twenty-three. Nobody asked us to stop. So we haven't.
+mo_x146f1|Going down. Going down. It only goes down. Nobody knows what's at the bottom. It's very deep.
+mo_x146f2|Dance with me? I've been dancing for a hundred years. My partner left. He's a coat stand now.
+mo_x146g0|The band strikes up the waltz again. And again. And again. It's a very nice waltz.
+mo_x146g1|The lift doors open. The lift goes down. Floor minus one. Minus two. Minus four hundred.
+mo_x146g2|The chandelier turns very slowly, in time with the waltz, even though nobody's touching it.
+mo_x147f0|Order in the court. Order. Has anyone seen my gavel? The barber borrowed it to hang a picture.
+mo_x147f1|I'm accused of stealing a pie. I didn't steal it. I borrowed it. Into my stomach.
+mo_x147f2|All rise. All sit. All rise again. Judge Hollister likes the exercise.
+mo_x147g0|Bang! Order! Order! That was the table. That was my thumb. Ow.
+mo_x147g1|The witness stand creaks. The witness swears to tell the truth. The witness is a goat.
+mo_x147g2|Exhibit A: one pie, half eaten. The defendant has crumbs on his shirt.
+mo_x148f0|Patience, boy. Patience. Fish'll come when they're ready. Been waiting since nineteen thirty.
+mo_x148f1|I caught a frog! And a boot! And Gramps's hat!
+mo_x148f2|Fried chicken, potato salad and a pitcher of lemonade. The fish don't bite, but the ants do.
+mo_x148g0|I got one! I got one! It's a fish! It's a small fish! It's a leaf!
+mo_x148g1|A frog pops out of the reeds, says ribbit, and jumps straight into the picnic basket.
+mo_x148g2|The picnic basket wobbles. There's a frog in it. And the chicken's gone.
+mo_x149f0|Nails, flour, licorice, rope and gossip. The gossip's free. The licorice is a nickel.
+mo_x149f1|Your move. It's been your move since nineteen fifty-eight. Take your time.
+mo_x149f2|Mama wants a bag of flour, a spool of thread, and whatever the new gossip is!
+mo_x149g0|King me. Finally. It took sixty years. King me.
+mo_x149g1|The licorice jar rattles. A kid's hand is in it. The kid freezes.
+mo_x149g2|Ching! The cash drawer pops open. Inside: three nickels and a button.
+mo_x150f0|Coconut soup, coconut stew, coconut pie and, for dessert, a coconut. Nine years. I miss toast.
+mo_x150f1|If I connect this wire to this coconut, and this coconut to that shell, we'll be rescued. Or toast. Either way.
+mo_x150f2|I've been in this hammock since we landed. I'm resting. For the rescue. Whenever it comes.
+mo_x150g0|The coconut radio crackles and plays a weather report. It's sunny. It's always sunny. They're still stuck.
+mo_x150g1|The bamboo ceiling fan turns, powered by a castaway on a bamboo bicycle in the corner.
+mo_x150g2|A coconut drops from the roof. Thunk. Right on the radio. It works now.
+mo_x151f0|Plane! Light the fire! It's gone. Put the fire out. Plane! Light the fire!
+mo_x151f1|I've seen forty planes this year. Two boats. One whale. The whale waved.
+mo_x151f2|I spelled HELP with rocks! I spelled it wrong! It says HLEP!
+mo_x151g0|The signal fire roars up into a column of smoke. The plane overhead dips a wing. Then flies on.
+mo_x151g1|A ship! On the horizon! No. It's a seagull. On a log.
+mo_x151g2|H. L. E. P. That's right, isn't it? That's how you spell it!
+mo_x152f0|This was my ship. My lovely ship. Now it's a crab hotel.
+mo_x152f1|Welcome to the crab hotel! Rooms available! Very damp! Very sideways!
+mo_x152f2|There must be treasure on board. Every ship has treasure. This one has forty tins of beans.
+mo_x152g0|The ship's wheel spins on its own, steering the wreck nowhere, very confidently.
+mo_x152g1|A stack of bean tins topples over and rolls across the slanted floor to the low end of the ship.
+mo_x152g2|Room service! Oh, sorry. Wrong porthole. Carry on.
+mo_x153f0|Wings out, little ones. Flap, flap, glide. Don't breathe fire on your neighbour. Sharing is caring.
+mo_x153f1|I breathed fire! A tiny bit! It was a sneeze! It still counts!
+mo_x153f2|I can't fly yet. I can float a bit. If I flap really hard I go backwards.
+mo_x153g0|A little dragon takes off, wobbles, loops once, and lands on the teacher's head.
+mo_x153g1|Pfff! Look! A fire puff! It's the size of a marshmallow! I'm so proud!
+mo_x153g2|The gold star chart shines. Every little dragon has a gold star. Even the one who set fire to it.
+mo_x154f0|Once upon a time, in a land not far from here, there was a little visitor who sat under a tree.
+mo_x154f1|When a page falls, I catch it! This one's a story about a dragon who couldn't stop hiccupping!
+mo_x154f2|I've listened to every story the tree knows. Twice. It always changes the endings.
+mo_x154g0|A leaf drifts down. It's a page. It reads: and the dragon finally said sorry.
+mo_x154g1|A knot in the trunk glows warm gold. The tree is about to begin a new story.
+mo_x154g2|A ribbon bookmark twirls down from the branches and marks the page where everyone left off.
+mo_x155f0|Cross carefully. The red stripe is sticky, the blue is slippery, and the purple tickles.
+mo_x155f1|I sweep the clouds off the bridge every morning. Some of them are asleep. I sweep gently.
+mo_x155f2|They say if you cross the rainbow bridge you get a wish! I wished for another wish!
+mo_x155g0|Someone slips on the blue stripe and slides the whole length of the bridge, laughing.
+mo_x155g1|A pot of gold pops up at the end of the rainbow. It's full of chocolate coins.
+mo_x155g2|A sleepy cloud puffs up under the bridge, yawns, and drifts off.
+mo_x156f0|I'm the star. Everyone knows I'm the star. I'm red and spicy and I want more lights.
+mo_x156f1|I just sit in the corner. People say I'm too strong. I'm just honest.
+mo_x156f2|A bit of shine on the tomato, a bit of polish on the pepper. Vegetables are very vain.
+mo_x156g0|The paprika jar rattles. Paprika would like to speak to the manager.
+mo_x156g1|The mirror turns. A little turnip checks its leaves. Perfect.
+mo_x156g2|The gold star on the dressing room door flips round. It now says: also a star. Everyone's happy.
+mo_x157f0|And now, the part of the show where we sing a silly song about nothing at all!
+mo_x157f1|Ooh! Aah! Ooh! We're the backing singers! We only know two words!
+mo_x157f2|More bass on the cucumber. Less squeak on the radish. Somebody stop the carrot whistling.
+mo_x157g0|Where is my slipper? Where could it be? It's on my head! Oh, silly me!
+mo_x157g1|The red recording light comes on. Every vegetable in the studio stands up a little straighter.
+mo_x157g2|Bzzzzzz bzz bzzz! The kazoo solo! The crowd goes wild! The crowd is two onions.
+mo_x158f0|To peel, or not to peel? That is the question. The answer is always peel. Eventually.
+mo_x158f1|We're a bunch. We go everywhere together. We argue constantly.
+mo_x158f2|I've been in this bowl for three weeks. I'm getting wrinkly. I'm still the sharpest actor here.
+mo_x158g0|The fruit bowl turns, and every fruit in it strikes a dramatic pose at once.
+mo_x158g1|An orange rolls off the counter, across the stage, and takes a bow at the edge.
+mo_x158g2|Alas! A banana peel! Someone will surely slip! It was me. I slipped.
+mo_x159f0|This flower sings when you water it. This one sings when you don't. They're having a competition.
+mo_x159f1|The hedge trims itself into shapes! Today it's a duck! Tomorrow it's a slightly bigger duck!
+mo_x159f2|My snail's winning! He's very fast! For a snail! He's moved an inch!
+mo_x159g0|The singing flower opens and hums a little tune. Its neighbour hums louder.
+mo_x159g1|Why did the sprinkler cross the garden? To get to the other side! Splash!
+mo_x159g2|The hedge clips itself into a duck, then a bigger duck, then a duck wearing a hat.
+mo_x160f0|Round plates, round table, round sandwiches. I cut the corners off everything. Corners are not allowed.
+mo_x160f1|I made a round sandwich! And a round pizza! And a round cube! It's a ball now!
+mo_x160f2|Is it snack time? Is it snack time now? How about now? Now?
+mo_x160g0|A perfectly round sandwich spins on a perfectly round plate. Not a corner in sight.
+mo_x160g1|Cookies! The jar's open! I wasn't going to take one! I'm taking two!
+mo_x160g2|Ping! The toaster launches two slices of toast straight up to the ceiling. They stick.
+mo_x161f0|Look through here. That's the moon. That's a star. That's a plane. That's my thumb.
+mo_x161f1|I'm going to be an astronaut! I've got a helmet! It's a fishbowl!
+mo_x161f2|Beep. I am the clubhouse robot. I can count stars. One. One. One. They keep moving.
+mo_x161g0|The telescope swings round and points at the moon. The moon, very faintly, waves back.
+mo_x161g1|Three, two, one, liftoff! My rocket's going to the moon! It's in the hedge!
+mo_x161g2|The star map on the ceiling twinkles on, constellation by constellation.
+mo_x162f0|I steer the ship. I've also seen three crewmates vanish this morning. I'm just going to keep steering.
+mo_x162f1|I was on the bridge the whole time. I can prove it. Mint saw me. Mint, tell them.
+mo_x162f2|I just do the asteroids. Shoot, shoot, shoot. Somebody keeps turning the lights off.
+mo_x162g0|The steering console beeps. The ship turns slightly left. Nobody touched it.
+mo_x162g1|Pew! Pew! Got one! Got another! Missed forty!
+mo_x162g2|The course plotter draws a long green line across the map, straight into a star.
+mo_x163f0|I saw Olive near the vent. Near it! That's suspicious! Everyone vote Olive!
+mo_x163f1|Olive was with me! We were doing wires! I mean, I was. Olive was nearby. Ish.
+mo_x163f2|I vote skip. I always vote skip. I don't want to get involved. Skip.
+mo_x163g0|The voting tablet lights up. Two votes for Olive, one for skip, and one for the potted plant.
+mo_x163g1|The siren wails and every crewmate on the ship comes running to the table.
+mo_x163g2|A cushion flies out of the airlock. It was not the impostor.
+mo_x164f0|I watch the cameras all day. I see everything. I don't say anything. That's my strategy.
+mo_x164f1|The door log says Olive went in the vent room at ten past. The door log also says the ghost went in.
+mo_x164f2|I'm a ghost now. I still do my tasks. Nobody can see me. I'm the most productive person on the ship.
+mo_x164g0|The camera wall flickers. On camera four, something climbs out of a vent and waves.
+mo_x164g1|The door log scrolls out of the printer, longer and longer, across the floor and out of the door.
+mo_x164g2|Task complete. Task complete. Nobody saw me do it. It still counts.
+mo_x165f0|This skull is shocked. This one is smug. This one has just seen the price of the gift shop.
+mo_x165f1|I posed for every face in this hall. I can do forty expressions. Thirty-nine of them are surprised.
+mo_x165f2|I'm the museum dog. I'm a skeleton dog. I don't react to anything. I'm very calm.
+mo_x165g0|A skull pops up with its jaw dropped all the way to the floor. It stays that way.
+mo_x165g1|The smug skull turns slowly toward you with a look that says: I told you so.
+mo_x165g2|The crying skull shakes. A single tear rolls down. It's actually glued on.
+mo_x166f0|Every clip in here has made someone laugh so hard they snorted. We keep a snort counter. It's broken.
+mo_x166f1|I've watched the cat clip forty thousand times. It gets funnier. I don't know why.
+mo_x166f2|Cats, babies, people falling over, and one goat that screams. That's the whole internet.
+mo_x166g0|On the little screen, a cat walks to the edge of a table, looks at you, and pushes a cup off.
+mo_x166g1|The snort counter clicks over. A million and one. Somebody's just watched the goat.
+mo_x166g2|Aaaaaah! A goat screams. Everyone in the vault laughs. Then the goat laughs.
+mo_x167f0|This one goes viral in twenty-six years. It's a skeleton doing a small, confident nod.
+mo_x167f1|I'm from the future. The memes there are amazing. You'll love the one about the sandwich.
+mo_x167f2|That's not a meme. That's just a picture of a sandwich. That'll never catch on.
+mo_x167g0|A screen shows a meme from the future. It's a sandwich. Everyone in the future thinks it's hilarious.
+mo_x167g1|The time capsule pops open. Inside: a note that says you had to be there.
+mo_x167g2|A skeleton gives a small, confident nod. In twenty-six years, this will be everywhere.
+mo_x168f0|Washed, waxed, sorted by size, boxed and shipped. A million oranges a day. My hands are orange.
+mo_x168f1|Big ones here, small ones there, funny-shaped ones in my lunchbox.
+mo_x168f2|I taste the juice! It's my job! It's the best job! My teeth are sticky!
+mo_x168g0|A river of oranges rolls along the conveyor, bumping, tumbling, all heading for the boxes.
+mo_x168g1|The juice press squeezes an orange so hard a jet of juice hits the ceiling.
+mo_x168g2|A crate of oranges topples. Oranges everywhere. Somebody slips. Somebody else juggles.
+mo_x169f0|Keep your hands on the rail. That log's a gator. That log's a gator too. That one's a log. Probably.
+mo_x169f1|Herons, egrets, ibises and an anhinga drying its wings. It looks like a tiny vampire.
+mo_x169f2|Ribbit! Ribbit! I'm the frog choir! I'm the lead! Ribbit!
+mo_x169g0|A gator surfaces next to the boardwalk, opens one eye, decides you're not lunch, and sinks.
+mo_x169g1|A heron stalks along the shallows, very slowly, then stabs the water and comes up with a fish.
+mo_x169g2|Ribbit! Ribbit! Ribbit! The whole swamp joins in! It's deafening! Ribbit!
+mo_x170f0|This is a real moon rock. Brought back by real astronauts. Please don't lick it. People try.
+mo_x170f1|I worked on the launch pad for thirty years. Every launch, I cried a little. Every single one.
+mo_x170f2|I'm going to Mars! I've got the suit! It's a bit big! I'll grow into it!
+mo_x170g0|The moon rock sits under glass, grey and ordinary and four billion years old.
+mo_x170g1|Ten, nine, eight, the countdown clock on the wall ticks down. At zero, every engineer in the hall cheers.
+mo_x170g2|My model rocket! It's going! It's going up! It's in the ceiling!
+mo_x171f0|The fire island monsters sing the spicy part. Sizzle, pop, crackle. Keep your eyebrows away from the chorus.
+mo_x171f1|Breed a drum monster with a lava monster and you get a monster that drums on lava. It's very loud and very warm.
+mo_x171f2|I came for the music. I stayed too close to the lava. I'm medium rare.
+mo_x171g0|Sssss! Pop! Sssss! Crackle! The sizzle monster hits every beat with a little burst of sparks.
+mo_x171g1|Boom! The lava drum thumps and a ring of orange light ripples across the island.
+mo_x171g2|Wheeeee! The steam whistle monster spins and toots the high note, right on time.
+mo_x172f0|Up here, the monsters sing the breezy part. Whoosh, whistle, flutter. Hold onto your hat. Seriously.
+mo_x172f1|I fly the kite monsters. They sing when the wind blows through them. They're basically flutes with faces.
+mo_x172f2|The island moves. Gently. All the time. I'm going to sit down for a bit. For about a week.
+mo_x172g0|A cloud monster drifts past, whistling a tune through a hole in its middle.
+mo_x172g1|Ting, ting, tong. The wind chime monster rings in the breeze, never quite the same tune twice.
+mo_x172g2|The kite monster's singing! Hear it? Ooooh! It's going higher! Oooooh!
+mo_x173f0|Shh. They've just hatched. Every baby monster sings one tiny note. Altogether, it's a lullaby.
+mo_x173f1|I turn the eggs every hour. Clockwise on Mondays. Anticlockwise on Tuesdays. They like routine.
+mo_x173f2|Bloop! Bloop! That's my note! I've only got one! Bloop!
+mo_x173g0|Crack! An egg hatches and a tiny monster pops out singing a single high note.
+mo_x173g1|A pile of baby monsters wriggles, and sings, and falls asleep mid-note.
+mo_x173g2|The cot mobile turns, little felt notes dangling from it, and plays the island's song very, very softly.
+mo_x174f0|This letter is for room nine-zero-four. There's no room nine-zero-four. There will be by Thursday.
+mo_x174f1|The mail chute moves. Yesterday it came out of the ceiling. Today it's in the floor.
+mo_x174f2|I delivered a parcel to a corridor that wasn't there. The corridor signed for it.
+mo_x174g0|A bundle of letters drops out of the mail chute. One of them is addressed to you. Dated next week.
+mo_x174g1|The pigeonholes rearrange themselves. Everybody's mail is now in somebody else's box.
+mo_x174g2|A parcel hums. It's addressed to the building. The building would like it opened.
+mo_x175f0|I watch the middle. It's my job. Nothing's in the middle. I watch it anyway.
+mo_x175f1|What's in the middle? I'm not cleared to know. Neither are you. Neither is the middle.
+mo_x175f2|If you watch something long enough, does it watch you back? Asking for the middle.
+mo_x175g0|The thing in the middle of the room gets slightly bigger every time somebody stops looking at it.
+mo_x175g1|The red lamp on the ceiling turns, sweeping the room. Every desk goes quiet as it passes.
+mo_x175g2|Ka-chunk! CLASSIFIED. The stamp comes down on a blank sheet of paper. Very important blank paper.
+mo_x176f0|We dig. The symbols appear. We didn't carve them. Nobody carved them. They just appear.
+mo_x176f1|This symbol means door. This one means don't. This one means door again, but angrier.
+mo_x176f2|Hello. Hello. Hello. The quarry says hello back. Then it says something else. I don't repeat that.
+mo_x176g0|A symbol on the quarry wall glows red, pulses three times, and goes dark.
+mo_x176g1|A rock falls from high up the quarry wall and stops in the air, a metre above the floor. It stays there.
+mo_x176g2|Clink. Clink. The pickaxe strikes the wall. The wall strikes back. Clink.
+mo_x177f0|You're listening to the late show. It's three in the morning. Caller, you're on the air. Caller?
+mo_x177f1|I play the records, the jingles and the sound of rain. It's not raining. It's just atmosphere.
+mo_x177f2|Hello? Is this the radio? The lights by the lake keep going out. Tell everyone to stay in the light.
+mo_x177g0|The ON AIR light flickers on. Somewhere in the dark town, every radio crackles.
+mo_x177g1|The record player spins up a slow old song about a lake at night. It skips. It skips. It skips.
+mo_x177g2|Line four lights up. There's nobody on line four. There's breathing on line four.
+mo_x178f0|I show a film every night at midnight. Nobody comes. The seats are full anyway.
+mo_x178f1|Your ticket, please. Row G. Watch your step. Watch the screen. Don't watch the row behind you.
+mo_x178f2|This film's about a writer in a lakeside town. It's oddly familiar. Is that this cinema on the screen?
+mo_x178g0|The projector clatters into life and throws a flickering picture of the lake onto the screen.
+mo_x178g1|A seat in row G folds down by itself, as if somebody's just sat in it to watch.
+mo_x178g2|The old popcorn machine pops by itself. It smells of butter and dust and nineteen fifty-two.
+mo_x179f0|The lamp turns once every ten seconds. As long as it turns, the shadows stay on the far shore.
+mo_x179f1|I've got a spare bulb. I've got forty spare bulbs. I'm not letting this light go out. Not on my watch.
+mo_x179f2|Light! Light! Beautiful light! I've been flying at it since nineteen sixty! Light!
+mo_x179g0|The great lamp turns, and the beam sweeps across the black lake, and the shadows on the shore step back.
+mo_x179g1|A spare bulb rolls off the shelf. The keeper catches it, inches from the floor.
+mo_x179g2|Light! Light! I'm going in! Bonk. That's glass. Again! Light!
+mo_x180f0|Five smoothies, one for each colour. The squad comes in every day. They leave every day. In a flash. Every time.
+mo_x180f1|Kick! Punch! Block! Again! Your form's good. Your shouting needs work. Hi-yah!
+mo_x180f2|I can lift this weight! Ten times! Ok, twice! Ok, I can look at it!
+mo_x180g0|The blender whirs and makes a smoothie in five stripes: red, blue, yellow, green and pink.
+mo_x180g1|The punching bag swings. A kid hits it. It swings back. The kid sits down.
+mo_x180g2|The trophy case turns slowly. Every trophy is for karate. Every trophy is for the same kid.
+mo_x181f0|Five vehicles, five colours, one giant robot when they join up. Don't park them in the wrong order. It's a mess.
+mo_x181f1|I polish the vehicles every morning. It takes all day. They get dirty every afternoon fighting monsters.
+mo_x181f2|Beep! Oh no! Oh no! The vehicles are parked in alphabetical order again!
+mo_x181g0|The red vehicle rolls forward on its own, engines rumbling, ready for the next monster.
+mo_x181g1|Somebody presses the big button. Nothing combines. It's the button for the hangar lights.
+mo_x181g2|Careful with that! That's the giant robot's spare arm! It's also a slide!
+mo_x182f0|This week's monster is half toaster, half dinosaur. Last week was half fridge. We're running out of kitchen.
+mo_x182f1|I collect the parts. Toaster, kettle, a lamp. It's really just a kitchen with legs.
+mo_x182f2|I am Kettlegrim! I am half kettle! I'm about to boil over! Wait for it!
+mo_x182g0|The monster vat bubbles purple and something with a handle and a spout rises out of it.
+mo_x182g1|The grow ray fires and the little monster on the bench grows until it bumps its head.
+mo_x182g2|Wheeeee! That's my whistle! I've boiled! Time to fight! Oh, they've left.
+mo_x183f0|Flour, butter, a pinch of salt, a sprinkle of patience. That's a scone. Ours are just very big.
+mo_x183f1|I made a croissant so flaky it fell apart on the way to the counter. It was beautiful while it lasted.
+mo_x183f2|I taste everything. I'm very full. I've been very full since twenty nineteen.
+mo_x183g0|A scone rises in the oven, and rises, and pushes the oven door open.
+mo_x183g1|A bag of flour bursts. Everybody in the kitchen is now a slightly whiter skeleton.
+mo_x183g2|The rolling pin rolls off the counter, across the floor, and out into the cafe.
+mo_x184f0|Take a book, leave a book. Somebody left a cookbook. Somebody else took the soup page.
+mo_x184f1|I've been reading the same chapter since Monday. It's not a long chapter. I keep falling asleep.
+mo_x184f2|Percival's leaf poem? Amateur. My poem is about two leaves. Twice the poetry.
+mo_x184g0|The fire crackles a little higher and every reader in the nook sighs and sinks deeper into their chair.
+mo_x184g1|The skeleton cat on the armchair stretches, yawns, and goes back to sleep. Nobody knows who it belongs to.
+mo_x184g2|A book slips off the top shelf and lands open on exactly the right page.
+mo_x185f0|Table for two? Sunset view? It's an extra pound. The sun doesn't charge, but I do.
+mo_x185f1|Golden hour. Every evening. I take a thousand photos. They all look exactly the same. Gorgeous.
+mo_x185f2|Coo. I eat the crumbs. Crumbs from the scones. Very big crumbs. Coo.
+mo_x185g0|The fairy lights flicker on, one string at a time, as the sun goes down.
+mo_x185g1|Coo! Crumb! Coo! Big crumb! Coo! Got it!
+mo_x185g2|A gust catches the parasol. It flips inside out, then right side in again, very politely.
+mo_x186f0|Strawberry hills, vanilla rivers, a chocolate mountain. Well, half a chocolate mountain. Somebody round was here.
+mo_x186f1|I grow the sprinkles. They grow in rows. Rainbow ones, chocolate ones, and ones that taste of mint.
+mo_x186f2|I ate too much too fast. My skull's cold. Is my skull cold? It feels cold.
+mo_x186g0|An ice cream cone grows taller, scoop on scoop, until it wobbles dangerously.
+mo_x186g1|A cloud passes over and rains sprinkles. Everybody opens their mouth.
+mo_x186g2|A scoop of vanilla slides off the top of a hill and slowly melts into the river.
+mo_x187f0|Hammer, polish, sparkle. Every star gets a test flight. Some come back. Some decide they prefer the sky.
+mo_x187f1|I fly every new star round the factory twice. If I come back dizzy, it's a good star.
+mo_x187f2|I sweep up the sparkle dust. There's a lot of sparkle dust. I sparkle now. Permanently.
+mo_x187g0|A brand new star lifts off the workbench, does a loop of the factory, and parks itself on a shelf.
+mo_x187g1|The polishing wheel whirs and a star comes off it so shiny you can see your skull in it.
+mo_x187g2|A puff of sparkle dust rises off the floor and settles on everyone. It never comes off.
+mo_x188f0|Lie down. Just for a moment. That's what I said three days ago.
+mo_x188f1|I knit the dreams for everyone sleeping here. Tonight: flying, cake, and a dream about being a cloud.
+mo_x188f2|I'm not sleepy! I'm going to stay awake all day! I'm going to - zzzz.
+mo_x188g0|A dream bubble rises from a sleeping skeleton. Inside it, a tiny skeleton is flying over a cake.
+mo_x188g1|The grass puffs up, soft as a pillow. Everybody nearby yawns.
+mo_x188g2|A cloud lies in the meadow, snoring very gently, rising and falling.
+mo_x189f0|Pick me. Pick me! Nobody picks me. I'm a fighter who fights with a slightly bigger spoon.
+mo_x189f1|Everybody picks me. Every single time. I haven't had a day off since I was added.
+mo_x189f2|I'm the random button. Press me and you get anybody. Usually Ulf. Ulf loves me.
+mo_x189g0|A pedestal rotates, showing off a fighter who strikes a pose, then another pose, then gets dizzy.
+mo_x189g1|Random! It's random! It's Ulf! It's always Ulf!
+mo_x189g2|A spotlight swings down onto one fighter. Everyone else sighs.
+mo_x190f0|Hammers, bats, bombs, fans, and a single very angry fist-sized capsule. Don't touch that one.
+mo_x190f1|Red wire or blue wire? It's always both. Every bomb in here has both.
+mo_x190f2|I decide what falls from the sky. Today: hammers. Tomorrow: more hammers.
+mo_x190g0|Tick. Tick. Tick. The bomb shakes. Everyone takes one step back. It's a clock.
+mo_x190g1|A crate drops out of the ceiling. It bursts open. Inside: a fan. A single paper fan.
+mo_x190g2|A pair of bunny ears spins on a stand. Wear them and you jump very high. Wear them and you look silly.
+mo_x191f0|I built a stage that's all ice! Everyone slides off! It's perfect!
+mo_x191f1|I've fallen off every stage in here. Ice stage, lava stage, the one made of bananas.
+mo_x191f2|Your stage must have somewhere to stand. Just one place. Please. Anyone's stage. Somewhere.
+mo_x191g0|A block of ice slides off the edge of the model stage and takes three tiny fighters with it.
+mo_x191g1|Boing! The bumper bounces a tiny fighter straight off the stage.
+mo_x191g2|My stage! Look! It's a cliff! And another cliff! And a bigger cliff!
+mo_x192f0|Bright lights, soft colours, happy music. The glitch hates happy music. Keep humming.
+mo_x192f1|Lumi rescued me! I was half static! Now I'm only a tiny bit static! On my left ear!
+mo_x192f2|Forty-two rescue hugs today. Every hug brings back a cartoon. We're winning. Slowly.
+mo_x192g0|The music box plays a cheerful tune and the glitch outside the door shrinks back a little.
+mo_x192g1|The counter ticks up. Forty-three. Somewhere, a cartoon gets its colours back.
+mo_x192g2|The paper sun on the wall smiles a bit wider every time somebody laughs in the room.
+mo_x193f0|Rolling. Rolling. Roll- Rolling. I don't remember when we stopped filming. Rolling.
+mo_x193f1|Places, everyone! Wait. Where is everyone? Half of you are static. Places anyway!
+mo_x193f2|I'm the show's mascot. I'm in a big fluffy suit. The glitch got the suit's ears. I'm fine.
+mo_x193g0|The camera turns to film you. On the monitor, you're slightly the wrong colour.
+mo_x193g1|The set wobbles and flickers. For a second it's a castle. Then a kitchen. Then a castle again.
+mo_x193g2|Clap! Take one. Take one. Take one. The clapperboard is stuck on take one.
+mo_x194f0|Pull the lever and the whole show reboots. Fresh. Clean. And nobody remembers anything. That's the catch.
+mo_x194f1|I guard the lever. Nobody's allowed to touch it. I'm not allowed to touch it. I really want to touch it.
+mo_x194f2|If they reboot, I'll forget my friends! I don't want to forget my friends! Don't pull it!
+mo_x194g0|Somebody grabs the lever. Everybody gasps. They let go. Not today.
+mo_x194g1|A progress bar on the wall fills up to ninety-nine percent and stops. It's waiting for someone to decide.
+mo_x194g2|The backup tape spins, saving everything, just in case. Every friend, every song, every hug.
+mo_x195f0|Ho ho ho. You want to battle me? In my grotto? On Christmas Eve? Alright. Mic me up.
+mo_x195f1|I only came in for wrapping paper. Now I'm watching a rap battle by the ice rink. Best Christmas ever.
+mo_x195f2|No battling near the ice rink. Okay, one battle. Okay, two. Okay, I'm judging.
+mo_x195g0|The fair's big tree spins on its base, flashing in time with the beat.
+mo_x195g1|A stack of presents topples off the stage. They're all empty boxes. They bounce.
+mo_x195g2|Ho ho ho! Bop bap bop! That's how Santa raps! Ho!
+mo_x196f0|Roll up! Roll up! Two rappers, one microphone, and a prize for the winner: a goldfish!
+mo_x196f1|Candy floss! Pink or blue! I've been spinning it in time with the beat all night!
+mo_x196f2|I juggle to the rhythm! Three balls! Four! Five! I've dropped one on the rapper!
+mo_x196g0|A coconut wobbles on its stand on every beat and finally falls, right on the drop.
+mo_x196g1|A cloud of candy floss grows and grows on its stick, swaying to the music.
+mo_x196g2|The prize goldfish turns round in its bag, looking at the crowd, deeply unimpressed.
+mo_x197f0|No battling in the water. No battling on the lifeguard tower. Fine. One battle. I'm judging from the tower.
+mo_x197f1|I built the stage out of sand! It's holding! It's mostly holding! Don't stamp!
+mo_x197f2|Squawk! Off key! Squawk! Give us a chip! Squawk!
+mo_x197g0|A wave rolls up the beach on the beat and washes out the front row's shoes.
+mo_x197g1|A beach ball bounces off the speaker, off the crowd, and out to sea.
+mo_x197g2|The sand speaker thumps! Squawk! The stage is crumbling! Squawk! Keep going!
+mo_x198f0|Today we're learning hoofwriting. Hold the pencil in your mouth. Gently. Don't eat it.
+mo_x198f1|I ate the pencil. And the eraser. And a bit of the desk.
+mo_x198f2|Ding ding! Lessons are over! Ding! Oh, they've only just started. Sorry.
+mo_x198g0|The school bell rings and a dozen little ponies gallop out of the door at once.
+mo_x198g1|The chalkboard flips. Somebody's drawn a very good picture of a cupcake on the back.
+mo_x198g2|A gold star! For the best hoofwriting! It went to the pony who ate the pencil!
+mo_x199f0|Fluffy clouds for sunny days, grey ones for rain, and a very special pink one for Fifi's birthday.
+mo_x199f1|I mix the rainbow colours. Too much red and it's just an orange. Too much blue and it's a bruise.
+mo_x199f2|I cut every snowflake by hoof. Every one's different. It takes a very long time to make winter.
+mo_x199g0|The rainbow vat swirls and a stripe of every colour pours out into a cloud mould.
+mo_x199g1|A grey cloud puffs up, grumbles, and drizzles on the weather manager. Again.
+mo_x199g2|A single paper snowflake drifts down from the ceiling. It's perfect. It took a week.
+mo_x200f0|Back in my day we bucked these trees with our own hooves. Uphill. In the snow.
+mo_x200f1|Apple pie, apple crumble, apple sauce, apple fritters. Apples are a lifestyle.
+mo_x200f2|I'm going to buck my first tree today! Watch! Ow. Ok, the tree won.
+mo_x200g0|A barrel of apples tips over and they roll across the barn floor in every direction.
+mo_x200g1|The cider press turns and fills the barn with a smell like a warm autumn afternoon.
+mo_x200g2|An apple pie on the windowsill puffs up, golden, and every pony in the meadow turns its head.
+mo_x201f0|Cut the blocks, stack them in a spiral, a small door to keep the warm in. And a big door for the seal.
+mo_x201f1|Fish, fish, and more fish. We have fish for breakfast, lunch and dinner. And fish for pudding.
+mo_x201f2|Snowball! Got you! Snowball! Got you again! I'm the best snowball thrower in the whole tribe!
+mo_x201g0|An ice block slides into place on the igloo with a satisfying crunch.
+mo_x201g1|A seal pops up through a hole in the ice, barks once, and steals a fish.
+mo_x201g2|Snowball! It's going! It's going! It's on the elder! Run!
+mo_x202f0|Bowls, cups, vases. Handmade. Shaped by an earth master, actually. Very sturdy. Drop one. Go on. See?
+mo_x202f1|Fresh vegetables! Fresh from the valley! Mind the cart! Everyone always crashes into the cart!
+mo_x202f2|I play the lute for coins. Not many coins. Mostly turnips. People throw turnips.
+mo_x202g0|A tower of pots wobbles. And wobbles. An earth master made them. They won't fall. Probably.
+mo_x202g1|The vegetable cart rolls down the street on its own. Everyone dives out of the way.
+mo_x202g2|Dong! The market bell rings. It's lunch time. The whole market sits down at once.
+mo_x203f0|Breathe in. Breathe out. Fire comes from breath, not anger. Mostly. Some of you are very angry.
+mo_x203f1|I made a fire puff! It was the shape of a dragon! It was the shape of a slightly smaller dragon!
+mo_x203f2|I cook with my own fire. No stove. Just me. Lunch is ready in four seconds. Lunch is also on fire.
+mo_x203g0|A row of candles lights one by one as a student breathes slowly in and out.
+mo_x203g1|The training dummy takes a fire puff, smoulders slightly, and stays standing, scorched but proud.
+mo_x203g2|The dragon on the mural seems, for a second, to turn its head.
+mo_x204f0|Up here, you can see the whole forest. And the cave. And the gorilla who's lava. He's coming. Run.
+mo_x204f1|I sleep up here. On a leaf. A very big leaf. I've fallen off twice.
+mo_x204f2|I'm a bird. I live up here. The gorillas keep landing on my nest. Please stop landing on my nest.
+mo_x204g0|A vine swings across the canopy. A gorilla grabs it, misses, and grabs the next one.
+mo_x204g1|Hey! That's my nest! Get your arms out of my nest!
+mo_x204g2|A coconut drops from the top of the tree. A gorilla catches it with one hand, very casually.
+mo_x205f0|I tagged forty gorillas yesterday. Forty. Nobody outruns lava.
+mo_x205f1|I've only been lava for a minute! I don't know how to be lava! Do I chase people?
+mo_x205f2|I've never been tagged. Never. Ninety days. I don't sleep. I just run.
+mo_x205g0|The lava pit glows brighter. Every lava gorilla in the arena stands up and grins.
+mo_x205g1|Tag! A gorilla's arm starts to glow orange. Everybody scatters.
+mo_x205g2|Grab the branch! Grab it! Got it! Swing! Safe! For now!
+mo_x206f0|I don't play any more. I sit here. I wear my hat. That's enough.
+mo_x206f1|I've got a crown, a cap, a cowboy hat and a hat shaped like a banana. The banana's my favourite.
+mo_x206f2|Hello? Hello? Can everyone hear me? I'm just going to talk. Forever. Hello?
+mo_x206g0|The hat stand spins. A crown, a cowboy hat, a banana hat. Every gorilla in the room wants the banana.
+mo_x206g1|Hello? Hello? Can anyone -
+mo_x206g2|A bunch of bananas wobbles on the table. Every gorilla in the lounge goes very quiet.
+mo_x207f0|Wash, wax, and a tyre shine. The getaway drivers come in every day. Very dirty cars. Very nervous drivers.
+mo_x207f1|I scrub the cars! I scrub the windows! I scrubbed a man by mistake! He was very clean after!
+mo_x207f2|I do the inside. Crumbs, coins, a lot of masks. Every car has a lot of masks.
+mo_x207g0|The giant brushes spin up and a whirlwind of soap fills the car wash.
+mo_x207g1|Foam pours out of the machine and keeps coming until the whole car wash is a bubble bath.
+mo_x207g2|A red car rolls out of the wash, sparkling, and immediately drives through a puddle.
+mo_x208f0|I've got a pool, a tennis court and a statue of myself. Want to see it? It's very tall.
+mo_x208f1|Breathe. Stretch. Ignore the helicopter. There's always a helicopter.
+mo_x208f2|I clean the pool every morning. Every afternoon there's a car in it. Every afternoon.
+mo_x208g0|A car rolls off the drive and into the pool with a huge splash. Again.
+mo_x208g1|Look at my statue! It's me! It's gold! It's spinning! Why's it spinning?
+mo_x208g2|The yoga mat flips over. The yoga teacher stays perfectly still, in tree pose, completely calm.
+mo_x209f0|Where to? The mountains? The coast? Anywhere but the police station, I expect.
+mo_x209f1|These old planes run on hope, oil and duct tape. Mostly duct tape.
+mo_x209f2|I jump out of planes for fun! I've jumped four hundred times! I've landed in the sea three hundred times!
+mo_x209g0|The windsock swings round in the hot desert breeze. It's pointing at the police station.
+mo_x209g1|Wheeee! Parachute open! Wait, that's my backpack! Ok, now it's open!
+mo_x209g2|The old propeller coughs, turns, and starts with a roar. The whole airfield vanishes in a cloud of dust.
+mo_x210f0|Walk through the tunnel and the sharks swim right over your head. They're very gentle. They're also very curious about skeletons.
+mo_x210f1|I feed the sharks every day. I'm in the tank. They swim round me. I try not to look like a fish.
+mo_x210f2|A turtle! A turtle waved at me! Did you see? It waved!
+mo_x210g0|A shark glides overhead, very slowly, looking down at everyone in the tunnel.
+mo_x210g1|A stingray flaps up the glass like a kite and smiles. Stingrays always look like they're smiling.
+mo_x210g2|A column of bubbles rises up the tank wall, and every little fish in the tank swims through it.
+mo_x211f0|Gently, now. The goats nibble. The sheep lean. The rabbits hide. The pig judges.
+mo_x211f1|A goat ate my ticket! And my sleeve! And my map! It's eating my shoelace!
+mo_x211f2|Oink. I'm in charge here. I supervise the goats. Badly. They don't listen.
+mo_x211g0|A goat climbs on top of the feeding trough, looks around, and bleats very loudly at nobody.
+mo_x211g1|A rabbit pops its head out of the hutch, twitches its nose, and pops back in.
+mo_x211g2|A bag of feed tips over and every animal on the farm arrives at once.
+mo_x212f0|The parrots can talk. Mostly they say hello and ask for crackers. One of them does an impression of the phone.
+mo_x212f1|Hello! Hello! Cracker! Hello! Ring ring! Hello!
+mo_x212f2|I'm a toucan. I've got a big beak. I don't have a lot else to say. Big beak, though.
+mo_x212g0|Hello! Cracker! Ring ring! Ring ring! Hello! Who's a pretty bird?
+mo_x212g1|A swarm of butterflies lifts off the flowers and settles on the head keeper's hat.
+mo_x212g2|The toucan turns its head and its huge beak knocks a feeder off its hook.
 mo_xms_confetti|The present bursts open! Confetti everywhere! Inside: another present. Inside that: more confetti.
 mo_xms_headelf|Faster! Faster! Only four hundred days until Christmas! That's not a lot of days! Every day is Christmas here, actually. Never mind.
 mo_xms_robot|Wind up robot. Walking. Walking. Walking. Please wind me up again. Thank you.
