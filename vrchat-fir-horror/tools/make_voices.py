@@ -1320,6 +1320,20 @@ ROOMS = [
     ("Rooms/rm_gta_stars", M2, 140, 40, 1.0, "narr", "One star. Two stars. Three. Sirens start up across the city. Four. Five. A helicopter appears from nowhere."),
     ("Rooms/rm_gta_getaway", M3, 170, 75, 1.2, "skel", "Get in! Get in! Go go go! I've left the handbrake on! Go anyway!"),
     ("Rooms/rm_gta_vault", M2, 140, 40, 1.0, "narr", "The vault door swings open. Inside: one bag of coins, a pile of old receipts, and a very surprised bank manager eating a sandwich."),
+    # the Bonetown Zoo
+    ("Rooms/rm_zoo_hattie", F1, 145, 50, 1.0, "skel", "Welcome to the Bonetown Zoo! I've been head keeper for forty years. The animals love me. Mostly because I'm made of bones, and they think I'm a snack."),
+    ("Rooms/rm_zoo_pablo", M3, 155, 55, 1.05, "skel", "I look after the penguins. They're very organised. They line up for fish, they line up for the pool, they line up to stare at me. I don't know why. I've asked."),
+    ("Rooms/rm_zoo_scales", M2, 125, 30, 0.9, "skel", "Reptiles are misunderstood. The snake isn't sinister. He's shy. He just has a very long face."),
+    ("Rooms/rm_zoo_iggy", M3, 170, 75, 1.2, "skel", "Ice cream! Vanilla, chocolate, and bone marrow ripple. The marrow ripple is popular with the lions. Only with the lions."),
+    ("Rooms/rm_zoo_guide", M2, 150, 45, 1.0, "skel", "Follow me, folks! On the left, the plains. On the right, the giraffes. Straight ahead, a monkey who has stolen my sandwich. Again."),
+    ("Rooms/rm_zoo_elephant", M2, 140, 40, 1.0, "narr", "The elephant fills its trunk at the watering hole, takes aim, and sprays the whole crowd. It looks extremely pleased with itself."),
+    ("Rooms/rm_zoo_lion", M2, 140, 40, 1.0, "narr", "The lion lifts its head and roars. Every skeleton in the zoo rattles. Then it yawns and goes back to sleep."),
+    ("Rooms/rm_zoo_giraffe", M2, 140, 40, 1.0, "narr", "The giraffe stretches up to the top of the acacia and chews a leaf, very slowly, while staring at you the whole time."),
+    ("Rooms/rm_zoo_penguins", M3, 185, 90, 1.4, "skel", "Belly slide! Wheee! Out of the way! Penguin coming through! No brakes! Penguins never have brakes!"),
+    ("Rooms/rm_zoo_monkey", M3, 190, 95, 1.45, "skel", "Ooh ooh! Banana! Mine now! You weren't using it! You were holding it wrong!"),
+    ("Rooms/rm_zoo_flamingo", F1, 165, 75, 1.15, "skel", "One leg. One leg. I can do this all day. Whoa. Whoa. Okay, two legs. Just for a second. Nobody saw that."),
+    ("Rooms/rm_zoo_snake", M2, 110, 30, 0.85, "glitch", "Ssssso. A visitor. Come closer to the glasss. Closer. I just want to sssay hello. Ssssincerely."),
+    ("Rooms/rm_zoo_tortoise", M2, 70, 15, 0.7, "skel", "Hello. I'm. Going. To. The. Pond. I. Set. Off. In. Nineteen. Seventy. Nine. Nearly. There."),
     ("Rooms/rm_orl_meteor", M2, 140, 40, 1.0, "narr", "A meteor shower. One of them is coming straight at the capsule. It misses by a whisker. The computer says oops."),
 ]
 
@@ -1493,6 +1507,12 @@ ROOMWINGS = [
     ("More/mo_rgtw_jetski", M3, 175, 80, 1.25, "skel", "Jet ski! Full throttle! Out to sea! Wait, how do I turn? How do I turn this?"),
     ("More/mo_rgtw_weights", M2, 145, 30, 0.95, "skel", "One more rep. One more. One more. That's my whole workout. One more, forever."),
     ("More/mo_rgtw_gull", M2, 140, 40, 1.0, "narr", "A seagull swoops down, grabs somebody's hot dog, and flies off over the sea, screaming in triumph."),
+    ("More/mo_rzow_noor", F1, 130, 45, 0.92, "skel", "Welcome to the night house. We keep it dark so the night animals think it's midnight. Please whisper. And don't step on the bat that's always on the floor."),
+    ("More/mo_rzow_bertram", M2, 140, 40, 0.95, "skel", "Bats are wonderful. They sleep upside down, they see with sound, and they've never once paid rent. Role models, really."),
+    ("More/mo_rzow_sid", M3, 110, 30, 0.85, "skel", "I came in here to see the owls. That was three hours ago. It's so dark and quiet. I think I live here now."),
+    ("More/mo_rzow_bats", M2, 140, 40, 1.0, "narr", "A cloud of bats bursts off the ceiling, swirls once round the room, and settles back, upside down, exactly where it was."),
+    ("More/mo_rzow_owl", M3, 120, 45, 0.9, "skel", "Hoo. Hoo. Who are you? I asked first. Hoo."),
+    ("More/mo_rzow_eyes", M2, 90, 15, 0.75, "glitch", "Two eyes open in the dark. Then four. Then twenty. They blink, all together, and close again."),
     ("More/mo_rspw_goons", M3, 140, 45, 1.0, "skel", "Hup! Clay goons, reporting for duty! We're fresh out of the dispenser! We're still a bit wet!"),
 ]
 

@@ -1078,7 +1078,7 @@ public static class SimCheck {
   static void RoomsTests(Sim.Client A, Sim.Client B) {
     Console.WriteLine("\n== The new rooms");
     var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("The new rooms:"));
-    Check(line != null && line.Contains("28 more Station stops"), line != null ? Plain(line) : "no rooms line in the build log");
+    Check(line != null && line.Contains("29 more Station stops"), line != null ? Plain(line) : "no rooms line in the build log");
     Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems (coaster tracks clear of themselves)" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
     foreach (var l in Sim.BuildLog.Where(l => l.Contains("roller coaster")).Distinct()) Console.WriteLine("        " + Plain(l).Replace("Fir Warning systems check: ", ""));
     var rooms = FirCheckBuilder.rooms;
@@ -1098,7 +1098,7 @@ public static class SimCheck {
       foreach (var f in floors) if (overlap(rooms[i].Value, f.Value)) clash.Add(rooms[i].Key + " / " + f.Key);
       for (int j = i + 1; j < rooms.Count; j++) if (overlap(rooms[i].Value, rooms[j].Value)) clash.Add(rooms[i].Key + " / " + rooms[j].Key);
     }
-    Check(rooms.Count == 28 && clash.Count == 0, rooms.Count + " rooms, none overlapping anything else (" + floors.Count + " areas and wings checked)" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
+    Check(rooms.Count == 29 && clash.Count == 0, rooms.Count + " rooms, none overlapping anything else (" + floors.Count + " areas and wings checked)" + (clash.Count > 0 ? " | " + string.Join(", ", clash.Take(5)) : ""));
     // the Station takes you to each one; you can walk in from the arrival spot; a button takes you home
     int ok = 0; var bad = new List<string>();
     for (int i = 0; i < rooms.Count; i++) {
@@ -1117,15 +1117,15 @@ public static class SimCheck {
     }
     var board = All<FirTeleport>(A).Where(t => t.transform.parent != null && t.transform.parent.name == "Station").ToList();
     bool tidy = board.All(t => board.All(u => u == t || Vector3.Distance(t.transform.position, u.transform.position) > 0.15f));
-    Check(ok == rooms.Count && board.Count >= 70 && tidy, ok + " of " + rooms.Count + " rooms: the Station sends you there, the way in is clear, and a button takes you home; the board has " + board.Count + " stops, none overlapping" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
+    Check(ok == rooms.Count && board.Count >= 71 && tidy, ok + " of " + rooms.Count + " rooms: the Station sends you there, the way in is clear, and a button takes you home; the board has " + board.Count + " stops, none overlapping" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
     // the people: voiced and captioned
     var folk = All<FirRainbowSkeleton>(A).Where(k => k.voice != null && k.voice.clip != null && k.voice.clip.name.StartsWith("rm_")).ToList();
-    Check(folk.Count >= 105 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned");
+    Check(folk.Count >= 113 && folk.All(k => !string.IsNullOrEmpty(k.caption)), folk.Count + " new people, all voiced and captioned");
     int gagN; var gagBad = new List<string>();
     gagSet = "rm";
     int gagOk = RunGags(B, g => true, out gagN, gagBad);
     gagSet = "";
-    Check(gagN >= 105 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
+    Check(gagN >= 115 && gagOk == gagN, gagOk + " of " + gagN + " new gags move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     // the coasters: ride a whole lap of each
     foreach (var cname in new[] { "Gator Gulch", "The Storm Chaser" }) {
       var ride = All<FirRide>(A).First(x => x.name == cname);

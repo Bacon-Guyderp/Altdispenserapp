@@ -400,8 +400,8 @@ The Kitchen (Pine Pete's) · The Old Ruins (Pixel Hollow) · The Observation Dec
 
 ## The new rooms (and rideable rides)
 
-Twenty-eight more Station stops (`Editor/FirRooms.cs`, `Editor/FirRooms2.cs`, `Editor/FirRooms3.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
-ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is seven across now (70 stops). The
+Twenty-nine more Station stops (`Editor/FirRooms.cs`, `Editor/FirRooms2.cs`, `Editor/FirRooms3.cs`, `Editor/FirZoo.cs`, `Editor/FirOrlando.cs`; voices in `tools/make_voices.py`
+ROOMS, `Audio/Rooms`; `make_voices.py --rooms` re-records just these). The Station board is seven across now (71 stops). The
 cartoon rooms are original takes on a kind of show: new names, new characters and new jokes, with no logos,
 theme songs or catchphrases. Every person is voiced and captioned, and every gag speaks.
 
@@ -444,7 +444,11 @@ theme songs or catchphrases. Every person is voiced and captioned, and every gag
 * **Sunny Bay City** (a sunny crime-caper city): a boulevard, the bank, a car dealership, a police car, the wanted
   stars. Wing: the Beach Pier.
 
-Every one of the twenty-eight has a wing through its far wall, like the expansion's (3 voiced people and 3 gags each,
+* **The Bonetown Zoo**: elephants and zebras on the plains, giraffes under an acacia, a lion pride on its rock, a
+  penguin pool, a flamingo lagoon, a monkey island, a reptile house with glass tanks, an ice cream stall and ten
+  animal stickers to collect; five keepers and eight animal gags. Wing: the Night House (bats, an owl, eyes in the dark).
+
+Every one of the twenty-nine has a wing through its far wall, like the expansion's (3 voiced people and 3 gags each,
 `Audio/More/mo_r*`): the Salty Barnacle, Yellowville Elementary, the Secret Basement, the Community Center, the
 Acorn Festival, the Dressing Room, Level Two: the Pipes, the Town Square, the Other Side of the Island, the Cloud
 Castle, Backstage in the Fridge, the Gadget Garage, the Engine Room, the Gift Shop, the Rocket Garden, the Cold

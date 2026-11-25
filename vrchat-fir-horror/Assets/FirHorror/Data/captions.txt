@@ -772,6 +772,12 @@ mo_ryw_driver|Everybody on the bus! Next stop: school! Or the beach. I haven't d
 mo_ryw_principal|Welcome to Yellowville Elementary. Our test scores are average. Our fire drills are excellent. We get a lot of practice.
 mo_ryw_teacher|Twenty years of teaching. I've seen every excuse. The dog ate it. The plant ate it. Yesterday, a boy told me the school ate it.
 mo_ryw_volcano|The science fair volcano erupts. Then it keeps erupting. The judges give it first prize from under a table.
+mo_rzow_bats|A cloud of bats bursts off the ceiling, swirls once round the room, and settles back, upside down, exactly where it was.
+mo_rzow_bertram|Bats are wonderful. They sleep upside down, they see with sound, and they've never once paid rent. Role models, really.
+mo_rzow_eyes|Two eyes open in the dark. Then four. Then twenty. They blink, all together, and close again.
+mo_rzow_noor|Welcome to the night house. We keep it dark so the night animals think it's midnight. Please whisper. And don't step on the bat that's always on the floor.
+mo_rzow_owl|Hoo. Hoo. Who are you? I asked first. Hoo.
+mo_rzow_sid|I came in here to see the owls. That was three hours ago. It's so dark and quiet. I think I live here now.
 mo_scb_cube|S C B nine fifty seven. A cube that counts. It has been counting since nineteen sixty. It's on four. Nobody knows what happens at five.
 mo_scb_door|S C B nine fifty. A door that only opens if you say please. If you say thank you, it closes again, very proudly.
 mo_scb_researcher|Containment Wing B. Three anomalies, all perfectly safe. That's what the paperwork says. I wrote the paperwork.
@@ -1195,6 +1201,19 @@ rm_yel_kid|I wrote my name on the school roof. In spray paint. In letters you ca
 rm_yel_mom|Hmmmm. I don't like it when the plant glows at night. But the light is nice for reading.
 rm_yel_rod|A glowing green rod falls out of a lunchbox. Somewhere, a meter goes click, click, click, click.
 rm_yel_skate|Coming through! Skateboard! No brakes! I never got the brakes! Brakes are for losers! Waaah!
+rm_zoo_elephant|The elephant fills its trunk at the watering hole, takes aim, and sprays the whole crowd. It looks extremely pleased with itself.
+rm_zoo_flamingo|One leg. One leg. I can do this all day. Whoa. Whoa. Okay, two legs. Just for a second. Nobody saw that.
+rm_zoo_giraffe|The giraffe stretches up to the top of the acacia and chews a leaf, very slowly, while staring at you the whole time.
+rm_zoo_guide|Follow me, folks! On the left, the plains. On the right, the giraffes. Straight ahead, a monkey who has stolen my sandwich. Again.
+rm_zoo_hattie|Welcome to the Bonetown Zoo! I've been head keeper for forty years. The animals love me. Mostly because I'm made of bones, and they think I'm a snack.
+rm_zoo_iggy|Ice cream! Vanilla, chocolate, and bone marrow ripple. The marrow ripple is popular with the lions. Only with the lions.
+rm_zoo_lion|The lion lifts its head and roars. Every skeleton in the zoo rattles. Then it yawns and goes back to sleep.
+rm_zoo_monkey|Ooh ooh! Banana! Mine now! You weren't using it! You were holding it wrong!
+rm_zoo_pablo|I look after the penguins. They're very organised. They line up for fish, they line up for the pool, they line up to stare at me. I don't know why. I've asked.
+rm_zoo_penguins|Belly slide! Wheee! Out of the way! Penguin coming through! No brakes! Penguins never have brakes!
+rm_zoo_scales|Reptiles are misunderstood. The snake isn't sinister. He's shy. He just has a very long face.
+rm_zoo_snake|Ssssso. A visitor. Come closer to the glasss. Closer. I just want to sssay hello. Ssssincerely.
+rm_zoo_tortoise|Hello. I'm. Going. To. The. Pond. I. Set. Off. In. Nineteen. Seventy. Nine. Nearly. There.
 rt_hitch|Anyone heading west? I can pay you. I have a penny. Or exposure. Mostly the penny.
 rt_jar|The donation jar! Every penny helps. This one is mostly buttons. The buttons help too.
 rt_plaque|A fan room, inspired by Ryan Trahan's videos: penny challenges, trading up, and very long road trips. An unofficial tribute. Not affiliated.

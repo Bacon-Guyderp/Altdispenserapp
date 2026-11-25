@@ -24,6 +24,7 @@ public static partial class FirCheckBuilder
         RoomCounter(root); RoomClubhouse(root); RoomStarship(root); RoomMemes(root); RoomOrlando(root);
         RoomMonsters(root); RoomBureau(root); RoomDarkLake(root); RoomSpectrum(root);
         RoomCafe(root); RoomStarHills(root); RoomBrawl(root); RoomGlitch(root); RoomRhythm(root); RoomPonies(root); RoomElements(root); RoomGorilla(root); RoomSunnyBay(root);
+        RoomZoo(root);
         RoomWings(root);
         RoomWings3(root);
         report.Add("The new rooms: " + rooms.Count + " more Station stops (" + string.Join(", ", roomStops) + "); " + roomRides + " rideable rides");
