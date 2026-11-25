@@ -37,10 +37,41 @@ def meta(path, g, is_dir):
     if ext in (".json", ".txt", ".md"):
         return head + "TextScriptImporter:\n  externalObjects: {}\n" + tail
     if ext in (".png", ".jpg"):
-        # Unity fills in importer defaults; GeoQuest > Build World then sets size,
-        # wrap mode and Quest (ASTC) compression itself.
-        return head
+        return head + texture_importer(os.path.basename(path)) + tail
+    if ext == ".mat":
+        return head + "NativeFormatImporter:\n  externalObjects: {}\n  mainObjectFileID: 2100000\n" + tail
     return head + "DefaultImporter:\n  externalObjects: {}\n" + tail
+
+
+# Import settings baked into each texture's .meta, so the maps are right the moment Unity imports them.
+#   name: (max size, mipmaps, sRGB, readable, point filter, uncompressed)
+TEXTURES = {
+    "NCMap.png":           (4096, True,  True,  False, False, False),
+    "WorldMap.png":        (4096, True,  True,  False, False, False),
+    "LobbyPanorama.png":   (2048, False, True,  False, False, False),
+    "CountyIds.png":       (1024, False, False, True,  True,  True),   # exact county index per pixel
+    "CountySelection.png": (128,  False, False, True,  True,  True),   # repainted at runtime
+}
+ASTC_6x6, RGBA32 = 50, 4
+
+
+def texture_importer(name):
+    size, mips, srgb, readable, point, raw = TEXTURES.get(name, (2048, True, True, False, False, False))
+    plat = lambda target, over, fmt: (
+        f"  - serializedVersion: 3\n    buildTarget: {target}\n    maxTextureSize: {size}\n    resizeAlgorithm: 0\n"
+        f"    textureFormat: {fmt}\n    textureCompression: {0 if raw else 1}\n    compressionQuality: 50\n"
+        f"    crunchedCompression: 0\n    allowsAlphaSplitting: 0\n    overridden: {int(over)}\n"
+        f"    androidETC2FallbackOverride: 0\n    forceMaximumCompressionQuality_BC6H_BC7: 0\n")
+    return ("TextureImporter:\n  internalIDToNameTable: []\n  externalObjects: {}\n  serializedVersion: 12\n"
+            f"  mipmaps:\n    mipMapMode: 0\n    enableMipMap: {int(mips)}\n    sRGBTexture: {int(srgb)}\n"
+            f"  isReadable: {int(readable)}\n"
+            f"  textureSettings:\n    serializedVersion: 2\n    filterMode: {0 if point else 1}\n    aniso: 1\n"
+            "    mipBias: 0\n    wrapU: 1\n    wrapV: 1\n    wrapW: 1\n"
+            f"  nPOTScale: 0\n  textureType: 0\n  textureShape: 1\n  maxTextureSize: {size}\n"
+            f"  alphaUsage: 1\n  textureFormat: 1\n  platformSettings:\n"
+            + plat("DefaultTexturePlatform", False, -1)
+            + plat("Standalone", raw, RGBA32 if raw else -1)
+            + plat("Android", True, RGBA32 if raw else ASTC_6x6))
 
 
 def collect():

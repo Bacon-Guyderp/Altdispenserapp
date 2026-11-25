@@ -113,11 +113,15 @@ public class GeoQuestWorldBuilder : EditorWindow
         EditorUtility.DisplayDialog("GeoQuest", "Got " + LoadLocs().Length + " places.", "OK");
     }
 
-    LocFile LoadFile() => locationsJson == null ? null : JsonUtility.FromJson<LocFile>(locationsJson.text);
+    LocFile LoadFile()
+    {
+        string text = locationsJson != null ? locationsJson.text : ReadData("locations.json");
+        return string.IsNullOrEmpty(text) ? null : JsonUtility.FromJson<LocFile>(text);
+    }
 
     Loc[] LoadLocs()
     {
-        if (locationsJson == null) return new Loc[0];
+        if (locationsJson == null && ReadData("locations.json") == null) return new Loc[0];
         var f = LoadFile();
         return (f?.locations ?? new Loc[0]).Where(l => l != null && !string.IsNullOrEmpty(l.src)).Take(maxPlaces).ToArray();
     }
@@ -151,6 +155,7 @@ public class GeoQuestWorldBuilder : EditorWindow
                 "No places found in locations.json. Build an empty world anyway?", "Build", "Cancel")) return false;
 
         Directory.CreateDirectory(Gen);
+        // The textures' import settings ship in their .meta files; this only reimports one whose settings were changed.
         // Re-load after configuring: a reimport can leave the old in-memory texture invalid.
         worldMap = ConfigureTexture(worldMap ? worldMap : AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/NCMap.png"), 4096, true);
         lobbyPanorama = ConfigureTexture(lobbyPanorama ? lobbyPanorama : AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/LobbyPanorama.png"), 2048, false);
@@ -162,13 +167,13 @@ public class GeoQuestWorldBuilder : EditorWindow
         Undo.RegisterCreatedObjectUndo(root, "Build GeoQuest");
 
         // ---- materials
-        var panoMat = Mat("Panorama", Shader.Find("GeoQuest/Panorama"), Color.white, lobbyPanorama);
-        var mapMat = Mat("Map", Shader.Find("GeoQuest/Map") ?? Shader.Find("Unlit/Texture"), Color.white, worldMap);
+        // The map and panorama materials ship ready-made in Materials/ with their textures assigned.
         // County picker data: an id per pixel, and a 128x1 texture the game repaints as counties are switched.
         var idTex = ConfigureDataTexture(Root + "/Textures/CountyIds.png");
         var selTex = ConfigureDataTexture(Root + "/Textures/CountySelection.png");
-        if (mapMat.HasProperty("_IdTex")) { mapMat.SetTexture("_IdTex", idTex); mapMat.SetTexture("_SelTex", selTex); }
-        EditorUtility.SetDirty(mapMat);
+        var panoMat = BakedMat("Panorama", Shader.Find("GeoQuest/Panorama"), ("_MainTex", lobbyPanorama));
+        var mapMat = BakedMat("Map", Shader.Find("GeoQuest/Map") ?? Shader.Find("Unlit/Texture"),
+                              ("_MainTex", worldMap), ("_IdTex", idTex), ("_SelTex", selTex));
         var screenMat = Mat("PhotoScreen", Shader.Find("Unlit/Texture"), Color.white);
         var cMine = Mat("PinMine", ColorShader(), new Color(0.2f, 0.9f, 0.3f));
         var cAnswer = Mat("PinAnswer", ColorShader(), new Color(1f, 0.2f, 0.2f));
@@ -575,6 +580,19 @@ public class GeoQuestWorldBuilder : EditorWindow
         return m;
     }
 
+    /// <summary>A material shipped in Materials/ (made by tools/make_materials.py), checked so every texture
+    /// slot holds the right texture; made under Generated/ if it isn't there.</summary>
+    static Material BakedMat(string name, Shader shader, params (string prop, Texture tex)[] texs)
+    {
+        var m = AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/" + name + ".mat") ?? Mat(name, shader, Color.white);
+        if (shader != null && m.shader != shader) m.shader = shader;
+        bool changed = false;
+        foreach (var (prop, tex) in texs)
+            if (tex != null && m.HasProperty(prop) && m.GetTexture(prop) != tex) { m.SetTexture(prop, tex); changed = true; }
+        if (changed) { EditorUtility.SetDirty(m); AssetDatabase.SaveAssets(); }
+        return m;
+    }
+
     static Material FontMaterial()
     {
         string path = Gen + "/FontMobile.mat";
@@ -594,6 +612,11 @@ public class GeoQuestWorldBuilder : EditorWindow
         string path = AssetDatabase.GetAssetPath(t);
         var imp = AssetImporter.GetAtPath(path) as TextureImporter;
         if (imp == null) return t;
+        var android = imp.GetPlatformTextureSettings("Android");
+        if (imp.textureType == TextureImporterType.Default && imp.mipmapEnabled == mips && imp.wrapMode == TextureWrapMode.Clamp &&
+            imp.maxTextureSize == max && imp.npotScale == TextureImporterNPOTScale.None && android.overridden &&
+            android.maxTextureSize == max && android.format == TextureImporterFormat.ASTC_6x6)
+            return t;  // already set up (the shipped .meta has these settings)
         imp.textureType = TextureImporterType.Default;
         imp.mipmapEnabled = mips;
         imp.wrapMode = TextureWrapMode.Clamp;
@@ -610,6 +633,9 @@ public class GeoQuestWorldBuilder : EditorWindow
     {
         var imp = AssetImporter.GetAtPath(path) as TextureImporter;
         if (imp == null) { Debug.LogError("GeoQuest: missing " + path); return null; }
+        if (imp.textureType == TextureImporterType.Default && !imp.sRGBTexture && imp.isReadable && !imp.mipmapEnabled &&
+            imp.filterMode == FilterMode.Point && imp.textureCompression == TextureImporterCompression.Uncompressed)
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);  // already set up
         imp.textureType = TextureImporterType.Default;
         imp.sRGBTexture = false;
         imp.isReadable = true;
@@ -626,27 +652,50 @@ public class GeoQuestWorldBuilder : EditorWindow
         return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
-    [Serializable] class CountyFile { public string[] names; }
+    [Serializable] class CountyFile { public string[] names; public int gridW, gridH; public string grid; }
+
+    /// <summary>A data file's text, straight from disk if Unity hasn't imported it as a TextAsset yet.</summary>
+    static string ReadData(string file)
+    {
+        string path = Root + "/Data/" + file;
+        var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+        if (asset != null) return asset.text;
+        return File.Exists(path) ? File.ReadAllText(path) : null;
+    }
 
     /// <summary>County names, the click lookup grid and each place's county, for the in-game county picker.</summary>
     static void FillCounties(GeoGameManager mgr, Loc[] locs, Texture2D idTex, Texture2D selTex, Bounds bounds)
     {
-        var json = AssetDatabase.LoadAssetAtPath<TextAsset>(Root + "/Data/counties.json");
-        var names = json != null ? JsonUtility.FromJson<CountyFile>(json.text).names : null;
+        string text = ReadData("counties.json");
+        var file = text != null ? JsonUtility.FromJson<CountyFile>(text) : null;
+        var names = file?.names;
         mgr.locCounty = new int[locs.Length];
         for (int i = 0; i < locs.Length; i++) mgr.locCounty[i] = -1;
-        if (names == null || idTex == null)
+
+        // The lookup grid is baked into counties.json (tools/make_county_data.py); older files need the id texture.
+        int GW = 512, GH = 256;
+        byte[] grid = null;
+        if (names != null && !string.IsNullOrEmpty(file.grid) && file.gridW > 0 && file.gridH > 0)
+        {
+            try { grid = Convert.FromBase64String(file.grid); GW = file.gridW; GH = file.gridH; }
+            catch (FormatException) { grid = null; }
+            if (grid != null && grid.Length != GW * GH) grid = null;
+        }
+        if (grid == null && names != null && idTex != null && idTex.isReadable)
+        {
+            GW = 512; GH = 256;
+            var px = idTex.GetPixels32();
+            grid = new byte[GW * GH];
+            for (int y = 0; y < GH; y++)
+                for (int x = 0; x < GW; x++)
+                    grid[y * GW + x] = px[(y * idTex.height / GH) * idTex.width + (x * idTex.width / GW)].r;
+        }
+        if (names == null || grid == null)
         {
             mgr.countyNames = new string[0];
             Debug.LogWarning("GeoQuest: county data missing, so the county picker is off.");
             return;
         }
-        const int GW = 512, GH = 256;
-        var px = idTex.GetPixels32();
-        var grid = new byte[GW * GH];
-        for (int y = 0; y < GH; y++)
-            for (int x = 0; x < GW; x++)
-                grid[y * GW + x] = px[(y * idTex.height / GH) * idTex.width + (x * idTex.width / GW)].r;
         mgr.countyNames = names;
         mgr.countyGrid = grid;
         mgr.gridW = GW;
@@ -987,6 +1036,10 @@ public class GeoQuestWorldBuilder : EditorWindow
             if (File.Exists(path)) AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             if (AssetDatabase.LoadAssetAtPath<Object>(path) == null) missing = (missing == null ? "" : missing + "\n") + path;
         }
+        // The ready-made materials (optional: the builder makes its own if they're absent).
+        foreach (var mat in new[] { "/Materials/Map.mat", "/Materials/Panorama.mat" })
+            if (File.Exists(Root + mat) && AssetDatabase.LoadAssetAtPath<Material>(Root + mat) == null)
+                AssetDatabase.ImportAsset(Root + mat, ImportAssetOptions.ForceSynchronousImport);
         return missing;
     }
 
