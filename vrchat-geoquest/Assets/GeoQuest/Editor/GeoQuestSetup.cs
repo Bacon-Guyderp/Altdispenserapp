@@ -18,6 +18,8 @@ public static class GeoQuestSetup
     public const string ScenePath = "Assets/GeoQuest/GeoQuest NC.unity";
     const string PendingKey = "GeoQuest.setupPending";
     const string TmpTriedKey = "GeoQuest.tmpImportTried";
+    const string WaitsKey = "GeoQuest.setupWaits";
+    const int MaxWaits = 20;   // about a minute of waiting for Unity to finish importing and compiling
     static string AskedKey => "GeoQuest.askedOnce." + Application.dataPath.GetHashCode();
 
     static GeoQuestSetup()
@@ -45,11 +47,16 @@ public static class GeoQuestSetup
             return;
         EditorPrefs.SetBool(PendingKey, true);
         EditorPrefs.DeleteKey(TmpTriedKey);
+        EditorPrefs.DeleteKey(WaitsKey);
         Continue();
     }
 
     static void Continue()
     {
+        // 0. On a first import Unity is still importing files and compiling scripts for a while.
+        //    Building before that finishes leaves the map blank and U# behaviours unset, so wait.
+        if (EditorApplication.isCompiling || EditorApplication.isUpdating) { if (!WaitThenContinue()) Stop("Unity is still importing or compiling. Wait for the spinner in the bottom-right corner to stop, then run GeoQuest > One-Click Setup again."); return; }
+
         // 1. VRChat Worlds SDK present?
         if (FindType("VRCSceneDescriptor") == null)
         {
@@ -84,9 +91,21 @@ public static class GeoQuestSetup
             return;  // continues in OnTmpImported, or after the reload via PendingKey
         }
 
-        // 3. Make the scene and build the world into it.
+        // 3. Every map, photo list and U# program asset imported and compiled?
+        if (!GeoQuestWorldBuilder.EnsureProgramAssets(out bool created)) { Stop("A GeoQuest script is missing. Unzip the GeoQuest folder again."); return; }
+        if (created) { if (!WaitThenContinue(10)) Stop("Unity is still importing or compiling. Wait for the spinner in the bottom-right corner to stop, then run GeoQuest > One-Click Setup again."); return; }   // new program assets compile first
+        string missing = GeoQuestWorldBuilder.ImportMissingAssets();
+        if (missing != null)
+        {
+            if (WaitThenContinue()) return;
+            Stop("These GeoQuest files didn't import:\n\n" + missing + "\n\nUnzip the GeoQuest folder again, then run GeoQuest > One-Click Setup.");
+            return;
+        }
+
+        // 4. Make the scene and build the world into it.
         EditorPrefs.DeleteKey(PendingKey);
         EditorPrefs.DeleteKey(TmpTriedKey);
+        EditorPrefs.DeleteKey(WaitsKey);
         var scene = File.Exists(ScenePath)
             ? EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single)
             : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -94,6 +113,15 @@ public static class GeoQuestSetup
         bool ok;
         int places;
         try { ok = GeoQuestWorldBuilder.BuildWithDefaults(out places); }
+        catch (Exception e) when (StillCompiling(e))
+        {
+            // U# hadn't finished compiling after all: compile, wait and build again.
+            EditorUtility.ClearProgressBar();
+            EditorPrefs.SetBool(PendingKey, true);
+            if (!WaitThenContinue(10))
+                Stop("UdonSharp is still compiling. Wait for it to finish, then run GeoQuest > One-Click Setup again.");
+            return;
+        }
         finally { EditorUtility.ClearProgressBar(); }
         if (!ok) return;  // the builder already explained what's missing
 
@@ -113,6 +141,33 @@ public static class GeoQuestSetup
             "OK");
     }
 
+    /// <summary>U#'s "outdated script version, wait until program assets have compiled" error,
+    /// possibly wrapped by the reflection call that hit it.</summary>
+    static bool StillCompiling(Exception e)
+    {
+        for (; e != null; e = e.InnerException)
+            if (e is InvalidOperationException && (e.Message.Contains("outdated") || e.Message.Contains("compiled"))) return true;
+        return false;
+    }
+
+    /// <summary>Runs Continue again after a few seconds, once Unity is idle. False when we've waited too long.</summary>
+    static bool WaitThenContinue(double seconds = 3)
+    {
+        int waits = EditorPrefs.GetInt(WaitsKey) + 1;
+        if (waits > MaxWaits) { EditorPrefs.DeleteKey(WaitsKey); return false; }
+        EditorPrefs.SetInt(WaitsKey, waits);
+        double at = EditorApplication.timeSinceStartup + seconds;
+        EditorApplication.CallbackFunction tick = null;
+        tick = () =>
+        {
+            if (EditorApplication.timeSinceStartup < at || EditorApplication.isCompiling || EditorApplication.isUpdating) return;
+            EditorApplication.update -= tick;
+            if (EditorPrefs.GetBool(PendingKey)) Continue();
+        };
+        EditorApplication.update += tick;
+        return true;
+    }
+
     static void OnTmpImported(string packageName)
     {
         AssetDatabase.importPackageCompleted -= OnTmpImported;
@@ -123,6 +178,7 @@ public static class GeoQuestSetup
     {
         EditorPrefs.DeleteKey(PendingKey);
         EditorPrefs.DeleteKey(TmpTriedKey);
+        EditorPrefs.DeleteKey(WaitsKey);
         EditorUtility.DisplayDialog("GeoQuest setup", message, "OK");
     }
 

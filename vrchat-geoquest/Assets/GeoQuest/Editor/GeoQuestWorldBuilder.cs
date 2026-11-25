@@ -137,7 +137,14 @@ public class GeoQuestWorldBuilder : EditorWindow
             EditorUtility.DisplayDialog("GeoQuest", "This world needs VRChat Worlds SDK 3.7.0 or newer (Player Objects). Update it in the VRChat Creator Companion.", "OK");
             return false;
         }
-        if (!EnsureProgramAssets()) return false;
+        if (!EnsureProgramAssets(out _)) return false;
+        string missing = ImportMissingAssets();
+        if (missing != null)
+        {
+            EditorUtility.DisplayDialog("GeoQuest", "These GeoQuest files haven't finished importing yet:\n\n" + missing +
+                "\n\nWait for Unity to finish importing (the spinner in the bottom-right corner), then try again.", "OK");
+            return false;
+        }
 
         var locs = LoadLocs();
         if (locs.Length == 0 && !EditorUtility.DisplayDialog("GeoQuest",
@@ -965,9 +972,29 @@ public class GeoQuestWorldBuilder : EditorWindow
     static readonly string[] Scripts = { "GeoGameManager", "MapBoard", "PlayerGuess", "GeoButton",
                                          "GeoTeleporter", "GeoFloorPin", "GeoPinRack", "GeoTV", "GeoCountyMenu", "GeoCategoryMenu" };
 
-    static bool EnsureProgramAssets()
+    /// <summary>The files the world is built from. On a first import Unity can still be importing them when
+    /// setup starts, so import any that are on disk but not in the asset database yet.
+    /// Returns null when all are ready, else a list of the missing ones.</summary>
+    internal static string ImportMissingAssets()
     {
-        bool created = false;
+        var need = new[] { "/Textures/NCMap.png", "/Textures/LobbyPanorama.png", "/Textures/CountyIds.png",
+                           "/Textures/CountySelection.png", "/Data/locations.json", "/Data/counties.json" };
+        string missing = null;
+        foreach (var n in need)
+        {
+            string path = Root + n;
+            if (AssetDatabase.LoadAssetAtPath<Object>(path) != null) continue;
+            if (File.Exists(path)) AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            if (AssetDatabase.LoadAssetAtPath<Object>(path) == null) missing = (missing == null ? "" : missing + "\n") + path;
+        }
+        return missing;
+    }
+
+    /// <summary>Makes the U# program asset for each script. <paramref name="created"/> is true when any were new:
+    /// they then need compiling before behaviours that use them can be set up.</summary>
+    internal static bool EnsureProgramAssets(out bool created)
+    {
+        created = false;
         foreach (var s in Scripts)
         {
             string asset = Root + "/Scripts/" + s + ".asset";

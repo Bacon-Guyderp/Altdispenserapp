@@ -111,7 +111,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private bool _miles, _boardsHidden;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
     private int[] _pool;
-    private int _poolSize, _poolGame = -1, _poolRound = -1;
+    private int _poolSize, _poolGame = -1;
     private Color[] _selPixels;
 
     void Start()
