@@ -55,6 +55,13 @@ public static class SimCheck {
       var cu0 = All<FirCuller>(A).First(); cu0.enabled = true; A.player.pos = new Vector3(-4f, 0.05f, -1f); Sim.Run(1f);
       var tk = All<UdonSharp.UdonSharpBehaviour>(A).Where(b => b.gameObject.activeInHierarchy && b.enabled && b.GetType().GetMethod("Update", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly) != null).ToList();
       foreach (var grp in tk.GroupBy(b => { var t = b.transform; while (t.parent != null && t.parent.parent != null) t = t.parent; return b.GetType().Name + " in " + t.name; }).OrderByDescending(x => x.Count()).Take(15)) Console.WriteLine("AWAKE " + grp.Count() + " " + grp.Key);
+      Console.WriteLine("AWAKE TOTAL " + tk.Count);
+      foreach (var grp in tk.GroupBy(b => { var t = b.transform; while (t.parent != null && t.parent.parent != null) t = t.parent; return t.name; }).OrderByDescending(x => x.Count())) Console.WriteLine("AREA " + grp.Count() + " " + grp.Key);
+      var rt2 = cu0.transform.parent;
+      foreach (var nm in new[] { "Map", "Cellar", "Cellar Hunt", "Cellar Corridor", "Hunt", "Shed", "Pine Petes" }) { var t = rt2.Find(nm); if (t == null) continue;
+        float x0 = 1e9f, x1 = -1e9f, z0 = 1e9f, z1 = -1e9f; int v = 0, m = 0;
+        foreach (var mf in t.GetComponentsInChildren<MeshFilter>(true)) { if (mf.sharedMesh == null) continue; v += mf.sharedMesh.vertexCount; m++; var p = mf.transform.position; x0 = Mathf.Min(x0, p.x); x1 = Mathf.Max(x1, p.x); z0 = Mathf.Min(z0, p.z); z1 = Mathf.Max(z1, p.z); }
+        Console.WriteLine("HORROR " + nm + " meshes " + m + " verts " + v + " spans x " + x0.ToString("F0") + ".." + x1.ToString("F0") + " z " + z0.ToString("F0") + ".." + z1.ToString("F0")); }
       return 0; }
     if (args.Length > 0 && args[0] == "cull") { CullTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rooms") { RoomsTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
