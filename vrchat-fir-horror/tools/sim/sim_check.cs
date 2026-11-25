@@ -139,6 +139,7 @@ public static class SimCheck {
     for (int f = 0; f < (int)(upsy.length / Time.deltaTime); f++) { Sim.Step(); if (tinyRoot.position.y - tinyHome.y > tinyMax) { tinyMax = tinyRoot.position.y - tinyHome.y; tinyTop = tinyRoot.position; } }
     var flat = new Vector3(tinyTop.x - giantRoot.position.x, 0, tinyTop.z - giantRoot.position.z);
     Check(tinyMax > 2f && flat.magnitude < 0.4f, "Upsy-daisy: the giant lifted tiny " + tinyMax.ToString("F2") + " m up, right over its head (" + flat.magnitude.ToString("F2") + " m off centre)");
+    if (FirCheckBuilder.WithHorror) {
     Console.WriteLine("\n== The map: walking through it");
     foreach (var l in Sim.BuildLog.Where(x => x.Contains("placed in the map")).Distinct()) Check(!l.Contains("problem") && System.Text.RegularExpressions.Regex.IsMatch(l, @"(\d+) of \1 "), l.Replace("Fir Warning systems check: ", ""));
     Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
@@ -223,6 +224,7 @@ public static class SimCheck {
     baby.body.velocity = new Vector3(0, 2f, -6f); Sim.Run(0.2f); baby.body.velocity = Vector3.zero; Sim.Run(0.2f);
     Check(Sim.Events.Any(e => e.Contains("whoosh")) && Sim.Events.Any(e => e.Contains("toilet_clunk")), "a thrown baby whooshes when grabbed and thuds when it lands");
 
+    }
     Console.WriteLine("\n== Gags for everyone: Bob presses, Alice sees it too");
     Sim.Run(20f);
     Func<object, bool> Running = o => (bool)(o.GetType().GetField("running", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
@@ -248,6 +250,7 @@ public static class SimCheck {
         if (seen) ok++; else bad.Add(mine.name);
         Sim.Run(kind == 4 ? 40f : kind == 2 ? 11f : 9f);
       }
+      if (kindCount[kind] == 0 && !FirCheckBuilder.WithHorror) continue;   // the closets were all in the horror map
       Check(ok == n && n > 0, ok + " of " + n + " " + kindName[kind] + " pressed by Bob also played for Alice" + string.Concat(bad.Take(5).Select(x => " | " + x)));
     }
     B.player.pos = new Vector3(40, 0.05f, 0);
@@ -264,10 +267,10 @@ public static class SimCheck {
     Sim.Run(40f);
     Sim.Leave(C);
 
-    HuntTests(A, B);
+    if (FirCheckBuilder.WithHorror) HuntTests(A, B); else NoHorrorTests(A);
     TownTests(A, B);
     FacingTests(A);
-    CellarTests(A, B);
+    if (FirCheckBuilder.WithHorror) CellarTests(A, B);
     ParkTests(A, B);
     PrecinctTests(A, B);
     NightTests(A, B);
@@ -553,7 +556,7 @@ public static class SimCheck {
     var rs = All<FirRainbowSkeleton>(A);
     Func<FirRainbowSkeleton, Vector3> Fwd = r => r.transform.rotation * Vector3.forward;
     var theatre = rs.Where(r => r.transform.parent != null && (r.transform.parent.name == "RAINBOW HALL" || r.transform.parent.name == "TALENT SHOW")).ToList();
-    Check(theatre.Count == 17 && theatre.All(r => Fwd(r).z > 0.9f), theatre.Count + " skeletons in the Rainbow Hall and on the Talent Show stage face the audience (north)");
+    if (FirCheckBuilder.WithHorror) Check(theatre.Count == 17 && theatre.All(r => Fwd(r).z > 0.9f), theatre.Count + " skeletons in the Rainbow Hall and on the Talent Show stage face the audience (north)");
     var townNames = new[] { "Mint", "Peach", "Lavender", "Coral", "Sky", "Navy", "Rust", "Olive", "Cream", "Plum", "Scarlet", "Cobalt", "Emerald", "Mustard" };
     var town = rs.Where(r => townNames.Any(n => r.name == n + " Skeleton")).ToList();
     var plaza = new Vector3(-30f, 0, 4f);
@@ -1080,6 +1083,17 @@ public static class SimCheck {
     Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags (3 a wing) move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
     Check(boards >= 3, boards + " wings have something to collect");
+  }
+
+  // ======================================================================== without the horror game (it lives in its own world)
+  static void NoHorrorTests(Sim.Client A) {
+    Console.WriteLine("\n== Without the horror game");
+    Check(All<FirHunt>(A).Count == 0 && All<FirStalker>(A).Count == 0, "no horror map and no Root Cellar in this world (they're in their own)");
+    Check(All<FirNight>(A).Count == 1, "Pine Pete's night shift is still here");
+    string what;
+    Check(Blocked(A, new[] { new Vector3(0, 0.05f, -4f), new Vector3(0, 0.05f, -9f) }, out what), "the lobby's south wall is solid now (" + what + ")");
+    Check(Blocked(A, new[] { new Vector3(4f, 0.05f, -2f), new Vector3(10f, 0.05f, -2f) }, out what), "...and its east wall (" + what + ")");
+    Check(!Blocked(A, new[] { new Vector3(-4f, 0.05f, 4f), new Vector3(-14f, 0.05f, 4f) }, out what), "the west doorway still leads to Bonetown" + (what != "" ? " | " + what : ""));
   }
 
   // ======================================================================== optimising: only the area you're in is awake

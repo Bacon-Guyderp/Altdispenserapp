@@ -63,12 +63,13 @@ public static partial class FirCheckBuilder
         Box(lobby, "Floor", new Vector3(0, -0.1f, 0), new Vector3(14, 0.2f, 12), M("Floor"));
         Box(lobby, "Ceiling", new Vector3(0, 3.7f, 0), new Vector3(14, 0.2f, 12), M("Ceiling"));
         Box(lobby, "WallN", new Vector3(0, 1.8f, 6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));
-        DoorWall(lobby, "WallS", -6.1f, 14.4f, 3.6f, M("Wall"));
+        if (WithHorror) DoorWall(lobby, "WallS", -6.1f, 14.4f, 3.6f, M("Wall"));
+        else Box(lobby, "WallS", new Vector3(0, 1.8f, -6.1f), new Vector3(14.4f, 3.6f, 0.2f), M("Wall"));   // no doorway: the map's in its own world
 
         // details: trim, twinkling lights, the doorway's frame, wreaths and candy canes, a rug, posters and lamps
         Trim(lobby, "Lobby", 6.0f, -6.0f, 14f, 3.6f, float.NaN, 0f, false);
         StringLights(lobby, "Lobby", -6f, 6f, 14f, 3.6f);
-        DoorFrame(lobby, 0f, -6.1f);
+        if (WithHorror) DoorFrame(lobby, 0f, -6.1f);
         Wreath(lobby, new Vector3(-2.2f, 2.2f, -5.97f), Vector3.forward);
         Wreath(lobby, new Vector3(2.2f, 2.2f, -5.97f), Vector3.forward);
         CandyCane(lobby, new Vector3(-1.75f, 0, -5.65f), true);
@@ -84,11 +85,15 @@ public static partial class FirCheckBuilder
         Text("TownDoorSign", lobby, new Vector3(-6.98f, 3.25f, 4.0f), Face(Vector3.right), new Vector2(2.6f, 0.5f), 0.2f,
              "<b>BONETOWN</b>\n<size=70%>the expansion: skeletons live here</size>").color = new Color(1f, 0.85f, 0.4f);
         // the east wall has a doorway (z -3.2 to -0.8) through to the Root Cellar, the horror expansion
-        Box(lobby, "WallE S", new Vector3(7.1f, 1.8f, -4.7f), new Vector3(0.2f, 3.6f, 3.0f), M("Wall"));
-        Box(lobby, "WallE N", new Vector3(7.1f, 1.8f, 2.7f), new Vector3(0.2f, 3.6f, 7.0f), M("Wall"));
-        Box(lobby, "WallE Top", new Vector3(7.1f, 3.2f, -2.0f), new Vector3(0.2f, 0.8f, 2.4f), M("Wall"));
-        DoorFrameX(lobby, 7.0f, -2.0f);
-        Text("CellarDoorSign", lobby, new Vector3(6.98f, 3.25f, -2.0f), Face(Vector3.left), new Vector2(2.6f, 0.5f), 0.2f,
+        if (WithHorror)
+        {
+            Box(lobby, "WallE S", new Vector3(7.1f, 1.8f, -4.7f), new Vector3(0.2f, 3.6f, 3.0f), M("Wall"));
+            Box(lobby, "WallE N", new Vector3(7.1f, 1.8f, 2.7f), new Vector3(0.2f, 3.6f, 7.0f), M("Wall"));
+            Box(lobby, "WallE Top", new Vector3(7.1f, 3.2f, -2.0f), new Vector3(0.2f, 0.8f, 2.4f), M("Wall"));
+            DoorFrameX(lobby, 7.0f, -2.0f);
+        }
+        else Box(lobby, "WallE", new Vector3(7.1f, 1.8f, 0f), new Vector3(0.2f, 3.6f, 12.4f), M("Wall"));   // no doorway: the Root Cellar's in its own world
+        if (WithHorror) Text("CellarDoorSign", lobby, new Vector3(6.98f, 3.25f, -2.0f), Face(Vector3.left), new Vector2(2.6f, 0.5f), 0.2f,
              "<b>THE ROOT CELLAR</b>\n<size=70%>the horror expansion</size>").color = new Color(0.9f, 0.3f, 0.25f);
         var spawn = Marker(lobby, "Spawn", new Vector3(0, 0.05f, -2.6f), 0);
         // ---- the test room (teleport target), far from the lobby
@@ -190,10 +195,9 @@ public static partial class FirCheckBuilder
         t8.other = UB(tree);
 
         // ---- the map: new rooms to the south, full of gags (through the doorway in the lobby's south wall)
-        BuildMap(root, spawn);
-        BuildHunt(root, lobby, spawn);
+        if (WithHorror) { BuildMap(root, spawn); BuildHunt(root, lobby, spawn); }
         BuildTown(root);
-        BuildCellar(root);
+        if (WithHorror) BuildCellar(root);
         BuildStation(lobby, spawn);
         BuildPark(root);
         BuildPrecinct(root);
@@ -257,7 +261,7 @@ public static partial class FirCheckBuilder
         info.color = Color.white;
         info.text = BuildReport(root);
 
-        FinishHunt(root);
+        if (WithHorror) FinishHunt(root);
         SetupDescriptor(spawn);
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
@@ -546,6 +550,12 @@ public static partial class FirCheckBuilder
     /// The rooms of the map, south of the lobby along z (each room's north wall has a doorway at x = 0).
     /// Gag rooms line their side walls with slots; the original gags and skeleton routines fill them.
     /// </summary>
+    /// <summary>
+    /// The horror game (the map south of the lobby and the Root Cellar east of it) lives in its own world now; set this
+    /// to true to build it into this one again. Pine Pete's night shift stays.
+    /// </summary>
+    public const bool WithHorror = false;
+
     static void BuildMap(Transform root, Transform spawn)
     {
         var map = Group(root, "Map", Vector3.zero);

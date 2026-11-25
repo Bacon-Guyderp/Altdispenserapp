@@ -471,6 +471,13 @@ file, `Data/wings_more.txt`, written from `tools/wings4/a.py` to `d.py` by `tool
 `make_voices.py --wings4` (which records on every core at once) both read that file. The fan rooms' wings are fans
 and crew only.
 
+## The horror game has moved out
+
+The horror map (south of the lobby) and the Root Cellar (east of it) now live in their own world. The lobby's south
+and east walls are solid, and the west doorway still leads to Bonetown. Set `FirCheckBuilder.WithHorror` to `true`
+to build them back into this world; their tests run again when it is. Pine Pete's night shift stays, and its
+restaurant sleeps like any other area when you're not in it (the synced night-shift system itself stays on).
+
 ## Optimising (nothing looks or sounds different)
 
 * **Only the area you're in is awake.** A `FirCuller` switches off the contents of every area you're not in: the
@@ -479,7 +486,7 @@ and crew only.
   the shared-press system). The lobby and the horror game's areas are never switched off. Every teleport button wakes
   the place it's sending you to before you land, and walking toward Bonetown wakes it before you can see in.
   Everything that moves runs off the server clock, so an area wakes with everything in the right place. In the
-  lobby, 422 of the world's 3,002 per-frame scripts run instead of all of them.
+  lobby, 100 of the world's per-frame scripts run (there were 3,002 before any of this).
 * **Draw distance.** The world's reference camera stops drawing at 300 m. Every area is walled in, and nothing
   inside one is that far away, so nothing visible is lost.
 * **A cheaper shader for Quest.** The remaster's shading depends only on which way a surface faces, so it's now

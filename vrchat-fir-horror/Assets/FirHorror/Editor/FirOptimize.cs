@@ -96,7 +96,7 @@ public static partial class FirCheckBuilder
             var area = root.GetChild(ci);
             if (never.Contains(area.name) || area == lobbyTop) continue;
             // the horror game reaches into its whole map from outside it (rounds, doors, closets, keys): leave those areas exactly as they were
-            if (area.GetComponentsInChildren<FirHunt>(true).Length > 0 || area.GetComponentsInChildren<FirStalker>(true).Length > 0 || area.GetComponentsInChildren<FirNight>(true).Length > 0) continue;
+            if (area.GetComponentsInChildren<FirHunt>(true).Length > 0 || area.GetComponentsInChildren<FirStalker>(true).Length > 0) continue;   // (Pine Pete's night shift is synced: its own part stays awake, see KeepAwake)
             bool station = area.Find("Floor") != null && area.Find("Arrive") != null;
             var groups = new List<Transform> { area };
             for (int k = 0; k < area.childCount; k++) { var c = area.GetChild(k); if (c.Find("Floor") != null && c.Find("WallN") != null) groups.Add(c); }
