@@ -19,6 +19,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private const int MAX_ROUNDS = 10;
     private const string BEST_KEY = "geoquest.best";
     private const string UNITS_KEY = "geoquest.miles";
+    private const string MUSIC_KEY = "geoquest.musicOff";
     private const string BOARDS_KEY = "geoquest.boardsHidden";
 
     [Header("Location table (written by GeoQuest > Build World)")]
@@ -45,6 +46,7 @@ public class GeoGameManager : UdonSharpBehaviour
     [HideInInspector] public string[] categoryNames = { "Interstates & highways", "Towns & cities", "Country roads", "Middle of nowhere" };
     [Tooltip("Status, score and info boards: the Boards button hides/shows them for the local player.")]
     public GameObject[] boardObjects;
+    public AudioSource roundMusic;      // background song: plays while a round is on, paused for the reveal
     [HideInInspector] public bool ready;   // counts are built; other scripts wait for this
     [HideInInspector] public string notice = "";
 
@@ -108,7 +110,7 @@ public class GeoGameManager : UdonSharpBehaviour
     private int[] _catCount = new int[4];  // places per category for the current photo type + counties
     private int _inPlay, _sigMode = -1, _sigCat = -1, _sigC0, _sigC1, _sigC2, _sigC3;
     private int _nCounties;
-    private bool _miles, _boardsHidden;
+    private bool _miles, _boardsHidden, _musicOff, _musicPaused;
     private int _m0 = 1, _m1 = 1, _m2 = 1, _m3 = 1;   // selection last painted (forces first paint)
     private int[] _pool;
     private int _poolSize, _poolGame = -1;
@@ -472,7 +474,6 @@ public class GeoGameManager : UdonSharpBehaviour
         return Mathf.RoundToInt(km).ToString("N0") + " km";
     }
 
-    /// <summary>Units button: km or miles. Your own choice, remembered between visits.</summary>
     /// <summary>Boards button: hide or show the text boards for you only. Remembered between visits.</summary>
     public void ToggleBoards()
     {
@@ -488,6 +489,42 @@ public class GeoGameManager : UdonSharpBehaviour
             if (boardObjects[i] != null) boardObjects[i].SetActive(!_boardsHidden);
     }
 
+    /// <summary>Music button: switch the round music off or on for you only. Remembered between visits.</summary>
+    public void ToggleMusic()
+    {
+        _musicOff = !_musicOff;
+        PlayerData.SetBool(MUSIC_KEY, _musicOff);
+        ApplyMusic();
+        UpdateTexts();
+    }
+
+    /// <summary>Plays the song during a round (looping), pauses it for the reveal and stops it
+    /// between games. Silent for you while you're away from the game area (e.g. in the hangout).</summary>
+    private void ApplyMusic()
+    {
+        if (roundMusic == null) return;
+        if (_musicOff || (phase != PHASE_GUESS && phase != PHASE_REVEAL))
+        {
+            if (roundMusic.isPlaying || _musicPaused) roundMusic.Stop();
+            _musicPaused = false;
+            return;
+        }
+        if (phase == PHASE_GUESS)
+        {
+            if (_musicPaused) roundMusic.UnPause();
+            else if (!roundMusic.isPlaying) roundMusic.Play();
+            _musicPaused = false;
+        }
+        else if (roundMusic.isPlaying)
+        {
+            roundMusic.Pause();
+            _musicPaused = true;
+        }
+        VRCPlayerApi me = Networking.LocalPlayer;
+        if (me != null) roundMusic.mute = !InGame(me);
+    }
+
+    /// <summary>Units button: km or miles. Your own choice, remembered between visits.</summary>
     public void ToggleUnits()
     {
         _miles = !_miles;
@@ -498,7 +535,8 @@ public class GeoGameManager : UdonSharpBehaviour
     public override void OnPlayerRestored(VRCPlayerApi player)
     {
         if (player == null || !player.isLocal) return;
-        bool mi, hidden;
+        bool mi, hidden, musicOff;
+        if (PlayerData.TryGetBool(player, MUSIC_KEY, out musicOff)) { _musicOff = musicOff; ApplyMusic(); }
         if (PlayerData.TryGetBool(player, UNITS_KEY, out mi)) _miles = mi;
         if (PlayerData.TryGetBool(player, BOARDS_KEY, out hidden)) { _boardsHidden = hidden; ApplyBoards(); }
         UpdateTexts();
@@ -664,6 +702,7 @@ public class GeoGameManager : UdonSharpBehaviour
         if (g != null && gameId != _seenGame && g.gameId != gameId) g.ResetForGame(gameId);
         if (g != null) _seenGame = gameId;
 
+        ApplyMusic();
         PaintSelection();
         if (phase == PHASE_GUESS || phase == PHASE_REVEAL) notice = "";
         if (countyMenu != null) countyMenu.Refresh();
@@ -718,6 +757,8 @@ public class GeoGameManager : UdonSharpBehaviour
         // Player objects can appear a moment after joining.
         PlayerGuess g = LocalGuess();
         if (g != null && _seenGame != gameId) ApplyState();
+        if (roundMusic != null && roundMusic.isPlaying && Networking.LocalPlayer != null)
+            roundMusic.mute = !InGame(Networking.LocalPlayer);   // quiet while you're in the hangout
 
         if (Networking.IsOwner(gameObject))
         {
@@ -884,7 +925,7 @@ public class GeoGameManager : UdonSharpBehaviour
             return head + "\nCounties: " + CountyChoice() + "  |  Photos: " + ModeName() +
                    "\nCategories: " + CategoryChoice() + "\n" + places +
                    "\nRounds: " + totalRounds + "  |  Timer: " + (roundSeconds == 0 ? "off" : roundSeconds + "s") +
-                   "  |  Units: " + (_miles ? "miles" : "km") + "  |  Best: " + GetBest().ToString("N0");
+                   "  |  Units: " + (_miles ? "miles" : "km") + "  |  Music: " + (_musicOff ? "off" : "on") + "  |  Best: " + GetBest().ToString("N0");
         }
         string s = "Round " + round + " / " + totalRounds;
         if (phase == PHASE_GUESS)

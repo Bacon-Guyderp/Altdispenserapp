@@ -38,6 +38,13 @@ def meta(path, g, is_dir):
         return head + "TextScriptImporter:\n  externalObjects: {}\n" + tail
     if ext in (".png", ".jpg"):
         return head + texture_importer(os.path.basename(path)) + tail
+    if ext in (".ogg", ".mp3", ".wav"):
+        # Streamed Vorbis: small on Quest and doesn't sit in memory.
+        return head + ("AudioImporter:\n  externalObjects: {}\n  serializedVersion: 7\n  defaultSettings:\n"
+                       "    serializedVersion: 2\n    loadType: 2\n    sampleRateSetting: 0\n    sampleRateOverride: 44100\n"
+                       "    compressionFormat: 1\n    quality: 0.5\n    conversionMode: 0\n    preloadAudioData: 0\n"
+                       "  platformSettingOverrides: {}\n  forceToMono: 0\n  normalize: 1\n  loadInBackground: 1\n"
+                       "  ambisonic: 0\n  3D: 1\n") + tail
     if ext == ".mat":
         return head + "NativeFormatImporter:\n  externalObjects: {}\n  mainObjectFileID: 2100000\n" + tail
     return head + "DefaultImporter:\n  externalObjects: {}\n" + tail

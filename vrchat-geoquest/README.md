@@ -116,6 +116,13 @@ routes as highways.
 The **Boards** button under the map hides or shows the status, score and info boards so they
 don't block the photo. It's each player's own setting and is remembered between visits.
 
+## Round music
+A song (`Assets/GeoQuest/Audio/RoundMusic.ogg`) plays in the game area while a round is on.
+It pauses for each reveal and stops between games. It's silent in the hangout. The
+**Music on/off** button under the map switches it off or on for you only, and VRChat
+remembers your choice. To use another song, replace that file (keep the name) and run
+GeoQuest > One-Click Setup again.
+
 ## If the VR laser is off
 Controllers differ in which way they report "forward". Press **Fix laser aim** under the map,
 point your controller at the red dot the way that feels natural, and pull the trigger. The laser

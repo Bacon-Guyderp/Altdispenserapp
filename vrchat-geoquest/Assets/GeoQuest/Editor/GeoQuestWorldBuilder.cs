@@ -284,6 +284,7 @@ public class GeoQuestWorldBuilder : EditorWindow
         Button("v", mapRoot, Bp(0.02f), bs, cBtn, fontMat, map, nameof(MapBoard.PanDown));
         Button("Boards", mapRoot, Bp(-0.75f, -0.26f), new Vector3(0.4f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleBoards));
         mgr.boardObjects = new[] { status.transform.parent.gameObject, score.transform.parent.gameObject, info.transform.parent.gameObject };
+        Button("Music on/off", mapRoot, Bp(-0.75f, -0.39f), new Vector3(0.4f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleMusic));
         Button("Units: km / miles", mapRoot, Bp(-0.25f, -0.26f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, mgr, nameof(GeoGameManager.ToggleUnits));
         Button("Fix laser aim", mapRoot, Bp(-0.25f, -0.13f), new Vector3(0.5f, 0.1f, 0.05f), cBtn, fontMat, map, nameof(MapBoard.StartCalibration));
         var calib = new GameObject("AimTarget");
@@ -410,6 +411,24 @@ public class GeoQuestWorldBuilder : EditorWindow
         mgr.floorMapHeight = FH;
         mgr.floorAnswerBeam = beam;
         mgr.gameArea = spawn;
+
+        // ---- round music (2D, quiet for players away from the game area; the game handles that)
+        var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(Root + "/Audio/RoundMusic.ogg");
+        if (clip != null)
+        {
+            var musicGo = new GameObject("RoundMusic");
+            musicGo.transform.SetParent(root.transform, false);
+            musicGo.transform.position = spawn.position;
+            var music = musicGo.AddComponent<AudioSource>();
+            music.clip = clip;
+            music.playOnAwake = false;
+            music.loop = true;
+            music.volume = 0.35f;
+            music.spatialBlend = 0f;
+            music.dopplerLevel = 0f;
+            mgr.roundMusic = music;
+        }
+        else Debug.LogWarning("GeoQuest: no round music at " + Root + "/Audio/RoundMusic.ogg");
 
         var rackRoot = new GameObject("PinRack").transform;
         rackRoot.SetParent(root.transform, false);
@@ -1043,8 +1062,8 @@ public class GeoQuestWorldBuilder : EditorWindow
             if (AssetDatabase.LoadAssetAtPath<Object>(path) == null) missing = (missing == null ? "" : missing + "\n") + path;
         }
         // The ready-made materials (optional: the builder makes its own if they're absent).
-        foreach (var mat in new[] { "/Materials/Map.mat", "/Materials/Panorama.mat" })
-            if (File.Exists(Root + mat) && AssetDatabase.LoadAssetAtPath<Material>(Root + mat) == null)
+        foreach (var mat in new[] { "/Materials/Map.mat", "/Materials/Panorama.mat", "/Audio/RoundMusic.ogg" })
+            if (File.Exists(Root + mat) && AssetDatabase.LoadAssetAtPath<Object>(Root + mat) == null)
                 AssetDatabase.ImportAsset(Root + mat, ImportAssetOptions.ForceSynchronousImport);
         return missing;
     }
