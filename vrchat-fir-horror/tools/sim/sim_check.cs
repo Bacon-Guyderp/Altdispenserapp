@@ -32,6 +32,7 @@ public static class SimCheck {
     if (args.Length > 0 && args[0] == "water") { WaterParkTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "ct") { ChrisTrippTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "remaster") { RemasterTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
+    if (args.Length > 0 && args[0] == "towninside") { BigTownTests(A, B); TownInsideTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "rooms") { RoomsTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "expand") { ExpansionTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
     if (args.Length > 0 && args[0] == "north") { NorthTests(A, B); Console.WriteLine("\n" + pass + " passed, " + fail + " failed, " + Sim.Failures.Count + " runtime problems"); foreach (var f in Sim.Failures.Take(10)) Console.WriteLine("  problem: " + f); return fail == 0 ? 0 : 1; }
@@ -258,6 +259,7 @@ public static class SimCheck {
     RemasterTests(A, B);
     ExpansionTests(A, B);
     RoomsTests(A, B);
+    TownInsideTests(A, B);
 
     Sim.Run(1f);
     foreach (var c in new[] { A, B }) {
@@ -1046,6 +1048,30 @@ public static class SimCheck {
     Check(gagN == wings.Count * 3 && gagOk == gagN, gagOk + " of " + gagN + " new gags (3 a wing) move, speak and show their caption" + (gagBad.Count > 0 ? " | " + string.Join(", ", gagBad.Take(6)) : ""));
     int boards = All<FirBoost>(A).Count(f => wings.Any(w => f.transform.position.x > w.Value[0] && f.transform.position.x < w.Value[2] && f.transform.position.z > w.Value[1] && f.transform.position.z < w.Value[3]));
     Check(boards >= 3, boards + " wings have something to collect");
+  }
+
+  // ======================================================================== Bonetown, inside
+  static void TownInsideTests(Sim.Client A, Sim.Client B) {
+    Console.WriteLine("\n== Bonetown, inside");
+    var line = Sim.BuildLog.FirstOrDefault(l => l.Contains("Bonetown interiors:"));
+    Check(line != null, line != null ? Plain(line) : "no interiors line in the build log");
+    Check(!Sim.BuildLog.Any(x => x.Contains("problem")), "the builder reported no problems" + string.Concat(Sim.BuildLog.Where(x => x.Contains("problem")).Distinct().Take(5).Select(x => " | " + x)));
+    int ok = 0; var bad = new List<string>();
+    foreach (var r in FirCheckBuilder.townRooms) {
+      var b = r.Value; string what;
+      float fy = b.Length > 7 ? b[7] : 0f; bool walk = !Blocked(A, new[] { new Vector3(b[4], fy, b[5]), new Vector3(b[4], fy, b[6]) }, out what);
+      // and nothing solid is left inside the walls where the old block was: a ray across the room at head height finds the far wall, not a block
+      if (walk) ok++; else bad.Add(r.Key + " (" + what + ")");
+    }
+    Check(FirCheckBuilder.townRooms.Count == 16 && ok == FirCheckBuilder.townRooms.Count, ok + " of " + FirCheckBuilder.townRooms.Count + " shops and buildings: you can walk in through the door" + (bad.Count > 0 ? " | " + string.Join(", ", bad.Take(6)) : ""));
+    var root = All<FirTeleport>(A).First().transform; while (root.parent != null) root = root.parent;
+    var bd = root.Find("Bonetown districts"); var ins = bd != null ? bd.Find("Interiors") : null;
+    int pieces = 0; if (ins != null) pieces = ins.GetComponentsInChildren<MeshRenderer>(true).Length;
+    int shopPieces = 0; var d = root.Find("Bonetown districts");
+    for (int i = 0; i < d.childCount; i++) { var c = d.GetChild(i); if (!c.name.StartsWith("Shop ")) continue; var it = c.Find("Interior"); if (it != null && it.GetComponentsInChildren<MeshRenderer>(true).Length >= 8) shopPieces++; }
+    Check(shopPieces == 8 && pieces > 200, shopPieces + " of 8 shops furnished, and " + pieces + " pieces inside the opened-up buildings");
+    var keepers = All<FirRainbowSkeleton>(A).Where(k => k.voice != null && k.voice.clip != null && k.voice.clip.name.StartsWith("t2_") && k.transform.position.z < -40f && k.transform.position.z > -44f).ToList();
+    Check(keepers.Count == 7, keepers.Count + " shopkeepers stand behind their counters");
   }
 
   // ======================================================================== the new rooms, and their rides

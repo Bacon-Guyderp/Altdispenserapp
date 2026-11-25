@@ -361,6 +361,22 @@ It's an original take on the life-sim genre, and none of it is scary.
 * **Captions everywhere:** every voiced skeleton shows what it says under its name while it talks, and
   combo acts show each line on their button (`Data/captions.txt`, written by `make_voices.py --captions`).
 
+## Bonetown, inside
+
+Every Main Street shop is furnished (`Editor/FirTownInteriors.cs`): the counters sit further back so each shop has
+a real floor, and each has its own fittings. The bakery has bread racks, an oven, a cake case and a table. Skull
+Cuts has two barber chairs with mirrors. The toy shop has shelves of toys, a rocking horse and balloons. The post
+office has PO boxes, parcels, mail sacks and a queue rope. The Boneplex has a popcorn machine, a candy case and
+film posters. Cafe Calcium has tables and an espresso machine, the florist has buckets of flowers and hanging
+baskets, and the empty unit for lease has dust sheets, a ladder and paint cans. The solid buildings are opened up
+with a door and a room inside:
+* **The town hall:** a council chamber on a raised floor.
+* **The school:** a classroom with desks, a chalkboard and a skeleton model.
+* **The library:** bookcases and a reading table.
+* **The fire station:** a spare engine, a pole, lockers and coats.
+* **The barn:** hay, stalls and chickens.
+* **The three houses on Clavicle Avenue:** a living room and a kitchen in each.
+
 ## The expansion
 
 Every Station area has a new wing through a doorway in its far wall (and a shortcut button beside its

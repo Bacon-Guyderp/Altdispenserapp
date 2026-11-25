@@ -16,6 +16,7 @@ public class FirShare : UdonSharpBehaviour
     [UdonSynced] public int pressId;
     [UdonSynced] public int kind;
     [UdonSynced] public int index;
+    [UdonSynced] public int pressAt;   // server time of the press: a late joiner's first update carries an old one, and is skipped
 
     public UdonBehaviour[] gags;
     public UdonBehaviour[] skeletonGags;
@@ -30,25 +31,25 @@ public class FirShare : UdonSharpBehaviour
     public int argIndex;
 
     int lastSeen;
-    bool synced;
 
     /// <summary>Someone here pressed something (it has already played for them): tell everyone else.</summary>
     public void EvShare()
     {
-        synced = true;
         if (!Networking.IsOwner(gameObject)) Networking.SetOwner(Networking.LocalPlayer, gameObject);
         kind = argKind;
         index = argIndex;
         pressId = Random.Range(1, 2000000000);
+        pressAt = Networking.GetServerTimeInMilliseconds();
         lastSeen = pressId;
         RequestSerialization();
     }
 
     public override void OnDeserialization()
     {
-        if (!synced) { synced = true; lastSeen = pressId; return; }   // just joined: don't replay the last press
         if (pressId == lastSeen) return;
         lastSeen = pressId;
+        int age = Networking.GetServerTimeInMilliseconds() - pressAt;
+        if (age > 5000 || age < -5000) return;   // an old press (we've just joined): don't replay it
         UdonBehaviour[] list = kind == 0 ? gags : kind == 1 ? skeletonGags : kind == 2 ? closets : kind == 3 ? gagSkeletons : kind == 4 ? combos : kind == 5 ? wanderers : residents;
         if (index >= 0 && index < list.Length && list[index] != null) list[index].SendCustomEvent("Play");
     }

@@ -213,6 +213,7 @@ public static partial class FirCheckBuilder
         BuildCornFlakes(root);
         BuildApartments(root);
         BuildTownDistricts(root);
+        BuildTownInteriors(root);
         BuildCrystalCove(root);
         BuildCritterMeadow(root);
         BuildShadowBelow(root);
@@ -2742,7 +2743,7 @@ public static partial class FirCheckBuilder
         Box(s, "Facade", new Vector3(x, 4.7f, zf), new Vector3(w + 0.4f, 1.2f, 0.2f), M(wall));
         Text("Sign", s, new Vector3(x, 4.7f, zf + 0.12f), Face(Vector3.forward), new Vector2(w - 0.4f, 0.9f), 0.5f, "<b>" + title + "</b>").color = new Color(1f, 0.95f, 0.8f);
         Box(s, "Awning", new Vector3(x, 3.2f, zf + 0.7f), new Vector3(w, 0.1f, 1.4f), M(awning), false);
-        Box(s, "Counter", new Vector3(x, 0.5f, -38.6f), new Vector3(w - 2f, 1f, 0.6f), M("DeskWood"));
+        Box(s, "Counter", new Vector3(x, 0.5f, -41.6f), new Vector3(w - 2f, 1f, 0.6f), M("DeskWood"));   // set back, so the shop floor in front has room for its displays
         Box(s, "Floor", new Vector3(x, 0.01f, zm), new Vector3(w - 0.2f, 0.02f, 8f), M("Floor2"), false);
         return s;
     }
@@ -2824,17 +2825,17 @@ public static partial class FirCheckBuilder
         foreach (var sh in shops)
         {
             var s = Shop(g, sh.t, sh.x, 9f, sh.wall, sh.aw);
-            if (sh.who != "") Folk(s, sh.who, sh.hex, sh.act, new Vector3(sh.x, 0, -39.4f), 0f, "Town2/" + sh.clip);
+            if (sh.who != "") Folk(s, sh.who, sh.hex, sh.act, new Vector3(sh.x, 0, -42.4f), 0f, "Town2/" + sh.clip);
         }
         // shop dressing
-        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Capsule, "Loaf", g, new Vector3(-19.5f + k * 1.1f, 1.15f, -38.6f), new Vector3(0.25f, 0.3f, 0.25f), M("Bun"), Quaternion.Euler(0, 0, 90));
+        for (int k = 0; k < 5; k++) DPrim(PrimitiveType.Capsule, "Loaf", g, new Vector3(-19.5f + k * 1.1f, 1.15f, -41.6f), new Vector3(0.25f, 0.3f, 0.25f), M("Bun"), Quaternion.Euler(0, 0, 90));
         DPrim(PrimitiveType.Cylinder, "BarberPole", g, new Vector3(-22.6f, 1.5f, -35.8f), new Vector3(0.25f, 1.2f, 0.25f), M("CaneRed"));
-        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cube, "Toy", g, new Vector3(-38.5f + k * 0.9f, 1.15f, -38.6f), Vector3.one * 0.3f, M(new[] { "GiftRed", "GiftBlue", "GlowYellow", "GiftGreen", "GemPurple", "InkOrange" }[k]));
+        for (int k = 0; k < 6; k++) DPrim(PrimitiveType.Cube, "Toy", g, new Vector3(-38.5f + k * 0.9f, 1.15f, -41.6f), Vector3.one * 0.3f, M(new[] { "GiftRed", "GiftBlue", "GlowYellow", "GiftGreen", "GemPurple", "InkOrange" }[k]));
         Box(g, "Marquee", new Vector3(-69f, 3.6f, -35.4f), new Vector3(8f, 0.8f, 0.3f), M("GlowWarm"), false);
         Text("NowShowing", g, new Vector3(-69f, 3.6f, -35.23f), Face(Vector3.forward), new Vector2(7.6f, 0.7f), 0.24f, "NOW SHOWING: <b>THE MAN WITH SKIN</b> (rated R for Revolting)").color = new Color(0.2f, 0.05f, 0.05f);
         for (int k = 0; k < 3; k++) { Prim(PrimitiveType.Cylinder, "CafeTable", g, new Vector3(-83f + k * 3f, 0.38f, -34.6f), new Vector3(0.8f, 0.38f, 0.8f), M("CaneWhite")); }
-        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Sphere, "Bouquet", g, new Vector3(-94f + k * 0.8f, 1.2f, -38.6f), Vector3.one * 0.35f, M(new[] { "BonePink", "GlowYellow", "GiftRed", "GemPurple" }[k % 4]));
-        Text("Lease", g, new Vector3(-102f, 2f, -38.25f), Face(Vector3.forward), new Vector2(4f, 0.6f), 0.2f, "<b>FOR LEASE</b>\n<size=70%>ideal for a business. or a closet. or a closet business</size>").color = Color.white;
+        for (int k = 0; k < 8; k++) DPrim(PrimitiveType.Sphere, "Bouquet", g, new Vector3(-94f + k * 0.8f, 1.2f, -41.6f), Vector3.one * 0.35f, M(new[] { "BonePink", "GlowYellow", "GiftRed", "GemPurple" }[k % 4]));
+        Text("Lease", g, new Vector3(-102f, 2f, -41.25f), Face(Vector3.forward), new Vector2(4f, 0.6f), 0.2f, "<b>FOR LEASE</b>\n<size=70%>ideal for a business. or a closet. or a closet business</size>").color = Color.white;
         // the town hall, with a clock tower
         var th = Group(g, "Town Hall", Vector3.zero);
         Box(th, "Hall", new Vector3(-46f, 3f, -44f), new Vector3(10f, 6f, 8f), M("Concrete"));
