@@ -121,8 +121,9 @@
     <section class="card">
       <h2>2 · Choose your chaos</h2>
       <div class="tabs">
-        <button id="tabRender" class="on">🎨 Glitch Render</button>
-        <button id="tabBytes">💾 Byte Bitrot</button>
+        <button id="tabRender" class="on">🎨 Glitch</button>
+        <button id="tabMosh">🌊 Datamosh</button>
+        <button id="tabBytes">💾 Bitrot</button>
       </div>
 
       <!-- ============ GLITCH RENDER ============ -->
@@ -160,6 +161,23 @@
         </div>
         <button class="go" id="renderBtn" disabled>CORRUPT IT</button>
         <p class="note">Rendering plays the video through the effects in real time, so a 1-minute clip takes about a minute (less if you sped it up). Keep this tab visible while it runs.</p>
+      </div>
+
+      <!-- ============ REAL DATAMOSH ============ -->
+      <div id="panelMosh" class="hidden">
+        <p class="note" style="margin-top:0">This is the real datamosh trick glitch artists use. A video only stores a full picture every second or two (a <b>keyframe</b>). Every frame in between just says how the last picture <i>moves</i>. This removes the keyframes, so the old picture never gets replaced. Instead it gets dragged, stretched and melted by the motion of whatever comes next.</p>
+        <div class="ctrl">
+          <label for="moshAmount">Intensity <small>how many keyframes get removed</small></label>
+          <output id="moshAmountOut"></output>
+          <input type="range" id="moshAmount" min="0" max="100" value="100">
+        </div>
+        <div class="ctrl">
+          <label for="moshChaos">Extra chaos <small>also scrambles some motion data, making the smear swirl and break apart</small></label>
+          <output id="moshChaosOut"></output>
+          <input type="range" id="moshChaos" min="0" max="100" value="0">
+        </div>
+        <button class="go" id="moshBtn" disabled>MOSH IT</button>
+        <p class="note">Works best on <b>MP4 / MOV</b> files using H.264, which most videos use. H.265/HEVC files (iPhone "High Efficiency") also work, but most players fill in the missing pictures with grey, so you get ghostly outlines instead of the colourful smear. For the full effect on those, use the 🎨 Glitch tab. The very first frame is kept, so the start looks normal and the mush builds from there. It looks best on videos with movement and scene changes. The result often plays more reliably in <b>VLC</b> than in a browser. To datamosh any other format, run it through 🎨 Glitch first with the Datamosh sliders up, or convert it to MP4 first.</p>
       </div>
 
       <!-- ============ BYTE BITROT ============ -->
@@ -218,7 +236,8 @@ function setProgress(f) {
 
 // ---------------------------------------------------------------- controls
 const VIDEO_CTRLS = [
-  ['mosh',    'Datamosh',      'old pixels get dragged around by new motion'],
+  ['mosh',    'Datamosh',      'how often old pixels get dragged around by new motion'],
+  ['moshPower','Mosh intensity','how far the smear flows and how long it refuses to clear up'],
   ['melt',    'Melt',          'the picture drips down the screen'],
   ['blocks',  'Block glitch',  'chunks of the frame jump sideways'],
   ['vhs',     'VHS wobble',    'wavy lines, tracking tears, scanlines'],
@@ -233,6 +252,7 @@ const AUDIO_CTRLS = [
   ['warble',  'Tape warble',   'wobbly, seasick worn-out-tape pitch'],
 ];
 const vals = {};
+const DEFAULTS = { speed: 50, moshPower: 50 };
 let actx = null, mediaSrc = null, crusher = null, outGain = null, monitorGain = null, streamDest = null;
 
 function buildCtrls(list, host) {
@@ -241,12 +261,12 @@ function buildCtrls(list, host) {
     wrap.className = 'ctrl';
     wrap.innerHTML = `<label for="c_${key}">${name}<small>${hint}</small></label>
       <output id="o_${key}"></output>
-      <input type="range" id="c_${key}" min="0" max="100" value="${key === 'speed' ? 50 : 0}">`;
+      <input type="range" id="c_${key}" min="0" max="100" value="${DEFAULTS[key] ?? 0}">`;
     host.appendChild(wrap);
     const input = wrap.querySelector('input');
     const update = () => {
       vals[key] = +input.value;
-      $('o_' + key).textContent = key === 'speed' ? speedFromVal(vals[key]).toFixed(2) + '×' : (vals[key] ? vals[key] + '%' : 'off');
+      $('o_' + key).textContent = key === 'speed' ? speedFromVal(vals[key]).toFixed(2) + '×' : (vals[key] ? vals[key] + '%' : key === 'moshPower' ? 'gentle' : 'off');
       applyLiveAudio();
     };
     input.addEventListener('input', update);
@@ -259,17 +279,17 @@ buildCtrls(AUDIO_CTRLS, $('audioCtrls'));
 
 function setVals(obj) {
   for (const [k] of [...VIDEO_CTRLS, ...AUDIO_CTRLS]) {
-    const v = obj[k] ?? (k === 'speed' ? 50 : 0);
+    const v = obj[k] ?? DEFAULTS[k] ?? 0;
     const el = $('c_' + k);
     el.value = v;
     el.dispatchEvent(new Event('input'));
   }
 }
 const PRESETS = {
-  mosh:     { mosh: 85, rgb: 10, stutter: 10, crunch: 15 },
+  mosh:     { mosh: 85, moshPower: 80, rgb: 10, stutter: 10, crunch: 15 },
   fried:    { fry: 85, rgb: 35, color: 25, crunch: 75, blocks: 15 },
   vhs:      { vhs: 75, rgb: 45, blocks: 25, stutter: 15, warble: 55, crunch: 20, color: 10 },
-  melt:     { melt: 80, mosh: 30, color: 30, warble: 30, speed: 40 },
+  melt:     { melt: 80, mosh: 30, moshPower: 60, color: 30, warble: 30, speed: 40 },
   chipmunk: { speed: 88, stutter: 45, blocks: 35, color: 40, crunch: 30 },
   clear:    {},
 };
@@ -278,6 +298,7 @@ document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('clic
   if (p === 'random') {
     const o = {};
     for (const [k] of VIDEO_CTRLS) o[k] = chance(0.5) ? randi(20, 95) : 0;
+    o.moshPower = randi(30, 100);
     o.crunch = chance(0.5) ? randi(10, 90) : 0;
     o.speed = chance(0.5) ? randi(20, 85) : 50;
     o.warble = chance(0.35) ? randi(15, 80) : 0;
@@ -287,14 +308,15 @@ document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('clic
 }));
 
 // ---------------------------------------------------------------- tabs
-function showTab(bytes) {
-  $('tabRender').classList.toggle('on', !bytes);
-  $('tabBytes').classList.toggle('on', bytes);
-  $('panelRender').classList.toggle('hidden', bytes);
-  $('panelBytes').classList.toggle('hidden', !bytes);
+function showTab(name) {
+  for (const t of ['Render', 'Mosh', 'Bytes']) {
+    $('tab' + t).classList.toggle('on', t === name);
+    $('panel' + t).classList.toggle('hidden', t !== name);
+  }
 }
-$('tabRender').onclick = () => showTab(false);
-$('tabBytes').onclick = () => showTab(true);
+$('tabRender').onclick = () => showTab('Render');
+$('tabMosh').onclick = () => showTab('Mosh');
+$('tabBytes').onclick = () => showTab('Bytes');
 
 // ---------------------------------------------------------------- file loading
 const video = $('src');
@@ -313,7 +335,7 @@ function loadFile(file) {
   videoPlayable = false;
   $('result').style.display = 'none';
   $('fileInfo').textContent = `${file.name} · ${fmtBytes(file.size)}`;
-  $('rotBtn').disabled = false;
+  $('rotBtn').disabled = $('moshBtn').disabled = false;
   $('renderBtn').disabled = $('previewBtn').disabled = true;
   if (videoURL) URL.revokeObjectURL(videoURL);
   videoURL = URL.createObjectURL(file);
@@ -331,8 +353,8 @@ video.addEventListener('loadedmetadata', () => {
 video.addEventListener('seeked', () => { if (!running) drawStill(); });
 video.addEventListener('error', () => {
   if (!currentFile) return;
-  setStatus("Your browser can't play this video format, so Glitch Render won't work on it. Byte Bitrot still works.");
-  showTab(true);
+  setStatus("Your browser can't play this video format, so Glitch Render won't work on it. Datamosh and Bitrot still work.");
+  showTab('Bytes');
 });
 
 // ---------------------------------------------------------------- render engine
@@ -456,7 +478,7 @@ function processFrame() {
     const cur = computeLum();
     if (prevLum && state.frame > 2) {
       const m = estimateMotion(cur, prevLum);
-      const p = v.mosh / 100;
+      const p = v.mosh / 100, q = (v.moshPower ?? 50) / 100;
       if (state.moshing) {
         if (--state.moshLeft <= 0) { state.moshing = false; state.cleanLeft = Math.round(rand(10, 60) * (1.6 - p)); }
       } else {
@@ -464,15 +486,20 @@ function processFrame() {
         // Real datamoshes happen at scene cuts: the old scene gets pushed around by the new scene's motion.
         if ((m.cut && chance(0.3 + p * 0.7)) || (state.cleanLeft <= 0 && chance(p * 0.15))) {
           state.moshing = true;
-          state.moshLeft = Math.round(rand(25, 110) * (0.4 + p));
+          state.moshLeft = Math.round(rand(25, 110) * (0.4 + p) * (0.5 + q * 2.5));
+          state.flow = new Float32Array(m.vecs.length);
         }
       }
       if (state.moshing) {
-        const sx = W / AW, sy = H / AH, amp = 1 + p * 1.5;
+        // Intensity: motion gets amplified and keeps its momentum, so the smear "blooms" and keeps flowing
+        const sx = W / AW, sy = H / AH, amp = 1 + q * 3;
+        const keep = q * 0.82;
+        const flow = state.flow && state.flow.length === m.vecs.length ? state.flow : (state.flow = new Float32Array(m.vecs.length));
+        for (let k = 0; k < flow.length; k++) flow[k] = flow[k] * keep + m.vecs[k];
         const bwPx = BLOCK * sx, bhPx = BLOCK * sy;
         for (let by = 0; by < m.bh; by++) for (let bx = 0; bx < m.bw; bx++) {
           const k = (by * m.bw + bx) * 2;
-          const dx = m.vecs[k] * sx * amp, dy = m.vecs[k + 1] * sy * amp;
+          const dx = flow[k] * sx * amp, dy = flow[k + 1] * sy * amp;
           const x = bx * bwPx, y = by * bhPx;
           const fx = clamp(x + dx, 0, W - bwPx), fy = clamp(y + dy, 0, H - bhPx);
           outCtx.drawImage(prevC, fx, fy, bwPx, bhPx, x, y, bwPx, bhPx);
@@ -482,7 +509,7 @@ function processFrame() {
         if (gw < W) outCtx.drawImage(srcC, gw, 0, W - gw, H, gw, 0, W - gw, H);
         if (gh < H) outCtx.drawImage(srcC, 0, gh, W, H - gh, 0, gh, W, H - gh);
         // A little "residual" bleeds the real picture back in, like P-frames do
-        outCtx.globalAlpha = 0.035 + (1 - p) * 0.05;
+        outCtx.globalAlpha = 0.09 * Math.pow(1 - q, 1.5);
         outCtx.drawImage(srcC, 0, 0);
         outCtx.globalAlpha = 1;
         moshedThisFrame = true;
@@ -877,6 +904,219 @@ $('rotBtn').onclick = async () => {
   } finally {
     setTimeout(() => setProgress(null), 400);
     $('rotBtn').disabled = false;
+  }
+};
+
+// ---------------------------------------------------------------- real datamosh (MP4/MOV keyframe removal)
+const moshAmount = $('moshAmount'), moshChaos = $('moshChaos');
+function updMosh() {
+  $('moshAmountOut').textContent = +moshAmount.value ? moshAmount.value + '%' : 'none';
+  $('moshChaosOut').textContent = +moshChaos.value ? moshChaos.value + '%' : 'off';
+}
+moshAmount.oninput = moshChaos.oninput = updMosh; updMosh();
+
+function mp4Boxes(u8, dv, start, end) {
+  const boxes = [];
+  for (let o = start; o + 8 <= end;) {
+    let size = dv.getUint32(o), hdr = 8;
+    const type = fourcc(u8, o + 4);
+    if (size === 1 && o + 16 <= end) { size = Number(dv.getBigUint64(o + 8)); hdr = 16; }
+    else if (size === 0) size = end - o;
+    if (size < hdr) break;
+    boxes.push({ type, start: o, body: o + hdr, end: Math.min(end, o + size) });
+    o += size;
+  }
+  return boxes;
+}
+
+// Finds the video track and the byte position + size of every video frame in it.
+function parseVideoTrack(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const kids = (box, skip = 0) => mp4Boxes(u8, dv, box.body + skip, box.end);
+  const find = (list, type) => list.find(b => b.type === type);
+  const top = mp4Boxes(u8, dv, 0, u8.length);
+  const moov = find(top, 'moov');
+  if (!moov) throw new Error("this doesn't look like an MP4 or MOV file");
+  const moovKids = kids(moov);
+
+  for (const trak of moovKids.filter(b => b.type === 'trak')) {
+    const tk = kids(trak);
+    const tkhd = find(tk, 'tkhd'), mdia = find(tk, 'mdia');
+    if (!tkhd || !mdia) continue;
+    const md = kids(mdia), hdlr = find(md, 'hdlr');
+    if (!hdlr || fourcc(u8, hdlr.body + 8) !== 'vide') continue;
+    const trackId = dv.getUint32(tkhd.body + (u8[tkhd.body] === 1 ? 20 : 12));
+    const minf = find(md, 'minf'); if (!minf) continue;
+    const stbl = find(kids(minf), 'stbl'); if (!stbl) continue;
+    const st = kids(stbl);
+    const stsd = find(st, 'stsd'); if (!stsd) continue;
+    const entry = mp4Boxes(u8, dv, stsd.body + 8, stsd.end)[0]; if (!entry) continue;
+    const cfg = mp4Boxes(u8, dv, entry.body + 78, entry.end);
+    const avcC = find(cfg, 'avcC'), hvcC = find(cfg, 'hvcC');
+    const track = {
+      codec: entry.type, trackId, samples: [],
+      kind: avcC ? 'h264' : hvcC ? 'hevc' : null,
+      lengthSize: avcC ? (u8[avcC.body + 4] & 3) + 1 : hvcC ? (u8[hvcC.body + 21] & 3) + 1 : 4,
+    };
+
+    // Regular MP4: sample tables
+    const stsz = find(st, 'stsz'), stsc = find(st, 'stsc'), stco = find(st, 'stco') || find(st, 'co64');
+    if (stsz && stsc && stco) {
+      const fixed = dv.getUint32(stsz.body + 4), count = dv.getUint32(stsz.body + 8);
+      const size = i => fixed || dv.getUint32(stsz.body + 12 + i * 4);
+      const nChunks = dv.getUint32(stco.body + 4), big = stco.type === 'co64';
+      const chunkOff = c => big ? Number(dv.getBigUint64(stco.body + 8 + c * 8)) : dv.getUint32(stco.body + 8 + c * 4);
+      const nStsc = dv.getUint32(stsc.body + 4);
+      let s = 0;
+      for (let e = 0; e < nStsc && s < count; e++) {
+        const first = dv.getUint32(stsc.body + 8 + e * 12) - 1, per = dv.getUint32(stsc.body + 12 + e * 12);
+        const last = e + 1 < nStsc ? dv.getUint32(stsc.body + 8 + (e + 1) * 12) - 1 : nChunks;
+        for (let c = first; c < last && s < count; c++) {
+          let off = chunkOff(c);
+          for (let k = 0; k < per && s < count; k++, s++) { const sz = size(s); track.samples.push([off, sz]); off += sz; }
+        }
+      }
+    }
+
+    // Fragmented MP4 (screen recorders, browser recordings, some cameras): moof/traf/trun
+    if (!track.samples.length) {
+      let defSize = 0;
+      const mvex = find(moovKids, 'mvex');
+      if (mvex) for (const trex of kids(mvex).filter(b => b.type === 'trex'))
+        if (dv.getUint32(trex.body + 4) === trackId) defSize = dv.getUint32(trex.body + 16);
+      for (const moof of top.filter(b => b.type === 'moof')) {
+        for (const traf of kids(moof).filter(b => b.type === 'traf')) {
+          const tf = kids(traf), tfhd = find(tf, 'tfhd');
+          if (!tfhd || dv.getUint32(tfhd.body + 4) !== trackId) continue;
+          const fl = dv.getUint32(tfhd.body) & 0xffffff;
+          let p = tfhd.body + 8, base = moof.start, tDefSize = defSize;
+          if (fl & 0x1) { base = Number(dv.getBigUint64(p)); p += 8; }
+          if (fl & 0x2) p += 4;
+          if (fl & 0x8) p += 4;
+          if (fl & 0x10) tDefSize = dv.getUint32(p);
+          let cursor = null;
+          for (const trun of tf.filter(b => b.type === 'trun')) {
+            const tfl = dv.getUint32(trun.body) & 0xffffff, n = dv.getUint32(trun.body + 4);
+            let q = trun.body + 8;
+            let off = cursor ?? base;
+            if (tfl & 0x1) { off = base + dv.getInt32(q); q += 4; }
+            if (tfl & 0x4) q += 4;
+            for (let i = 0; i < n; i++) {
+              if (tfl & 0x100) q += 4;
+              let sz = tDefSize;
+              if (tfl & 0x200) { sz = dv.getUint32(q); q += 4; }
+              if (tfl & 0x400) q += 4;
+              if (tfl & 0x800) q += 4;
+              track.samples.push([off, sz]); off += sz;
+            }
+            cursor = off;
+          }
+        }
+      }
+    }
+    return track;
+  }
+  throw new Error('no video track found in this file');
+}
+
+// Is this NAL unit an intra (keyframe) slice?
+function isIntraNal(u8, n, len, kind) {
+  if (kind === 'hevc') { const t = (u8[n] >> 1) & 0x3f; return t >= 16 && t <= 23; }
+  const t = u8[n] & 0x1f;
+  if (t === 5) return true;
+  if (t !== 1 || len < 3) return false;
+  // Read first_mb_in_slice and slice_type (Exp-Golomb) to catch non-IDR I-frames too
+  let bit = (n + 1) * 8;
+  const end = (n + Math.min(len, 12)) * 8;
+  const ue = () => {
+    let zeros = 0;
+    while (bit < end && !((u8[bit >> 3] >> (7 - (bit & 7))) & 1)) { zeros++; bit++; }
+    bit++;
+    let v = 0;
+    for (let i = 0; i < zeros && bit < end; i++, bit++) v = (v << 1) | ((u8[bit >> 3] >> (7 - (bit & 7))) & 1);
+    return (1 << zeros) - 1 + v;
+  };
+  ue();
+  const type = ue() % 5;
+  return type === 2 || type === 4;
+}
+function isSliceNal(u8, n, kind) {
+  if (kind === 'hevc') return ((u8[n] >> 1) & 0x3f) <= 9;
+  return (u8[n] & 0x1f) === 1;
+}
+
+function datamosh(u8, track, amount, chaos) {
+  const ls = track.lengthSize, kind = track.kind;
+  let keyframes = 0, removed = 0, scrambled = 0, acc = 0;
+  for (const [off, size] of track.samples) {
+    const end = Math.min(u8.length, off + size);
+    const nals = [];
+    for (let p = off; p + ls <= end;) {
+      let len = 0;
+      for (let i = 0; i < ls; i++) len = len * 256 + u8[p + i];
+      const n = p + ls;
+      if (len <= 0 || n + len > end) break;
+      nals.push([n, len]);
+      p = n + len;
+    }
+    const intra = nals.filter(([n, len]) => isIntraNal(u8, n, len, kind));
+    if (intra.length) {
+      keyframes++;
+      if (keyframes === 1) continue;            // keep the very first picture
+      acc += amount;
+      if (acc >= 1) {
+        acc -= 1;
+        removed++;
+        // Turn the keyframe into "filler data" the decoder skips. Sizes stay the same, so the file stays valid.
+        for (const [n] of intra) u8[n] = kind === 'hevc' ? (u8[n] & 0x81) | (38 << 1) : 12;
+      }
+    } else if (chaos > 0 && keyframes > 0) {
+      for (const [n, len] of nals) {
+        if (len < 24 || !isSliceNal(u8, n, kind) || !chance(chaos * 0.35)) continue;
+        const flips = randi(1, 1 + Math.round(chaos * 4));
+        for (let f = 0; f < flips; f++) { const o = n + randi(12, len - 1); u8[o] ^= 1 << randi(0, 7); }
+        scrambled++;
+      }
+    }
+  }
+  return { keyframes, removed, scrambled };
+}
+
+$('moshBtn').onclick = async () => {
+  if (!currentFile) return;
+  stopAll();
+  $('moshBtn').disabled = true;
+  setStatus('Reading file…');
+  setProgress(0.2);
+  try {
+    const u8 = new Uint8Array(await currentFile.arrayBuffer());
+    let track;
+    try { track = parseVideoTrack(u8); }
+    catch (e) { throw new Error(`Couldn't datamosh this file: ${e.message}. Real datamosh needs an MP4 or MOV. Try the 🎨 Glitch tab with the Datamosh sliders turned up instead.`); }
+    if (!track.kind) throw new Error(`This video uses the "${track.codec}" codec, which real datamosh doesn't support yet (it needs H.264 or H.265). Try the 🎨 Glitch tab with the Datamosh sliders turned up instead.`);
+    if (!track.samples.length) throw new Error("Couldn't find any video frames in this file.");
+    setProgress(0.6);
+    const r = datamosh(u8, track, +moshAmount.value / 100, +moshChaos.value / 100);
+    setProgress(1);
+    const ext = (currentFile.name.match(/\.([^.]+)$/) || [, 'mp4'])[1].toLowerCase();
+    const blob = new Blob([u8], { type: currentFile.type || 'video/mp4' });
+    let note = `${track.kind === 'hevc' ? 'H.265' : 'H.264'} video, ${track.samples.length.toLocaleString()} frames. ` +
+      `Removed ${r.removed} of ${Math.max(0, r.keyframes - 1)} keyframes (the first one is kept)` +
+      (r.scrambled ? `, and scrambled ${r.scrambled.toLocaleString()} motion frames.` : '.');
+    if (track.kind === 'hevc' && r.removed) note += ' Heads up: with H.265 most players show grey ghost outlines instead of the colourful smear.';
+    if (r.keyframes <= 1) note += ' This video only has one keyframe, so there was nothing to remove. Turn up Extra chaos, or use the 🎨 Glitch tab.';
+    else if (!r.removed) note += ' Turn the Intensity up to actually mosh it.';
+    showResult(blob, ext, note);
+    $('resultVideo').onerror = () => {
+      $('resultNote').textContent += " Your browser won't play this one, which is common with moshed files. Download it and open it in VLC.";
+      $('resultVideo').onerror = null;
+    };
+    setStatus('Moshed! Press play below. The smearing starts at the first scene change or keyframe.');
+  } catch (e) {
+    setStatus(e.message);
+  } finally {
+    setTimeout(() => setProgress(null), 400);
+    $('moshBtn').disabled = false;
   }
 };
 
