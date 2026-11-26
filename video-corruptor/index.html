@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Video Corruptor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
   :root {
     --bg: #0d0b14;
@@ -16,11 +17,12 @@
     --cyan: #21e6c1;
     --yellow: #ffd23f;
     --radius: 12px;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  body { padding: 20px 16px 60px; }
+  body { padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   main { max-width: 1100px; margin: 0 auto; }
   h1 { font-size: clamp(28px, 6vw, 46px); margin: 0 0 4px; letter-spacing: -1px; position: relative; display: inline-block; }
   h1 span { color: var(--hot); text-shadow: -3px 0 var(--cyan), 3px 0 var(--hot); }
@@ -778,18 +780,75 @@ $('stopBtn').onclick = () => { const r = recording; stopAll(); if (!r) setStatus
 // ---------------------------------------------------------------- results
 let resultURL = null;
 function baseName() { return (currentFile?.name || 'video').replace(/\.[^.]+$/, ''); }
+let resultBlob = null, resultName = '';
 function showResult(blob, ext, note) {
   if (resultURL) URL.revokeObjectURL(resultURL);
   resultURL = URL.createObjectURL(blob);
+  resultBlob = blob;
   const rv = $('resultVideo');
   rv.onerror = null;
   rv.src = resultURL;
+  resultName = `${baseName()}-CORRUPTED.${ext}`;
   $('download').href = resultURL;
-  $('download').download = `${baseName()}-CORRUPTED.${ext}`;
+  $('download').download = resultName;
+  $('download').textContent = '⬇ Download corrupted video';
   $('resultNote').textContent = note;
   $('result').style.display = 'block';
   $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
+// When this page is hosted on claude.ai, downloads go through the viewer's save prompt instead of a plain link.
+let saver = null;
+if (window.claude && typeof window.claude.use === 'function') {
+  window.claude.use('downloads').then(d => { saver = d; }).catch(() => {});
+}
+const SAVE_OK = ['mp4', 'webm'];
+
+// Minimal "stored" (uncompressed) ZIP writer, used for formats the save prompt won't accept directly.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function zipOne(name, blob) {
+  const data = new Uint8Array(await blob.arrayBuffer());
+  const nm = new TextEncoder().encode(name), crc = crc32(data), size = data.length;
+  const lh = new DataView(new ArrayBuffer(30));
+  lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+  lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, nm.length, true);
+  const cd = new DataView(new ArrayBuffer(46));
+  cd.setUint32(0, 0x02014b50, true); cd.setUint16(4, 20, true); cd.setUint16(6, 20, true); cd.setUint16(8, 0x0800, true);
+  cd.setUint32(16, crc, true); cd.setUint32(20, size, true); cd.setUint32(24, size, true); cd.setUint16(28, nm.length, true);
+  const cdOff = 30 + nm.length + size;
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, 1, true); end.setUint16(10, 1, true);
+  end.setUint32(12, 46 + nm.length, true); end.setUint32(16, cdOff, true);
+  return new Blob([lh, nm, data, cd, nm, end], { type: 'application/zip' });
+}
+
+$('download').addEventListener('click', async e => {
+  if (!saver || !resultBlob) return;          // running locally: the normal download link works
+  e.preventDefault();
+  const a = $('download');
+  let ext = resultName.split('.').pop().toLowerCase(), name = resultName, data = resultBlob;
+  if (ext === 'mov' || ext === 'm4v') { ext = 'mp4'; name = name.replace(/\.[^.]+$/, '.mp4'); }  // same container
+  if (!SAVE_OK.includes(ext)) {
+    if (data.size > 4e9) { setStatus('This file is too big to wrap in a ZIP for download here.'); return; }
+    a.textContent = 'Packing…';
+    data = await zipOne(resultName, data);
+    name = resultName.replace(/\.[^.]+$/, '') + '.zip';
+  }
+  a.textContent = 'Waiting for you to confirm…';
+  try {
+    await saver.save({ filename: name, data });
+    setStatus(name.endsWith('.zip') ? `Saved ${name}. Unzip it to get your corrupted video.` : `Saved ${name}.`);
+  } catch (err) {
+    const code = err && err.code;
+    if (code === 'declined') setStatus('Download cancelled.');
+    else if (code === 'rate_limited') setStatus('A save prompt is already open. Finish that one, then try again.');
+    else if (code === 'host_unavailable') setStatus("This app can't save files. Open this page in a web browser or on a computer to download.");
+    else setStatus("Couldn't save the file here" + (err && err.message ? ` (${err.message})` : '') + '.');
+  } finally {
+    a.textContent = '⬇ Download corrupted video';
+  }
+});
 
 // ---------------------------------------------------------------- byte bitrot
 const rotAmount = $('rotAmount');
