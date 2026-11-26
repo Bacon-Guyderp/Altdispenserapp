@@ -136,6 +136,7 @@
           <button data-preset="vhs">📼 Cursed VHS</button>
           <button data-preset="melt">🫠 Meltdown</button>
           <button data-preset="chipmunk">🐿️ Chipmunk Panic</button>
+          <button data-preset="squish">🗜️ Content-Aware Squish</button>
           <button data-preset="random">🎲 Surprise me</button>
           <button data-preset="clear">↺ Clear</button>
         </div>
@@ -247,6 +248,7 @@ const VIDEO_CTRLS = [
   ['fry',     'Deep fry',      'crunchy pixels, nuclear colours'],
   ['color',   'Colour chaos',  'hue spins and inverted flashes'],
   ['stutter', 'Stutter',       'freezes and skipping-CD loops'],
+  ['carve',   'Content-aware squish', 'cuts out "boring" paths through the picture and stretches what is left back to full size'],
 ];
 const AUDIO_CTRLS = [
   ['crunch',  'Bitcrush',      'turns the sound into a broken toy'],
@@ -293,6 +295,7 @@ const PRESETS = {
   vhs:      { vhs: 75, rgb: 45, blocks: 25, stutter: 15, warble: 55, crunch: 20, color: 10 },
   melt:     { melt: 80, mosh: 30, moshPower: 60, color: 30, warble: 30, speed: 40 },
   chipmunk: { speed: 88, stutter: 45, blocks: 35, color: 40, crunch: 30 },
+  squish:   { carve: 85, crunch: 25, speed: 45 },
   clear:    {},
 };
 document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
@@ -410,6 +413,30 @@ const GL = (() => {
     for (const [k, val] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]])
       gl.texParameteri(gl.TEXTURE_2D, k, val);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    // Second program: remaps every output pixel through a seam-carving map
+    const fsMap = `precision highp float;
+      uniform sampler2D tex, cmap; uniform vec2 grid, ana;
+      varying vec2 uv;
+      void main(){
+        vec2 o = vec2(uv.x, 1.0 - uv.y) * grid;
+        vec2 cell = min(floor(o), grid - 1.0), f = o - cell;
+        vec2 m = floor(texture2D(cmap, vec2((cell.x + 0.5) / grid.x, 1.0 - (cell.y + 0.5) / grid.y)).rg * 255.0 + 0.5);
+        vec2 s = (m + f) / ana;
+        gl_FragColor = vec4(texture2D(tex, vec2(s.x, 1.0 - s.y)).rgb, 1.0);
+      }`;
+    const progMap = gl.createProgram();
+    gl.attachShader(progMap, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(progMap, sh(gl.FRAGMENT_SHADER, fsMap));
+    gl.linkProgram(progMap);
+    if (!gl.getProgramParameter(progMap, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(progMap));
+    const UM = { grid: gl.getUniformLocation(progMap, 'grid'), ana: gl.getUniformLocation(progMap, 'ana'),
+                 tex: gl.getUniformLocation(progMap, 'tex'), cmap: gl.getUniformLocation(progMap, 'cmap') };
+    const locMap = gl.getAttribLocation(progMap, 'p');
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    for (const [k, val] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]])
+      gl.texParameteri(gl.TEXTURE_2D, k, val);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.useProgram(prog);
     const U = {};
     for (const n of ['res', 'shift', 'levels', 'noise', 'scan', 'seed', 'invert', 'contrast', 'bright', 'swapMode', 'hue', 'sat']) U[n] = gl.getUniformLocation(prog, n);
     const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
@@ -426,6 +453,23 @@ const GL = (() => {
     const T = m => [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]];
     return {
       // Runs the shader on `from` and writes the result into the 2D context `to`.
+      remap(from, to, m) {
+        const w = from.width, h = from.height;
+        if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+        gl.useProgram(progMap);
+        gl.vertexAttribPointer(locMap, 2, gl.FLOAT, false, 0, 0); gl.enableVertexAttribArray(locMap);
+        gl.viewport(0, 0, w, h);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, m.gw, m.gh, 0, gl.RGBA, gl.UNSIGNED_BYTE, m.map);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
+        gl.uniform1i(UM.tex, 0); gl.uniform1i(UM.cmap, 1);
+        gl.uniform2f(UM.grid, m.gw, m.gh); gl.uniform2f(UM.ana, m.aw, m.ah);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.useProgram(prog);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0); gl.enableVertexAttribArray(loc);
+        to.drawImage(c, 0, 0);
+      },
       run(from, to, o) {
         const w = from.width, h = from.height;
         if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
@@ -528,6 +572,94 @@ function estimateMotion(cur, prev) {
     }
   }
   return { vecs, bw, bh, cut: totalZeroSad / (bw * bh * BLOCK * BLOCK) > 38 };
+}
+
+// ---------------------------------------------------------------- content-aware squish (seam carving)
+// Seams are found on a small copy of the frame. The result is a map saying which source pixel every output
+// cell comes from, which is then applied to the full-resolution frame (stretched back to full size).
+const CARVE_MAX = 200;
+let carveC = null, carveX = null, carveBufs = null;
+
+// Removes the cheapest vertical seams until `w` reaches `target`. Rows have `stride`; E = energy, idx = source index.
+function carveSeams(E, idx, stride, w, h, target, M, B) {
+  while (w > target) {
+    for (let x = 0; x < w; x++) M[x] = E[x];
+    for (let y = 1; y < h; y++) {
+      const r = y * stride, pr = r - stride, last = w - 1;
+      for (let x = 0; x <= last; x++) {
+        let b = M[pr + x], d = 0;
+        if (x > 0 && M[pr + x - 1] < b) { b = M[pr + x - 1]; d = -1; }
+        if (x < last && M[pr + x + 1] < b) { b = M[pr + x + 1]; d = 1; }
+        M[r + x] = E[r + x] + b; B[r + x] = d;
+      }
+    }
+    let r = (h - 1) * stride, sx = 0, best = M[r];
+    for (let x = 1; x < w; x++) if (M[r + x] < best) { best = M[r + x]; sx = x; }
+    for (let y = h - 1; y >= 0; y--) {
+      r = y * stride;
+      const nx = y > 0 ? sx + B[r + sx] : sx;
+      E.copyWithin(r + sx, r + sx + 1, r + w);
+      idx.copyWithin(r + sx, r + sx + 1, r + w);
+      sx = nx;
+    }
+    w--;
+  }
+  return w;
+}
+
+function seamCarveMap(p, t) {
+  const sc = Math.min(1, CARVE_MAX / Math.max(W, H));
+  const aw = Math.max(16, Math.round(W * sc)), ah = Math.max(16, Math.round(H * sc)), n = aw * ah;
+  if (!carveC || carveC.width !== aw || carveC.height !== ah) {
+    carveC = mkCanvas(aw, ah); carveX = ctx2d(carveC, true);
+    carveBufs = { L: new Uint8Array(n), E: new Int32Array(n), E2: new Int32Array(n), X: new Uint8Array(n), Y: new Uint8Array(n),
+                  M: new Int32Array(n), B: new Int8Array(n) };
+  }
+  const { L, E, E2, X, Y, M, B } = carveBufs;
+  carveX.drawImage(out, 0, 0, aw, ah);
+  const d = carveX.getImageData(0, 0, aw, ah).data;
+  for (let i = 0, j = 0; j < n; i += 4, j++) L[j] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
+  // Energy = how much detail each pixel has (gradient strength). Seams avoid detail, so "boring" areas get cut first.
+  for (let y = 0; y < ah; y++) {
+    const r = y * aw, up = (y > 0 ? y - 1 : y) * aw, dn = (y < ah - 1 ? y + 1 : y) * aw;
+    for (let x = 0; x < aw; x++) {
+      const gx = L[r + (x < aw - 1 ? x + 1 : x)] - L[r + (x > 0 ? x - 1 : x)];
+      const gy = L[dn + x] - L[up + x];
+      E[r + x] = (gx < 0 ? -gx : gx) + (gy < 0 ? -gy : gy);
+      X[r + x] = x;
+    }
+  }
+  // The squish "breathes" over time so it keeps wobbling
+  const amt = p * (0.75 + 0.25 * Math.sin(t * 1.7));
+  const gw = carveSeams(E, X, aw, aw, ah, Math.max(4, Math.round(aw * (1 - amt * 0.8))), M, B);
+  // Transpose the narrowed grid and carve horizontal seams the same way
+  for (let x = 0; x < gw; x++) for (let y = 0; y < ah; y++) { E2[x * ah + y] = E[y * aw + x]; Y[x * ah + y] = y; }
+  const gh = carveSeams(E2, Y, ah, ah, gw, Math.max(4, Math.round(ah * (1 - amt * 0.6))), M, B);
+  const map = new Uint8Array(gw * gh * 4);
+  for (let i = 0; i < gw; i++) for (let j = 0; j < gh; j++) {
+    const sy = Y[i * ah + j], k = (j * gw + i) * 4;
+    map[k] = X[sy * aw + i]; map[k + 1] = sy;
+  }
+  return { map, gw, gh, aw, ah };
+}
+
+// CPU version of the remap: every output pixel looks up its source pixel through the map
+function remapCPU(m) {
+  const img = outCtx.getImageData(0, 0, W, H);
+  const dst = new Uint32Array(img.data.buffer), src = dst.slice();
+  const { map, gw, gh, aw, ah } = m, sxS = W / aw, syS = H / ah;
+  const colCell = new Int32Array(W), colF = new Float32Array(W);
+  for (let x = 0; x < W; x++) { const g = (x + 0.5) * gw / W; colCell[x] = Math.min(gw - 1, g | 0); colF[x] = g - colCell[x]; }
+  for (let y = 0; y < H; y++) {
+    const g = (y + 0.5) * gh / H, j = Math.min(gh - 1, g | 0), fy = g - j, rowBase = j * gw, o = y * W;
+    for (let x = 0; x < W; x++) {
+      const k = (rowBase + colCell[x]) * 4;
+      let sx = ((map[k] + colF[x]) * sxS) | 0, sy = ((map[k + 1] + fy) * syS) | 0;
+      if (sx >= W) sx = W - 1; if (sy >= H) sy = H - 1;
+      dst[o + x] = src[sy * W + sx];
+    }
+  }
+  outCtx.putImageData(img, 0, 0);
 }
 
 const NOISE_MASK = (1 << 18) - 1;
@@ -671,6 +803,12 @@ function processFrame(t) {
         outCtx.filter = 'none';
       }
     }
+  }
+
+  // ---- Content-aware squish
+  if (v.carve) {
+    const m = seamCarveMap(v.carve / 100, t);
+    if (GL) GL.remap(out, outCtx, m); else remapCPU(m);
   }
 
   // ---- Per-pixel pass: RGB split, posterise, channel swap, noise, scanlines

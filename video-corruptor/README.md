@@ -20,9 +20,10 @@ Everything runs in your browser, so your video is never uploaded anywhere.
 | Deep fry | Pixelation, posterised colour, extreme saturation and contrast. |
 | Colour chaos | Spinning hue, inverted flashes, swapped colour channels. |
 | Stutter | Freezes and skipping-CD loops. |
+| Content-aware squish | Seam carving, like Photoshop's Content-Aware Scale: it repeatedly cuts out the least detailed path through the frame (horizontally and vertically), then stretches what's left back to full size. Seams are found on a small copy and applied to the full-resolution frame as a pixel map, and the amount pulses over time. |
 | Bitcrush / Speed / Tape warble | Crunchy audio, chipmunk or demon pitch, and seasick wobble. |
 
-There are presets (Datamosh Dream, Deep Fried, Cursed VHS, Meltdown, Chipmunk Panic, Surprise me) and a live preview.
+There are presets (Datamosh Dream, Deep Fried, Cursed VHS, Meltdown, Chipmunk Panic, Content-Aware Squish, Surprise me) and a live preview.
 Rendering decodes and re-encodes the video with WebCodecs (via [Mediabunny](https://mediabunny.dev), loaded from jsDelivr only when you render) as fast as the computer can process frames, instead of playing it in real time. No frames get dropped, and the sound is processed offline to match.
 Colour and pixel effects run as a WebGL shader on computers with a graphics card, and as optimised CPU loops otherwise.
 Browsers without WebCodecs fall back to recording in real time.
