@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Corruptor</title>
+<style>
+  :root {
+    --bg: #0d0b14;
+    --panel: #17141f;
+    --panel-2: #201c2b;
+    --line: #322c40;
+    --text: #ece8f4;
+    --muted: #9a92ab;
+    --hot: #ff2e88;
+    --cyan: #21e6c1;
+    --yellow: #ffd23f;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { padding: 20px 16px 60px; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: clamp(28px, 6vw, 46px); margin: 0 0 4px; letter-spacing: -1px; position: relative; display: inline-block; }
+  h1 span { color: var(--hot); text-shadow: -3px 0 var(--cyan), 3px 0 var(--hot); }
+  .tag { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .card h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin: 0 0 12px; }
+
+  #drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px 16px; text-align: center;
+    cursor: pointer; transition: border-color .15s, background .15s; }
+  #drop.over, #drop:hover { border-color: var(--hot); background: #ff2e8810; }
+  #drop strong { display: block; font-size: 18px; margin-bottom: 4px; }
+  #drop small { color: var(--muted); }
+  #fileInfo { margin-top: 10px; color: var(--muted); font-size: 13px; word-break: break-all; }
+
+  .stage { position: relative; background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center; margin-top: 14px; }
+  .stage canvas, .stage video { max-width: 100%; max-height: 100%; display: block; }
+  .stage .empty { color: #555; font-size: 14px; padding: 20px; text-align: center; }
+  .stage .badge { position: absolute; top: 8px; left: 8px; background: #000a; padding: 2px 8px; border-radius: 6px;
+    font-size: 12px; color: var(--yellow); font-family: ui-monospace, monospace; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; background: var(--panel-2); padding: 4px; border-radius: 10px; }
+  .tabs button { flex: 1; background: none; border: 0; color: var(--muted); padding: 9px 6px; border-radius: 7px;
+    font: inherit; font-weight: 600; cursor: pointer; }
+  .tabs button.on { background: var(--hot); color: #fff; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .presets button, .btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    padding: 7px 11px; border-radius: 8px; font: inherit; font-size: 13px; cursor: pointer; }
+  .presets button:hover, .btn:hover { border-color: var(--cyan); }
+
+  .ctrl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin-bottom: 10px; }
+  .ctrl label { font-size: 14px; }
+  .ctrl label small { color: var(--muted); font-size: 12px; display: block; }
+  .ctrl output { font-family: ui-monospace, monospace; font-size: 12px; color: var(--cyan); align-self: center; }
+  .ctrl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--hot); }
+  .group-title { font-size: 12px; color: var(--yellow); text-transform: uppercase; letter-spacing: 1.2px;
+    margin: 14px 0 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; }
+  select { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 8px; font: inherit; font-size: 13px; }
+
+  .go { width: 100%; background: linear-gradient(90deg, var(--hot), #b13cff); color: #fff; border: 0;
+    padding: 14px; border-radius: 10px; font: inherit; font-weight: 800; font-size: 17px; cursor: pointer;
+    letter-spacing: .5px; margin-top: 6px; }
+  .go:disabled { opacity: .4; cursor: not-allowed; }
+  .go.secondary { background: var(--panel-2); border: 1px solid var(--line); font-size: 14px; padding: 10px; font-weight: 600; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .progress { height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; margin-top: 12px; display: none; }
+  .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--hot)); transition: width .2s; }
+  #status { font-size: 13px; color: var(--muted); margin-top: 8px; min-height: 1.4em; }
+
+  #result { display: none; margin-top: 16px; }
+  #result video { width: 100%; border-radius: 8px; background: #000; max-height: 60vh; }
+  .download { display: block; text-align: center; text-decoration: none; margin-top: 10px; background: var(--cyan);
+    color: #04201a; font-weight: 800; padding: 13px; border-radius: 10px; font-size: 16px; }
+  .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .hidden { display: none !important; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Video <span>Corruptor</span></h1>
+  <p class="tag">Ruin a perfectly good video. Everything happens in your browser, so your file never leaves your computer.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>1 · Your video</h2>
+      <div id="drop" tabindex="0" role="button" aria-label="Choose a video file">
+        <strong>Drop a video here</strong>
+        <small>or click to choose one (MP4, WebM, MOV, AVI, MKV…)</small>
+      </div>
+      <input type="file" id="file" accept="video/*,.mkv,.avi,.mov" hidden>
+      <div id="fileInfo"></div>
+
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">Your cursed creation will appear here</div>
+        <canvas id="out" class="hidden"></canvas>
+        <div class="badge hidden" id="badge"></div>
+      </div>
+      <video id="src" playsinline preload="auto" class="hidden"></video>
+
+      <div class="progress" id="progress"><div></div></div>
+      <div id="status"></div>
+
+      <div id="result">
+        <h2 style="margin-top:6px">3 · Your masterpiece</h2>
+        <video id="resultVideo" controls playsinline></video>
+        <a class="download" id="download" download>⬇ Download corrupted video</a>
+        <div class="note" id="resultNote"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2 · Choose your chaos</h2>
+      <div class="tabs">
+        <button id="tabRender" class="on">🎨 Glitch Render</button>
+        <button id="tabBytes">💾 Byte Bitrot</button>
+      </div>
+
+      <!-- ============ GLITCH RENDER ============ -->
+      <div id="panelRender">
+        <div class="presets">
+          <button data-preset="mosh">🌊 Datamosh Dream</button>
+          <button data-preset="fried">🍟 Deep Fried</button>
+          <button data-preset="vhs">📼 Cursed VHS</button>
+          <button data-preset="melt">🫠 Meltdown</button>
+          <button data-preset="chipmunk">🐿️ Chipmunk Panic</button>
+          <button data-preset="random">🎲 Surprise me</button>
+          <button data-preset="clear">↺ Clear</button>
+        </div>
+
+        <div class="group-title">Picture</div>
+        <div id="videoCtrls"></div>
+        <div class="group-title">Sound</div>
+        <div id="audioCtrls"></div>
+
+        <div class="group-title">Output</div>
+        <div class="row">
+          <label for="size">Size</label>
+          <select id="size">
+            <option value="360">360p (fastest)</option>
+            <option value="480">480p</option>
+            <option value="720" selected>720p</option>
+            <option value="1080">1080p (needs a fast computer)</option>
+          </select>
+          <label style="margin-left:auto"><input type="checkbox" id="monitor" checked> Hear it while rendering</label>
+        </div>
+
+        <div class="actions">
+          <button class="go secondary" id="previewBtn" disabled>▶ Live preview</button>
+          <button class="go secondary" id="stopBtn" disabled>■ Stop</button>
+        </div>
+        <button class="go" id="renderBtn" disabled>CORRUPT IT</button>
+        <p class="note">Rendering plays the video through the effects in real time, so a 1-minute clip takes about a minute (less if you sped it up). Keep this tab visible while it runs.</p>
+      </div>
+
+      <!-- ============ BYTE BITROT ============ -->
+      <div id="panelBytes" class="hidden">
+        <p class="note" style="margin-top:0">This damages the actual bytes inside the file, the way a dying hard drive would. The video decoder then gets confused and makes grey smears, rainbow blocks and frames that melt into each other. Every click gives a different result.</p>
+        <div class="ctrl">
+          <label for="rotAmount">Damage <small>how many places get hit</small></label>
+          <output id="rotAmountOut"></output>
+          <input type="range" id="rotAmount" min="1" max="100" value="45">
+        </div>
+        <div class="row">
+          <label for="rotStyle">Style</label>
+          <select id="rotStyle">
+            <option value="random">Random bytes (smears and blocks)</option>
+            <option value="repeat">Copy chunks (stutters and ghosts)</option>
+            <option value="shuffle">Shuffle chunks (scrambled frames)</option>
+            <option value="lol">Write "LOL" everywhere</option>
+            <option value="mix">A bit of everything</option>
+          </select>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="rotProtect" checked> Keep the file playable <small style="color:var(--muted)">(only damages picture/sound data, not the file's table of contents)</small></label>
+        </div>
+        <button class="go" id="rotBtn" disabled>ROT IT</button>
+        <p class="note">Tip: MP4 and AVI files work best. Corrupted files often play better in <b>VLC</b> or <b>mpv</b> than in a browser, and different players show the damage differently. Browsers sometimes refuse to play them at all.</p>
+      </div>
+    </section>
+  </div>
+  <footer>No uploads, no servers. It's just your browser and a lot of bad decisions.</footer>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+// ---------------------------------------------------------------- helpers
+const $ = id => document.getElementById(id);
+const rand = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+const randi = (a, b) => Math.floor(rand(a, b + 1));
+const chance = p => Math.random() < p;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const mkCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const ctx2d = (c, read) => c.getContext('2d', read ? { willReadFrequently: true } : undefined);
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + ' MB';
+  return (n / 1073741824).toFixed(2) + ' GB';
+}
+function setStatus(msg) { $('status').textContent = msg; }
+function setProgress(f) {
+  $('progress').style.display = f == null ? 'none' : 'block';
+  $('progress').firstElementChild.style.width = ((f || 0) * 100).toFixed(1) + '%';
+}
+
+// ---------------------------------------------------------------- controls
+const VIDEO_CTRLS = [
+  ['mosh',    'Datamosh',      'old pixels get dragged around by new motion'],
+  ['melt',    'Melt',          'the picture drips down the screen'],
+  ['blocks',  'Block glitch',  'chunks of the frame jump sideways'],
+  ['vhs',     'VHS wobble',    'wavy lines, tracking tears, scanlines'],
+  ['rgb',     'RGB split',     'colour channels drift apart'],
+  ['fry',     'Deep fry',      'crunchy pixels, nuclear colours'],
+  ['color',   'Colour chaos',  'hue spins and inverted flashes'],
+  ['stutter', 'Stutter',       'freezes and skipping-CD loops'],
+];
+const AUDIO_CTRLS = [
+  ['crunch',  'Bitcrush',      'turns the sound into a broken toy'],
+  ['speed',   'Speed / pitch', '50 = normal, up = chipmunk, down = demon'],
+  ['warble',  'Tape warble',   'wobbly, seasick worn-out-tape pitch'],
+];
+const vals = {};
+let actx = null, mediaSrc = null, crusher = null, outGain = null, monitorGain = null, streamDest = null;
+
+function buildCtrls(list, host) {
+  for (const [key, name, hint] of list) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ctrl';
+    wrap.innerHTML = `<label for="c_${key}">${name}<small>${hint}</small></label>
+      <output id="o_${key}"></output>
+      <input type="range" id="c_${key}" min="0" max="100" value="${key === 'speed' ? 50 : 0}">`;
+    host.appendChild(wrap);
+    const input = wrap.querySelector('input');
+    const update = () => {
+      vals[key] = +input.value;
+      $('o_' + key).textContent = key === 'speed' ? speedFromVal(vals[key]).toFixed(2) + '×' : (vals[key] ? vals[key] + '%' : 'off');
+      applyLiveAudio();
+    };
+    input.addEventListener('input', update);
+    update();
+  }
+}
+const speedFromVal = v => Math.pow(2, (v - 50) / 50);   // 0.5× … 2×
+buildCtrls(VIDEO_CTRLS, $('videoCtrls'));
+buildCtrls(AUDIO_CTRLS, $('audioCtrls'));
+
+function setVals(obj) {
+  for (const [k] of [...VIDEO_CTRLS, ...AUDIO_CTRLS]) {
+    const v = obj[k] ?? (k === 'speed' ? 50 : 0);
+    const el = $('c_' + k);
+    el.value = v;
+    el.dispatchEvent(new Event('input'));
+  }
+}
+const PRESETS = {
+  mosh:     { mosh: 85, rgb: 10, stutter: 10, crunch: 15 },
+  fried:    { fry: 85, rgb: 35, color: 25, crunch: 75, blocks: 15 },
+  vhs:      { vhs: 75, rgb: 45, blocks: 25, stutter: 15, warble: 55, crunch: 20, color: 10 },
+  melt:     { melt: 80, mosh: 30, color: 30, warble: 30, speed: 40 },
+  chipmunk: { speed: 88, stutter: 45, blocks: 35, color: 40, crunch: 30 },
+  clear:    {},
+};
+document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+  const p = b.dataset.preset;
+  if (p === 'random') {
+    const o = {};
+    for (const [k] of VIDEO_CTRLS) o[k] = chance(0.5) ? randi(20, 95) : 0;
+    o.crunch = chance(0.5) ? randi(10, 90) : 0;
+    o.speed = chance(0.5) ? randi(20, 85) : 50;
+    o.warble = chance(0.35) ? randi(15, 80) : 0;
+    if (!VIDEO_CTRLS.some(([k]) => o[k])) o.mosh = 70;
+    setVals(o);
+  } else setVals(PRESETS[p]);
+}));
+
+// ---------------------------------------------------------------- tabs
+function showTab(bytes) {
+  $('tabRender').classList.toggle('on', !bytes);
+  $('tabBytes').classList.toggle('on', bytes);
+  $('panelRender').classList.toggle('hidden', bytes);
+  $('panelBytes').classList.toggle('hidden', !bytes);
+}
+$('tabRender').onclick = () => showTab(false);
+$('tabBytes').onclick = () => showTab(true);
+
+// ---------------------------------------------------------------- file loading
+const video = $('src');
+let currentFile = null, videoURL = null, videoPlayable = false;
+
+$('drop').onclick = () => $('file').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+$('file').onchange = e => e.target.files[0] && loadFile(e.target.files[0]);
+['dragenter', 'dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('over'); }));
+$('drop').addEventListener('drop', e => e.dataTransfer.files[0] && loadFile(e.dataTransfer.files[0]));
+
+function loadFile(file) {
+  stopAll();
+  currentFile = file;
+  videoPlayable = false;
+  $('result').style.display = 'none';
+  $('fileInfo').textContent = `${file.name} · ${fmtBytes(file.size)}`;
+  $('rotBtn').disabled = false;
+  $('renderBtn').disabled = $('previewBtn').disabled = true;
+  if (videoURL) URL.revokeObjectURL(videoURL);
+  videoURL = URL.createObjectURL(file);
+  video.src = videoURL;
+  setStatus('Loading video…');
+}
+
+video.addEventListener('loadedmetadata', () => {
+  videoPlayable = true;
+  $('fileInfo').textContent += ` · ${video.videoWidth}×${video.videoHeight} · ${video.duration.toFixed(1)}s`;
+  $('renderBtn').disabled = $('previewBtn').disabled = false;
+  setStatus('Ready. Pick a preset or play with the sliders, then hit CORRUPT IT.');
+  video.currentTime = Math.min(0.5, video.duration / 3 || 0);
+});
+video.addEventListener('seeked', () => { if (!running) drawStill(); });
+video.addEventListener('error', () => {
+  if (!currentFile) return;
+  setStatus("Your browser can't play this video format, so Glitch Render won't work on it. Byte Bitrot still works.");
+  showTab(true);
+});
+
+// ---------------------------------------------------------------- render engine
+const out = $('out');
+const outCtx = ctx2d(out, true);
+let W = 0, H = 0;
+let srcC, srcX, prevC, prevX, tmpC, tmpX, anaC, anaX;
+let AW = 0, AH = 0, prevLum = null, curLum = null;
+const BLOCK = 8, SEARCH = 4;
+let ring = [], ringPos = 0;
+let state = {};
+
+function setupCanvases() {
+  const maxH = +$('size').value;
+  const vw = video.videoWidth || 640, vh = video.videoHeight || 360;
+  const s = Math.min(1, maxH / vh, (maxH * 16 / 9) / vw);
+  W = Math.max(2, Math.round(vw * s / 2) * 2);
+  H = Math.max(2, Math.round(vh * s / 2) * 2);
+  out.width = W; out.height = H;
+  srcC = mkCanvas(W, H); srcX = ctx2d(srcC);
+  prevC = mkCanvas(W, H); prevX = ctx2d(prevC);
+  tmpC = mkCanvas(W, H); tmpX = ctx2d(tmpC);
+  AW = 160; AH = Math.max(BLOCK * 2, Math.round(AW * H / W / BLOCK) * BLOCK);
+  anaC = mkCanvas(AW, AH); anaX = ctx2d(anaC, true);
+  prevLum = null; curLum = new Uint8Array(AW * AH);
+  ring = Array.from({ length: 8 }, () => mkCanvas(W, H));
+  ringPos = 0;
+  state = {
+    frame: 0, moshing: false, moshLeft: 0, cleanLeft: randi(10, 40),
+    stutterLeft: 0, stutterMode: null, stutterIdx: 0, stutterLen: 0,
+    meltCols: null, invertLeft: 0, swapLeft: 0, swapMode: 0, tearY: -1, tearLeft: 0,
+  };
+  const colW = 6, cols = Math.ceil(W / colW);
+  state.meltCols = Array.from({ length: cols }, () => rand(0.3, 1) * (chance(0.15) ? 3 : 1));
+  out.classList.remove('hidden');
+  $('empty').classList.add('hidden');
+}
+
+function drawStill() {
+  if (!videoPlayable || !video.videoWidth) return;
+  if (!W || out.width !== W) setupCanvases();
+  outCtx.drawImage(video, 0, 0, W, H);
+}
+$('size').onchange = () => { if (!running && videoPlayable) { setupCanvases(); drawStill(); } };
+
+function computeLum() {
+  anaX.drawImage(video, 0, 0, AW, AH);
+  const d = anaX.getImageData(0, 0, AW, AH).data;
+  const lum = new Uint8Array(AW * AH);
+  for (let i = 0, j = 0; j < lum.length; i += 4, j++) lum[j] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
+  return lum;
+}
+
+// Block-matching motion estimation: for each block in the current frame, find where it was in the previous one.
+function estimateMotion(cur, prev) {
+  const bw = AW / BLOCK | 0, bh = AH / BLOCK | 0;
+  const vecs = new Int8Array(bw * bh * 2);
+  let totalZeroSad = 0;
+  for (let by = 0; by < bh; by++) {
+    for (let bx = 0; bx < bw; bx++) {
+      const x0 = bx * BLOCK, y0 = by * BLOCK;
+      let best = Infinity, bdx = 0, bdy = 0;
+      for (let dy = -SEARCH; dy <= SEARCH; dy++) {
+        const py = y0 + dy;
+        if (py < 0 || py + BLOCK > AH) continue;
+        for (let dx = -SEARCH; dx <= SEARCH; dx++) {
+          const px = x0 + dx;
+          if (px < 0 || px + BLOCK > AW) continue;
+          let sad = (dx || dy) ? 24 : 0;   // small bias toward "no motion"
+          for (let j = 0; j < BLOCK && sad < best; j++) {
+            let ci = (y0 + j) * AW + x0, pi = (py + j) * AW + px;
+            for (let i = 0; i < BLOCK; i++) { const d = cur[ci + i] - prev[pi + i]; sad += d < 0 ? -d : d; }
+          }
+          if (!dx && !dy) totalZeroSad += sad;
+          if (sad < best) { best = sad; bdx = dx; bdy = dy; }
+        }
+      }
+      const k = (by * bw + bx) * 2;
+      vecs[k] = bdx; vecs[k + 1] = bdy;
+    }
+  }
+  return { vecs, bw, bh, cut: totalZeroSad / (bw * bh * BLOCK * BLOCK) > 38 };
+}
+
+function processFrame() {
+  const v = vals, t = video.currentTime;
+  state.frame++;
+
+  // Source frame (with colour chaos hue spin baked in)
+  let filter = 'none';
+  const parts = [];
+  if (v.color) {
+    parts.push(`hue-rotate(${(t * v.color * 4) % 360}deg)`);
+    if (state.invertLeft > 0) { parts.push('invert(1)'); state.invertLeft--; }
+    else if (chance(v.color / 100 * 0.025)) state.invertLeft = randi(2, 8);
+  }
+  if (v.fry) parts.push(`saturate(${1 + v.fry / 100 * 4}) contrast(${1 + v.fry / 100 * 1.6}) brightness(${1 + v.fry / 100 * 0.15})`);
+  if (parts.length) filter = parts.join(' ');
+  srcX.filter = filter;
+  srcX.drawImage(video, 0, 0, W, H);
+  srcX.filter = 'none';
+
+  // Deep fry: pixelate by bouncing through a tiny canvas
+  if (v.fry) {
+    const f = 1 + v.fry / 100 * 7;
+    const sw = Math.max(8, Math.round(W / f)), sh = Math.max(8, Math.round(H / f));
+    tmpX.imageSmoothingEnabled = true;
+    tmpX.clearRect(0, 0, W, H);
+    tmpX.drawImage(srcC, 0, 0, sw, sh);
+    srcX.imageSmoothingEnabled = false;
+    srcX.drawImage(tmpC, 0, 0, sw, sh, 0, 0, W, H);
+    srcX.imageSmoothingEnabled = true;
+  }
+
+  // Keep a copy of last output for temporal effects
+  prevX.drawImage(out, 0, 0);
+
+  // ---- Datamosh
+  let moshedThisFrame = false;
+  if (v.mosh) {
+    const cur = computeLum();
+    if (prevLum && state.frame > 2) {
+      const m = estimateMotion(cur, prevLum);
+      const p = v.mosh / 100;
+      if (state.moshing) {
+        if (--state.moshLeft <= 0) { state.moshing = false; state.cleanLeft = Math.round(rand(10, 60) * (1.6 - p)); }
+      } else {
+        state.cleanLeft--;
+        // Real datamoshes happen at scene cuts: the old scene gets pushed around by the new scene's motion.
+        if ((m.cut && chance(0.3 + p * 0.7)) || (state.cleanLeft <= 0 && chance(p * 0.15))) {
+          state.moshing = true;
+          state.moshLeft = Math.round(rand(25, 110) * (0.4 + p));
+        }
+      }
+      if (state.moshing) {
+        const sx = W / AW, sy = H / AH, amp = 1 + p * 1.5;
+        const bwPx = BLOCK * sx, bhPx = BLOCK * sy;
+        for (let by = 0; by < m.bh; by++) for (let bx = 0; bx < m.bw; bx++) {
+          const k = (by * m.bw + bx) * 2;
+          const dx = m.vecs[k] * sx * amp, dy = m.vecs[k + 1] * sy * amp;
+          const x = bx * bwPx, y = by * bhPx;
+          const fx = clamp(x + dx, 0, W - bwPx), fy = clamp(y + dy, 0, H - bhPx);
+          outCtx.drawImage(prevC, fx, fy, bwPx, bhPx, x, y, bwPx, bhPx);
+        }
+        // Edge rows/cols not covered by the block grid
+        const gw = m.bw * bwPx, gh = m.bh * bhPx;
+        if (gw < W) outCtx.drawImage(srcC, gw, 0, W - gw, H, gw, 0, W - gw, H);
+        if (gh < H) outCtx.drawImage(srcC, 0, gh, W, H - gh, 0, gh, W, H - gh);
+        // A little "residual" bleeds the real picture back in, like P-frames do
+        outCtx.globalAlpha = 0.035 + (1 - p) * 0.05;
+        outCtx.drawImage(srcC, 0, 0);
+        outCtx.globalAlpha = 1;
+        moshedThisFrame = true;
+      }
+    }
+    prevLum = cur;
+  }
+  if (!moshedThisFrame) outCtx.drawImage(srcC, 0, 0);
+
+  // ---- Melt: previous output slides downward in columns, current frame laid over it semi-transparently
+  if (v.melt) {
+    const p = v.melt / 100, colW = 6;
+    tmpX.drawImage(out, 0, 0);
+    outCtx.drawImage(prevC, 0, 0);
+    for (let c = 0; c < state.meltCols.length; c++) {
+      const drop = state.meltCols[c] * (1 + p * 9) * (H / 360);
+      const x = c * colW;
+      outCtx.drawImage(prevC, x, 0, colW, H - drop, x, drop, colW, H - drop);
+    }
+    outCtx.globalAlpha = 1 - 0.93 * p;
+    outCtx.drawImage(tmpC, 0, 0);
+    outCtx.globalAlpha = 1;
+    if (chance(0.01)) state.meltCols = state.meltCols.map(() => rand(0.3, 1) * (chance(0.15) ? 3 : 1));
+  }
+
+  // ---- VHS wobble: wavy horizontal strips plus occasional tracking tear
+  if (v.vhs) {
+    const p = v.vhs / 100, strip = 4;
+    tmpX.drawImage(out, 0, 0);
+    const amp = p * W * 0.012;
+    if (state.tearLeft > 0) state.tearLeft--; else if (chance(p * 0.04)) { state.tearY = rand(H); state.tearLeft = randi(4, 20); }
+    for (let y = 0; y < H; y += strip) {
+      let off = Math.sin(y * 0.031 + t * 7) * amp + Math.sin(y * 0.0071 - t * 2.3) * amp * 1.5;
+      if (state.tearLeft > 0) {
+        const d = y - state.tearY;
+        if (d > 0 && d < H * 0.12) off += (1 - d / (H * 0.12)) * W * 0.15 * p;
+      }
+      if (chance(p * 0.004)) off += rand(-1, 1) * W * 0.1;
+      outCtx.drawImage(tmpC, 0, y, W, strip, off, y, W, strip);
+      if (off > 0) outCtx.drawImage(tmpC, W - off, y, off, strip, 0, y, off, strip);
+    }
+  }
+
+  // ---- Block glitch
+  if (v.blocks) {
+    const p = v.blocks / 100;
+    if (chance(0.15 + p * 0.6)) {
+      tmpX.drawImage(out, 0, 0);
+      const n = randi(1, 2 + Math.round(p * 10));
+      for (let i = 0; i < n; i++) {
+        const bh = randi(2, Math.max(3, H * (0.03 + p * 0.15)));
+        const bw = randi(W * 0.15, W);
+        const sx = randi(0, W - bw), sy = randi(0, H - bh);
+        const dx = clamp(sx + rand(-1, 1) * W * 0.3 * p, -bw / 2, W - bw / 2), dy = chance(0.3) ? randi(0, H - bh) : sy;
+        if (chance(0.25)) outCtx.filter = ['invert(1)', 'hue-rotate(120deg)', 'hue-rotate(240deg) saturate(4)', 'grayscale(1) contrast(4)'][randi(0, 3)];
+        outCtx.drawImage(tmpC, sx, sy, bw, bh, dx, dy, bw, bh);
+        outCtx.filter = 'none';
+      }
+    }
+  }
+
+  // ---- Per-pixel pass: RGB split, posterise, channel swap, noise, scanlines
+  const needPixels = v.rgb || v.fry || v.vhs || v.color;
+  if (needPixels) {
+    const img = outCtx.getImageData(0, 0, W, H);
+    const d = img.data;
+    const src = (v.rgb || (v.color && state.swapLeft > 0)) ? new Uint8ClampedArray(d) : d;
+    let shift = 0;
+    if (v.rgb) shift = Math.round((v.rgb / 100) * W * 0.018 * (1 + (chance(0.1) ? rand(2) : 0)));
+    let levels = 0;
+    if (v.fry) levels = Math.round(2 + (1 - v.fry / 100) * 10);
+    const noise = (v.vhs ? v.vhs * 0.35 : 0) + (v.fry ? v.fry * 0.25 : 0);
+    const scan = v.vhs ? 1 - v.vhs / 100 * 0.22 : 1;
+    if (v.color) {
+      if (state.swapLeft > 0) state.swapLeft--;
+      else if (chance(v.color / 100 * 0.03)) { state.swapLeft = randi(3, 15); state.swapMode = randi(0, 2); }
+    }
+    const swapping = v.color && state.swapLeft > 0;
+    const step = levels ? 255 / (levels - 1) : 0;
+    const row = W * 4;
+    for (let y = 0; y < H; y++) {
+      const dark = (y & 1) ? scan : 1;
+      const base = y * row;
+      for (let x = 0; x < W; x++) {
+        const i = base + x * 4;
+        let r, g, b;
+        if (shift) {
+          const xr = x + shift < W ? x + shift : W - 1, xb = x - shift >= 0 ? x - shift : 0;
+          r = src[base + xr * 4]; g = src[i + 1]; b = src[base + xb * 4 + 2];
+        } else { r = src[i]; g = src[i + 1]; b = src[i + 2]; }
+        if (swapping) {
+          if (state.swapMode === 0) { const tmp = r; r = b; b = tmp; }
+          else if (state.swapMode === 1) { const tmp = r; r = g; g = b; b = tmp; }
+          else { r = 255 - r; b = 255 - b; }
+        }
+        if (levels) { r = Math.round(r / step) * step; g = Math.round(g / step) * step; b = Math.round(b / step) * step; }
+        if (noise) { const n = (Math.random() - 0.5) * noise; r += n; g += n; b += n; }
+        d[i] = r * dark; d[i + 1] = g * dark; d[i + 2] = b * dark;
+      }
+    }
+    outCtx.putImageData(img, 0, 0);
+  }
+
+  // ---- Stutter: show a frozen frame or loop the last few frames (like a skipping CD)
+  if (v.stutter && state.stutterLeft > 0) {
+    state.stutterLeft--;
+    let frameC;
+    if (state.stutterMode === 'freeze') frameC = ring[(ringPos - 1 + ring.length) % ring.length];
+    else {
+      state.stutterIdx = (state.stutterIdx + 1) % state.stutterLen;
+      frameC = ring[(ringPos - state.stutterLen + state.stutterIdx + ring.length) % ring.length];
+    }
+    outCtx.drawImage(frameC, 0, 0);
+  } else {
+    if (v.stutter && chance(v.stutter / 100 * 0.04)) {
+      state.stutterMode = chance(0.4) ? 'freeze' : 'loop';
+      state.stutterLen = randi(2, 6);
+      state.stutterIdx = 0;
+      state.stutterLeft = randi(6, 12 + Math.round(v.stutter / 100 * 30));
+    }
+    const rc = ring[ringPos];
+    ctx2d(rc).drawImage(out, 0, 0);
+    ringPos = (ringPos + 1) % ring.length;
+  }
+}
+
+// ---------------------------------------------------------------- audio
+
+function ensureAudio() {
+  if (actx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  actx = new AC();
+  mediaSrc = actx.createMediaElementSource(video);
+  crusher = actx.createWaveShaper();
+  outGain = actx.createGain();
+  monitorGain = actx.createGain();
+  streamDest = actx.createMediaStreamDestination();
+  mediaSrc.connect(crusher).connect(outGain);
+  outGain.connect(streamDest);
+  outGain.connect(monitorGain).connect(actx.destination);
+  applyLiveAudio();
+}
+
+function applyLiveAudio() {
+  if (!actx) return;
+  const c = vals.crunch || 0;
+  if (c) {
+    const bits = 12 - (c / 100) * 10.5;            // ~12 bits down to ~1.5 bits
+    const levels = Math.pow(2, bits);
+    const n = 8192, curve = new Float32Array(n);
+    const drive = 1 + c / 100 * 6;
+    for (let i = 0; i < n; i++) {
+      let x = (i / (n - 1)) * 2 - 1;
+      x = Math.tanh(x * drive) / Math.tanh(drive);
+      curve[i] = Math.round(x * levels) / levels;
+    }
+    crusher.curve = curve;
+    outGain.gain.value = 0.8;
+  } else { crusher.curve = null; outGain.gain.value = 1; }
+  monitorGain.gain.value = $('monitor').checked ? 1 : 0;
+}
+$('monitor').onchange = applyLiveAudio;
+
+function setPitchFree(el) {
+  el.preservesPitch = false; el.mozPreservesPitch = false; el.webkitPreservesPitch = false;
+}
+
+// ---------------------------------------------------------------- run loop
+let running = false, recording = false, recorder = null, chunks = [], frameHandle = null, recMime = '';
+
+function loop() {
+  if (!running) return;
+  if (video.readyState >= 2) {
+    const base = speedFromVal(vals.speed ?? 50);
+    const w = (vals.warble || 0) / 100;
+    const rate = clamp(base * (1 + Math.sin(video.currentTime * 5.3) * 0.18 * w + Math.sin(video.currentTime * 1.7) * 0.12 * w), 0.25, 4);
+    if (Math.abs(video.playbackRate - rate) > 0.005) video.playbackRate = rate;
+    processFrame();
+    if (video.duration) setProgress(video.currentTime / video.duration);
+    $('badge').textContent = (recording ? '● REC ' : '▶ PREVIEW ') + video.currentTime.toFixed(1) + 's';
+  }
+  frameHandle = video.requestVideoFrameCallback ? video.requestVideoFrameCallback(loop) : requestAnimationFrame(loop);
+}
+
+async function start(record) {
+  if (!videoPlayable) return;
+  ensureAudio();
+  if (actx && actx.state === 'suspended') await actx.resume();
+  setupCanvases();
+  outCtx.drawImage(video, 0, 0, W, H);
+  setPitchFree(video);
+  $('result').style.display = 'none';
+  running = true; recording = record;
+  $('badge').classList.remove('hidden');
+  $('renderBtn').disabled = $('previewBtn').disabled = true;
+  $('stopBtn').disabled = false;
+
+  if (record) {
+    video.currentTime = 0;
+    await new Promise(r => video.addEventListener('seeked', r, { once: true }));
+    const vStream = out.captureStream(30);
+    const tracks = [...vStream.getVideoTracks()];
+    if (streamDest) tracks.push(...streamDest.stream.getAudioTracks());
+    const stream = new MediaStream(tracks);
+    // Real H.264 MP4 first (plays everywhere), then WebM, then whatever MP4 the browser offers (Safari)
+    const mimes = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+    recMime = mimes.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || '';
+    try {
+      recorder = new MediaRecorder(stream, { mimeType: recMime || undefined, videoBitsPerSecond: H >= 720 ? 10e6 : 5e6 });
+    } catch (e) {
+      setStatus("Sorry, your browser can't record video (" + e.message + "). Try Chrome, Edge or Firefox.");
+      stopAll(); return;
+    }
+    chunks = [];
+    recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+    recorder.onstop = finishRecording;
+    recorder.start(1000);
+    setStatus('Corrupting… sit back and enjoy the carnage.');
+  } else {
+    if (video.ended) video.currentTime = 0;
+    setStatus('Live preview. Move the sliders to see changes instantly. Nothing is being saved.');
+  }
+  setProgress(0);
+  try { await video.play(); } catch (e) { setStatus('Could not play the video: ' + e.message); stopAll(); return; }
+  loop();
+}
+
+function stopAll() {
+  const wasRecording = recording;
+  running = false; recording = false;
+  if (frameHandle != null) {
+    if (video.cancelVideoFrameCallback) try { video.cancelVideoFrameCallback(frameHandle); } catch (_) {}
+    cancelAnimationFrame(frameHandle);
+    frameHandle = null;
+  }
+  if (!video.paused) video.pause();
+  if (wasRecording && recorder && recorder.state !== 'inactive') recorder.stop();
+  else setProgress(null);
+  $('badge').classList.add('hidden');
+  $('stopBtn').disabled = true;
+  $('renderBtn').disabled = $('previewBtn').disabled = !videoPlayable;
+}
+
+function finishRecording() {
+  const type = (recMime || 'video/webm').split(';')[0];
+  const ext = type.includes('mp4') ? 'mp4' : 'webm';
+  const blob = new Blob(chunks, { type });
+  chunks = [];
+  showResult(blob, ext, `Recorded as ${ext.toUpperCase()} · ${fmtBytes(blob.size)}` +
+    (ext === 'webm' ? '. WebM plays in browsers, VLC and most editors. Convert it to MP4 if your phone or app is picky.' : ''));
+  setProgress(null);
+  setStatus('Done! Scroll down to watch and download.');
+}
+
+video.addEventListener('ended', () => {
+  if (running && recording) stopAll();
+  else if (running) { stopAll(); setStatus('Preview finished.'); }
+});
+
+$('previewBtn').onclick = () => start(false);
+$('renderBtn').onclick = () => start(true);
+$('stopBtn').onclick = () => { const r = recording; stopAll(); if (!r) setStatus('Stopped.'); else setStatus('Stopped early. Saving what was rendered…'); };
+
+// ---------------------------------------------------------------- results
+let resultURL = null;
+function baseName() { return (currentFile?.name || 'video').replace(/\.[^.]+$/, ''); }
+function showResult(blob, ext, note) {
+  if (resultURL) URL.revokeObjectURL(resultURL);
+  resultURL = URL.createObjectURL(blob);
+  const rv = $('resultVideo');
+  rv.onerror = null;
+  rv.src = resultURL;
+  $('download').href = resultURL;
+  $('download').download = `${baseName()}-CORRUPTED.${ext}`;
+  $('resultNote').textContent = note;
+  $('result').style.display = 'block';
+  $('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---------------------------------------------------------------- byte bitrot
+const rotAmount = $('rotAmount');
+const hitsPerMB = v => 0.5 * Math.pow(1000, v / 100);
+function updRot() {
+  const per = hitsPerMB(+rotAmount.value);
+  const total = currentFile ? Math.max(1, Math.round(per * currentFile.size / 1048576)) : null;
+  $('rotAmountOut').textContent = total != null ? `${total.toLocaleString()} hits` : `${per < 10 ? per.toFixed(1) : Math.round(per)}/MB`;
+}
+rotAmount.oninput = updRot; updRot();
+$('file').addEventListener('change', updRot);
+$('drop').addEventListener('drop', () => setTimeout(updRot));
+
+const fourcc = (u8, o) => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
+
+// Find the byte ranges that hold media data, so the "table of contents" survives and the file still opens.
+function findSafeRanges(u8) {
+  const n = u8.length, dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  // MP4 / MOV / M4V / 3GP: top-level boxes, corrupt only inside 'mdat'
+  if (n > 16 && ['ftyp', 'moov', 'mdat', 'wide', 'free', 'skip'].includes(fourcc(u8, 4))) {
+    const ranges = [];
+    let o = 0;
+    while (o + 8 <= n) {
+      let size = dv.getUint32(o), hdr = 8;
+      const type = fourcc(u8, o + 4);
+      if (size === 1 && o + 16 <= n) { size = Number(dv.getBigUint64(o + 8)); hdr = 16; }
+      else if (size === 0) size = n - o;
+      if (size < hdr) break;
+      if (type === 'mdat') {
+        // leave a small margin at the start so the first keyframe's headers usually survive
+        const s = o + hdr + Math.min(2048, (size - hdr) / 10 | 0), e = Math.min(n, o + size);
+        if (e > s) ranges.push([s, e]);
+      }
+      o += size;
+    }
+    if (ranges.length) return { kind: 'MP4/MOV', ranges };
+  }
+  // AVI: corrupt inside the 'movi' list, skipping each chunk's 8-byte header region near its start
+  if (n > 12 && fourcc(u8, 0) === 'RIFF' && fourcc(u8, 8) === 'AVI ') {
+    for (let o = 12; o + 12 <= n;) {
+      const id = fourcc(u8, o), size = dv.getUint32(o + 4, true);
+      if (id === 'LIST' && fourcc(u8, o + 8) === 'movi') {
+        const s = o + 12 + 1024, e = Math.min(n, o + 8 + size);
+        if (e > s) return { kind: 'AVI', ranges: [[s, e]] };
+        break;
+      }
+      o += 8 + size + (size & 1);
+    }
+  }
+  // Anything else (MKV, WebM, MPEG-TS, …): spare the first 3% and last 1%, where headers and indexes usually live
+  const s = Math.min(n, Math.max(4096, Math.floor(n * 0.03))), e = Math.max(s, Math.floor(n * 0.99));
+  return { kind: 'generic', ranges: e > s ? [[s, e]] : [[0, n]] };
+}
+
+function pickOffset(ranges, total, len) {
+  let r = Math.random() * total;
+  for (const [s, e] of ranges) {
+    const sz = e - s;
+    if (r < sz) return s + Math.min(Math.floor(r), Math.max(0, sz - len));
+    r -= sz;
+  }
+  const [s] = ranges[ranges.length - 1]; return s;
+}
+
+$('rotBtn').onclick = async () => {
+  if (!currentFile) return;
+  stopAll();
+  $('rotBtn').disabled = true;
+  setStatus('Reading file…');
+  setProgress(0.1);
+  try {
+    const u8 = new Uint8Array(await currentFile.arrayBuffer());
+    const { kind, ranges } = $('rotProtect').checked ? findSafeRanges(u8) : { kind: 'whole file', ranges: [[0, u8.length]] };
+    const total = ranges.reduce((a, [s, e]) => a + (e - s), 0);
+    const hits = Math.max(1, Math.round(hitsPerMB(+rotAmount.value) * u8.length / 1048576));
+    const style = $('rotStyle').value;
+    const LOL = [0x4C, 0x4F, 0x4C];
+    setProgress(0.5);
+    for (let h = 0; h < hits; h++) {
+      const st = style === 'mix' ? ['random', 'random', 'repeat', 'shuffle', 'lol'][randi(0, 4)] : style;
+      if (st === 'random') {
+        const len = chance(0.8) ? randi(1, 4) : randi(8, 64);
+        const o = pickOffset(ranges, total, len);
+        for (let i = 0; i < len && o + i < u8.length; i++) u8[o + i] = chance(0.5) ? randi(0, 255) : u8[o + i] ^ (1 << randi(0, 7));
+      } else if (st === 'repeat') {
+        const len = randi(64, 4096);
+        const a = pickOffset(ranges, total, len), b = pickOffset(ranges, total, len);
+        u8.copyWithin(b, a, Math.min(u8.length, a + len));
+      } else if (st === 'shuffle') {
+        const len = randi(64, 2048);
+        const a = pickOffset(ranges, total, len), b = pickOffset(ranges, total, len);
+        const tmp = u8.slice(a, a + len);
+        u8.copyWithin(a, b, b + len);
+        u8.set(tmp.subarray(0, Math.min(len, u8.length - b)), b);
+      } else {
+        const reps = randi(1, 6);
+        const o = pickOffset(ranges, total, reps * 3);
+        for (let i = 0; i < reps * 3 && o + i < u8.length; i++) u8[o + i] = LOL[i % 3];
+      }
+    }
+    setProgress(1);
+    const ext = (currentFile.name.match(/\.([^.]+)$/) || [, 'mp4'])[1].toLowerCase();
+    const blob = new Blob([u8], { type: currentFile.type || 'application/octet-stream' });
+    showResult(blob, ext, `${hits.toLocaleString()} hits spread across the ${kind === 'whole file' ? 'whole file' : kind + ' media data'} (${fmtBytes(total)} of ${fmtBytes(u8.length)}). Click ROT IT again for a different result.`);
+    $('resultVideo').onerror = () => {
+      $('resultNote').textContent += " Your browser refused to play this one. That's normal for badly corrupted files. Download it and open it in VLC, or lower the damage and try again.";
+      $('resultVideo').onerror = null;
+    };
+    setStatus('Rotted! Preview below. If it looks too normal, crank the damage up.');
+  } catch (e) {
+    setStatus('Something went wrong: ' + e.message + (currentFile.size > 1.5e9 ? ' The file may be too big for your browser to hold in memory.' : ''));
+  } finally {
+    setTimeout(() => setProgress(null), 400);
+    $('rotBtn').disabled = false;
+  }
+};
+
+window.addEventListener('beforeunload', e => { if (recording) { e.preventDefault(); e.returnValue = ''; } });
+})();
+</script>
+</body>
+</html>
