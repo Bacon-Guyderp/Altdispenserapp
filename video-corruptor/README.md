@@ -23,7 +23,9 @@ Everything runs in your browser, so your video is never uploaded anywhere.
 | Bitcrush / Speed / Tape warble | Crunchy audio, chipmunk or demon pitch, and seasick wobble. |
 
 There are presets (Datamosh Dream, Deep Fried, Cursed VHS, Meltdown, Chipmunk Panic, Surprise me) and a live preview.
-Rendering runs in real time, so keep the tab visible.
+Rendering decodes and re-encodes the video with WebCodecs (via [Mediabunny](https://mediabunny.dev), loaded from jsDelivr only when you render) as fast as the computer can process frames, instead of playing it in real time. No frames get dropped, and the sound is processed offline to match.
+Colour and pixel effects run as a WebGL shader on computers with a graphics card, and as optimised CPU loops otherwise.
+Browsers without WebCodecs fall back to recording in real time.
 
 **🌊 Datamosh** is the real thing. It finds the video track in an MP4/MOV (regular or fragmented), reads every frame's position and turns the keyframes into filler data that decoders skip. Frame sizes stay the same, so the file stays valid.
 With no new full picture, the decoder keeps applying motion to the old one, which produces the melting smear.

@@ -154,7 +154,7 @@
             <option value="720" selected>720p</option>
             <option value="1080">1080p (needs a fast computer)</option>
           </select>
-          <label style="margin-left:auto"><input type="checkbox" id="monitor" checked> Hear it while rendering</label>
+          <label style="margin-left:auto"><input type="checkbox" id="monitor" checked> Sound during preview</label>
         </div>
 
         <div class="actions">
@@ -162,7 +162,7 @@
           <button class="go secondary" id="stopBtn" disabled>■ Stop</button>
         </div>
         <button class="go" id="renderBtn" disabled>CORRUPT IT</button>
-        <p class="note">Rendering plays the video through the effects in real time, so a 1-minute clip takes about a minute (less if you sped it up). Keep this tab visible while it runs.</p>
+        <p class="note">Rendering runs as fast as your computer can go, usually several times faster than the video's length. In older browsers it falls back to real time (keep the tab visible then).</p>
       </div>
 
       <!-- ============ REAL DATAMOSH ============ -->
@@ -361,7 +361,92 @@ video.addEventListener('error', () => {
 
 // ---------------------------------------------------------------- render engine
 const out = $('out');
-const outCtx = ctx2d(out, true);
+// GPU (WebGL) colour/pixel effects. Falls back to CPU loops when WebGL isn't available.
+const GL = (() => {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false, alpha: false });
+    if (!gl) return null;
+    // Software-emulated WebGL (no graphics card) is slower than the CPU loops, so skip it
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) { console.info('Using CPU effects (software WebGL: ' + renderer + ')'); return null; }
+    const vs = `attribute vec2 p; varying vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
+    const fs = `precision highp float;
+      uniform sampler2D tex; uniform vec2 res;
+      uniform float shift, levels, noise, scan, seed, invert, contrast, bright, swapMode;
+      uniform mat3 hue, sat;
+      varying vec2 uv;
+      float rnd(vec2 q){ return fract(sin(dot(q, vec2(12.9898, 78.233)) + seed) * 43758.5453); }
+      void main(){
+        vec3 c = texture2D(tex, uv).rgb;
+        if (shift > 0.0) {
+          float dx = shift / res.x;
+          c.r = texture2D(tex, uv + vec2(dx, 0.0)).r;
+          c.b = texture2D(tex, uv - vec2(dx, 0.0)).b;
+        }
+        c = hue * c;
+        c = mix(c, 1.0 - c, invert);
+        c = clamp(sat * c, 0.0, 1.0);
+        c = ((c - 0.5) * contrast + 0.5) * bright;
+        if (swapMode > 2.5) {} else if (swapMode < 0.5) c = c.bgr; else if (swapMode < 1.5) c = c.gbr; else c = vec3(1.0 - c.r, c.g, 1.0 - c.b);
+        if (noise > 0.0) c += (rnd(gl_FragCoord.xy) - 0.5) * noise;
+        c = clamp(c, 0.0, 1.0);
+        if (levels > 1.5) c = floor(c * (levels - 1.0) + 0.5) / (levels - 1.0);
+        if (mod(floor(gl_FragCoord.y), 2.0) > 0.5) c *= scan;
+        gl_FragColor = vec4(c, 1.0);
+      }`;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    for (const [k, val] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]])
+      gl.texParameteri(gl.TEXTURE_2D, k, val);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    const U = {};
+    for (const n of ['res', 'shift', 'levels', 'noise', 'scan', 'seed', 'invert', 'contrast', 'bright', 'swapMode', 'hue', 'sat']) U[n] = gl.getUniformLocation(prog, n);
+    const I3 = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+    // Same matrices as the CSS hue-rotate() and saturate() filters (row-major, transposed on upload)
+    const hueMat = deg => {
+      const a = deg * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+      return [0.213 + co * 0.787 - si * 0.213, 0.715 - co * 0.715 - si * 0.715, 0.072 - co * 0.072 + si * 0.928,
+              0.213 - co * 0.213 + si * 0.143, 0.715 + co * 0.285 + si * 0.140, 0.072 - co * 0.072 - si * 0.283,
+              0.213 - co * 0.213 - si * 0.787, 0.715 - co * 0.715 + si * 0.715, 0.072 + co * 0.928 + si * 0.072];
+    };
+    const satMat = x => [0.213 + 0.787 * x, 0.715 - 0.715 * x, 0.072 - 0.072 * x,
+                         0.213 - 0.213 * x, 0.715 + 0.285 * x, 0.072 - 0.072 * x,
+                         0.213 - 0.213 * x, 0.715 - 0.715 * x, 0.072 + 0.928 * x];
+    const T = m => [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]];
+    return {
+      // Runs the shader on `from` and writes the result into the 2D context `to`.
+      run(from, to, o) {
+        const w = from.width, h = from.height;
+        if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+        gl.viewport(0, 0, w, h);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, from);
+        gl.uniform2f(U.res, w, h);
+        gl.uniform1f(U.shift, o.shift || 0); gl.uniform1f(U.levels, o.levels || 0);
+        gl.uniform1f(U.noise, (o.noise || 0) / 255); gl.uniform1f(U.scan, o.scan ?? 1);
+        gl.uniform1f(U.seed, Math.random() * 100); gl.uniform1f(U.invert, o.invert ? 1 : 0);
+        gl.uniform1f(U.contrast, o.contrast ?? 1); gl.uniform1f(U.bright, o.bright ?? 1);
+        gl.uniform1f(U.swapMode, o.swapMode ?? 3);
+        gl.uniformMatrix3fv(U.hue, false, T(o.hue ? hueMat(o.hue) : I3));
+        gl.uniformMatrix3fv(U.sat, false, T(o.sat != null ? satMat(o.sat) : I3));
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        to.drawImage(c, 0, 0);
+      },
+    };
+  } catch (e) { console.warn('WebGL effects unavailable:', e); return null; }
+})();
+// Without WebGL the CPU pixel loop reads the canvas every frame, so keep it in CPU memory in that case.
+const outCtx = ctx2d(out, !GL);
 let W = 0, H = 0;
 let srcC, srcX, prevC, prevX, tmpC, tmpX, anaC, anaX;
 let AW = 0, AH = 0, prevLum = null, curLum = null;
@@ -369,18 +454,20 @@ const BLOCK = 8, SEARCH = 4;
 let ring = [], ringPos = 0;
 let state = {};
 
-function setupCanvases() {
+let rawC, rawX, anaGC = null, anaGX = null;
+function setupCanvases(vw = video.videoWidth || 640, vh = video.videoHeight || 360) {
   const maxH = +$('size').value;
-  const vw = video.videoWidth || 640, vh = video.videoHeight || 360;
   const s = Math.min(1, maxH / vh, (maxH * 16 / 9) / vw);
   W = Math.max(2, Math.round(vw * s / 2) * 2);
   H = Math.max(2, Math.round(vh * s / 2) * 2);
   out.width = W; out.height = H;
+  rawC = mkCanvas(W, H); rawX = ctx2d(rawC);
   srcC = mkCanvas(W, H); srcX = ctx2d(srcC);
   prevC = mkCanvas(W, H); prevX = ctx2d(prevC);
   tmpC = mkCanvas(W, H); tmpX = ctx2d(tmpC);
   AW = 160; AH = Math.max(BLOCK * 2, Math.round(AW * H / W / BLOCK) * BLOCK);
   anaC = mkCanvas(AW, AH); anaX = ctx2d(anaC, true);
+  anaGC = GL ? mkCanvas(AW, AH) : null; anaGX = anaGC && ctx2d(anaGC);
   prevLum = null; curLum = new Uint8Array(AW * AH);
   ring = Array.from({ length: 8 }, () => mkCanvas(W, H));
   ringPos = 0;
@@ -403,7 +490,9 @@ function drawStill() {
 $('size').onchange = () => { if (!running && videoPlayable) { setupCanvases(); drawStill(); } };
 
 function computeLum() {
-  anaX.drawImage(video, 0, 0, AW, AH);
+  // Shrink on the GPU first so only a tiny image gets read back to the CPU
+  if (anaGX) { anaGX.drawImage(rawC, 0, 0, AW, AH); anaX.drawImage(anaGC, 0, 0); }
+  else anaX.drawImage(rawC, 0, 0, AW, AH);
   const d = anaX.getImageData(0, 0, AW, AH).data;
   const lum = new Uint8Array(AW * AH);
   for (let i = 0, j = 0; j < lum.length; i += 4, j++) lum[j] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
@@ -441,23 +530,34 @@ function estimateMotion(cur, prev) {
   return { vecs, bw, bh, cut: totalZeroSad / (bw * bh * BLOCK * BLOCK) > 38 };
 }
 
-function processFrame() {
-  const v = vals, t = video.currentTime;
+const NOISE_MASK = (1 << 18) - 1;
+const NOISE = new Int8Array(NOISE_MASK + 1).map(() => randi(-128, 127));
+const LUT_E = new Uint8ClampedArray(512), LUT_O = new Uint8ClampedArray(512);
+
+// Expects the current source frame already drawn into rawC. t = source time in seconds.
+function processFrame(t) {
+  const v = vals;
   state.frame++;
 
-  // Source frame (with colour chaos hue spin baked in)
-  let filter = 'none';
-  const parts = [];
+  // Source frame (with colour chaos hue spin and deep-fry colours baked in)
+  const cf = {};
   if (v.color) {
-    parts.push(`hue-rotate(${(t * v.color * 4) % 360}deg)`);
-    if (state.invertLeft > 0) { parts.push('invert(1)'); state.invertLeft--; }
+    cf.hue = (t * v.color * 4) % 360;
+    if (state.invertLeft > 0) { cf.invert = true; state.invertLeft--; }
     else if (chance(v.color / 100 * 0.025)) state.invertLeft = randi(2, 8);
   }
-  if (v.fry) parts.push(`saturate(${1 + v.fry / 100 * 4}) contrast(${1 + v.fry / 100 * 1.6}) brightness(${1 + v.fry / 100 * 0.15})`);
-  if (parts.length) filter = parts.join(' ');
-  srcX.filter = filter;
-  srcX.drawImage(video, 0, 0, W, H);
-  srcX.filter = 'none';
+  if (v.fry) { cf.sat = 1 + v.fry / 100 * 4; cf.contrast = 1 + v.fry / 100 * 1.6; cf.bright = 1 + v.fry / 100 * 0.15; }
+  if (!v.color && !v.fry) srcX.drawImage(rawC, 0, 0);
+  else if (GL) GL.run(rawC, srcX, cf);
+  else {
+    const parts = [];
+    if (cf.hue) parts.push(`hue-rotate(${cf.hue}deg)`);
+    if (cf.invert) parts.push('invert(1)');
+    if (v.fry) parts.push(`saturate(${cf.sat}) contrast(${cf.contrast}) brightness(${cf.bright})`);
+    srcX.filter = parts.join(' ') || 'none';
+    srcX.drawImage(rawC, 0, 0);
+    srcX.filter = 'none';
+  }
 
   // Deep fry: pixelate by bouncing through a tiny canvas
   if (v.fry) {
@@ -576,9 +676,6 @@ function processFrame() {
   // ---- Per-pixel pass: RGB split, posterise, channel swap, noise, scanlines
   const needPixels = v.rgb || v.fry || v.vhs || v.color;
   if (needPixels) {
-    const img = outCtx.getImageData(0, 0, W, H);
-    const d = img.data;
-    const src = (v.rgb || (v.color && state.swapLeft > 0)) ? new Uint8ClampedArray(d) : d;
     let shift = 0;
     if (v.rgb) shift = Math.round((v.rgb / 100) * W * 0.018 * (1 + (chance(0.1) ? rand(2) : 0)));
     let levels = 0;
@@ -589,30 +686,46 @@ function processFrame() {
       if (state.swapLeft > 0) state.swapLeft--;
       else if (chance(v.color / 100 * 0.03)) { state.swapLeft = randi(3, 15); state.swapMode = randi(0, 2); }
     }
-    const swapping = v.color && state.swapLeft > 0;
+    const swapping = v.color && state.swapLeft > 0, swapMode = state.swapMode;
+    if (GL) {
+      GL.run(out, outCtx, { shift, levels, noise, scan, swapMode: swapping ? swapMode : 3 });
+    } else {
+    const img = outCtx.getImageData(0, 0, W, H);
+    const d = img.data;
+    const src = (shift || swapping) ? new Uint8ClampedArray(d) : d;
+    // Lookup tables do posterise + scanline darkening; index is value + noise + 128
     const step = levels ? 255 / (levels - 1) : 0;
-    const row = W * 4;
+    const lutE = LUT_E, lutO = LUT_O;
+    for (let k = 0; k < 512; k++) {
+      let val = k - 128; val = val < 0 ? 0 : val > 255 ? 255 : val;
+      if (levels) val = Math.round(val / step) * step;
+      lutE[k] = val; lutO[k] = val * scan;
+    }
+    const nAmp = noise | 0, seed = randi(0, NOISE_MASK);
+    const row = W * 4, xMax = W - 1;
     for (let y = 0; y < H; y++) {
-      const dark = (y & 1) ? scan : 1;
+      const lut = (y & 1) ? lutO : lutE;
       const base = y * row;
+      let nj = (seed + y * W) & NOISE_MASK;
       for (let x = 0; x < W; x++) {
         const i = base + x * 4;
         let r, g, b;
         if (shift) {
-          const xr = x + shift < W ? x + shift : W - 1, xb = x - shift >= 0 ? x - shift : 0;
+          const xr = x + shift < xMax ? x + shift : xMax, xb = x - shift > 0 ? x - shift : 0;
           r = src[base + xr * 4]; g = src[i + 1]; b = src[base + xb * 4 + 2];
         } else { r = src[i]; g = src[i + 1]; b = src[i + 2]; }
         if (swapping) {
-          if (state.swapMode === 0) { const tmp = r; r = b; b = tmp; }
-          else if (state.swapMode === 1) { const tmp = r; r = g; g = b; b = tmp; }
+          if (swapMode === 0) { const tmp = r; r = b; b = tmp; }
+          else if (swapMode === 1) { const tmp = r; r = g; g = b; b = tmp; }
           else { r = 255 - r; b = 255 - b; }
         }
-        if (levels) { r = Math.round(r / step) * step; g = Math.round(g / step) * step; b = Math.round(b / step) * step; }
-        if (noise) { const n = (Math.random() - 0.5) * noise; r += n; g += n; b += n; }
-        d[i] = r * dark; d[i + 1] = g * dark; d[i + 2] = b * dark;
+        const n = nAmp ? ((NOISE[nj] * nAmp) >> 8) + 128 : 128;
+        nj = (nj + 1) & NOISE_MASK;
+        d[i] = lut[r + n]; d[i + 1] = lut[g + n]; d[i + 2] = lut[b + n];
       }
     }
     outCtx.putImageData(img, 0, 0);
+    }
   }
 
   // ---- Stutter: show a frozen frame or loop the last few frames (like a skipping CD)
@@ -660,21 +773,25 @@ function applyLiveAudio() {
   if (!actx) return;
   const c = vals.crunch || 0;
   if (c) {
-    const bits = 12 - (c / 100) * 10.5;            // ~12 bits down to ~1.5 bits
-    const levels = Math.pow(2, bits);
-    const n = 8192, curve = new Float32Array(n);
-    const drive = 1 + c / 100 * 6;
-    for (let i = 0; i < n; i++) {
-      let x = (i / (n - 1)) * 2 - 1;
-      x = Math.tanh(x * drive) / Math.tanh(drive);
-      curve[i] = Math.round(x * levels) / levels;
-    }
-    crusher.curve = curve;
+    crusher.curve = crushCurve(c);
     outGain.gain.value = 0.8;
   } else { crusher.curve = null; outGain.gain.value = 1; }
   monitorGain.gain.value = $('monitor').checked ? 1 : 0;
 }
 $('monitor').onchange = applyLiveAudio;
+
+function crushCurve(c) {
+  const bits = 12 - (c / 100) * 10.5;              // ~12 bits down to ~1.5 bits
+  const levels = Math.pow(2, bits);
+  const n = 8192, curve = new Float32Array(n);
+  const drive = 1 + c / 100 * 6;
+  for (let i = 0; i < n; i++) {
+    let x = (i / (n - 1)) * 2 - 1;
+    x = Math.tanh(x * drive) / Math.tanh(drive);
+    curve[i] = Math.round(x * levels) / levels;
+  }
+  return curve;
+}
 
 function setPitchFree(el) {
   el.preservesPitch = false; el.mozPreservesPitch = false; el.webkitPreservesPitch = false;
@@ -682,23 +799,230 @@ function setPitchFree(el) {
 
 // ---------------------------------------------------------------- run loop
 let running = false, recording = false, recorder = null, chunks = [], frameHandle = null, recMime = '';
+let fastJob = null;   // the in-progress fast render, if any
+
+// Playback rate (speed + tape warble) as a function of source time
+function rateAt(t) {
+  const base = speedFromVal(vals.speed ?? 50), w = (vals.warble || 0) / 100;
+  return clamp(base * (1 + Math.sin(t * 5.3) * 0.18 * w + Math.sin(t * 1.7) * 0.12 * w), 0.25, 4);
+}
+// Maps source time -> output time, integrating 1/rate on a fixed grid (audio automation uses the same grid)
+const TIME_STEP = 0.02;
+function buildTimeMap(duration) {
+  const n = Math.ceil(duration / TIME_STEP) + 2, out = new Float64Array(n);
+  for (let k = 1; k < n; k++) out[k] = out[k - 1] + TIME_STEP / rateAt((k - 1) * TIME_STEP);
+  const map = t => {
+    const f = Math.max(0, t) / TIME_STEP, k = Math.min(n - 2, Math.floor(f));
+    return out[k] + (out[k + 1] - out[k]) * (f - k);
+  };
+  map.grid = out;
+  return map;
+}
+
+// ---------------------------------------------------------------- fast render (WebCodecs via Mediabunny)
+// Decodes frames as fast as the computer can process them instead of playing the video in real time.
+const MEDIABUNNY_URL = 'https://cdn.jsdelivr.net/npm/mediabunny@1.65.2/dist/bundles/mediabunny.min.mjs';
+let mbPromise = null;
+function loadMediabunny() {
+  if (!mbPromise) mbPromise = import(MEDIABUNNY_URL).catch(e => { mbPromise = null; throw e; });
+  return mbPromise;
+}
+class NeedFallback extends Error {}
+const pause = () => new Promise(r => setTimeout(r, 0));
+
+async function renderAudio(MB, aTrack, t0, duration, timeMap) {
+  const sink = new MB.AudioBufferSink(aTrack);
+  const parts = [];
+  let sr = 0, ch = 1;
+  for await (const { buffer, timestamp } of sink.buffers()) {
+    if (fastJob?.cancelled) return null;
+    if (!sr) { sr = buffer.sampleRate; ch = Math.min(2, buffer.numberOfChannels); }
+    parts.push({ buffer, timestamp });
+  }
+  if (!sr) return null;
+  const full = new AudioBuffer({ length: Math.max(1, Math.ceil(duration * sr)), numberOfChannels: ch, sampleRate: sr });
+  for (const { buffer, timestamp } of parts) {
+    const off = Math.round((timestamp - t0) * sr);
+    for (let c = 0; c < ch; c++) {
+      let data = buffer.getChannelData(Math.min(c, buffer.numberOfChannels - 1));
+      let o = off;
+      if (o < 0) { data = data.subarray(-o); o = 0; }
+      if (o >= full.length) continue;
+      if (o + data.length > full.length) data = data.subarray(0, full.length - o);
+      full.copyToChannel(data, c, o);
+    }
+  }
+  parts.length = 0;
+  const outDur = timeMap(duration);
+  const oc = new OfflineAudioContext(ch, Math.max(1, Math.ceil(outDur * sr)), sr);
+  const src = oc.createBufferSource();
+  src.buffer = full;
+  const grid = timeMap.grid, constant = !vals.warble;
+  if (constant) src.playbackRate.value = rateAt(0);
+  else for (let k = 0; k < grid.length - 1; k++) src.playbackRate.setValueAtTime(rateAt(k * TIME_STEP), grid[k]);
+  const shaper = oc.createWaveShaper(), gain = oc.createGain();
+  if (vals.crunch) { shaper.curve = crushCurve(vals.crunch); gain.gain.value = 0.8; }
+  src.connect(shaper).connect(gain).connect(oc.destination);
+  src.start(0);
+  return oc.startRendering();
+}
+
+async function fastRender() {
+  if (typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined') throw new NeedFallback('no WebCodecs');
+  let MB;
+  try { MB = await loadMediabunny(); } catch (e) { throw new NeedFallback('library did not load'); }
+  const job = fastJob = { cancelled: false, output: null };
+  const input = new MB.Input({ formats: MB.ALL_FORMATS, source: new MB.BlobSource(currentFile) });
+  try {
+    const vTrack = await input.getPrimaryVideoTrack();
+    if (!vTrack || !(await vTrack.canDecode())) throw new NeedFallback('cannot decode');
+    let aTrack = await input.getPrimaryAudioTrack();
+    if (aTrack && !(await aTrack.canDecode())) aTrack = null;
+    const t0 = await input.getFirstTimestamp([vTrack, ...(aTrack ? [aTrack] : [])]);
+    const duration = Math.max(0.05, (await input.computeDuration()) - t0);
+    setupCanvases(await vTrack.getDisplayWidth(), await vTrack.getDisplayHeight());
+    const timeMap = buildTimeMap(duration);
+
+    // Pick an output: H.264 MP4 if the browser can encode it, otherwise WebM
+    let format = null, vCodec = null;
+    for (const f of [new MB.Mp4OutputFormat({ fastStart: 'in-memory' }), new MB.WebMOutputFormat()]) {
+      const order = ['avc', 'hevc', 'vp9', 'av1', 'vp8'].filter(c => f.getSupportedVideoCodecs().includes(c));
+      vCodec = await MB.getFirstEncodableVideoCodec(order, { width: W, height: H });
+      if (vCodec) { format = f; break; }
+    }
+    if (!vCodec) throw new NeedFallback('no encoder');
+    const target = new MB.BufferTarget();
+    const output = job.output = new MB.Output({ format, target });
+    const canvasSource = new MB.CanvasSource(out, { codec: vCodec, bitrate: MB.QUALITY_HIGH, keyFrameInterval: 2 });
+    output.addVideoTrack(canvasSource);
+
+    let audioSource = null, audioBuf = null;
+    if (aTrack) {
+      setStatus('Mangling the sound…');
+      audioBuf = await renderAudio(MB, aTrack, t0, duration, timeMap);
+      if (job.cancelled) throw new Error('cancelled');
+      if (audioBuf) {
+        const order = ['aac', 'opus', 'mp3', 'vorbis', 'flac'].filter(c => format.getSupportedAudioCodecs().includes(c));
+        const aCodec = await MB.getFirstEncodableAudioCodec(order, { numberOfChannels: audioBuf.numberOfChannels, sampleRate: audioBuf.sampleRate });
+        if (aCodec) { audioSource = new MB.AudioBufferSource({ codec: aCodec, bitrate: MB.QUALITY_HIGH }); output.addAudioTrack(audioSource); }
+        else audioBuf = null;
+      }
+    }
+    await output.start();
+
+    // Audio goes in first, in 1-second slices
+    if (audioSource && audioBuf) {
+      const sr = audioBuf.sampleRate, n = audioBuf.numberOfChannels;
+      for (let off = 0; off < audioBuf.length; off += sr) {
+        const len = Math.min(sr, audioBuf.length - off);
+        const slice = new AudioBuffer({ length: len, numberOfChannels: n, sampleRate: sr });
+        for (let c = 0; c < n; c++) slice.copyToChannel(audioBuf.getChannelData(c).subarray(off, off + len), c);
+        await audioSource.add(slice);
+        if (job.cancelled) throw new Error('cancelled');
+      }
+      audioSource.close();
+    }
+
+    // Video: decode → effects → encode, as fast as possible
+    setStatus('Corrupting at full speed…');
+    const sink = new MB.VideoSampleSink(vTrack);
+    const startedAt = performance.now();
+    let lastYield = startedAt, frames = 0, lastT = 0;
+    const prof = { decode: 0, fx: 0, encode: 0 };
+    let mark = performance.now();
+    for await (const sample of sink.samples()) {
+      let now0 = performance.now(); prof.decode += now0 - mark;
+      if (job.cancelled) { sample.close(); break; }
+      const ts = sample.timestamp - t0, dur = sample.duration || 1 / 30;
+      sample.draw(rawX, 0, 0, W, H);
+      sample.close();
+      processFrame(ts);
+      let now1 = performance.now(); prof.fx += now1 - now0;
+      const T0 = timeMap(ts), T1 = timeMap(ts + dur);
+      await canvasSource.add(T0, Math.max(0.001, T1 - T0));
+      mark = performance.now(); prof.encode += mark - now1;
+      frames++; lastT = ts + dur;
+      const now = performance.now();
+      if (now - lastYield > 60) {
+        const speedX = lastT / ((now - startedAt) / 1000);
+        setProgress(Math.min(1, lastT / duration));
+        $('badge').textContent = `⚡ ${lastT.toFixed(1)}s / ${duration.toFixed(1)}s · ${speedX.toFixed(1)}× real time`;
+        lastYield = now;
+        await pause();   // let the page repaint so you can watch it happen
+        mark = performance.now();
+      }
+    }
+    if (!frames) throw new Error('no video frames could be decoded');
+    canvasSource.close();
+    await output.finalize();
+    console.debug('fast render ms/frame', frames, Object.fromEntries(Object.entries(prof).map(([k, v]) => [k, +(v / frames).toFixed(1)])));
+    const secs = (performance.now() - startedAt) / 1000;
+    const blob = new Blob([target.buffer], { type: format.mimeType });
+    return { blob, ext: format.fileExtension.replace('.', ''), stopped: job.cancelled, secs, mediaSecs: lastT };
+  } catch (e) {
+    try { await job.output?.cancel(); } catch (_) {}
+    if (job.cancelled && !(e instanceof NeedFallback)) return null;
+    throw e;
+  } finally {
+    input.dispose?.();
+    if (fastJob === job) fastJob = null;
+  }
+}
+
+async function startFast() {
+  $('result').style.display = 'none';
+  running = true; recording = true;
+  $('badge').classList.remove('hidden');
+  $('badge').textContent = '⚡ starting…';
+  $('renderBtn').disabled = $('previewBtn').disabled = true;
+  $('stopBtn').disabled = false;
+  setProgress(0);
+  setStatus('Loading the video engine…');
+  try {
+    const r = await fastRender();
+    running = recording = false;
+    if (!r) { setStatus('Stopped.'); return; }
+    const kind = r.ext === 'mp4' ? 'MP4' : 'WebM';
+    showResult(r.blob, r.ext, `${kind} · ${fmtBytes(r.blob.size)} · rendered ${r.mediaSecs.toFixed(1)}s of video in ${r.secs.toFixed(1)}s` +
+      (r.stopped ? ' (stopped early)' : '') +
+      (r.ext === 'webm' ? '. WebM plays in browsers, VLC and most editors. Convert it to MP4 if your phone or app is picky.' : '.'));
+    setStatus('Done! Scroll down to watch and download.');
+  } catch (e) {
+    running = recording = false;
+    if (e instanceof NeedFallback) {
+      console.warn('Fast render unavailable:', e.message);
+      setStatus('Fast mode isn\'t available for this video in this browser, so rendering in real time instead…');
+      resetButtons();
+      return start(true, true);
+    }
+    console.error(e);
+    setStatus('Rendering failed: ' + (e && e.message || e) + '. Try a smaller output size, or a different browser.');
+  } finally {
+    if (!running) { resetButtons(); setProgress(null); }
+  }
+}
+function resetButtons() {
+  $('badge').classList.add('hidden');
+  $('stopBtn').disabled = true;
+  $('renderBtn').disabled = $('previewBtn').disabled = !videoPlayable;
+}
 
 function loop() {
   if (!running) return;
   if (video.readyState >= 2) {
-    const base = speedFromVal(vals.speed ?? 50);
-    const w = (vals.warble || 0) / 100;
-    const rate = clamp(base * (1 + Math.sin(video.currentTime * 5.3) * 0.18 * w + Math.sin(video.currentTime * 1.7) * 0.12 * w), 0.25, 4);
+    const rate = rateAt(video.currentTime);
     if (Math.abs(video.playbackRate - rate) > 0.005) video.playbackRate = rate;
-    processFrame();
+    rawX.drawImage(video, 0, 0, W, H);
+    processFrame(video.currentTime);
     if (video.duration) setProgress(video.currentTime / video.duration);
     $('badge').textContent = (recording ? '● REC ' : '▶ PREVIEW ') + video.currentTime.toFixed(1) + 's';
   }
   frameHandle = video.requestVideoFrameCallback ? video.requestVideoFrameCallback(loop) : requestAnimationFrame(loop);
 }
 
-async function start(record) {
+async function start(record, realtime) {
   if (!videoPlayable) return;
+  if (record && !realtime) return startFast();
   ensureAudio();
   if (actx && actx.state === 'suspended') await actx.resume();
   setupCanvases();
@@ -731,7 +1055,7 @@ async function start(record) {
     recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
     recorder.onstop = finishRecording;
     recorder.start(1000);
-    setStatus('Corrupting… sit back and enjoy the carnage.');
+    setStatus('Corrupting in real time… keep this tab visible.');
   } else {
     if (video.ended) video.currentTime = 0;
     setStatus('Live preview. Move the sliders to see changes instantly. Nothing is being saved.');
@@ -742,6 +1066,7 @@ async function start(record) {
 }
 
 function stopAll() {
+  if (fastJob) { fastJob.cancelled = true; return; }
   const wasRecording = recording;
   running = false; recording = false;
   if (frameHandle != null) {
@@ -775,7 +1100,7 @@ video.addEventListener('ended', () => {
 
 $('previewBtn').onclick = () => start(false);
 $('renderBtn').onclick = () => start(true);
-$('stopBtn').onclick = () => { const r = recording; stopAll(); if (!r) setStatus('Stopped.'); else setStatus('Stopped early. Saving what was rendered…'); };
+$('stopBtn').onclick = () => { if (fastJob) { fastJob.cancelled = true; setStatus('Stopping…'); return; } const r = recording; stopAll(); if (!r) setStatus('Stopped.'); else setStatus('Stopped early. Saving what was rendered…'); };
 
 // ---------------------------------------------------------------- results
 let resultURL = null;
